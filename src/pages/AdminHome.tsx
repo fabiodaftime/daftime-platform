@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
 import { Plus, Search, LogOut, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import daftimeLogo from '@/assets/daftime-logo.jpg';
 
 interface CompanyWithKPIs {
   id: string;
@@ -44,7 +45,7 @@ export default function AdminHome() {
       // Fetch financial data for each company
       const currentYear = new Date().getFullYear();
       const companiesWithKPIs: CompanyWithKPIs[] = await Promise.all(
-        (companiesData || []).map(async (company) => {
+        (companiesData || []).map(async (company, index) => {
           const { data: financials } = await supabase
             .from('monthly_financials')
             .select('revenue_actual, revenue_budget')
@@ -54,14 +55,24 @@ export default function AdminHome() {
           const revenueYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_actual), 0) || 0;
           const budgetYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_budget), 0) || 0;
 
-          // For now, we'll use demo data if no financials exist
+          // For now, use demo data per company type if no financials exist
           const hasData = financials && financials.length > 0;
+          
+          // Different demo data based on layout type
+          const demoDataByLayout: Record<string, { revenue: number; budget: number; expenses: number }> = {
+            'cw_partners': { revenue: 895000, budget: 855000, expenses: 710000 },
+            'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
+            'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
+            'default': { revenue: 750000 + index * 100000, budget: 720000 + index * 95000, expenses: 600000 + index * 80000 },
+          };
+          
+          const demoData = demoDataByLayout[company.layout_type] || demoDataByLayout['default'];
           
           return {
             ...company,
-            revenueYTD: hasData ? revenueYTD : 895000, // Demo data
-            budgetYTD: hasData ? budgetYTD : 855000, // Demo data
-            expensesYTD: hasData ? 0 : 710000, // Demo data
+            revenueYTD: hasData ? revenueYTD : demoData.revenue,
+            budgetYTD: hasData ? budgetYTD : demoData.budget,
+            expensesYTD: hasData ? 0 : demoData.expenses,
           };
         })
       );
@@ -94,9 +105,13 @@ export default function AdminHome() {
       <header className="bg-primary text-primary-foreground py-4 px-6 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Building2 className="w-8 h-8" />
+            <img 
+              src={daftimeLogo} 
+              alt="DAF Time Advisory" 
+              className="h-10 w-auto"
+            />
             <div>
-              <h1 className="text-xl font-bold">Financial Dashboard</h1>
+              <h1 className="text-xl font-bold">DAF Time Advisory</h1>
               <p className="text-sm text-primary-foreground/70">Administration</p>
             </div>
           </div>
