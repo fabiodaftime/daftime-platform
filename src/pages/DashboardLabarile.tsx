@@ -9,7 +9,9 @@ import {
   PieChart, 
   Target,
   ArrowLeft,
-  Building2
+  Building2,
+  Menu,
+  X
 } from 'lucide-react';
 
 // Labarile Components
@@ -51,6 +53,7 @@ export default function DashboardLabarile() {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -123,29 +126,55 @@ export default function DashboardLabarile() {
 
   return (
     <div className="min-h-screen bg-labarile-light-gray flex">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-labarile-white border border-labarile-border rounded-lg shadow-sm"
+      >
+        <Menu className="w-5 h-5 text-labarile-text" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <LabarileSidebar
-        companyName={company.name}
-        logoUrl={company.logo_url}
-        navItems={navItems}
-        activePage={activePage}
-        onPageChange={setActivePage}
-        onBack={() => navigate('/')}
-      />
+      <div className={`
+        fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out
+        lg:translate-x-0 lg:static lg:z-20
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <LabarileSidebar
+          companyName={company.name}
+          logoUrl={company.logo_url}
+          navItems={navItems}
+          activePage={activePage}
+          onPageChange={(page) => {
+            setActivePage(page);
+            setSidebarOpen(false);
+          }}
+          onBack={() => navigate('/')}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 ml-[260px]">
+      <div className="flex-1 lg:ml-0 min-w-0">
         {/* Header */}
-        <header className="h-[70px] bg-labarile-white border-b border-labarile-border flex items-center justify-between px-8 sticky top-0 z-10">
-          <div>
-            <h1 className="font-bebas text-2xl tracking-wide text-labarile-text">
+        <header className="h-[70px] bg-labarile-white border-b border-labarile-border flex items-center justify-between px-4 lg:px-8 sticky top-0 z-10">
+          <div className="ml-12 lg:ml-0">
+            <h1 className="font-bebas text-xl lg:text-2xl tracking-wide text-labarile-text">
               {activePage === 'overview' && "Vue d'Ensemble"}
               {activePage === 'revenue' && "Chiffre d'Affaires"}
               {activePage === 'expenses' && "Charges"}
               {activePage === 'analysis' && "Analyse"}
               {activePage === 'kpis' && "KPIs & Ratios"}
             </h1>
-            <p className="text-sm text-labarile-muted">
+            <p className="text-xs lg:text-sm text-labarile-muted">
               {activePage === 'overview' && "KPIs et indicateurs clés"}
               {activePage === 'revenue' && "Évolution et détails du CA"}
               {activePage === 'expenses' && "Suivi des dépenses"}
@@ -153,11 +182,11 @@ export default function DashboardLabarile() {
               {activePage === 'kpis' && "Indicateurs de performance"}
             </p>
           </div>
-          <p className="text-sm text-labarile-muted">Données YTD 2025</p>
+          <p className="text-xs lg:text-sm text-labarile-muted">Données YTD 2025</p>
         </header>
 
         {/* Page Content */}
-        <main className="p-8">
+        <main className="p-4 lg:p-8">
           {/* Overview Page */}
           {activePage === 'overview' && (
             <div className="space-y-6 animate-fade-in">
