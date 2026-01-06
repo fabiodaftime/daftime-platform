@@ -69,6 +69,16 @@
     --sidebar-accent-foreground: 220 10% 85%;
     --sidebar-border: 220 15% 25%;
     --sidebar-ring: 45 70% 50%;
+
+    /* Bocuse Theme Colors */
+    --bocuse-blue: 232 100% 22%;
+    --bocuse-dark: 232 100% 15%;
+    --bocuse-darker: 232 100% 10%;
+    --bocuse-light: 232 80% 29%;
+    --bocuse-medium: 232 90% 21%;
+    --bocuse-card: 232 85% 24%;
+    --bocuse-red: 0 100% 49%;
+    --bocuse-gray: 225 24% 72%;
   }
 
   .dark {
