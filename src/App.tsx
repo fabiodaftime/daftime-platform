@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import DashboardBocuse from "./pages/DashboardBocuse";
 import CompanyForm from "./pages/CompanyForm";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-bocuse/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardBocuse />
                 </ProtectedRoute>
               } 
             />

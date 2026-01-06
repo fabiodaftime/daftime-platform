@@ -111,6 +111,18 @@ export default {
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['Roboto Mono', 'monospace'],
+        playfair: ['Playfair Display', 'serif'],
+      },
+      // Bocuse theme colors
+      bocuse: {
+        blue: '#001070',
+        dark: '#000a4a',
+        darker: '#000a4a',
+        light: '#1a2a7a',
+        medium: '#0d1a5c',
+        card: '#101d6a',
+        red: '#F80000',
+        gray: '#a8b0c8',
       },
     },
   },
