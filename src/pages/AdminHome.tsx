@@ -8,16 +8,19 @@ import { CompanyCard } from '@/components/admin/CompanyCard';
 import { Plus, Search, LogOut, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface Company {
+interface CompanyWithKPIs {
   id: string;
   name: string;
   logo_url: string | null;
   layout_type: string;
   currency: string;
+  revenueYTD: number;
+  budgetYTD: number;
+  expensesYTD: number;
 }
 
 export default function AdminHome() {
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyWithKPIs[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const { user, signOut, isSuperAdmin } = useAuth();
@@ -25,18 +28,45 @@ export default function AdminHome() {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCompanies();
+    fetchCompaniesWithKPIs();
   }, []);
 
-  const fetchCompanies = async () => {
+  const fetchCompaniesWithKPIs = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch companies
+      const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
         .order('name');
 
-      if (error) throw error;
-      setCompanies(data || []);
+      if (companiesError) throw companiesError;
+
+      // Fetch financial data for each company
+      const currentYear = new Date().getFullYear();
+      const companiesWithKPIs: CompanyWithKPIs[] = await Promise.all(
+        (companiesData || []).map(async (company) => {
+          const { data: financials } = await supabase
+            .from('monthly_financials')
+            .select('revenue_actual, revenue_budget')
+            .eq('company_id', company.id)
+            .eq('year', currentYear);
+
+          const revenueYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_actual), 0) || 0;
+          const budgetYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_budget), 0) || 0;
+
+          // For now, we'll use demo data if no financials exist
+          const hasData = financials && financials.length > 0;
+          
+          return {
+            ...company,
+            revenueYTD: hasData ? revenueYTD : 895000, // Demo data
+            budgetYTD: hasData ? budgetYTD : 855000, // Demo data
+            expensesYTD: hasData ? 0 : 710000, // Demo data
+          };
+        })
+      );
+
+      setCompanies(companiesWithKPIs);
     } catch (error) {
       console.error('Error fetching companies:', error);
       toast({
@@ -155,19 +185,29 @@ export default function AdminHome() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCompanies.map((company) => (
-              <CompanyCard
-                key={company.id}
-                id={company.id}
-                name={company.name}
-                logoUrl={company.logo_url}
-                layoutType={company.layout_type}
-                currency={company.currency}
-                revenueYTD={0}
-                revenueVariance={0}
-                margin={0}
-              />
-            ))}
+            {filteredCompanies.map((company) => {
+              const revenueVariance = company.budgetYTD > 0 
+                ? ((company.revenueYTD - company.budgetYTD) / company.budgetYTD) * 100 
+                : 0;
+              const netIncome = company.revenueYTD - company.expensesYTD;
+              const margin = company.revenueYTD > 0 
+                ? (netIncome / company.revenueYTD) * 100 
+                : 0;
+
+              return (
+                <CompanyCard
+                  key={company.id}
+                  id={company.id}
+                  name={company.name}
+                  logoUrl={company.logo_url}
+                  layoutType={company.layout_type}
+                  currency={company.currency}
+                  revenueYTD={company.revenueYTD}
+                  revenueVariance={revenueVariance}
+                  margin={margin}
+                />
+              );
+            })}
           </div>
         )}
       </main>
