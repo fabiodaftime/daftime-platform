@@ -79,6 +79,21 @@
     --bocuse-card: 232 85% 24%;
     --bocuse-red: 0 100% 49%;
     --bocuse-gray: 225 24% 72%;
+
+    /* Labarile Theme Colors */
+    --labarile-primary: 180 40% 75%;
+    --labarile-primary-dark: 180 42% 54%;
+    --labarile-primary-light: 180 45% 85%;
+    --labarile-ice1: 180 50% 93%;
+    --labarile-ice2: 180 55% 86%;
+    --labarile-text: 0 0% 7%;
+    --labarile-text-secondary: 0 0% 20%;
+    --labarile-muted: 0 0% 40%;
+    --labarile-light-gray: 0 0% 96%;
+    --labarile-border: 0 0% 88%;
+    --labarile-success: 160 50% 52%;
+    --labarile-warning: 15 75% 64%;
+    --labarile-white: 0 0% 100%;
   }
 
   .dark {

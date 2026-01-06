@@ -96,7 +96,9 @@ export function CompanyCard({
           <Button 
             className="flex-1" 
             onClick={() => {
-              const route = layoutType === 'bocuse' ? `/dashboard-bocuse/${id}` : `/dashboard/${id}`;
+              let route = `/dashboard/${id}`;
+              if (layoutType === 'bocuse') route = `/dashboard-bocuse/${id}`;
+              if (layoutType === 'labarile') route = `/dashboard-labarile/${id}`;
               navigate(route);
             }}
           >

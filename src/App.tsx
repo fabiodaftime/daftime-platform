@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import DashboardBocuse from "./pages/DashboardBocuse";
+import DashboardLabarile from "./pages/DashboardLabarile";
 import CompanyForm from "./pages/CompanyForm";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardBocuse />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-labarile/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLabarile />
                 </ProtectedRoute>
               } 
             />
