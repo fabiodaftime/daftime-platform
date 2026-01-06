@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
 import { Plus, Search, LogOut, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import daftimeLogo from '@/assets/daftime-logo-white.png';
+import daftimeLogoSrc from '@/assets/daftime-logo.jpg';
 
 interface CompanyWithKPIs {
   id: string;
@@ -107,8 +107,9 @@ export default function AdminHome() {
           <div className="flex items-center gap-3">
             <img 
               src={daftimeLogo} 
-              alt="DAF Time Advisory" 
-              className="h-10 w-auto"
+              alt="Daftime Advisory" 
+              className="h-10 w-auto bg-transparent"
+              style={{ backgroundColor: 'transparent' }}
             />
             <div>
               <h1 className="text-xl font-bold">Daftime Advisory</h1>
