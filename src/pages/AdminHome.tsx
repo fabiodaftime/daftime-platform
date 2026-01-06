@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
 import { Plus, Search, LogOut, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import daftimeLogoSrc from '@/assets/daftime-logo.jpg';
+import daftimeLogo from '@/assets/daftime-logo.jpg';
 
 interface CompanyWithKPIs {
   id: string;
