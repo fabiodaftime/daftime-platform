@@ -99,6 +99,7 @@ export function CompanyCard({
               let route = `/dashboard/${id}`;
               if (layoutType === 'bocuse') route = `/dashboard-bocuse/${id}`;
               if (layoutType === 'labarile') route = `/dashboard-labarile/${id}`;
+              console.log('[CompanyCard] Navigating:', { id, layoutType, route });
               navigate(route);
             }}
           >
