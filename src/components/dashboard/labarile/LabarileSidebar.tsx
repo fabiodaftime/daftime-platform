@@ -1,4 +1,4 @@
-import { ArrowLeft, Building2 } from 'lucide-react';
+import { ArrowLeft, Building2, X } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +15,7 @@ interface LabarileSidebarProps {
   activePage: string;
   onPageChange: (page: string) => void;
   onBack: () => void;
+  onClose?: () => void;
 }
 
 export function LabarileSidebar({
@@ -24,9 +25,10 @@ export function LabarileSidebar({
   activePage,
   onPageChange,
   onBack,
+  onClose,
 }: LabarileSidebarProps) {
   return (
-    <aside className="fixed inset-y-0 left-0 w-[260px] bg-labarile-white border-r border-labarile-border flex flex-col z-20">
+    <aside className="h-full w-[260px] bg-labarile-white border-r border-labarile-border flex flex-col">
       {/* Logo Section */}
       <div className="p-5 border-b border-labarile-border flex items-center gap-3">
         <button 
@@ -44,7 +46,17 @@ export function LabarileSidebar({
           </div>
         )}
         
-        <span className="font-semibold text-labarile-text truncate">{companyName}</span>
+        <span className="font-semibold text-labarile-text truncate flex-1">{companyName}</span>
+
+        {/* Mobile Close Button */}
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-2 hover:bg-labarile-ice1 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-labarile-muted" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
