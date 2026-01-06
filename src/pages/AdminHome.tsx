@@ -1,0 +1,176 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { CompanyCard } from '@/components/admin/CompanyCard';
+import { Plus, Search, LogOut, Building2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface Company {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  layout_type: string;
+  currency: string;
+}
+
+export default function AdminHome() {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const { user, signOut, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les clients',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  const filteredCompanies = companies.filter(company =>
+    company.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-primary text-primary-foreground py-4 px-6 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Building2 className="w-8 h-8" />
+            <div>
+              <h1 className="text-xl font-bold">Financial Dashboard</h1>
+              <p className="text-sm text-primary-foreground/70">Administration</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-primary-foreground/70">
+              {user?.email}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleSignOut}
+              className="text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Title and actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Mes Clients</h2>
+            <p className="text-muted-foreground">
+              {companies.length} entreprise{companies.length > 1 ? 's' : ''} gérée{companies.length > 1 ? 's' : ''}
+            </p>
+          </div>
+          
+          <div className="flex gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un client..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-64"
+              />
+            </div>
+            {isSuperAdmin && (
+              <Button onClick={() => navigate('/admin/company/new')}>
+                <Plus className="w-4 h-4 mr-2" />
+                Nouveau Client
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Companies grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-72 bg-muted animate-pulse rounded-lg" />
+            ))}
+          </div>
+        ) : filteredCompanies.length === 0 ? (
+          <div className="text-center py-16">
+            <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            {companies.length === 0 ? (
+              <>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Aucun client pour le moment
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Commencez par ajouter votre premier client
+                </p>
+                {isSuperAdmin && (
+                  <Button onClick={() => navigate('/admin/company/new')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un client
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Aucun résultat
+                </h3>
+                <p className="text-muted-foreground">
+                  Aucun client ne correspond à "{searchQuery}"
+                </p>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCompanies.map((company) => (
+              <CompanyCard
+                key={company.id}
+                id={company.id}
+                name={company.name}
+                logoUrl={company.logo_url}
+                layoutType={company.layout_type}
+                currency={company.currency}
+                revenueYTD={0}
+                revenueVariance={0}
+                margin={0}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
