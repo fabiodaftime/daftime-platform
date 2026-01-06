@@ -95,7 +95,10 @@ export function CompanyCard({
         <div className="flex gap-2">
           <Button 
             className="flex-1" 
-            onClick={() => navigate(`/dashboard/${id}`)}
+            onClick={() => {
+              const route = layoutType === 'bocuse' ? `/dashboard-bocuse/${id}` : `/dashboard/${id}`;
+              navigate(route);
+            }}
           >
             <Eye className="w-4 h-4 mr-2" />
             Voir Dashboard
