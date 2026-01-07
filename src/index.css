@@ -6,47 +6,47 @@
 
 @layer base {
   :root {
-    /* Base colors */
-    --background: 220 20% 97%;
-    --foreground: 220 25% 10%;
+    /* Base colors - Daftime beige/cream */
+    --background: 35 33% 95%;
+    --foreground: 220 50% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 220 50% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
+    --popover-foreground: 220 50% 10%;
 
-    /* Primary: Deep navy blue */
-    --primary: 220 60% 20%;
-    --primary-foreground: 45 70% 60%;
+    /* Primary: Deep navy blue (Daftime dark) */
+    --primary: 220 60% 12%;
+    --primary-foreground: 40 50% 95%;
 
-    /* Secondary: Lighter blue-gray */
-    --secondary: 220 15% 92%;
-    --secondary-foreground: 220 25% 25%;
+    /* Secondary: Lighter beige */
+    --secondary: 35 25% 90%;
+    --secondary-foreground: 220 50% 15%;
 
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 35 20% 92%;
+    --muted-foreground: 220 15% 45%;
 
-    /* Accent: Gold */
-    --accent: 45 70% 50%;
-    --accent-foreground: 220 60% 15%;
+    /* Accent: Daftime Gold */
+    --accent: 40 55% 55%;
+    --accent-foreground: 220 60% 10%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 220 60% 20%;
+    --border: 35 20% 85%;
+    --input: 35 20% 85%;
+    --ring: 40 55% 55%;
 
     --radius: 0.5rem;
 
-    /* Financial Dashboard specific */
-    --dashboard-bg: 220 20% 12%;
-    --dashboard-card: 220 20% 18%;
-    --dashboard-card-hover: 220 20% 22%;
-    --dashboard-border: 220 15% 25%;
-    --dashboard-text: 220 10% 85%;
-    --dashboard-text-muted: 220 10% 55%;
+    /* Financial Dashboard specific - Daftime dark theme */
+    --dashboard-bg: 220 55% 10%;
+    --dashboard-card: 220 50% 14%;
+    --dashboard-card-hover: 220 45% 18%;
+    --dashboard-border: 220 40% 22%;
+    --dashboard-text: 35 30% 92%;
+    --dashboard-text-muted: 220 15% 55%;
     
     /* KPI Colors */
     --kpi-positive: 142 70% 45%;
@@ -55,20 +55,20 @@
     
     /* Chart Colors */
     --chart-blue: 210 80% 55%;
-    --chart-gold: 45 70% 50%;
+    --chart-gold: 40 55% 55%;
     --chart-gray: 220 10% 45%;
     --chart-green: 142 70% 45%;
     --chart-red: 0 72% 51%;
 
     /* Sidebar */
-    --sidebar-background: 220 20% 12%;
-    --sidebar-foreground: 220 10% 85%;
-    --sidebar-primary: 45 70% 50%;
-    --sidebar-primary-foreground: 220 60% 15%;
-    --sidebar-accent: 220 20% 22%;
-    --sidebar-accent-foreground: 220 10% 85%;
-    --sidebar-border: 220 15% 25%;
-    --sidebar-ring: 45 70% 50%;
+    --sidebar-background: 220 55% 10%;
+    --sidebar-foreground: 35 30% 92%;
+    --sidebar-primary: 40 55% 55%;
+    --sidebar-primary-foreground: 220 60% 10%;
+    --sidebar-accent: 220 45% 18%;
+    --sidebar-accent-foreground: 35 30% 92%;
+    --sidebar-border: 220 40% 22%;
+    --sidebar-ring: 40 55% 55%;
 
     /* Bocuse Theme Colors */
     --bocuse-blue: 232 100% 22%;
@@ -97,42 +97,42 @@
   }
 
   .dark {
-    --background: 220 20% 8%;
-    --foreground: 220 10% 90%;
+    --background: 220 55% 8%;
+    --foreground: 35 30% 92%;
 
-    --card: 220 20% 12%;
-    --card-foreground: 220 10% 90%;
+    --card: 220 50% 12%;
+    --card-foreground: 35 30% 92%;
 
-    --popover: 220 20% 12%;
-    --popover-foreground: 220 10% 90%;
+    --popover: 220 50% 12%;
+    --popover-foreground: 35 30% 92%;
 
-    --primary: 45 70% 55%;
-    --primary-foreground: 220 60% 15%;
+    --primary: 40 55% 55%;
+    --primary-foreground: 220 60% 10%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 220 10% 85%;
+    --secondary: 220 45% 16%;
+    --secondary-foreground: 35 30% 90%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 220 45% 16%;
+    --muted-foreground: 220 15% 55%;
 
-    --accent: 45 70% 50%;
-    --accent-foreground: 220 60% 15%;
+    --accent: 40 55% 55%;
+    --accent-foreground: 220 60% 10%;
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 25%;
-    --input: 220 15% 25%;
-    --ring: 45 70% 50%;
+    --border: 220 40% 22%;
+    --input: 220 40% 22%;
+    --ring: 40 55% 55%;
     
-    --sidebar-background: 220 20% 8%;
-    --sidebar-foreground: 220 10% 85%;
-    --sidebar-primary: 45 70% 50%;
-    --sidebar-primary-foreground: 220 60% 15%;
-    --sidebar-accent: 220 20% 15%;
-    --sidebar-accent-foreground: 220 10% 85%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 45 70% 50%;
+    --sidebar-background: 220 55% 8%;
+    --sidebar-foreground: 35 30% 92%;
+    --sidebar-primary: 40 55% 55%;
+    --sidebar-primary-foreground: 220 60% 10%;
+    --sidebar-accent: 220 45% 14%;
+    --sidebar-accent-foreground: 35 30% 92%;
+    --sidebar-border: 220 40% 18%;
+    --sidebar-ring: 40 55% 55%;
   }
 }
 
