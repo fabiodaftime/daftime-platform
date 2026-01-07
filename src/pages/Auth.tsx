@@ -123,8 +123,8 @@ export default function Auth() {
               <TrendingUp className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Suivi en temps réel</h3>
-              <p className="text-sm text-primary-foreground/70">Visualisez vos KPIs financiers instantanément</p>
+              <h3 className="font-semibold text-primary-foreground">Mise à jour mensuelle</h3>
+              <p className="text-sm text-primary-foreground/70">Vos données financières actualisées chaque mois</p>
             </div>
           </div>
 
@@ -133,8 +133,8 @@ export default function Auth() {
               <BarChart3 className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Pilotage stratégique</h3>
-              <p className="text-sm text-primary-foreground/70">Des indicateurs clés pour vos décisions</p>
+              <h3 className="font-semibold text-primary-foreground">Accompagnement personnalisé</h3>
+              <p className="text-sm text-primary-foreground/70">Une visio de présentation pour chaque mise à jour</p>
             </div>
           </div>
 
@@ -143,8 +143,8 @@ export default function Auth() {
               <PieChart className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Rapports détaillés</h3>
-              <p className="text-sm text-primary-foreground/70">Revenus, dépenses et rentabilité en un coup d'œil</p>
+              <h3 className="font-semibold text-primary-foreground">Accès permanent</h3>
+              <p className="text-sm text-primary-foreground/70">Consultez vos tableaux de bord quand vous le souhaitez</p>
             </div>
           </div>
         </div>
