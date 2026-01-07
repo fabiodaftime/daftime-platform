@@ -112,45 +112,45 @@ export default function Auth() {
           <h1 className="text-3xl font-bold text-primary-foreground">
             Daftime Advisory
           </h1>
-          <p className="text-primary-foreground/70 mt-2">
-            Votre partenaire de confiance pour votre suivi financier et le conseil en pilotage stratégique
+          <p className="text-amber-400/90 mt-2 text-lg font-medium">
+            Your partner for structuring your business
           </p>
         </div>
 
         <div className="space-y-8">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary-foreground/10 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-primary-foreground" />
+            <div className="p-3 bg-amber-500/20 rounded-lg border border-amber-500/30">
+              <TrendingUp className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Mise à jour mensuelle</h3>
-              <p className="text-sm text-primary-foreground/70">Vos données financières actualisées chaque mois</p>
+              <h3 className="font-semibold text-primary-foreground">CFO & Advisory services</h3>
+              <p className="text-sm text-primary-foreground/70">Strategic financial guidance to grow with confidence</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary-foreground/10 rounded-lg">
-              <BarChart3 className="w-6 h-6 text-primary-foreground" />
+            <div className="p-3 bg-amber-500/20 rounded-lg border border-amber-500/30">
+              <BarChart3 className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Accompagnement personnalisé</h3>
-              <p className="text-sm text-primary-foreground/70">Une visio de présentation pour chaque mise à jour</p>
+              <h3 className="font-semibold text-primary-foreground">Financial reporting</h3>
+              <p className="text-sm text-primary-foreground/70">Clear dashboards for informed decision-making</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary-foreground/10 rounded-lg">
-              <PieChart className="w-6 h-6 text-primary-foreground" />
+            <div className="p-3 bg-amber-500/20 rounded-lg border border-amber-500/30">
+              <PieChart className="w-6 h-6 text-amber-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Accès permanent</h3>
-              <p className="text-sm text-primary-foreground/70">Consultez vos tableaux de bord quand vous le souhaitez</p>
+              <h3 className="font-semibold text-primary-foreground">Tailored support</h3>
+              <p className="text-sm text-primary-foreground/70">Personalized services to meet your objectives</p>
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-primary-foreground/50">
-          © 2024 Daftime Advisory. Tous droits réservés.
+        <p className="text-sm text-amber-400/50">
+          © 2025 Daftime Advisory. All rights reserved.
         </p>
       </div>
 
