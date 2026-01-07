@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, BarChart3, PieChart } from 'lucide-react';
 import { z } from 'zod';
+import daftimeLogo from '@/assets/daftime-logo.jpg';
 
 const emailSchema = z.string().email('Email invalide');
 const passwordSchema = z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères');
@@ -109,10 +110,10 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between">
         <div>
           <h1 className="text-3xl font-bold text-primary-foreground">
-            Financial Dashboard
+            Daftime Advisory
           </h1>
           <p className="text-primary-foreground/70 mt-2">
-            Plateforme de gestion financière multi-clients
+            Votre partenaire de confiance pour votre suivi financier et le conseil en pilotage stratégique
           </p>
         </div>
 
@@ -122,8 +123,8 @@ export default function Auth() {
               <TrendingUp className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Analyse en temps réel</h3>
-              <p className="text-sm text-primary-foreground/70">Suivez vos KPIs financiers instantanément</p>
+              <h3 className="font-semibold text-primary-foreground">Suivi en temps réel</h3>
+              <p className="text-sm text-primary-foreground/70">Visualisez vos KPIs financiers instantanément</p>
             </div>
           </div>
 
@@ -132,8 +133,8 @@ export default function Auth() {
               <BarChart3 className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-primary-foreground">Multi-clients</h3>
-              <p className="text-sm text-primary-foreground/70">Gérez plusieurs entreprises depuis une interface</p>
+              <h3 className="font-semibold text-primary-foreground">Pilotage stratégique</h3>
+              <p className="text-sm text-primary-foreground/70">Des indicateurs clés pour vos décisions</p>
             </div>
           </div>
 
@@ -143,20 +144,27 @@ export default function Auth() {
             </div>
             <div>
               <h3 className="font-semibold text-primary-foreground">Rapports détaillés</h3>
-              <p className="text-sm text-primary-foreground/70">Visualisez revenus, dépenses et rentabilité</p>
+              <p className="text-sm text-primary-foreground/70">Revenus, dépenses et rentabilité en un coup d'œil</p>
             </div>
           </div>
         </div>
 
         <p className="text-sm text-primary-foreground/50">
-          © 2024 Financial Dashboard. Tous droits réservés.
+          © 2024 Daftime Advisory. Tous droits réservés.
         </p>
       </div>
 
       {/* Right side - Auth form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <img 
+                src={daftimeLogo} 
+                alt="Daftime Advisory" 
+                className="h-12 w-auto"
+              />
+            </div>
             <CardTitle className="text-2xl">Bienvenue</CardTitle>
             <CardDescription>
               Connectez-vous ou créez un compte pour accéder à vos dashboards
