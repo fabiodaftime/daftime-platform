@@ -14,26 +14,21 @@ export function LabarileKPICard({
   variant = 'default',
 }: LabarileKPICardProps) {
   return (
-    <div className={cn(
-      "bg-labarile-white border border-labarile-border rounded-xl p-5 relative overflow-hidden",
-    )}>
-      {/* Top accent bar */}
-      <div className={cn(
-        "absolute top-0 left-0 right-0 h-[3px]",
-        variant === 'primary' && "bg-labarile-primary",
-        variant === 'success' && "bg-labarile-success",
-        variant === 'warning' && "bg-labarile-warning",
-        variant === 'default' && "bg-labarile-primary"
-      )} />
-      
-      <p className="text-xs text-labarile-muted uppercase tracking-wider font-medium mb-2">
+    <div className="bg-labarile-white border border-labarile-border rounded-xl p-5 lg:p-6 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-lg hover:shadow-labarile-primary/10">
+      <p className="text-[11px] lg:text-xs text-labarile-muted uppercase tracking-wider font-semibold mb-2">
         {label}
       </p>
-      <p className="text-2xl font-bold text-labarile-text">
+      <p className={cn(
+        "font-bebas text-2xl lg:text-4xl tracking-wide",
+        variant === 'primary' && "text-labarile-primary",
+        variant === 'success' && "text-labarile-success",
+        variant === 'warning' && "text-labarile-warning",
+        variant === 'default' && "text-labarile-title"
+      )}>
         {value}
       </p>
       {subtext && (
-        <p className="text-sm text-labarile-muted mt-1">{subtext}</p>
+        <p className="text-xs lg:text-sm text-labarile-muted mt-1 lg:mt-2">{subtext}</p>
       )}
     </div>
   );
