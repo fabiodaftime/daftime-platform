@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -191,7 +191,15 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Mot de passe</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="signin-password">Mot de passe</Label>
+                      <Link 
+                        to="/auth/reset-password" 
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Mot de passe oublié ?
+                      </Link>
+                    </div>
                     <Input
                       id="signin-password"
                       type="password"

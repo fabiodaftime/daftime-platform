@@ -7,6 +7,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
+import UpdatePassword from "./pages/UpdatePassword";
+import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import DashboardBocuse from "./pages/DashboardBocuse";
 import DashboardLabarile from "./pages/DashboardLabarile";
@@ -25,6 +28,16 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/update-password" element={<UpdatePassword />} />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/" 
               element={
