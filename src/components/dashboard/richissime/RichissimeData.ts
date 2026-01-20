@@ -126,7 +126,7 @@ export const VARIANCE_DATA = {
   }
 };
 
-export const INSIGHTS = [
+export const INSIGHTS: Array<{ type: 'success' | 'warning' | 'info'; icon: string; title: string; description: string }> = [
   { type: 'success', icon: '📈', title: 'Surperformance Oct-Nov', description: 'Masterclass "Investir en 2025" a généré +15.1 k€ non prévus.' },
   { type: 'warning', icon: '⚠️', title: 'Marketing Décembre', description: 'Budget doublé (30% vs 15%) avec ROI de 1.2x seulement.' },
   { type: 'info', icon: '🎯', title: 'Précision Prévisions', description: 'Écart moyen +4.2% sur le CA. Prévisions conservatrices.' },
