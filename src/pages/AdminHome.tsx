@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
-import { Plus, Search, LogOut, Building2 } from 'lucide-react';
+import { Plus, Search, LogOut, Building2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 
@@ -156,10 +156,16 @@ export default function AdminHome() {
               />
             </div>
             {isSuperAdmin && (
-              <Button onClick={() => navigate('/admin/company/new')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Nouveau Client
-              </Button>
+              <>
+                <Button variant="outline" onClick={() => navigate('/admin/users')}>
+                  <Users className="w-4 h-4 mr-2" />
+                  Gérer Utilisateurs
+                </Button>
+                <Button onClick={() => navigate('/admin/company/new')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nouveau Client
+                </Button>
+              </>
             )}
           </div>
         </div>
