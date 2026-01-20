@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardBocuse from "./pages/DashboardBocuse";
 import DashboardLabarile from "./pages/DashboardLabarile";
 import CompanyForm from "./pages/CompanyForm";
+import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <CompanyForm />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminUsers />
                 </ProtectedRoute>
               } 
             />
