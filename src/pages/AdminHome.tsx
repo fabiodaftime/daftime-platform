@@ -63,6 +63,7 @@ export default function AdminHome() {
             'cw_partners': { revenue: 895000, budget: 855000, expenses: 710000 },
             'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
             'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
+            'richissime': { revenue: 1262000, budget: 1180000, expenses: 890000 },
             'default': { revenue: 750000 + index * 100000, budget: 720000 + index * 95000, expenses: 600000 + index * 80000 },
           };
           
