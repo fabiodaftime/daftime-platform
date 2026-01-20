@@ -94,6 +94,27 @@
     --labarile-success: 160 50% 52%;
     --labarile-warning: 15 75% 64%;
     --labarile-white: 0 0% 100%;
+
+    /* Richissime Theme Colors */
+    --richissime-gold: 40 50% 58%;
+    --richissime-gold-dark: 40 41% 48%;
+    --richissime-gold-light: 40 50% 65%;
+    --richissime-gold-pale: 40 45% 91%;
+    --richissime-navy: 220 47% 20%;
+    --richissime-navy-dark: 220 55% 12%;
+    --richissime-navy-light: 220 40% 28%;
+    --richissime-cream: 40 30% 97%;
+    --richissime-text: 215 25% 27%;
+    --richissime-muted: 215 15% 47%;
+    --richissime-border: 35 20% 89%;
+    --richissime-success: 160 55% 36%;
+    --richissime-success-light: 152 76% 91%;
+    --richissime-warning: 16 62% 50%;
+    --richissime-warning-light: 28 93% 87%;
+    --richissime-danger: 0 72% 51%;
+    --richissime-danger-light: 0 93% 94%;
+    --richissime-info: 217 91% 60%;
+    --richissime-info-light: 214 95% 93%;
   }
 
   .dark {
