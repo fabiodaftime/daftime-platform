@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import DashboardBocuse from "./pages/DashboardBocuse";
 import DashboardLabarile from "./pages/DashboardLabarile";
+import DashboardRichissime from "./pages/DashboardRichissime";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -71,6 +72,14 @@ const App = () => (
               } 
             />
             <Route 
+              path="/dashboard-richissime/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardRichissime />
+                </ProtectedRoute>
+              } 
+            />
+            <Route
               path="/admin/company/:id" 
               element={
                 <ProtectedRoute requireSuperAdmin>
