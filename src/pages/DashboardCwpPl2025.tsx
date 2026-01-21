@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Pie,
   PieChart,
@@ -135,6 +135,7 @@ function percent(part: number, total: number) {
 
 export default function DashboardCwpPl2025() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const computed = useMemo(() => {
     const salesUsd = [...DATA_USD.sales];
@@ -226,6 +227,19 @@ export default function DashboardCwpPl2025() {
   return (
     <div className="cwp-pl-2025">
       <div className="header cwp-header">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <button
+            type="button"
+            className="currency-badge"
+            onClick={() => navigate("/")}
+            aria-label="Retour à la page d'accueil"
+            title="Retour"
+            style={{ cursor: "pointer" }}
+          >
+            ← Retour
+          </button>
+          <div aria-hidden />
+        </div>
         <h1>
           <span className="cw">CW</span> PARTNERS FZCO
           <span className="currency-badge">USD</span>
