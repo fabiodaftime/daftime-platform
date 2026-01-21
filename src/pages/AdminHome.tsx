@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
-import { Plus, Search, LogOut, Building2, Users, BarChart3 } from 'lucide-react';
+import { Plus, Search, LogOut, Building2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 
@@ -61,6 +61,8 @@ export default function AdminHome() {
           // Different demo data based on layout type
           const demoDataByLayout: Record<string, { revenue: number; budget: number; expenses: number }> = {
             'cw_partners': { revenue: 895000, budget: 855000, expenses: 710000 },
+            // Dedicated P&L package: show representative totals in the admin hub if no monthly_financials exist
+            'cwp_pl_2025': { revenue: 1760000, budget: 0, expenses: 1650000 },
             'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
             'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
             'richissime': { revenue: 1262000, budget: 1180000, expenses: 890000 },
@@ -99,8 +101,6 @@ export default function AdminHome() {
   const filteredCompanies = companies.filter(company =>
     company.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const cwPartnersCompanies = filteredCompanies.filter(c => c.layout_type === 'cw_partners');
 
   return (
     <div className="min-h-screen bg-background">
@@ -172,32 +172,6 @@ export default function AdminHome() {
             )}
           </div>
         </div>
-
-        {/* Accès séparé */}
-        {cwPartnersCompanies.length > 0 && (
-          <section className="mb-8 rounded-lg border bg-card p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Accès séparé</h3>
-                <p className="text-xs text-muted-foreground">
-                  Accès direct au dashboard “CWP P&amp;L 2025 &amp; EBITDA”.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {cwPartnersCompanies.map((c) => (
-                  <Button
-                    key={c.id}
-                    variant="secondary"
-                    onClick={() => navigate(`/dashboard-cwp-pl-2025/${c.id}`)}
-                  >
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    {c.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Companies grid */}
         {loading ? (

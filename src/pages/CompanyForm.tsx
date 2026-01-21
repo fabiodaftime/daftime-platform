@@ -14,6 +14,7 @@ type DashboardLayout = Database['public']['Enums']['dashboard_layout'];
 
 const LAYOUT_OPTIONS: { value: DashboardLayout; label: string }[] = [
   { value: 'cw_partners', label: 'CW Partners' },
+  { value: 'cwp_pl_2025', label: 'CWP P&L 2025 (accès séparé)' },
   { value: 'bocuse', label: 'Bocuse' },
   { value: 'lle_education', label: 'LLE Education' },
   { value: 'default', label: 'Default' },
