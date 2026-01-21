@@ -9,6 +9,8 @@ import {
   Legend,
 } from "recharts";
 
+import "./DashboardCwpPl2025.css";
+
 type PnlRow = {
   label: string;
   values: number[]; // 12 months
@@ -185,288 +187,205 @@ export default function DashboardCwpPl2025() {
     };
   }, []);
 
+  // Match the original HTML palette ordering
   const chartColors = [
-    "hsl(var(--primary))",
-    "hsl(var(--muted-foreground))",
-    "hsl(var(--secondary))",
-    "hsl(var(--accent))",
-    "hsl(var(--border))",
-    "hsl(var(--ring))",
-    "hsl(var(--foreground))",
+    "hsl(var(--cwp-gold))",
+    "hsl(42 30% 42%)" /* #8b7a4a approx */,
+    "hsl(var(--cwp-muted))",
+    "hsl(210 14% 42%)" /* #5a6a7a approx */,
+    "hsl(39 38% 73%)" /* #d4c4a0 approx */,
+    "hsl(210 18% 35%)" /* #4a5a6a approx */,
+    "hsl(var(--cwp-muted-2))",
   ];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="mx-auto w-full max-w-7xl px-6 pt-8">
-        <div className="rounded-2xl border bg-card/40 p-6 text-center backdrop-blur">
-          <h1 className="text-balance text-2xl font-semibold tracking-widest text-foreground md:text-3xl">
-            <span className="text-primary">CW</span> PARTNERS FZCO
-            <span className="ml-3 inline-flex items-center rounded-full border bg-muted px-3 py-1 text-xs font-semibold text-foreground">
-              USD
-            </span>
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Profit &amp; Loss Dashboard — Full Year 2025
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            FX Rate: 1 USD = {FX} AED • Company ID: {id}
-          </p>
+    <div className="cwp-pl-2025">
+      <div className="header cwp-header">
+        <h1>
+          <span className="cw">CW</span> PARTNERS FZCO
+          <span className="currency-badge">USD</span>
+        </h1>
+        <p>Profit &amp; Loss Dashboard — Full Year 2025</p>
+        <div className="fx-note">FX Rate: 1 USD = {FX} AED</div>
+      </div>
+
+      <div className="kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-label">Net Revenue</div>
+          <div className="kpi-value">{formatShortUsd(computed.fyNetRevenue)}</div>
+          <div className="kpi-sub">After disbursements</div>
         </div>
-      </header>
 
-      <section className="mx-auto w-full max-w-7xl px-6 pt-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border bg-card/40 p-5">
-            <div className="text-xs font-medium tracking-widest text-muted-foreground">
-              NET REVENUE
-            </div>
-            <div className="mt-2 text-3xl font-semibold">
-              {formatShortUsd(computed.fyNetRevenue)}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              After disbursements
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-card/40 p-5">
-            <div className="text-xs font-medium tracking-widest text-muted-foreground">
-              OPERATING EXPENSES
-            </div>
-            <div className="mt-2 text-3xl font-semibold">
-              {formatShortUsd(computed.fyOpex)}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {percent(computed.fyOpex, computed.fyNetRevenue)} of Net Revenue
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-card/40 p-5">
-            <div className="text-xs font-medium tracking-widest text-muted-foreground">
-              EBITDA (STATUTORY)
-            </div>
-            <div className="mt-2 text-3xl font-semibold">
-              {formatShortUsd(computed.fyEbitda)}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {percent(computed.fyEbitda, computed.fyNetRevenue)} margin
-            </div>
-          </div>
-
-          <div className="rounded-2xl border bg-card/40 p-5 ring-1 ring-primary/20">
-            <div className="text-xs font-medium tracking-widest text-muted-foreground">
-              ADJUSTED EBITDA
-            </div>
-            <div className="mt-2 text-3xl font-semibold text-primary">
-              {formatShortUsd(computed.adjustedEbitda)}
-            </div>
-            <div className="mt-1 text-sm text-muted-foreground">
-              {percent(computed.adjustedEbitda, computed.fyNetRevenue)} margin
-            </div>
+        <div className="kpi-card">
+          <div className="kpi-label">Operating Expenses</div>
+          <div className="kpi-value">{formatShortUsd(computed.fyOpex)}</div>
+          <div className="kpi-sub">
+            {percent(computed.fyOpex, computed.fyNetRevenue)} of Net Revenue
           </div>
         </div>
-      </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 pt-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border bg-card/40 p-6 lg:col-span-2">
-            <h2 className="text-base font-semibold">EBITDA Adjustments Explanation</h2>
+        <div className="kpi-card">
+          <div className="kpi-label">EBITDA (Statutory)</div>
+          <div className="kpi-value">{formatShortUsd(computed.fyEbitda)}</div>
+          <div className="kpi-sub">
+            {percent(computed.fyEbitda, computed.fyNetRevenue)} margin
+          </div>
+        </div>
 
-            <div className="mt-5 space-y-4">
-              {EBITDA_ADJUSTMENTS.map((a) => (
-                <article
-                  key={a.title}
-                  className="rounded-xl border bg-background/20 p-5"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="text-sm font-semibold text-primary">{a.title}</div>
-                    <div className="text-lg font-semibold text-primary">
-                      +{formatUsd(a.amountUsd)}
-                    </div>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    {a.description}
-                  </p>
-                </article>
-              ))}
+        <div className="kpi-card highlight">
+          <div className="kpi-label">Adjusted EBITDA</div>
+          <div className="kpi-value">{formatShortUsd(computed.adjustedEbitda)}</div>
+          <div className="kpi-sub positive">
+            {percent(computed.adjustedEbitda, computed.fyNetRevenue)} margin
+          </div>
+        </div>
+      </div>
+
+      <div className="content-grid">
+        <div className="card">
+          <div className="card-title">EBITDA Adjustments Explanation</div>
+
+          <div className="adjustment-section">
+            {EBITDA_ADJUSTMENTS.map((a) => (
+              <div key={a.title} className="adjustment-item">
+                <div className="adjustment-header">
+                  <div className="adjustment-title">{a.title}</div>
+                  <div className="adjustment-amount">+{formatUsd(a.amountUsd)}</div>
+                </div>
+                <div className="adjustment-description">{a.description}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="ebitda-bridge">
+            <div className="bridge-row">
+              <div className="bridge-label">Statutory EBITDA</div>
+              <div className="bridge-value">
+                {formatUsd(computed.fyEbitda)}
+                <span className="bridge-pct">
+                  {percent(computed.fyEbitda, computed.fyNetRevenue)}
+                </span>
+              </div>
             </div>
 
-            <div className="mt-6 rounded-xl border bg-primary/5 p-5">
-              <div className="space-y-3">
-                <div className="flex items-baseline justify-between border-b border-border/60 pb-3">
-                  <div className="text-sm font-semibold">Statutory EBITDA</div>
-                  <div className="text-sm font-semibold">
-                    {formatUsd(computed.fyEbitda)}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {percent(computed.fyEbitda, computed.fyNetRevenue)}
-                    </span>
-                  </div>
-                </div>
-                {EBITDA_ADJUSTMENTS.map((a) => (
-                  <div
-                    key={a.title}
-                    className="flex items-baseline justify-between"
-                  >
-                    <div className="text-sm text-muted-foreground">(+) {a.title}</div>
-                    <div className="text-sm font-semibold text-primary">
-                      +{formatUsd(a.amountUsd)}
-                    </div>
-                  </div>
-                ))}
-                <div className="mt-3 flex items-baseline justify-between border-t border-border/60 pt-4">
-                  <div className="text-sm font-semibold">Adjusted EBITDA</div>
-                  <div className="text-base font-semibold text-primary">
-                    {formatUsd(computed.adjustedEbitda)}
-                    <span className="ml-2 text-xs text-primary/80">
-                      {percent(computed.adjustedEbitda, computed.fyNetRevenue)}
-                    </span>
-                  </div>
-                </div>
+            {EBITDA_ADJUSTMENTS.map((a) => (
+              <div key={a.title} className="bridge-row">
+                <div className="bridge-label">(+) {a.title}</div>
+                <div className="bridge-value add">+{formatUsd(a.amountUsd)}</div>
+              </div>
+            ))}
+
+            <div className="bridge-row">
+              <div className="bridge-label">Adjusted EBITDA</div>
+              <div className="bridge-value">
+                {formatUsd(computed.adjustedEbitda)}
+                <span className="bridge-pct" style={{ color: "hsl(var(--cwp-gold))" }}>
+                  {percent(computed.adjustedEbitda, computed.fyNetRevenue)}
+                </span>
               </div>
             </div>
           </div>
-
-          <div className="rounded-2xl border bg-card/40 p-6">
-            <h2 className="text-base font-semibold">Operating Expenses Breakdown</h2>
-            <div className="mt-4 h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Tooltip
-                    formatter={(value: number, name: string) => [
-                      `${formatShortUsd(value)} (${percent(
-                        value,
-                        computed.fyOpex,
-                      )})`,
-                      name,
-                    ]}
-                  />
-                  <Legend
-                    verticalAlign="middle"
-                    align="right"
-                    layout="vertical"
-                    wrapperStyle={{ fontSize: 12 }}
-                  />
-                  <Pie
-                    data={computed.opexTotals}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius="55%"
-                    outerRadius="80%"
-                    paddingAngle={2}
-                    stroke="hsl(var(--background))"
-                    strokeWidth={1}
-                  >
-                    {computed.opexTotals.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={chartColors[i % chartColors.length]}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Donut en USD (somme annuelle par catégorie)
-            </p>
-          </div>
         </div>
-      </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 pb-12 pt-6">
-        <div className="rounded-2xl border bg-card/40 p-6">
-          <h2 className="text-base font-semibold">
-            Detailed P&amp;L — Monthly Breakdown (USD)
-          </h2>
-
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="bg-muted/40 px-3 py-3 text-left text-xs font-semibold tracking-widest text-primary">
-                    ACCOUNT
-                  </th>
-                  {MONTHS.map((m) => (
-                    <th
-                      key={m}
-                      className="bg-muted/40 px-3 py-3 text-right text-xs font-semibold tracking-widest text-primary"
-                    >
-                      {m.toUpperCase()}
-                    </th>
+        <div className="card">
+          <div className="card-title">Operating Expenses Breakdown</div>
+          <div className="chart-container" aria-label="Operating expenses breakdown">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip
+                  formatter={(value: number, name: string) => [
+                    `${formatShortUsd(value)} (${percent(value, computed.fyOpex)})`,
+                    name,
+                  ]}
+                  contentStyle={{
+                    background: "rgba(0,0,0,0.35)",
+                    border: "1px solid rgba(201,169,98,0.25)",
+                    borderRadius: 12,
+                    color: "#e8eef5",
+                  }}
+                />
+                <Legend
+                  verticalAlign="middle"
+                  align="right"
+                  layout="vertical"
+                  wrapperStyle={{ fontSize: 11, color: "#a0b0c8" }}
+                />
+                <Pie
+                  data={computed.opexTotals}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius="55%"
+                  outerRadius="80%"
+                  paddingAngle={1}
+                  stroke="rgba(0,0,0,0)"
+                >
+                  {computed.opexTotals.map((_, i) => (
+                    <Cell key={i} fill={chartColors[i % chartColors.length]} />
                   ))}
-                  <th className="bg-muted/40 px-3 py-3 text-right text-xs font-semibold tracking-widest text-primary">
-                    FY 2025
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {computed.rows.map((row) => {
-                  const isSection = row.variant === "section";
-                  const isTotal = row.variant === "total";
-                  const isEbitda = row.variant === "ebitda";
-                  const isNet = row.variant === "net";
-
-                  const baseRowClass = "border-b border-border/40";
-                  const rowClass = isSection
-                    ? ""
-                    : isEbitda
-                      ? "bg-primary/10"
-                      : isTotal
-                        ? "bg-muted/30"
-                        : isNet
-                          ? "bg-muted/50"
-                          : "";
-
-                  return (
-                    <tr
-                      key={row.label}
-                      className={[baseRowClass, rowClass].filter(Boolean).join(" ")}
-                    >
-                      <td
-                        className={
-                          isSection
-                            ? "px-3 pt-6 text-xs font-semibold tracking-widest text-primary"
-                            : isEbitda
-                              ? "px-3 py-2 font-semibold text-primary"
-                              : isTotal || isNet
-                                ? "px-3 py-2 font-semibold"
-                                : "px-3 py-2 text-muted-foreground"
-                        }
-                      >
-                        {row.label}
-                      </td>
-
-                      {isSection ? (
-                        <>
-                          {Array.from({ length: 12 }).map((_, i) => (
-                            <td key={i} className="px-3 pt-6 text-right text-xs" />
-                          ))}
-                          <td className="px-3 pt-6 text-right text-xs" />
-                        </>
-                      ) : (
-                        <>
-                          {row.values.map((v, i) => (
-                            <td key={i} className="px-3 py-2 text-right">
-                              {formatUsd(v)}
-                            </td>
-                          ))}
-                          <td className="px-3 py-2 text-right font-semibold">
-                            {formatUsd(sum(row.values))}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        <footer className="py-8 text-center text-xs text-muted-foreground">
-          CW Partners FZCO — CFO Reporting — Prepared for Group CFO &amp; Investment
-          Fund Review
-        </footer>
-      </section>
-    </main>
+      <div className="table-section">
+        <div className="table-title">Detailed P&amp;L — Monthly Breakdown (USD)</div>
+        <table className="pl-table" aria-label="Detailed P&L monthly breakdown">
+          <thead>
+            <tr>
+              <th>Account</th>
+              {MONTHS.map((m) => (
+                <th key={m}>{m}</th>
+              ))}
+              <th>FY 2025</th>
+            </tr>
+          </thead>
+          <tbody>
+            {computed.rows.map((row) => {
+              const cls =
+                row.variant === "section"
+                  ? "section-header"
+                  : row.variant === "total"
+                    ? "total-row"
+                    : row.variant === "ebitda"
+                      ? "ebitda-row"
+                      : row.variant === "net"
+                        ? "net-row"
+                        : "";
+
+              return (
+                <tr key={row.label} className={cls}>
+                  <td>{row.label}</td>
+                  {row.variant === "section" ? (
+                    <>
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <td key={i} />
+                      ))}
+                      <td />
+                    </>
+                  ) : (
+                    <>
+                      {row.values.map((v, i) => (
+                        <td key={i}>{formatUsd(v)}</td>
+                      ))}
+                      <td>{formatUsd(sum(row.values))}</td>
+                    </>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="footer cwp-footer">
+        CW Partners FZCO — CFO Reporting — Prepared for Group CFO &amp; Investment
+        Fund Review
+        <div style={{ marginTop: 6, opacity: 0.7 }}>
+          (Accès séparé) URL: /dashboard-cwp-pl-2025/{id}
+        </div>
+      </div>
+    </div>
   );
 }
