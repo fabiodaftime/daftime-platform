@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Eye, Settings } from 'lucide-react';
+import { Eye, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CompanyCardProps {
@@ -17,29 +17,15 @@ interface CompanyCardProps {
 export function CompanyCard({
   id,
   name,
-  logoUrl,
   layoutType,
-  currency,
 }: CompanyCardProps) {
   const navigate = useNavigate();
 
   return (
     <Card className="group bg-card hover:shadow-lg transition-all duration-300 border border-border hover:border-accent/50 overflow-hidden">
       <CardContent className="p-6">
-        {/* Header */}
-        <div className="flex items-start gap-4 mb-6">
-          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-            {logoUrl ? (
-              <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <Building2 className="w-7 h-7 text-primary" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg text-foreground truncate">{name}</h3>
-            <p className="text-sm text-muted-foreground capitalize">{layoutType.replace('_', ' ')}</p>
-          </div>
-        </div>
+        {/* Title */}
+        <h3 className="font-semibold text-lg text-foreground truncate mb-4">{name}</h3>
 
         {/* Actions */}
         <div className="flex flex-col gap-2">
