@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, TrendingUp, TrendingDown, Eye, Settings } from 'lucide-react';
+import { Building2, TrendingUp, TrendingDown, Eye, Settings, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CompanyCardProps {
@@ -92,28 +92,40 @@ export function CompanyCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
-          <Button 
-            className="flex-1" 
-            onClick={() => {
-              let route = `/dashboard/${id}`;
-              if (layoutType === 'bocuse') route = `/dashboard-bocuse/${id}`;
-              if (layoutType === 'labarile') route = `/dashboard-labarile/${id}`;
-              if (layoutType === 'richissime') route = `/dashboard-richissime/${id}`;
-              console.log('[CompanyCard] Navigating:', { id, layoutType, route });
-              navigate(route);
-            }}
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Voir Dashboard
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => navigate(`/admin/company/${id}`)}
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Button 
+              className="flex-1" 
+              onClick={() => {
+                let route = `/dashboard/${id}`;
+                if (layoutType === 'bocuse') route = `/dashboard-bocuse/${id}`;
+                if (layoutType === 'labarile') route = `/dashboard-labarile/${id}`;
+                if (layoutType === 'richissime') route = `/dashboard-richissime/${id}`;
+                console.log('[CompanyCard] Navigating:', { id, layoutType, route });
+                navigate(route);
+              }}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Voir Dashboard
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => navigate(`/admin/company/${id}`)}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {layoutType === 'cw_partners' && (
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/dashboard-cwp-pl-2025/${id}`)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              CWP P&amp;L 2025 &amp; EBITDA
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
