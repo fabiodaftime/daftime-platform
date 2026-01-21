@@ -252,6 +252,7 @@ export type Database = {
         | "default"
         | "labarile"
         | "richissime"
+        | "cwp_pl_2025"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -387,6 +388,7 @@ export const Constants = {
         "default",
         "labarile",
         "richissime",
+        "cwp_pl_2025",
       ],
     },
   },
