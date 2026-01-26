@@ -38,6 +38,7 @@ export function CompanyCard({
                 if (layoutType === 'labarile') route = `/dashboard-labarile/${id}`;
                 if (layoutType === 'richissime') route = `/dashboard-richissime/${id}`;
                 if (layoutType === 'cwp_pl_2025') route = `/dashboard-cwp-pl-2025/${id}`;
+                if (layoutType === 'nowmade') route = `/dashboard-nowmade/${id}`;
                 console.log('[CompanyCard] Navigating:', { id, layoutType, route });
                 navigate(route);
               }}

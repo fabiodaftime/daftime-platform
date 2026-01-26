@@ -66,6 +66,7 @@ export default function AdminHome() {
             'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
             'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
             'richissime': { revenue: 1262000, budget: 1180000, expenses: 890000 },
+            'nowmade': { revenue: 1183137, budget: 0, expenses: 788978 },
             'default': { revenue: 750000 + index * 100000, budget: 720000 + index * 95000, expenses: 600000 + index * 80000 },
           };
           
