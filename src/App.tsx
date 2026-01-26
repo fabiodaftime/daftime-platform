@@ -15,6 +15,7 @@ import DashboardBocuse from "./pages/DashboardBocuse";
 import DashboardLabarile from "./pages/DashboardLabarile";
 import DashboardRichissime from "./pages/DashboardRichissime";
 import DashboardCwpPl2025 from "./pages/DashboardCwpPl2025";
+import DashboardNowmade from "./pages/DashboardNowmade";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -85,6 +86,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardCwpPl2025 />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-nowmade/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardNowmade />
                 </ProtectedRoute>
               } 
             />
