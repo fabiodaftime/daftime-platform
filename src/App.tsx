@@ -16,6 +16,7 @@ import DashboardLabarile from "./pages/DashboardLabarile";
 import DashboardRichissime from "./pages/DashboardRichissime";
 import DashboardCwpPl2025 from "./pages/DashboardCwpPl2025";
 import DashboardNowmade from "./pages/DashboardNowmade";
+import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -94,6 +95,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardNowmade />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-prime-circle/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardPrimeCircle />
                 </ProtectedRoute>
               } 
             />

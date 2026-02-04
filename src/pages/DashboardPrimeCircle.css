@@ -1,0 +1,541 @@
+/* Prime Circle Dashboard Styles */
+.primecircle-dashboard {
+  --primary-blue: #1E56A0;
+  --primary-blue-dark: #164075;
+  --accent-green: #17B169;
+  --accent-green-dark: #129456;
+  --bg-primary: #F4F7FA;
+  --bg-white: #FFFFFF;
+  --text-dark: #0F1419;
+  --text-secondary: #536471;
+  --text-muted: #8899A6;
+  --border-color: #CFD9DE;
+  --border-sharp: #B8C5CC;
+  --orange: #F59E0B;
+  --red: #DC2626;
+  --purple: #7C3AED;
+
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-dark);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.primecircle-dashboard .pc-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header */
+.primecircle-dashboard .pc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background: var(--bg-white);
+  padding: 20px 28px;
+  border: 2px solid var(--border-sharp);
+  border-radius: 8px;
+}
+
+.primecircle-dashboard .pc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.primecircle-dashboard .pc-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.primecircle-dashboard .pc-logo-main {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: #1E3A5F;
+  letter-spacing: 1px;
+}
+
+.primecircle-dashboard .pc-logo-main .italic {
+  font-style: italic;
+}
+
+.primecircle-dashboard .pc-logo-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #C9A227;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-left: 2px;
+}
+
+.primecircle-dashboard .pc-divider {
+  width: 2px;
+  height: 32px;
+  background: var(--border-color);
+}
+
+.primecircle-dashboard .pc-header-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: -0.3px;
+}
+
+.primecircle-dashboard .pc-header-title .subtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.primecircle-dashboard .pc-period-badge {
+  background: var(--primary-blue);
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 14px;
+  color: white;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* Section Title */
+.primecircle-dashboard .pc-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+/* KPI Cards */
+.primecircle-dashboard .pc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-kpi-card {
+  background: var(--bg-white);
+  border-radius: 6px;
+  padding: 20px;
+  border: 2px solid var(--border-sharp);
+  position: relative;
+}
+
+.primecircle-dashboard .pc-kpi-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+}
+
+.primecircle-dashboard .pc-kpi-card.blue::after { background: var(--primary-blue); }
+.primecircle-dashboard .pc-kpi-card.green::after { background: var(--accent-green); }
+.primecircle-dashboard .pc-kpi-card.orange::after { background: var(--orange); }
+.primecircle-dashboard .pc-kpi-card.purple::after { background: var(--purple); }
+
+.primecircle-dashboard .pc-kpi-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.primecircle-dashboard .pc-kpi-value {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.primecircle-dashboard .pc-kpi-card.blue .pc-kpi-value { color: var(--primary-blue); }
+.primecircle-dashboard .pc-kpi-card.green .pc-kpi-value { color: var(--accent-green); }
+.primecircle-dashboard .pc-kpi-card.orange .pc-kpi-value { color: var(--orange); }
+.primecircle-dashboard .pc-kpi-card.purple .pc-kpi-value { color: var(--purple); }
+
+.primecircle-dashboard .pc-kpi-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Expenses Section */
+.primecircle-dashboard .pc-expenses-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-expenses-card {
+  background: var(--bg-white);
+  border-radius: 6px;
+  padding: 24px;
+  border: 2px solid var(--border-sharp);
+}
+
+.primecircle-dashboard .pc-expenses-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--bg-primary);
+}
+
+.primecircle-dashboard .pc-expense-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bg-primary);
+}
+
+.primecircle-dashboard .pc-expense-row:last-child {
+  border-bottom: none;
+}
+
+.primecircle-dashboard .pc-expense-row.total {
+  border-top: 2px solid var(--border-sharp);
+  margin-top: 8px;
+  padding-top: 16px;
+  font-weight: 700;
+}
+
+.primecircle-dashboard .pc-expense-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+
+.primecircle-dashboard .pc-expense-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: var(--bg-primary);
+}
+
+.primecircle-dashboard .pc-expense-amount {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.primecircle-dashboard .pc-expense-amount.negative { color: var(--red); }
+.primecircle-dashboard .pc-expense-amount.positive { color: var(--accent-green); }
+
+/* P&L Summary */
+.primecircle-dashboard .pc-pnl-card {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+}
+
+.primecircle-dashboard .pc-pnl-card h3 {
+  color: rgba(255,255,255,0.8);
+  border-bottom-color: rgba(255,255,255,0.15);
+}
+
+.primecircle-dashboard .pc-pnl-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.primecircle-dashboard .pc-pnl-row.highlight {
+  background: rgba(255,255,255,0.1);
+  margin: 8px -24px;
+  padding: 14px 24px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.primecircle-dashboard .pc-pnl-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+/* Charts Grid */
+.primecircle-dashboard .pc-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-chart-card {
+  background: var(--bg-white);
+  border-radius: 6px;
+  padding: 24px;
+  border: 2px solid var(--border-sharp);
+}
+
+.primecircle-dashboard .pc-chart-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-dark);
+}
+
+/* Status Summary */
+.primecircle-dashboard .pc-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-status-card {
+  background: var(--bg-white);
+  border-radius: 6px;
+  padding: 24px;
+  border: 2px solid var(--border-sharp);
+}
+
+.primecircle-dashboard .pc-status-card h3 {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.primecircle-dashboard .pc-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bg-primary);
+}
+
+.primecircle-dashboard .pc-status-item:last-child {
+  border-bottom: none;
+}
+
+.primecircle-dashboard .pc-status-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.primecircle-dashboard .pc-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.primecircle-dashboard .pc-status-dot.completed { background: var(--accent-green); }
+.primecircle-dashboard .pc-status-dot.progress { background: var(--orange); }
+
+.primecircle-dashboard .pc-status-values {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+}
+
+.primecircle-dashboard .pc-status-count {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.primecircle-dashboard .pc-status-amount {
+  color: var(--accent-green);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+
+/* Table */
+.primecircle-dashboard .pc-table-card {
+  background: var(--bg-white);
+  border-radius: 6px;
+  padding: 24px;
+  border: 2px solid var(--border-sharp);
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.primecircle-dashboard .pc-table-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.primecircle-dashboard .pc-table-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.primecircle-dashboard .pc-filter-btn {
+  background: var(--bg-white);
+  border: 2px solid var(--border-sharp);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'IBM Plex Sans', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.primecircle-dashboard .pc-filter-btn:hover {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.primecircle-dashboard .pc-filter-btn.active {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: white;
+}
+
+.primecircle-dashboard .pc-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.primecircle-dashboard .pc-data-table th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--border-sharp);
+  background: var(--bg-primary);
+}
+
+.primecircle-dashboard .pc-data-table td {
+  padding: 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--bg-primary);
+  font-weight: 500;
+}
+
+.primecircle-dashboard .pc-data-table tbody tr:hover {
+  background: rgba(30, 86, 160, 0.03);
+}
+
+.primecircle-dashboard .pc-customer-name {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.primecircle-dashboard .pc-service-tag {
+  background: var(--bg-primary);
+  color: var(--primary-blue);
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--border-color);
+}
+
+.primecircle-dashboard .pc-status-badge {
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.primecircle-dashboard .pc-status-badge.completed {
+  background: rgba(23, 177, 105, 0.12);
+  color: var(--accent-green);
+  border: 1px solid rgba(23, 177, 105, 0.3);
+}
+
+.primecircle-dashboard .pc-status-badge.progress {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--orange);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.primecircle-dashboard .pc-amount {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.primecircle-dashboard .pc-amount.turnover { color: var(--primary-blue); }
+.primecircle-dashboard .pc-amount.margin { color: var(--accent-green); }
+
+.primecircle-dashboard .pc-margin-rate {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Footer */
+.primecircle-dashboard .pc-footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  border-top: 2px solid var(--border-color);
+  margin-top: 8px;
+}
+
+/* Back button */
+.primecircle-dashboard .pc-back-btn {
+  margin-bottom: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .primecircle-dashboard .pc-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .primecircle-dashboard .pc-charts-grid,
+  .primecircle-dashboard .pc-expenses-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .primecircle-dashboard .pc-container { padding: 16px; }
+  .primecircle-dashboard .pc-kpi-grid { grid-template-columns: 1fr; }
+  .primecircle-dashboard .pc-header { flex-direction: column; gap: 16px; }
+  .primecircle-dashboard .pc-header-left { flex-direction: column; }
+  .primecircle-dashboard .pc-divider { display: none; }
+  .primecircle-dashboard .pc-status-grid { grid-template-columns: 1fr; }
+}
