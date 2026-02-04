@@ -39,6 +39,7 @@ export function CompanyCard({
                 if (layoutType === 'richissime') route = `/dashboard-richissime/${id}`;
                 if (layoutType === 'cwp_pl_2025') route = `/dashboard-cwp-pl-2025/${id}`;
                 if (layoutType === 'nowmade') route = `/dashboard-nowmade/${id}`;
+                if (layoutType === 'prime_circle') route = `/dashboard-prime-circle/${id}`;
                 console.log('[CompanyCard] Navigating:', { id, layoutType, route });
                 navigate(route);
               }}
