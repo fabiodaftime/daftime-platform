@@ -8,6 +8,7 @@ import { CompanyCard } from '@/components/admin/CompanyCard';
 import { Plus, Search, LogOut, Building2, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
+import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 
 interface CompanyWithKPIs {
   id: string;
@@ -108,9 +109,13 @@ export default function AdminHome() {
       {/* Header */}
       <header className="bg-primary text-primary-foreground py-4 px-6 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <h1 className="text-xl font-bold">Daftime Advisory</h1>
+          <div className="flex items-center gap-4">
+            <img 
+              src={daftimeLogoWhite} 
+              alt="Daftime Advisory" 
+              className="h-8 w-auto"
+            />
+            <div className="border-l border-primary-foreground/30 pl-4">
               <p className="text-sm text-primary-foreground/70">Administration</p>
             </div>
           </div>
