@@ -116,7 +116,7 @@ export default function AdminHome() {
               className="h-8 w-auto"
             />
             <div className="border-l border-primary-foreground/30 pl-4">
-              <p className="text-sm text-primary-foreground/70">Administration</p>
+              <p className="text-sm text-primary-foreground/70">Advisory</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
