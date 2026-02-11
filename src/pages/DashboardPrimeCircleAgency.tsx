@@ -7,6 +7,7 @@ import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClie
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCARisksTab } from '@/components/dashboard/primecircle-agency/PCARisksTab';
 import { C } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
+import pcaLogo from '@/assets/prime-circle-agency-logo.png';
 import './DashboardPrimeCircleAgency.css';
 
 const tabs = [
@@ -34,13 +35,9 @@ export default function DashboardPrimeCircleAgency() {
           </div>
           <div className="pca-header-top">
             <div className="pca-logo-area">
-              <div className="pca-logo-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="white" strokeWidth="2" fill="none" /><circle cx="10" cy="10" r="3" fill="white" /></svg>
-              </div>
+              <img src={pcaLogo} alt="Prime Circle Agency" style={{ height: 50 }} />
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="pca-title-main">Prime Circle</span>
-                  <span className="pca-title-main pca-title-accent">Agency</span>
                   <span className="pca-badge" style={{ background: C.accentSoft, color: C.accent }}>JANVIER 2026</span>
                 </div>
                 <p className="pca-subtitle">Monthly Financial & Operational Dashboard</p>
