@@ -1,0 +1,65 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DigitOverviewTab } from '@/components/dashboard/digit/DigitOverviewTab';
+import { DigitRevenueTab } from '@/components/dashboard/digit/DigitRevenueTab';
+import { DigitCostsTab } from '@/components/dashboard/digit/DigitCostsTab';
+import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
+import './DashboardDigit.css';
+
+const tabs = [
+  { id: "overview", label: "📊 Vue d'ensemble" },
+  { id: "revenue", label: "💰 Analyse CA" },
+  { id: "costs", label: "📉 Analyse Charges" },
+  { id: "comments", label: "💬 Commentaires" },
+];
+
+export default function DashboardDigit() {
+  const [tab, setTab] = useState("overview");
+  const navigate = useNavigate();
+
+  return (
+    <div className="digit-dashboard">
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+      <header className="digit-header">
+        <div className="digit-header-inner">
+          <div style={{ marginBottom: 8 }}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} style={{ color: '#6b7280' }}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour
+            </Button>
+          </div>
+          <h1 className="digit-title">Digit - Dashboard Financier</h1>
+          <div className="digit-subtitle">
+            <strong style={{ color: '#D946A8' }}>Janvier 2026</strong> — Analyse Mensuelle CFO
+          </div>
+        </div>
+      </header>
+
+      <div className="digit-tabs">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            className={`digit-tab ${tab === t.id ? 'active' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="digit-tab-content">
+        {tab === "overview" && <DigitOverviewTab />}
+        {tab === "revenue" && <DigitRevenueTab />}
+        {tab === "costs" && <DigitCostsTab />}
+        {tab === "comments" && <DigitCommentsTab />}
+      </div>
+
+      <footer className="digit-footer">
+        <p><strong>Digit</strong> — Dashboard Financier CFO | Janvier 2026 | Confidentiel</p>
+      </footer>
+    </div>
+  );
+}
