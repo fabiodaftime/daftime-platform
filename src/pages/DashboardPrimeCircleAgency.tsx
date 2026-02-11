@@ -13,7 +13,7 @@ const tabs = [
   { id: "overview", label: "Vue d'ensemble", icon: "📊" },
   { id: "clients", label: "Clients", icon: "👥" },
   { id: "media", label: "Media Spend", icon: "📡" },
-  { id: "risks", label: "Risques", icon: "⚠️" },
+  { id: "risks", label: "Risques et Commentaires", icon: "⚠️" },
 ];
 
 export default function DashboardPrimeCircleAgency() {
