@@ -118,7 +118,7 @@ export const waterfallRows = [
   { l: "Setup Cost (agents)", v: -1300, bg: null, b: false },
   { l: "Salary", v: -1200, bg: null, b: false },
   { l: "Advertising", v: -1038, bg: null, b: false },
-  { l: "Chris Referral (10%)", v: -2633, bg: "redSoft", b: false },
+  { l: "Chris Referral (10%)", v: -2633, bg: null, b: false },
   { l: "Master Referral (5%)", v: -66, bg: null, b: false },
   { l: "TOTAL EXPENSES", v: -6237, bg: "redSoft", b: true },
   { l: "", v: null, bg: null, b: false },
