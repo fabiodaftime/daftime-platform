@@ -18,6 +18,7 @@ import DashboardCwpPl2025 from "./pages/DashboardCwpPl2025";
 import DashboardNowmade from "./pages/DashboardNowmade";
 import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
 import DashboardPrimeCircleAgency from "./pages/DashboardPrimeCircleAgency";
+import DashboardDigit from "./pages/DashboardDigit";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -112,6 +113,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardPrimeCircleAgency />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-digit/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardDigit />
                 </ProtectedRoute>
               } 
             />

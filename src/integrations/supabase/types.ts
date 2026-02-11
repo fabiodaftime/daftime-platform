@@ -291,6 +291,7 @@ export type Database = {
         | "nowmade"
         | "prime_circle"
         | "prime_circle_agency"
+        | "digit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -430,6 +431,7 @@ export const Constants = {
         "nowmade",
         "prime_circle",
         "prime_circle_agency",
+        "digit",
       ],
     },
   },
