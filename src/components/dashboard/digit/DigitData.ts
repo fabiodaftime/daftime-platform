@@ -88,7 +88,6 @@ export const fullWaterfall = [
   { label: "Sales Salary", value: -3896, color: "neutral" },
   { label: "Company Margin", value: 48454, color: "accent" },
   { label: "Cost Salary", value: -25366, color: "indigo" },
-  { label: "Profit Net", value: 23088, color: "green" },
 ];
 
 export const PIE_COLORS = [D.accent, D.red, D.orange, D.textMuted];
