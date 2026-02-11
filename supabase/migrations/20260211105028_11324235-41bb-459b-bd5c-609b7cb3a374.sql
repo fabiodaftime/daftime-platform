@@ -1,0 +1,1 @@
+ALTER TABLE public.dashboard_comments ADD COLUMN section text NOT NULL DEFAULT 'general';
