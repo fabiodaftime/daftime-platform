@@ -33,7 +33,7 @@ export default function DashboardDigit() {
           </div>
           <h1 className="digit-title">Digit - Dashboard Financier</h1>
           <div className="digit-subtitle">
-            <strong style={{ color: '#D946A8' }}>Janvier 2026</strong> — Analyse Mensuelle CFO
+            <strong style={{ color: '#D946A8' }}>Janvier 2026</strong>
           </div>
         </div>
       </header>
