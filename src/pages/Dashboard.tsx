@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -49,6 +49,7 @@ const DEMO_CASH_DATA = [
 
 export default function Dashboard() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('executive');
@@ -69,6 +70,23 @@ export default function Dashboard() {
         .single();
 
       if (error) throw error;
+      
+      // Redirect to the correct specialized dashboard if layout_type doesn't match this generic dashboard
+      const layoutRoutes: Record<string, string> = {
+        bocuse: `/dashboard-bocuse/${id}`,
+        labarile: `/dashboard-labarile/${id}`,
+        richissime: `/dashboard-richissime/${id}`,
+        cwp_pl_2025: `/dashboard-cwp-pl-2025/${id}`,
+        nowmade: `/dashboard-nowmade/${id}`,
+        prime_circle: `/dashboard-prime-circle/${id}`,
+        prime_circle_agency: `/dashboard-prime-circle-agency/${id}`,
+        digit: `/dashboard-digit/${id}`,
+      };
+      if (data?.layout_type && layoutRoutes[data.layout_type]) {
+        navigate(layoutRoutes[data.layout_type], { replace: true });
+        return;
+      }
+      
       setCompany(data);
     } catch (error) {
       console.error('Error fetching company:', error);
