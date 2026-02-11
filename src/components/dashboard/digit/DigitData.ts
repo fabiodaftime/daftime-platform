@@ -86,8 +86,8 @@ export const fullWaterfall = [
   { label: "Provider Costs", value: -40958, color: "red" },
   { label: "Blink Com", value: -14112, color: "orange" },
   { label: "Sales Salary", value: -3896, color: "neutral" },
-  { label: "Company Margin", value: 48454, color: "accent" },
   { label: "Cost Salary", value: -25366, color: "indigo" },
+  { label: "Company Margin", value: 48454, color: "accent" },
 ];
 
 export const PIE_COLORS = [D.accent, D.red, D.orange, D.textMuted];
