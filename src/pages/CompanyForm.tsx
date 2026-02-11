@@ -18,6 +18,7 @@ const LAYOUT_OPTIONS: { value: DashboardLayout; label: string }[] = [
   { value: 'bocuse', label: 'Bocuse' },
   { value: 'nowmade', label: 'Nowmade (Investor Dashboard)' },
   { value: 'prime_circle', label: 'Prime Circle Structuring' },
+  { value: 'prime_circle_agency', label: 'Prime Circle Agency' },
   { value: 'lle_education', label: 'LLE Education' },
   { value: 'default', label: 'Default' },
 ];

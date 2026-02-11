@@ -17,6 +17,7 @@ import DashboardRichissime from "./pages/DashboardRichissime";
 import DashboardCwpPl2025 from "./pages/DashboardCwpPl2025";
 import DashboardNowmade from "./pages/DashboardNowmade";
 import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
+import DashboardPrimeCircleAgency from "./pages/DashboardPrimeCircleAgency";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -106,8 +107,16 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/dashboard-prime-circle-agency/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardPrimeCircleAgency />
+                </ProtectedRoute>
+              } 
+            />
             <Route
-              path="/admin/company/:id" 
+              path="/admin/company/:id"
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <CompanyForm />
