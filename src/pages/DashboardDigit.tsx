@@ -9,6 +9,7 @@ import { DigitGlobalTab } from '@/components/dashboard/digit/DigitGlobalTab';
 import { DigitSpyTab } from '@/components/dashboard/digit/DigitSpyTab';
 import { DigitCommentTrustTab } from '@/components/dashboard/digit/DigitCommentTrustTab';
 import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
+import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import './DashboardDigit.css';
 
 const tabs = [
@@ -31,11 +32,12 @@ export default function DashboardDigit() {
 
       <header className="digit-header">
         <div className="digit-header-inner">
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Button variant="ghost" size="sm" onClick={() => navigate('/')} style={{ color: '#6b7280' }}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
+            <ConsolidatedAccessButton />
           </div>
           <h1 className="digit-title">Digit - Dashboard Financier</h1>
           <div className="digit-subtitle">

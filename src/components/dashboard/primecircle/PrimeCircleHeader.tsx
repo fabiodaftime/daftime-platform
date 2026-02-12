@@ -1,21 +1,25 @@
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 
 export function PrimeCircleHeader() {
   const navigate = useNavigate();
 
   return (
     <>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={() => navigate('/')}
-        className="pc-back-btn"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Retour
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate('/')}
+          className="pc-back-btn"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Retour
+        </Button>
+        <ConsolidatedAccessButton />
+      </div>
 
       <header className="pc-header">
         <div className="pc-header-left">
