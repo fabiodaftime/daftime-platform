@@ -42,6 +42,7 @@ export function CompanyCard({
                 if (layoutType === 'prime_circle') route = `/dashboard-prime-circle/${id}`;
                 if (layoutType === 'prime_circle_agency') route = `/dashboard-prime-circle-agency/${id}`;
                 if (layoutType === 'digit') route = `/dashboard-digit/${id}`;
+                if (layoutType === 'prime_circle_group') route = `/dashboard-pc-group/${id}`;
                 console.log('[CompanyCard] Navigating:', { id, layoutType, route });
                 navigate(route);
               }}
