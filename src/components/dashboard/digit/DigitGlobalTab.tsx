@@ -19,7 +19,7 @@ export function DigitGlobalTab() {
 
   return (
     <div>
-      <h2 className="digit-section-title">Global - Main Product (Setup + Ad Account)</h2>
+      <h2 className="digit-section-title">Digit Solutions - Setup + Ad Account</h2>
       {renderKPIs(globalKPIs)}
 
       <h2 className="digit-section-title">Coûts Variables</h2>

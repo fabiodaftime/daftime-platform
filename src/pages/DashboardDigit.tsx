@@ -15,7 +15,7 @@ const tabs = [
   { id: "overview", label: "📊 Vue d'ensemble" },
   { id: "revenue", label: "💰 Analyse CA" },
   { id: "costs", label: "📉 Analyse Charges" },
-  { id: "global", label: "🌐 Global" },
+  { id: "global", label: "🌐 Digit Solutions" },
   { id: "spy", label: "🔍 SPY" },
   { id: "comment-trust", label: "💬 Comment/Trust" },
   { id: "comments", label: "💬 Commentaires" },
