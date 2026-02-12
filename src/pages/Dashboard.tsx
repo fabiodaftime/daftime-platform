@@ -81,6 +81,7 @@ export default function Dashboard() {
         prime_circle: `/dashboard-prime-circle/${id}`,
         prime_circle_agency: `/dashboard-prime-circle-agency/${id}`,
         digit: `/dashboard-digit/${id}`,
+        prime_circle_group: `/dashboard-pc-group/${id}`,
       };
       if (data?.layout_type && layoutRoutes[data.layout_type]) {
         navigate(layoutRoutes[data.layout_type], { replace: true });
