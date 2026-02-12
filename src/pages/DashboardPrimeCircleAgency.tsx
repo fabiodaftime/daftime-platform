@@ -8,6 +8,7 @@ import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaT
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
 import { PCARisksTab } from '@/components/dashboard/primecircle-agency/PCARisksTab';
 import { C } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
+import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import pcaLogo from '@/assets/prime-circle-agency-logo.png';
 import './DashboardPrimeCircleAgency.css';
 
@@ -29,11 +30,12 @@ export default function DashboardPrimeCircleAgency() {
 
       <header className="pca-header">
         <div className="pca-header-inner">
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="pca-back-btn">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
+            <ConsolidatedAccessButton />
           </div>
           <div className="pca-header-top">
             <div className="pca-logo-area">
