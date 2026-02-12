@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { DigitOverviewTab } from '@/components/dashboard/digit/DigitOverviewTab';
 import { DigitRevenueTab } from '@/components/dashboard/digit/DigitRevenueTab';
 import { DigitCostsTab } from '@/components/dashboard/digit/DigitCostsTab';
+import { DigitGlobalTab } from '@/components/dashboard/digit/DigitGlobalTab';
+import { DigitSpyTab } from '@/components/dashboard/digit/DigitSpyTab';
+import { DigitCommentTrustTab } from '@/components/dashboard/digit/DigitCommentTrustTab';
 import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
 import './DashboardDigit.css';
 
@@ -12,6 +15,9 @@ const tabs = [
   { id: "overview", label: "📊 Vue d'ensemble" },
   { id: "revenue", label: "💰 Analyse CA" },
   { id: "costs", label: "📉 Analyse Charges" },
+  { id: "global", label: "🌐 Global" },
+  { id: "spy", label: "🔍 SPY" },
+  { id: "comment-trust", label: "💬 Comment/Trust" },
   { id: "comments", label: "💬 Commentaires" },
 ];
 
@@ -54,6 +60,9 @@ export default function DashboardDigit() {
         {tab === "overview" && <DigitOverviewTab />}
         {tab === "revenue" && <DigitRevenueTab />}
         {tab === "costs" && <DigitCostsTab />}
+        {tab === "global" && <DigitGlobalTab />}
+        {tab === "spy" && <DigitSpyTab />}
+        {tab === "comment-trust" && <DigitCommentTrustTab />}
         {tab === "comments" && <DigitCommentsTab />}
       </div>
 
