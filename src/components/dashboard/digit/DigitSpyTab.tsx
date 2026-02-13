@@ -1,4 +1,4 @@
-import { D, spyKPIs, spyCommissions } from './DigitData';
+import { D, spyKPIs, spyVariableCosts, spySynthesis } from './DigitData';
 
 export function DigitSpyTab() {
   const typeColor: Record<string, string> = {
@@ -22,17 +22,11 @@ export function DigitSpyTab() {
       <h2 className="digit-section-title">SPY - Outils d'Analyse Concurrentielle</h2>
       {renderKPIs(spyKPIs)}
 
-      <h2 className="digit-section-title">Détail des Commissions - SPY</h2>
-      {renderKPIs(spyCommissions)}
+      <h2 className="digit-section-title">Coûts Variables</h2>
+      {renderKPIs(spyVariableCosts)}
 
-      <div className="digit-chart-container" style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: D.primary, marginBottom: 16 }}>💡 Analyse SPY</h3>
-        <p style={{ lineHeight: 1.8, color: D.text }}>
-          Les outils SPY génèrent <strong>$16,750 de CA</strong> avec une marge de <strong>19.5%</strong>.
-          Le coût produit élevé (67.2%) reflète les licences des outils d'analyse.
-          Les commissions totales (Blink + Sales) représentent <strong>13.4%</strong> du CA.
-        </p>
-      </div>
+      <h2 className="digit-section-title">Synthèse Financière</h2>
+      {renderKPIs(spySynthesis)}
     </div>
   );
 }

@@ -20,10 +20,14 @@ export const fmtF = (n: number) => "$" + n.toLocaleString();
 
 // Overview
 export const overviewKPIs = [
-  { label: "Company Margin", value: "$46,641", sub: "KPI Principal", type: "primary" },
-  { label: "Chiffre d'Affaires", value: "$134,212", sub: "Total facturé", type: "success" },
-  { label: "Taux de Marge", value: "34.8%", sub: "Margin / CA", type: "accent" },
-  { label: "Nombre de Deals", value: "267", sub: "Transactions", type: "warning" },
+  { label: "CA Total", value: "$134,212", sub: "Chiffre d'affaires", type: "primary" },
+  { label: "Marge", value: "$46,641", sub: "KPI Principal", type: "success" },
+  { label: "Taux de Marge", value: "34.8%", sub: "Marge / CA", type: "accent" },
+  { label: "Nombre de Deals", value: "292", sub: "Total tous produits", type: "warning" },
+  { label: "Setup", value: "233", sub: "80% des deals", type: "warning" },
+  { label: "Ad Account", value: "34", sub: "12% des deals", type: "warning" },
+  { label: "SPY", value: "5", sub: "2% des deals", type: "warning" },
+  { label: "Comment/Trust", value: "20", sub: "7% des deals", type: "warning" },
 ];
 
 export const waterfallOverview = [
@@ -33,7 +37,7 @@ export const waterfallOverview = [
   { label: "Sales Com", value: -3896, color: "accent" },
   { label: "Spy Product", value: -11250, color: "indigo" },
   { label: "Cost Salary", value: -25366, color: "neutral" },
-  { label: "Autres Charges", value: -2616, color: "neutralLight" },
+  { label: "Business Expenses", value: -2616, color: "neutralLight" },
   { label: "Company Margin", value: 46641, color: "green" },
 ];
 
@@ -49,19 +53,24 @@ export const economicSplit = [
 
 export const chargesDetail = [
   { label: "Provider Cost", value: "$29,708", sub: "Coûts fournisseurs produits", color: D.red },
-  { label: "Blink Commission", value: "$14,735", sub: "Global $12,922 + SPY $1,813", color: D.orange },
-  { label: "Sales Commission", value: "$3,896", sub: "Global $3,190 + SPY $425 + CT $281", color: D.accent },
+  { label: "Blink Commission", value: "$16,325", sub: "Global $12,922 + SPY $1,813", color: D.orange },
+  { label: "Commission Sales", value: "$3,896", sub: "Global $3,190 + SPY $425 + CT $281", color: D.accent },
   { label: "Spy Cost Product", value: "$11,250", sub: "Licences outils SPY", color: D.indigo },
   { label: "Cost Salary", value: "$25,366", sub: "Salaires fixes équipe", color: D.textSecondary },
-  { label: "Autres Charges", value: "$2,616", sub: "Tools, Refunds, Business Exp, Referral", color: D.textMuted },
+  { label: "Business Expenses", value: "$2,616", sub: "Tools, Refunds, Business Exp, Referral", color: D.textMuted },
 ];
 
 // Revenue
-export const revenueKPIs = [
-  { label: "CA Total", value: "$134,212", sub: "267 deals", type: "primary" },
-  { label: "Ticket Moyen", value: "$503", sub: "CA / Nombre de deals", type: "success" },
-  { label: "Top Produit", value: "$77,409", sub: "Set-up (58% du CA)", type: "accent" },
-  { label: "CA Récurrent", value: "20%", sub: "Ad Account + Spy", type: "warning" },
+export const revenueKPIsRow1 = [
+  { label: "CA Total", value: "$134,212", sub: "292 deals", type: "primary" },
+  { label: "CA Set-up", value: "$77,409", sub: "58% | 233 deals", type: "success" },
+  { label: "CA Ad Account", value: "$27,305", sub: "20% | 34 deals", type: "accent" },
+  { label: "CA SPY", value: "$16,750", sub: "12% | 5 deals", type: "warning" },
+];
+
+export const revenueKPIsRow2 = [
+  { label: "CA Comment/Trust", value: "$2,813", sub: "2% | 20 deals", type: "accent" },
+  { label: "CA Autres Produits", value: "$9,935", sub: "7% (BM, Page, Gmail, etc.)", type: "warning" },
 ];
 
 export const revenueByCategory = [
@@ -84,16 +93,17 @@ export const revenueDistribution = [
 
 // Costs
 export const costsKPIs = [
-  { label: "Provider Costs", value: "$40,958", sub: "30.5% du CA", type: "warning" },
-  { label: "Blink Commission", value: "$14,112", sub: "10.5% du CA", type: "accent" },
-  { label: "Sales Salary", value: "$3,896", sub: "2.9% du CA", type: "success" },
-  { label: "Coûts Variables", value: "$58,966", sub: "Total variables", type: "primary" },
+  { label: "Provider Cost", value: "$29,708", sub: "22.1% du CA", type: "warning" },
+  { label: "Blink Commission", value: "$16,325", sub: "12.2% (incl. refunds $1,591)", type: "accent" },
+  { label: "Commission Sales", value: "$3,896", sub: "2.9% du CA", type: "success" },
+  { label: "Marge", value: "$46,641", sub: "34.8% du CA", type: "primary" },
 ];
 
-export const costsKPIs2 = [
-  { label: "Cost Salary (Fixe)", value: "$25,366", sub: "Salaires mensuels", type: "indigo" },
-  { label: "Coûts Totaux", value: "$84,332", sub: "Variables + Fixes", type: "primary" },
-  { label: "Profit Net Final", value: "$23,088", sub: "17.2% du CA", type: "success" },
+export const blinkDetail = [
+  { label: "To Blink (Global)", value: "$12,922", sub: "Commission Digit Solution", type: "accent" },
+  { label: "To Blink (SPY)", value: "$1,813", sub: "Commission SPY", type: "accent" },
+  { label: "Refunds", value: "$1,591", sub: "Remboursements clients", type: "warning" },
+  { label: "Total Blink", value: "$16,325", sub: "Blink + Refunds", type: "primary" },
 ];
 
 export const fullWaterfall = [
@@ -103,22 +113,27 @@ export const fullWaterfall = [
   { label: "Sales Com", value: -3896, color: "accent" },
   { label: "Spy Product", value: -11250, color: "indigo" },
   { label: "Cost Salary", value: -25366, color: "neutral" },
-  { label: "Autres Charges", value: -2616, color: "neutralLight" },
+  { label: "Business Expenses", value: -2616, color: "neutralLight" },
   { label: "Company Margin", value: 46641, color: "green" },
 ];
 
-// Global Product
+// Global Product (Digit Solution)
 export const globalKPIs = [
-  { label: "Gross Amount", value: "$114,649", sub: "CA Total Global", type: "primary" },
-  { label: "Company Margin", value: "$40,848", sub: "35.6% du CA", type: "success" },
+  { label: "CA", value: "$114,649", sub: "CA Total Digit Solution", type: "primary" },
+  { label: "Marge", value: "$40,848", sub: "35.6% du CA", type: "success" },
   { label: "Total Deals", value: "267", sub: "233 Setup + 34 Ad Account", type: "accent" },
-  { label: "Ticket Moyen", value: "$429", sub: "CA / Deals", type: "warning" },
+  { label: "Ticket Moyen Global", value: "$429", sub: "Moyenne générale", type: "warning" },
+];
+
+export const globalTicketMoyens = [
+  { label: "Ticket Moyen Setup", value: "$332", sub: "233 deals", type: "accent" },
+  { label: "Ticket Moyen Ad Account", value: "$803", sub: "34 deals", type: "accent" },
 ];
 
 export const globalVariableCosts = [
   { label: "Provider Cost", value: "$29,708", sub: "25.9% du CA", type: "warning" },
   { label: "To Blink", value: "$12,922", sub: "11.3% du CA", type: "accent" },
-  { label: "Sales Salary", value: "$3,190", sub: "2.8% du CA", type: "success" },
+  { label: "Commission Sales", value: "$3,190", sub: "2.8% du CA", type: "success" },
 ];
 
 export const globalFixedCosts = [
@@ -129,35 +144,48 @@ export const globalFixedCosts = [
 ];
 
 export const globalSynthesis = [
-  { label: "Total Cost", value: "$70,612", sub: "61.6% du CA", type: "primary" },
-  { label: "Company Margin", value: "$40,848", sub: "35.6% du CA", type: "success" },
+  { label: "CA", value: "$114,649", sub: "Chiffre d'affaires", type: "primary" },
+  { label: "Total Cost", value: "$70,612", sub: "61.6% du CA", type: "warning" },
+  { label: "Marge", value: "$40,848", sub: "35.6% du CA", type: "success" },
 ];
 
 // SPY Product
 export const spyKPIs = [
   { label: "CA SPY", value: "$16,750", sub: "Chiffre d'affaires", type: "primary" },
-  { label: "Margin SPY", value: "$3,262", sub: "19.5% du CA", type: "success" },
-  { label: "Cost Product", value: "$11,250", sub: "67.2% du CA", type: "warning" },
-  { label: "Total Commissions", value: "$2,238", sub: "Blink + Sales", type: "accent" },
+  { label: "Marge SPY", value: "$3,262", sub: "19.5% du CA", type: "success" },
+  { label: "Total Deals", value: "5", sub: "Licences SPY", type: "accent" },
+  { label: "Ticket Moyen", value: "$3,350", sub: "CA / Deals", type: "warning" },
 ];
 
-export const spyCommissions = [
+export const spyVariableCosts = [
+  { label: "Cost Product", value: "$11,250", sub: "67.2% du CA", type: "warning" },
   { label: "COM Blink", value: "$1,812", sub: "10.8% du CA", type: "accent" },
   { label: "COM Sales", value: "$425", sub: "2.5% du CA", type: "success" },
+];
+
+export const spySynthesis = [
+  { label: "CA", value: "$16,750", sub: "Chiffre d'affaires", type: "primary" },
+  { label: "Total Cost", value: "$13,488", sub: "80.5% du CA", type: "warning" },
+  { label: "Marge", value: "$3,262", sub: "19.5% du CA", type: "success" },
 ];
 
 // Comment/Trust Product
 export const commentTrustKPIs = [
   { label: "CA Comment/Trust", value: "$2,813", sub: "Chiffre d'affaires", type: "primary" },
-  { label: "Margin", value: "$2,531", sub: "90.0% du CA", type: "success" },
-  { label: "Cost Product", value: "$0", sub: "Aucun coût produit", type: "warning" },
-  { label: "COM Sales", value: "$281", sub: "10.0% du CA", type: "accent" },
+  { label: "Marge", value: "$2,531", sub: "90.0% du CA", type: "success" },
+  { label: "Total Deals", value: "20", sub: "16 Comment | 4 Trustpilot", type: "accent" },
+  { label: "Ticket Moyen", value: "$141", sub: "CA / Deals", type: "warning" },
 ];
 
-export const marginComparison = [
-  { label: "Marge Comment/Trust", value: "90.0%", sub: "La plus élevée", color: D.green },
-  { label: "Marge SPY", value: "19.5%", sub: "Impactée par coûts", color: D.orange },
-  { label: "Marge Global", value: "35.6%", sub: "Setup + Ad Account", color: D.primary },
+export const commentVariableCosts = [
+  { label: "Cost Product", value: "$0", sub: "Aucun coût produit", type: "warning" },
+  { label: "COM Sales", value: "$281", sub: "10.0% du CA", type: "success" },
+];
+
+export const commentSynthesis = [
+  { label: "CA", value: "$2,813", sub: "Chiffre d'affaires", type: "primary" },
+  { label: "Total Cost", value: "$281", sub: "10.0% du CA", type: "warning" },
+  { label: "Marge", value: "$2,531", sub: "90.0% du CA", type: "success" },
 ];
 
 export const PIE_COLORS = [D.green, D.red, D.orange, D.accent, D.indigo, D.textMuted, "#9ca3af"];
