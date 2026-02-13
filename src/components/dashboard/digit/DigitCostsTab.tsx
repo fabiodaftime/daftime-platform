@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { D, costsKPIs, fullWaterfall, fmt } from './DigitData';
+import { D, costsKPIs, blinkDetail, fullWaterfall, fmt } from './DigitData';
 
 export function DigitCostsTab() {
   const typeColor: Record<string, string> = {
@@ -16,21 +16,28 @@ export function DigitCostsTab() {
     fill: colorMap[w.color],
   }));
 
+  const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
+    <div className="digit-kpi-grid">
+      {items.map((kpi, i) => (
+        <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] || D.primary }}>
+          <div className="digit-metric-label">{kpi.label}</div>
+          <div className="digit-metric-value">{kpi.value}</div>
+          <div className="digit-metric-sub">{kpi.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div>
-      <div className="digit-kpi-grid">
-        {costsKPIs.map((kpi, i) => (
-          <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] }}>
-            <div className="digit-metric-label">{kpi.label}</div>
-            <div className="digit-metric-value">{kpi.value}</div>
-            <div className="digit-metric-sub">{kpi.sub}</div>
-          </div>
-        ))}
-      </div>
+      {renderKPIs(costsKPIs)}
 
-      <h2 className="digit-section-title">Du CA à la Company Margin</h2>
+      <h2 className="digit-section-title">Détail Blink Commission</h2>
+      {renderKPIs(blinkDetail)}
+
+      <h2 className="digit-section-title">Waterfall des Charges</h2>
       <div className="digit-chart-container" style={{ maxWidth: 1000, margin: '0 auto' }}>
-        <div className="digit-chart-title">Du CA à la Company Margin - Détail de toutes les charges</div>
+        <div className="digit-chart-title">Du CA à la Marge - Détail de toutes les charges</div>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={barData}>
             <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />

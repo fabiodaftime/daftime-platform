@@ -1,4 +1,4 @@
-import { D, globalKPIs, globalVariableCosts, globalFixedCosts, globalSynthesis } from './DigitData';
+import { D, globalKPIs, globalTicketMoyens, globalVariableCosts, globalFixedCosts, globalSynthesis } from './DigitData';
 
 export function DigitGlobalTab() {
   const typeColor: Record<string, string> = {
@@ -19,8 +19,11 @@ export function DigitGlobalTab() {
 
   return (
     <div>
-      <h2 className="digit-section-title">Digit Solutions - Setup + Ad Account</h2>
+      <h2 className="digit-section-title">Digit Solution - Main Product (Setup + Ad Account)</h2>
       {renderKPIs(globalKPIs)}
+
+      <h2 className="digit-section-title">Tickets Moyens par Type</h2>
+      {renderKPIs(globalTicketMoyens)}
 
       <h2 className="digit-section-title">Coûts Variables</h2>
       {renderKPIs(globalVariableCosts)}
@@ -30,18 +33,6 @@ export function DigitGlobalTab() {
 
       <h2 className="digit-section-title">Synthèse Financière</h2>
       {renderKPIs(globalSynthesis)}
-
-      <div className="digit-chart-container" style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: D.primary, marginBottom: 16 }}>💡 Analyse Global (Main Product)</h3>
-        <p style={{ lineHeight: 1.8, color: D.text }}>
-          Le produit Global (Setup + Ad Account) génère <strong>$114,649 de CA</strong> sur 267 deals,
-          soit un ticket moyen de <strong>$429</strong>.
-          Avec une Company Margin de <strong>35.6%</strong>, c'est le produit principal de Digit.
-          <br /><br />
-          Les coûts fixes (Cost Salary + Tools + Business Exp + Refunds) représentent <strong>$27,907</strong>,
-          soit 24.3% du CA.
-        </p>
-      </div>
     </div>
   );
 }

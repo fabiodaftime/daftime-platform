@@ -61,7 +61,7 @@ export function DigitOverviewTab() {
       {/* Détail des Charges */}
       <div className="digit-chart-container" style={{ marginTop: 24 }}>
         <h3 style={{ fontSize: 18, fontWeight: 700, color: D.primary, marginBottom: 16 }}>💡 Détail des Charges</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
           {chargesDetail.map((item, i) => (
             <div key={i}>
               <strong style={{ color: item.color }}>{item.label} ({item.value})</strong><br />

@@ -1,21 +1,28 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { D, revenueKPIs, revenueByCategory, revenueDistribution, REVENUE_PIE_COLORS, fmt } from './DigitData';
+import { D, revenueKPIsRow1, revenueKPIsRow2, revenueByCategory, revenueDistribution, REVENUE_PIE_COLORS, fmt } from './DigitData';
 
 export function DigitRevenueTab() {
   const typeColor: Record<string, string> = {
     primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
   };
 
+  const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
+    <div className="digit-kpi-grid">
+      {items.map((kpi, i) => (
+        <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] }}>
+          <div className="digit-metric-label">{kpi.label}</div>
+          <div className="digit-metric-value">{kpi.value}</div>
+          <div className="digit-metric-sub">{kpi.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div>
-      <div className="digit-kpi-grid">
-        {revenueKPIs.map((kpi, i) => (
-          <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] }}>
-            <div className="digit-metric-label">{kpi.label}</div>
-            <div className="digit-metric-value">{kpi.value}</div>
-            <div className="digit-metric-sub">{kpi.sub}</div>
-          </div>
-        ))}
+      {renderKPIs(revenueKPIsRow1)}
+      <div style={{ marginTop: '1.5rem' }}>
+        {renderKPIs(revenueKPIsRow2)}
       </div>
 
       <h2 className="digit-section-title">Répartition du CA</h2>
