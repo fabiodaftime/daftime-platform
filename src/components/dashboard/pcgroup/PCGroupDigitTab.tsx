@@ -26,10 +26,10 @@ export function PCGroupDigitTab() {
       </div>
 
       <div className="pcg-charts-row">
-        <PCGroupWaterfall data={digitWaterfall} title="💰 Waterfall Complet" />
+        <PCGroupWaterfall data={digitWaterfall} title="💰 Waterfall Digit Solution" />
         <div className="pcg-section">
           <div className="pcg-section-header">
-            <h3 className="pcg-section-title">📊 CA par Catégorie</h3>
+            <h3 className="pcg-section-title">📊 Répartition CA</h3>
           </div>
           <div className="pcg-section-body">
             <div style={{ height: 280 }}>
@@ -48,7 +48,7 @@ export function PCGroupDigitTab() {
 
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📈 Répartition du CA par Produit</h3>
+          <h3 className="pcg-section-title">📈 Détail par Type de Produit</h3>
         </div>
         <div className="pcg-section-body">
           <table className="pcg-data-table">
@@ -56,8 +56,8 @@ export function PCGroupDigitTab() {
               <tr>
                 <th>Produit</th>
                 <th>CA</th>
-                <th>% Total</th>
-                <th>Type</th>
+                <th>Deals</th>
+                <th>Ticket Moyen</th>
               </tr>
             </thead>
             <tbody>
@@ -65,8 +65,8 @@ export function PCGroupDigitTab() {
                 <tr key={i}>
                   <td>{p.name}</td>
                   <td className="pcg-amount positive">${p.value.toLocaleString()}</td>
-                  <td>{p.pct}</td>
-                  <td><span className={`pcg-status-badge ${p.type === 'One-time' ? 'success' : p.type === 'Recurring' ? 'warning' : 'success'}`}>{p.type}</span></td>
+                  <td>{p.deals}</td>
+                  <td>{p.ticket}</td>
                 </tr>
               ))}
             </tbody>

@@ -70,7 +70,7 @@ export function PCGroupHoldingTab() {
         <div className="pcg-section-header">
           <div>
             <h3 className="pcg-section-title">👥 Répartition Dirigeants - Janvier 2026</h3>
-            <p className="pcg-section-subtitle">90% du résultat net groupe = $78,144</p>
+            <p className="pcg-section-subtitle">90% du résultat net groupe = $67,677</p>
           </div>
         </div>
         <div className="pcg-section-body">

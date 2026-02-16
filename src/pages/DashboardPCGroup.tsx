@@ -6,15 +6,19 @@ import { PCGroupOverviewTab } from '@/components/dashboard/pcgroup/PCGroupOvervi
 import { PCGroupAgencyTab } from '@/components/dashboard/pcgroup/PCGroupAgencyTab';
 import { PCGroupStructuringTab } from '@/components/dashboard/pcgroup/PCGroupStructuringTab';
 import { PCGroupDigitTab } from '@/components/dashboard/pcgroup/PCGroupDigitTab';
+import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
+import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import './DashboardPCGroup.css';
 
 const tabs = [
   { id: 'overview', icon: '📊', label: 'Vue Groupe' },
-  { id: 'agency', icon: '📡', label: 'Agency', amount: '$4.5K' },
+  { id: 'agency', icon: '📡', label: 'Agency', amount: '$2.2K' },
   { id: 'structuring', icon: '🏦', label: 'Structuring', amount: '$41.4K' },
-  { id: 'digit', icon: '⚡', label: 'Digit', amount: '$46.6K' },
-  { id: 'holding', icon: '🏛️', label: 'Holding', amount: '$8.7K' },
+  { id: 'digit', icon: '⚡', label: 'Digit Solution', amount: '$40.8K' },
+  { id: 'spy', icon: '🔍', label: 'SPY', amount: '$3.3K' },
+  { id: 'comment', icon: '💬', label: 'Comment', amount: '$2.5K' },
+  { id: 'holding', icon: '🏛️', label: 'Holding', amount: '$7.5K' },
 ];
 
 export default function DashboardPCGroup() {
@@ -65,6 +69,8 @@ export default function DashboardPCGroup() {
         {tab === 'agency' && <PCGroupAgencyTab />}
         {tab === 'structuring' && <PCGroupStructuringTab />}
         {tab === 'digit' && <PCGroupDigitTab />}
+        {tab === 'spy' && <PCGroupSpyTab />}
+        {tab === 'comment' && <PCGroupCommentTab />}
         {tab === 'holding' && <PCGroupHoldingTab />}
       </main>
 
