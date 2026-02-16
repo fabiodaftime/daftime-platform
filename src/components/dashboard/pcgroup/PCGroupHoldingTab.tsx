@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { holdingKPIs, holdingManagementFees, holdingRefacturation, holdingCharges, holdingSynthese, holdingPieData, directors } from './PCGroupData';
+import { holdingKPIs, holdingManagementFees, holdingRefacturation, holdingSynthese, holdingPieData, directors } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
 export function PCGroupHoldingTab() {
@@ -59,8 +59,59 @@ export function PCGroupHoldingTab() {
               <p className="pcg-section-subtitle">Utilisation des fonds</p>
             </div>
           </div>
-          <div className="pcg-section-body">
-            <PCGroupWaterfall data={holdingCharges} title="" />
+           <div className="pcg-section-body">
+            <p className="pcg-table-subheader">Frais de structure</p>
+            <table className="pcg-waterfall">
+              <tbody>
+                <tr>
+                  <td className="pcg-row-label">Compta + CFO Groupe</td>
+                  <td className="pcg-row-value negative">-$3,430</td>
+                </tr>
+                <tr>
+                  <td className="pcg-row-label">Salaire Assistante</td>
+                  <td className="pcg-row-value negative">-$1,630</td>
+                </tr>
+                <tr>
+                  <td className="pcg-row-label">Salaire Will</td>
+                  <td className="pcg-row-value negative">-$10,000</td>
+                </tr>
+                <tr className="pcg-row-total">
+                  <td className="pcg-row-label">TOTAL FRAIS HOLDING</td>
+                  <td className="pcg-row-value negative">-$15,060</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ height: 16 }} />
+            <p className="pcg-table-subheader">Salaires Management (90% résultat net)</p>
+            <table className="pcg-waterfall">
+              <tbody>
+                <tr>
+                  <td className="pcg-row-label">Maxence (37.5%)</td>
+                  <td className="pcg-row-value negative">-$25,379</td>
+                </tr>
+                <tr>
+                  <td className="pcg-row-label">Thibault (37.5%)</td>
+                  <td className="pcg-row-value negative">-$25,379</td>
+                </tr>
+                <tr>
+                  <td className="pcg-row-label">Florian (25%)</td>
+                  <td className="pcg-row-value negative">-$16,919</td>
+                </tr>
+                <tr className="pcg-row-total">
+                  <td className="pcg-row-label">TOTAL SALAIRES</td>
+                  <td className="pcg-row-value negative">-$67,677</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ height: 16 }} />
+            <table className="pcg-waterfall">
+              <tbody>
+                <tr className="pcg-row-highlight">
+                  <td className="pcg-row-label"><strong>RÉSERVES HOLDING (10%)</strong></td>
+                  <td className="pcg-row-value">$7,520</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

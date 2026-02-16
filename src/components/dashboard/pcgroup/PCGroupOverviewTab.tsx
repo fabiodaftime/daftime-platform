@@ -64,7 +64,7 @@ export function PCGroupOverviewTab() {
         <div className="pcg-section-header">
           <div>
             <h3 className="pcg-section-title">📈 P&L Consolidé - Janvier 2026</h3>
-            <p className="pcg-section-subtitle">Synthèse financière des 5 entités</p>
+            <p className="pcg-section-subtitle">Synthèse financière des 3 entités</p>
           </div>
         </div>
         <div className="pcg-section-body">
