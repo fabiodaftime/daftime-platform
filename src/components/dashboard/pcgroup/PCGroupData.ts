@@ -7,83 +7,114 @@ export const ENTITY_ROUTES = {
 };
 
 export const overviewHero = [
-  { label: "Chiffre d'Affaires Groupe", value: "$198,900", detail: "3 entités consolidées", color: "navy" },
+  { label: "Chiffre d'Affaires Groupe", value: "$198,900", detail: "5 entités consolidées", color: "navy" },
   { label: "Marge Brute Groupe", value: "$90,257", detail: "45.4% du CA", color: "success" },
-  { label: "Résultat Net Groupe", value: "$86,827", detail: "Après frais holding", color: "gold" },
-  { label: "Transactions", value: "365", detail: "59 + 39 + 267", color: "primary" },
+  { label: "Résultat Net Groupe", value: "$75,197", detail: "Après frais holding", color: "gold" },
+  { label: "Transactions", value: "365", detail: "Toutes entités", color: "primary" },
 ];
 
 export const entityCards = [
   {
     id: 'agency',
-    name: 'Prime Circle Agency',
-    badge: 'Media Buying',
+    name: 'Agency',
+    badge: 'Media',
     gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)',
+    cssClass: 'agency',
     metrics: [
       { label: 'Revenue', value: '$10,726' },
-      { label: 'Net Revenue', value: '$4,489', colorClass: 'success' },
-      { label: 'Media Géré', value: '$279.7K', colorClass: 'primary' },
-      { label: 'Clients Actifs', value: '47' },
+      { label: 'Marge Nette', value: '$2,245', colorClass: 'success' },
     ],
-    margin: 41.8,
+    margin: 20.9,
     marginLevel: 'medium' as const,
   },
   {
     id: 'structuring',
-    name: 'Prime Circle Structuring',
-    badge: 'US Banking',
+    name: 'Structuring',
+    badge: 'Banking',
     gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)',
+    cssClass: 'structuring',
     metrics: [
       { label: 'Turnover', value: '$53,962' },
       { label: 'Net Profit', value: '$41,371', colorClass: 'success' },
-      { label: 'Services', value: '39' },
-      { label: 'Completed', value: '26' },
     ],
     margin: 76.7,
     marginLevel: 'high' as const,
   },
   {
     id: 'digit',
-    name: 'Digit',
+    name: 'Digit Solution',
     badge: 'Ad Accounts',
     gradient: 'linear-gradient(135deg, #D946A8 0%, #EC4899 100%)',
+    cssClass: 'digit',
     metrics: [
-      { label: 'CA Total', value: '$134,212' },
-      { label: 'Company Margin', value: '$46,641', colorClass: 'success' },
-      { label: 'Deals', value: '267' },
-      { label: 'Ticket Moyen', value: '$503' },
+      { label: 'CA', value: '$114,649' },
+      { label: 'Margin', value: '$40,848', colorClass: 'success' },
     ],
-    margin: 34.8,
+    margin: 35.6,
     marginLevel: 'medium' as const,
+  },
+  {
+    id: 'spy',
+    name: 'SPY',
+    badge: 'Tools',
+    gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+    cssClass: 'spy',
+    metrics: [
+      { label: 'CA', value: '$16,750' },
+      { label: 'Margin', value: '$3,262', colorClass: 'success' },
+    ],
+    margin: 19.5,
+    marginLevel: 'low' as const,
+  },
+  {
+    id: 'comment',
+    name: 'Comment',
+    badge: 'Trust',
+    gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    cssClass: 'comment',
+    metrics: [
+      { label: 'CA', value: '$2,813' },
+      { label: 'Margin', value: '$2,531', colorClass: 'success' },
+    ],
+    margin: 90.0,
+    marginLevel: 'high' as const,
   },
 ];
 
 export const consolidatedPL = [
   { label: 'CA Prime Circle Agency', value: '$10,726', type: 'positive' },
   { label: 'CA Prime Circle Structuring', value: '$53,962', type: 'positive' },
-  { label: 'CA Digit', value: '$134,212', type: 'positive' },
+  { label: 'CA Digit Solution', value: '$114,649', type: 'positive' },
+  { label: 'CA SPY', value: '$16,750', type: 'positive' },
+  { label: 'CA Comment/Trustpilot', value: '$2,813', type: 'positive' },
   { label: 'CHIFFRE D\'AFFAIRES GROUPE', value: '$198,900', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
   { label: 'Marge Nette Agency (après 50% Blink)', value: '$2,245', type: 'positive' },
   { label: 'Marge Nette Structuring', value: '$41,371', type: 'positive' },
-  { label: 'Company Margin Digit', value: '$46,641', type: 'positive' },
+  { label: 'Margin Digit Solution', value: '$40,848', type: 'positive' },
+  { label: 'Margin SPY', value: '$3,262', type: 'positive' },
+  { label: 'Margin Comment/Trustpilot', value: '$2,531', type: 'positive' },
   { label: 'MARGE BRUTE GROUPE', value: '$90,257', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
   { label: 'Compta + CFO Groupe', value: '-$3,430', type: 'negative' },
-  { label: 'RÉSULTAT NET GROUPE', value: '$86,827', type: 'total-positive' },
+  { label: 'Salaire Assistante', value: '-$1,630', type: 'negative' },
+  { label: 'Salaire Will', value: '-$10,000', type: 'negative' },
+  { label: 'RÉSULTAT NET GROUPE', value: '$75,197', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'Maxence (37.5%)', value: '-$29,304', type: 'negative' },
-  { label: 'Thibault (37.5%)', value: '-$29,304', type: 'negative' },
-  { label: 'Florian (25%)', value: '-$19,536', type: 'negative' },
-  { label: 'SALAIRES MANAGEMENT (90%)', value: '-$78,144', type: 'total-negative' },
+  { label: 'Maxence (37.5%)', value: '-$25,379', type: 'negative' },
+  { label: 'Thibault (37.5%)', value: '-$25,379', type: 'negative' },
+  { label: 'Florian (25%)', value: '-$16,919', type: 'negative' },
+  { label: 'SALAIRES MANAGEMENT (90%)', value: '-$67,677', type: 'total-negative' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'RÉSERVES HOLDING (10%)', value: '$8,683', type: 'highlight' },
+  { label: 'RÉSERVES HOLDING (10%)', value: '$7,520', type: 'highlight' },
 ];
 
 export const pieData = [
   { name: 'Agency ($2.2K)', value: 2245, color: '#4F5BD5' },
   { name: 'Structuring ($41.4K)', value: 41371, color: '#1E3A5F' },
-  { name: 'Digit ($46.6K)', value: 46641, color: '#D946A8' },
+  { name: 'Digit Sol. ($40.8K)', value: 40848, color: '#D946A8' },
+  { name: 'SPY ($3.3K)', value: 3262, color: '#F59E0B' },
+  { name: 'Comment ($2.5K)', value: 2531, color: '#10B981' },
 ];
 
 // Agency Tab
@@ -166,55 +197,108 @@ export const structuringServicesChart = [
 
 // Digit Tab
 export const digitKPIs = [
-  { label: 'Company Margin', value: '$46,641', detail: 'KPI Principal', color: 'pink' },
-  { label: "Chiffre d'Affaires", value: '$134,212', detail: 'Total facturé', color: 'green' },
-  { label: 'Taux de Marge', value: '34.8%', detail: 'Margin / CA', color: 'blue' },
-  { label: 'Nombre de Deals', value: '267', detail: 'Transactions', color: 'gold' },
+  { label: 'Company Margin', value: '$40,848', detail: 'KPI Principal', color: 'pink' },
+  { label: "Chiffre d'Affaires", value: '$114,649', detail: 'Setup + Ad Account', color: 'green' },
+  { label: 'Taux de Marge', value: '35.6%', detail: 'Margin / CA', color: 'blue' },
+  { label: 'Nombre de Deals', value: '267', detail: '233 Setup + 34 Ad Account', color: 'gold' },
 ];
 
 export const digitWaterfall = [
-  { label: 'CA Total', value: '$134,212', type: 'positive' },
+  { label: 'CA Total', value: '$114,649', type: 'positive' },
   { label: '', value: '', type: 'spacer' },
   { label: 'Provider Cost', value: '-$29,708', type: 'negative' },
-  { label: 'Blink Commission', value: '-$14,735', type: 'negative' },
-  { label: 'Sales Commission', value: '-$3,896', type: 'negative' },
-  { label: 'Spy Product Cost', value: '-$11,250', type: 'negative' },
+  { label: 'Blink Commission', value: '-$12,922', type: 'negative' },
+  { label: 'Sales Commission', value: '-$3,190', type: 'negative' },
   { label: 'Cost Salary (Fixe)', value: '-$25,366', type: 'negative' },
-  { label: 'Autres Charges', value: '-$2,616', type: 'negative' },
-  { label: 'TOTAL CHARGES', value: '-$87,571', type: 'total-negative' },
-  { label: 'COMPANY MARGIN', value: '$46,641', type: 'highlight' },
+  { label: 'Tools + Business Exp + Refunds', value: '-$2,615', type: 'negative' },
+  { label: 'TOTAL CHARGES', value: '-$73,801', type: 'total-negative' },
+  { label: 'COMPANY MARGIN', value: '$40,848', type: 'highlight' },
 ];
 
 export const digitRevenueBreakdown = [
-  { name: 'Set-up', value: 77409, pct: '58%', type: 'One-time' },
-  { name: 'Ad Account', value: 27305, pct: '20%', type: 'Recurring' },
-  { name: 'Spy', value: 16750, pct: '12%', type: 'Recurring' },
-  { name: 'BM', value: 5651, pct: '4%', type: 'One-time' },
-  { name: 'Autres (Page, Trust, Comm)', value: 7097, pct: '6%', type: 'Mix' },
+  { name: 'Set-up', value: 77409, deals: '233', ticket: '$332' },
+  { name: 'Ad Account', value: 27305, deals: '34', ticket: '$803' },
+  { name: 'BM', value: 5651, deals: '—', ticket: '—' },
+  { name: 'Page', value: 2770, deals: '—', ticket: '—' },
+  { name: 'Autres', value: 1514, deals: '—', ticket: '—' },
 ];
 
 export const digitRevenueChart = [
   { name: 'Set-up', value: 77409, color: '#D946A8' },
   { name: 'Ad Account', value: 27305, color: '#D946A8' },
-  { name: 'Spy', value: 16750, color: '#D946A8' },
   { name: 'BM', value: 5651, color: '#D946A8' },
   { name: 'Page', value: 2770, color: '#D946A8' },
-  { name: 'Trust', value: 1560, color: '#D946A8' },
-  { name: 'Comm', value: 1253, color: '#D946A8' },
+  { name: 'Autres', value: 1514, color: '#D946A8' },
+];
+
+// SPY Tab
+export const spyKPIs = [
+  { label: 'CA SPY', value: '$16,750', detail: "Outils d'analyse", color: 'orange' },
+  { label: 'Company Margin', value: '$3,262', detail: '19.5% du CA', color: 'green' },
+  { label: 'Cost Product', value: '$11,250', detail: '67.2% du CA - Licences', color: 'pink' },
+  { label: 'Total Commissions', value: '$2,238', detail: 'Blink + Sales', color: 'blue' },
+];
+
+export const spyWaterfall = [
+  { label: 'CA SPY', value: '$16,750', type: 'positive' },
+  { label: '', value: '', type: 'spacer' },
+  { label: 'Cost Product (Licences)', value: '-$11,250', type: 'negative' },
+  { label: 'Blink Commission', value: '-$1,813', type: 'negative' },
+  { label: 'Sales Commission', value: '-$425', type: 'negative' },
+  { label: 'TOTAL CHARGES', value: '-$13,488', type: 'total-negative' },
+  { label: 'MARGIN SPY', value: '$3,262', type: 'highlight' },
+];
+
+export const spyCostsPie = [
+  { name: 'Margin ($3.3K)', value: 3262, color: '#10B981' },
+  { name: 'Cost Product ($11.3K)', value: 11250, color: '#F59E0B' },
+  { name: 'Blink ($1.8K)', value: 1813, color: '#D946A8' },
+  { name: 'Sales ($0.4K)', value: 425, color: '#4F5BD5' },
+];
+
+export const spyAnalysis = [
+  { label: 'Coût Produit', value: '67.2%', detail: 'Part importante des licences', severity: 'warning' },
+  { label: 'Commissions', value: '13.4%', detail: 'Blink 10.8% + Sales 2.5%', severity: 'primary' },
+  { label: 'Marge Nette', value: '19.5%', detail: 'Marge la plus faible', severity: 'success' },
+];
+
+// Comment/Trustpilot Tab
+export const commentKPIs = [
+  { label: 'CA Comment/Trust', value: '$2,813', detail: "Services d'engagement", color: 'green' },
+  { label: 'Company Margin', value: '$2,531', detail: '90.0% du CA', color: 'green' },
+  { label: 'Cost Product', value: '$0', detail: 'Aucun coût produit', color: 'blue' },
+  { label: 'Sales Commission', value: '$281', detail: '10.0% du CA', color: 'pink' },
+];
+
+export const commentWaterfall = [
+  { label: 'CA Comment/Trustpilot', value: '$2,813', type: 'positive' },
+  { label: '', value: '', type: 'spacer' },
+  { label: 'Cost Product', value: '$0', type: 'muted' },
+  { label: 'Sales Commission (10%)', value: '-$281', type: 'negative' },
+  { label: 'TOTAL CHARGES', value: '-$281', type: 'total-negative' },
+  { label: 'MARGIN COMMENT', value: '$2,531', type: 'highlight' },
+];
+
+export const commentComparison = [
+  { name: 'Comment/Trustpilot', ca: '$2,813', margin: '$2,531', taux: '90.0%', highlight: true, badgeType: 'success' as const },
+  { name: 'Digit Solution', ca: '$114,649', margin: '$40,848', taux: '35.6%', highlight: false, badgeType: 'warning' as const },
+  { name: 'SPY', ca: '$16,750', margin: '$3,262', taux: '19.5%', highlight: false, badgeType: 'danger' as const },
 ];
 
 // Holding Tab
 export const holdingKPIs = [
-  { label: 'Résultat Net Groupe', value: '$86,827', detail: 'Après frais holding', color: 'navy' },
-  { label: 'Distribuable (90%)', value: '$78,144', detail: 'Salaires management', color: 'gold' },
-  { label: 'Réserves (10%)', value: '$8,683', detail: 'Trésorerie holding', color: 'green' },
-  { label: 'Frais Compta/CFO', value: '$3,430', detail: 'Refacturés aux entités', color: 'pink' },
+  { label: 'Résultat Net Groupe', value: '$75,197', detail: 'Après frais holding', color: 'navy' },
+  { label: 'Distribuable (90%)', value: '$67,677', detail: 'Salaires management', color: 'gold' },
+  { label: 'Réserves (10%)', value: '$7,520', detail: 'Trésorerie holding', color: 'green' },
+  { label: 'Frais Holding', value: '$15,060', detail: 'Compta + Salaires', color: 'pink' },
 ];
 
 export const holdingManagementFees = [
   { label: 'Prime Circle Agency', value: '$2,245', type: 'positive' },
   { label: 'Prime Circle Structuring', value: '$41,371', type: 'positive' },
-  { label: 'Digit', value: '$46,641', type: 'positive' },
+  { label: 'Digit Solution', value: '$40,848', type: 'positive' },
+  { label: 'SPY', value: '$3,262', type: 'positive' },
+  { label: 'Comment/Trustpilot', value: '$2,531', type: 'positive' },
   { label: 'TOTAL BÉNÉFICE', value: '$90,257', type: 'total-positive' },
 ];
 
@@ -227,13 +311,16 @@ export const holdingRefacturation = [
 
 export const holdingCharges = [
   { label: 'Compta + CFO Groupe', value: '-$3,430', type: 'negative' },
+  { label: 'Salaire Assistante', value: '-$1,630', type: 'negative' },
+  { label: 'Salaire Will', value: '-$10,000', type: 'negative' },
+  { label: 'TOTAL FRAIS HOLDING', value: '-$15,060', type: 'total-negative' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'Maxence (37.5%)', value: '-$29,304', type: 'negative' },
-  { label: 'Thibault (37.5%)', value: '-$29,304', type: 'negative' },
-  { label: 'Florian (25%)', value: '-$19,536', type: 'negative' },
-  { label: 'TOTAL SALAIRES', value: '-$78,144', type: 'total-negative' },
+  { label: 'Maxence (37.5%)', value: '-$25,379', type: 'negative' },
+  { label: 'Thibault (37.5%)', value: '-$25,379', type: 'negative' },
+  { label: 'Florian (25%)', value: '-$16,919', type: 'negative' },
+  { label: 'TOTAL SALAIRES', value: '-$67,677', type: 'total-negative' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'RÉSERVES HOLDING (10%)', value: '$8,683', type: 'highlight' },
+  { label: 'RÉSERVES HOLDING (10%)', value: '$7,520', type: 'highlight' },
 ];
 
 export const holdingSynthese = [
@@ -241,23 +328,24 @@ export const holdingSynthese = [
   { label: 'Management fees (marge brute)', value: '$90,257', type: 'positive', indent: true },
   { label: 'Refacturation compta', value: '$3,430', type: 'positive', indent: true },
   { label: '', value: '', type: 'spacer' },
-  { label: 'SORTIES', value: '-$85,004', type: 'total-negative' },
+  { label: 'SORTIES', value: '-$86,167', type: 'total-negative' },
   { label: 'Compta + CFO', value: '-$3,430', type: 'negative', indent: true },
-  { label: 'Résultat Net Groupe', value: '$86,827', type: 'neutral', indent: true },
-  { label: 'Salaires management (90%)', value: '-$78,144', type: 'negative', indent: true },
+  { label: 'Salaire Assistante', value: '-$1,630', type: 'negative', indent: true },
+  { label: 'Salaire Will', value: '-$10,000', type: 'negative', indent: true },
+  { label: 'Salaires management (90%)', value: '-$67,677', type: 'negative', indent: true },
   { label: '', value: '', type: 'spacer' },
-  { label: 'SOLDE HOLDING (10%)', value: '$8,683', type: 'highlight' },
+  { label: 'SOLDE HOLDING (10%)', value: '$7,520', type: 'highlight' },
 ];
 
 export const holdingPieData = [
-  { name: 'Maxence ($29.3K)', value: 29304, color: '#1E3A5F' },
-  { name: 'Thibault ($29.3K)', value: 29304, color: '#2D4A6F' },
-  { name: 'Florian ($19.5K)', value: 19536, color: '#4F5BD5' },
-  { name: 'Réserves ($8.7K)', value: 8683, color: '#C9A227' },
+  { name: 'Maxence ($25.4K)', value: 25379, color: '#1E3A5F' },
+  { name: 'Thibault ($25.4K)', value: 25379, color: '#2D4A6F' },
+  { name: 'Florian ($16.9K)', value: 16919, color: '#4F5BD5' },
+  { name: 'Réserves ($7.5K)', value: 7520, color: '#C9A227' },
 ];
 
 export const directors = [
-  { name: 'Maxence', pct: '37.5%', amount: '$29,304', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)' },
-  { name: 'Thibault', pct: '37.5%', amount: '$29,304', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)' },
-  { name: 'Florian', pct: '25%', amount: '$19,536', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)' },
+  { name: 'Maxence', pct: '37.5%', amount: '$25,379', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)' },
+  { name: 'Thibault', pct: '37.5%', amount: '$25,379', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)' },
+  { name: 'Florian', pct: '25%', amount: '$16,919', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)' },
 ];
