@@ -33,11 +33,15 @@ function generateDynamicComments(monthData: MonthlyCostData, scenario: Scenario)
     const diff = parseFloat(pctActual) - item.target;
 
     if (diff > 3) {
-      comments.push(`⚠️ ${item.label} (${pctActual}% vs ${item.target}% prévu): ${amountK}k — au-dessus du target de +${diff.toFixed(1)} pts. À optimiser.`);
+      comments.push(`⚠️ ${item.label} (${pctActual}% vs ${item.target}% prévu): ${amountK}k — nettement au-dessus du target de +${diff.toFixed(1)} pts. À optimiser.`);
     } else if (diff > 0.5) {
       comments.push(`⚠️ ${item.label} (${pctActual}% vs ${item.target}% prévu): ${amountK}k — légèrement au-dessus du target.`);
-    } else if (item.actual > 0) {
+    } else if (diff >= -0.5) {
       comments.push(`✅ ${item.label} (${pctActual}% vs ${item.target}% prévu): ${amountK}k — conforme aux attentes.`);
+    } else if (diff >= -3) {
+      comments.push(`🟢 ${item.label} (${pctActual}% vs ${item.target}% prévu): ${amountK}k — légèrement en dessous du target. Bonne optimisation.`);
+    } else if (item.actual > 0) {
+      comments.push(`🟢 ${item.label} (${pctActual}% vs ${item.target}% prévu): ${amountK}k — nettement en dessous du target de ${Math.abs(diff).toFixed(1)} pts. Excellente maîtrise.`);
     }
   }
 
