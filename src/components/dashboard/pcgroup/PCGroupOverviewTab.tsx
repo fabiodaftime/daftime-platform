@@ -33,7 +33,7 @@ export function PCGroupOverviewTab() {
               <span className="pcg-entity-badge">{entity.badge}</span>
             </div>
             <div className="pcg-entity-body">
-              <div className="pcg-entity-metrics pcg-entity-metrics-single">
+              <div className="pcg-entity-metrics pcg-entity-metrics-single" style={{ gridTemplateColumns: '1fr' }}>
                 {entity.metrics.map((m, j) => (
                   <div key={j} className="pcg-entity-metric">
                     <div className="pcg-entity-metric-label">{m.label}</div>
