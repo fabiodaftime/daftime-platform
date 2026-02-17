@@ -27,11 +27,9 @@ import {
 import { 
   SCENARIOS, 
   Q4_DATA, 
-  ALERTS, 
-  ACTIONS, 
-  QUARTER_COMPARISON_BASE,
   Scenario
 } from '@/components/dashboard/labarile/LabarileData';
+import { cn } from '@/lib/utils';
 
 interface Company {
   id: string;
@@ -229,38 +227,54 @@ export default function DashboardLabarile() {
                 <LabarileEvolutionChart scenario={currentScenario} />
               </LabarileChartContainer>
 
-              {/* Quarter Comparison Table */}
-              <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
-                <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary mb-4 tracking-wide">📊 Comparaison Quarters 2026 vs Q4 2025</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-labarile-ice1">
-                        <th className="px-3 py-2 text-left text-xs font-bold border-b-2 border-labarile-border">Période</th>
-                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">CA Prévu</th>
-                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Q4 2025 Ref</th>
-                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Écart</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {QUARTER_COMPARISON_BASE.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-labarile-light-gray">
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{row.period}</td>
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.caPrev}</td>
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.q4Ref}</td>
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right text-labarile-success">{row.ecart}</td>
-                        </tr>
-                      ))}
-                      <tr className="bg-labarile-ice1">
-                        <td className="px-3 py-2 text-sm font-bold">TOTAL 2026</td>
-                        <td className="px-3 py-2 text-sm text-right font-bold">{currentScenario.total2026.toLocaleString()} kAED</td>
-                        <td className="px-3 py-2 text-sm text-right font-bold">5,221 kAED (Q4×4)</td>
-                        <td className="px-3 py-2 text-sm text-right font-bold text-labarile-success">+{(currentScenario.total2026 - 5221).toLocaleString()}k ({currentScenario.growth})</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              {/* Quarter Comparison Table - Dynamic */}
+              {(() => {
+                const f = currentScenario.forecast2026;
+                const q4Ref = 1305;
+                const quarters = [
+                  { period: 'Q1 2026', ca: f[0] + f[1] + f[2] },
+                  { period: 'Q2 2026', ca: f[3] + f[4] + f[5] },
+                  { period: 'Q3 2026', ca: f[6] + f[7] + f[8] },
+                  { period: 'Q4 2026', ca: f[9] + f[10] + f[11] },
+                ];
+                return (
+                  <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
+                    <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary mb-4 tracking-wide">📊 Comparaison Quarters 2026 vs Q4 2025 — {currentScenario.name}</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-labarile-ice1">
+                            <th className="px-3 py-2 text-left text-xs font-bold border-b-2 border-labarile-border">Période</th>
+                            <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">CA Prévu</th>
+                            <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Q4 2025 Ref</th>
+                            <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Écart</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {quarters.map((q, idx) => {
+                            const ecart = q.ca - q4Ref;
+                            const ecartPct = Math.round(ecart / q4Ref * 100);
+                            return (
+                              <tr key={idx} className="hover:bg-labarile-light-gray">
+                                <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{q.period}</td>
+                                <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{q.ca.toLocaleString()} kAED</td>
+                                <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{q4Ref.toLocaleString()} kAED</td>
+                                <td className="px-3 py-2 text-sm border-b border-labarile-border text-right text-labarile-success">+{ecart.toLocaleString()}k (+{ecartPct}%)</td>
+                              </tr>
+                            );
+                          })}
+                          <tr className="bg-labarile-ice1">
+                            <td className="px-3 py-2 text-sm font-bold">TOTAL 2026</td>
+                            <td className="px-3 py-2 text-sm text-right font-bold">{currentScenario.total2026.toLocaleString()} kAED</td>
+                            <td className="px-3 py-2 text-sm text-right font-bold">5,221 kAED (Q4×4)</td>
+                            <td className="px-3 py-2 text-sm text-right font-bold text-labarile-success">+{(currentScenario.total2026 - 5221).toLocaleString()}k ({currentScenario.growth})</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-5">
                 <p className="font-bold text-sm text-emerald-700 mb-2">💡 Insight Clé:</p>
@@ -352,29 +366,89 @@ export default function DashboardLabarile() {
             </div>
           )}
 
-          {/* Alerts */}
-          {activePage === 'alerts' && (
-            <div className="space-y-6 lg:space-y-8 animate-fade-in">
-              <div className="bg-labarile-ice1 rounded-xl p-8 text-center">
-                <h3 className="font-bebas text-2xl text-labarile-primary mb-4">⚠️ Alertes & Actions</h3>
-                <p className="text-labarile-muted">Cette section sera configurée selon vos priorités lors de la réunion.</p>
-              </div>
+          {/* Alerts - Dynamic */}
+          {activePage === 'alerts' && (() => {
+            const totalCostsTarget = currentScenario.costs.coaches + currentScenario.costs.marketing + currentScenario.costs.stripe + currentScenario.costs.tools + currentScenario.costs.admin;
+            const ebitdaTarget = 100 - totalCostsTarget;
+            const burnMonthly = Math.round(currentScenario.total2026 / 12 * totalCostsTarget / 100);
+            const dynamicAlerts = [
+              { type: 'critical' as const, title: `Réconciliation Comptable`, desc: `216.4 kAED de transactions non comptabilisées. Impact potentiel sur les prévisions du scénario ${currentScenario.name} (${currentScenario.total2026.toLocaleString()}k AED).` },
+              ...(currentScenario.costs.coaches > 12 ? [{ type: 'warning' as const, title: `Coaches à ${currentScenario.costs.coaches}% du CA`, desc: `Target élevé. Optimiser via coaching collectif (actuellement ${currentScenario.servicesMix.collective}%) et e-learning (${currentScenario.servicesMix.elearning}%) pour réduire ce ratio.` }] : []),
+              ...(currentScenario.costs.marketing > 15 ? [{ type: 'warning' as const, title: `Marketing à ${currentScenario.costs.marketing}% du CA`, desc: `Au-dessus de 15%. Analyser ROI par canal, optimiser CAC. Économie potentielle: ~${Math.round(currentScenario.total2026 * (currentScenario.costs.marketing - 12) / 100)}k AED/an.` }] : []),
+              { type: 'info' as const, title: `Burn Rate Mensuel Estimé: ${burnMonthly}k AED`, desc: `Basé sur ${totalCostsTarget.toFixed(1)}% de charges (scénario ${currentScenario.name}). Besoin runway 6 mois = ${(burnMonthly * 6).toLocaleString()}k AED.` },
+              { type: 'success' as const, title: `EBITDA Target: ${ebitdaTarget.toFixed(1)}%`, desc: `Objectif ${Math.round(currentScenario.total2026 * ebitdaTarget / 100).toLocaleString()}k AED. Q4 2025 atteint 53.7% — ${ebitdaTarget >= 53.7 ? 'ambitieux' : 'conservateur et atteignable'}.` },
+            ];
+            const dynamicActions = [
+              { priority: 'critique', icon: '🎯', title: 'Réconciliation Comptable Urgente', desc: `Intégrer les 216.4 kAED non comptabilisés. Impact sur le suivi du scénario ${currentScenario.name}.` },
+              { priority: 'haute', icon: '💰', title: `Optimiser Coaches (${currentScenario.costs.coaches}% target)`, desc: `Augmenter coaching collectif de ${currentScenario.servicesMix.collective}% et e-learning ${currentScenario.servicesMix.elearning}% pour optimiser la marge.` },
+              { priority: 'haute', icon: '📊', title: `Maintenir Marketing ≤ ${currentScenario.costs.marketing}%`, desc: `Contrôler les dépenses marketing pour rester dans le target du scénario ${currentScenario.name}.` },
+              { priority: 'moyenne', icon: '💵', title: `Cash Management: Runway ${Math.round(350 / burnMonthly * 10) / 10} mois`, desc: `Cash disponible ~350k. Burn ${burnMonthly}k/mois. Viser minimum 6 mois de runway = ${(burnMonthly * 6).toLocaleString()}k AED.` },
+            ];
+            return (
+              <div className="space-y-6 lg:space-y-8 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+                  <LabarileKPICard label="Scénario Actif" value={currentScenario.name} subtext={`${currentScenario.total2026.toLocaleString()} kAED`} variant="primary" />
+                  <LabarileKPICard label="Charges Target" value={`${totalCostsTarget.toFixed(1)}%`} subtext="du CA annuel" variant="warning" />
+                  <LabarileKPICard label="Burn Mensuel" value={`${burnMonthly}k AED`} subtext="Estimation scénario" />
+                  <LabarileKPICard label="EBITDA Target" value={`${ebitdaTarget.toFixed(1)}%`} subtext={`${Math.round(currentScenario.total2026 * ebitdaTarget / 100).toLocaleString()}k AED`} variant="success" />
+                </div>
 
-              <div className="bg-labarile-white rounded-xl p-5 border-2 border-dashed border-labarile-border">
-                <h4 className="font-bebas text-lg text-labarile-title mb-3">📝 Notes - Alertes à Définir</h4>
-                <textarea 
-                  className="w-full min-h-[200px] p-4 border border-labarile-border rounded-lg font-sans text-sm resize-y focus:outline-none focus:border-labarile-primary"
-                  placeholder="Utilisez cet espace pour noter les alertes prioritaires pendant la réunion..."
-                />
-              </div>
+                {/* Dynamic Alerts */}
+                <div className="space-y-4">
+                  <h3 className="font-bebas text-xl text-labarile-primary tracking-wide">⚠️ Alertes — Scénario {currentScenario.name}</h3>
+                  {dynamicAlerts.map((alert, idx) => (
+                    <div key={idx} className={cn(
+                      "rounded-xl p-5 border-l-4",
+                      alert.type === 'critical' && "bg-red-50 border-l-red-500",
+                      alert.type === 'warning' && "bg-amber-50 border-l-amber-500",
+                      alert.type === 'info' && "bg-blue-50 border-l-blue-500",
+                      alert.type === 'success' && "bg-emerald-50 border-l-emerald-500",
+                    )}>
+                      <p className={cn("font-bold text-sm mb-1",
+                        alert.type === 'critical' && "text-red-700",
+                        alert.type === 'warning' && "text-amber-700",
+                        alert.type === 'info' && "text-blue-700",
+                        alert.type === 'success' && "text-emerald-700",
+                      )}>{alert.title}</p>
+                      <p className="text-sm text-labarile-text">{alert.desc}</p>
+                    </div>
+                  ))}
+                </div>
 
-              <div className="bg-amber-50 border-l-4 border-l-amber-500 rounded-lg p-5">
-                <p className="text-sm text-labarile-muted">
-                  <strong className="text-amber-700">💡 Suggestion:</strong> Utilisez cette page pour tracker les actions prioritaires identifiées lors de vos réunions stratégiques.
-                </p>
+                {/* Dynamic Actions */}
+                <div className="space-y-4">
+                  <h3 className="font-bebas text-xl text-labarile-primary tracking-wide">🎯 Actions Prioritaires</h3>
+                  {dynamicActions.map((action, idx) => (
+                    <div key={idx} className="bg-labarile-white border border-labarile-border rounded-xl p-5 hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">{action.icon}</span>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full",
+                              action.priority === 'critique' && "bg-red-100 text-red-700",
+                              action.priority === 'haute' && "bg-amber-100 text-amber-700",
+                              action.priority === 'moyenne' && "bg-blue-100 text-blue-700",
+                            )}>{action.priority}</span>
+                            <p className="font-bold text-sm text-labarile-title">{action.title}</p>
+                          </div>
+                          <p className="text-sm text-labarile-text">{action.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notes */}
+                <div className="bg-labarile-white rounded-xl p-5 border-2 border-dashed border-labarile-border">
+                  <h4 className="font-bebas text-lg text-labarile-title mb-3">📝 Notes de Réunion</h4>
+                  <textarea 
+                    className="w-full min-h-[150px] p-4 border border-labarile-border rounded-lg font-sans text-sm resize-y focus:outline-none focus:border-labarile-primary"
+                    placeholder="Notez les actions prioritaires identifiées..."
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Config */}
           {activePage === 'config' && (
