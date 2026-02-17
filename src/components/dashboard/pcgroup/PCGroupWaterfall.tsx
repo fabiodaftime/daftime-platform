@@ -19,19 +19,23 @@ export function PCGroupWaterfall({ data, title }: { data: WaterfallRow[]; title:
               const isTotal = row.type.startsWith('total');
               const isHighlight = row.type === 'highlight';
               const isMuted = row.type === 'muted';
+              const isIndentMuted = row.type === 'indent-muted';
               const cls = [
                 isTotal ? 'pcg-row-total' : '',
                 isHighlight ? 'pcg-row-highlight' : '',
               ].join(' ');
               const valCls = row.type === 'positive' || row.type === 'total-positive' ? 'positive' :
                 row.type === 'negative' || row.type === 'total-negative' ? 'negative' :
-                  isMuted ? 'muted' : '';
+                  (isMuted || isIndentMuted) ? 'muted' : '';
               return (
                 <tr key={i} className={cls}>
-                  <td className="pcg-row-label" style={row.indent ? { paddingLeft: '1.5rem' } : undefined}>
+                  <td className="pcg-row-label" style={{
+                    ...(row.indent ? { paddingLeft: '1.5rem' } : undefined),
+                    ...(isIndentMuted ? { paddingLeft: '1.5rem', fontSize: '0.85rem', color: '#64748b' } : undefined),
+                  }}>
                     {isHighlight ? <strong>{row.label}</strong> : row.label}
                   </td>
-                  <td className={`pcg-row-value ${valCls}`}>{row.value}</td>
+                  <td className={`pcg-row-value ${valCls}`} style={isIndentMuted ? { fontSize: '0.85rem', color: '#64748b' } : undefined}>{row.value}</td>
                 </tr>
               );
             })}
