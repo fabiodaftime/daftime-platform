@@ -1,7 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { SCENARIOS, MONTHS_2026, type Scenario } from './LabarileData';
+import { useToast } from '@/hooks/use-toast';
 
 interface LabarileConfigPageProps {
+  companyId: string;
   onScenariosUpdate: (scenarios: Record<string, Scenario>) => void;
 }
 
@@ -9,14 +12,69 @@ const VARIANCE = 0.15;
 const DEFAULT_BASE_FORECAST = [600, 600, 670, 750, 810, 870, 900, 900, 900, 1000, 1000, 1000];
 const DEFAULT_COSTS = { coaches: 10, marketing: 12, admin: 10, stripe: 4.5, tools: 3, autres: 2 };
 
-export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProps) {
+export function LabarileConfigPage({ companyId, onScenariosUpdate }: LabarileConfigPageProps) {
   const [configMonthly, setConfigMonthly] = useState<number[]>([...DEFAULT_BASE_FORECAST]);
   const [costs, setCosts] = useState({ ...DEFAULT_COSTS });
-  const [toast, setToast] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [toast2, setToast2] = useState('');
+  const { toast } = useToast();
+
+  // Load saved config on mount
+  useEffect(() => {
+    loadSavedConfig();
+  }, [companyId]);
+
+  const loadSavedConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('dashboard_configs')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('config_key', 'labarile_scenarios');
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const config = data[0].config_value as any;
+        if (config.monthly) setConfigMonthly(config.monthly);
+        if (config.costs) setCosts(config.costs);
+        setLastSaved(new Date(data[0].updated_at).toLocaleString('fr-FR'));
+
+        // Apply to SCENARIOS immediately
+        applyToScenarios(config.monthly || DEFAULT_BASE_FORECAST, config.costs || DEFAULT_COSTS);
+      }
+    } catch (error) {
+      console.error('Error loading config:', error);
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
+
+  const applyToScenarios = (monthly: number[], costsData: typeof DEFAULT_COSTS) => {
+    const base = [...monthly];
+    const low = base.map(v => Math.round(v * (1 - VARIANCE)));
+    const high = base.map(v => Math.round(v * (1 + VARIANCE)));
+    const totalBase = base.reduce((a, b) => a + b, 0);
+    const totalLow = low.reduce((a, b) => a + b, 0);
+    const totalHigh = high.reduce((a, b) => a + b, 0);
+    const q4Ann = 5221;
+    const calcGrowth = (t: number) => (t >= q4Ann ? '+' : '') + Math.round((t - q4Ann) / q4Ann * 100) + '%';
+
+    const updated: Record<string, Scenario> = {
+      prudent: { ...SCENARIOS.prudent, forecast2026: low, total2026: totalLow, growth: calcGrowth(totalLow), costs: { coaches: costsData.coaches, marketing: costsData.marketing, stripe: costsData.stripe, tools: costsData.tools, admin: costsData.admin } },
+      base: { ...SCENARIOS.base, forecast2026: base, total2026: totalBase, growth: calcGrowth(totalBase), costs: { coaches: costsData.coaches, marketing: costsData.marketing, stripe: costsData.stripe, tools: costsData.tools, admin: costsData.admin } },
+      optimiste: { ...SCENARIOS.optimiste, forecast2026: high, total2026: totalHigh, growth: calcGrowth(totalHigh), costs: { coaches: costsData.coaches, marketing: costsData.marketing, stripe: costsData.stripe, tools: costsData.tools, admin: costsData.admin } },
+    };
+
+    Object.assign(SCENARIOS, updated);
+    onScenariosUpdate(updated);
+  };
 
   const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3500);
+    setToast2(msg);
+    setTimeout(() => setToast2(''), 3500);
   };
 
   const totalBase = configMonthly.reduce((a, b) => a + b, 0);
@@ -38,39 +96,43 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
   };
 
   const applyScenarios = () => {
-    const base = [...configMonthly];
-    const low = base.map(v => Math.round(v * (1 - VARIANCE)));
-    const high = base.map(v => Math.round(v * (1 + VARIANCE)));
-    const q4Ann = 5221;
-    const calcGrowth = (t: number) => (t >= q4Ann ? '+' : '') + Math.round((t - q4Ann) / q4Ann * 100) + '%';
+    applyToScenarios(configMonthly, costs);
+    showToast(`✅ Scénarios appliqués — Base: ${totalBase.toLocaleString()}k | Faible: ${totalLow.toLocaleString()}k | Élevé: ${totalHigh.toLocaleString()}k AED`);
+  };
 
-    const updated: Record<string, Scenario> = {
-      prudent: { ...SCENARIOS.prudent, forecast2026: low, total2026: totalLow, growth: calcGrowth(totalLow), costs: { coaches: costs.coaches, marketing: costs.marketing, stripe: costs.stripe, tools: costs.tools, admin: costs.admin } },
-      base: { ...SCENARIOS.base, forecast2026: base, total2026: totalBase, growth: calcGrowth(totalBase), costs: { coaches: costs.coaches, marketing: costs.marketing, stripe: costs.stripe, tools: costs.tools, admin: costs.admin } },
-      optimiste: { ...SCENARIOS.optimiste, forecast2026: high, total2026: totalHigh, growth: calcGrowth(totalHigh), costs: { coaches: costs.coaches, marketing: costs.marketing, stripe: costs.stripe, tools: costs.tools, admin: costs.admin } },
-    };
+  const saveToDatabase = async () => {
+    setSaving(true);
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      const configValue = { monthly: configMonthly, costs };
 
-    Object.assign(SCENARIOS, updated);
-    onScenariosUpdate(updated);
-    showToast(`✅ Scénarios mis à jour — Base: ${totalBase.toLocaleString()}k | Faible: ${totalLow.toLocaleString()}k | Élevé: ${totalHigh.toLocaleString()}k AED`);
+      const { error } = await supabase
+        .from('dashboard_configs')
+        .upsert({
+          company_id: companyId,
+          config_key: 'labarile_scenarios',
+          config_value: configValue as any,
+          updated_by: user.user?.id || null,
+        }, { onConflict: 'company_id,config_key' });
+
+      if (error) throw error;
+
+      // Also apply to live scenarios
+      applyToScenarios(configMonthly, costs);
+      setLastSaved(new Date().toLocaleString('fr-FR'));
+      toast({ title: '✅ Configuration enregistrée', description: 'Les modifications sont visibles par tous les utilisateurs.' });
+    } catch (error) {
+      console.error('Error saving config:', error);
+      toast({ title: 'Erreur', description: "Impossible d'enregistrer la configuration", variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const resetScenarios = () => {
     setConfigMonthly([...DEFAULT_BASE_FORECAST]);
-    showToast('↩ Valeurs réinitialisées');
-  };
-
-  const applyCosts = () => {
-    const updated = { ...costs };
-    ['prudent', 'base', 'optimiste'].forEach(s => {
-      SCENARIOS[s].costs = { coaches: updated.coaches, marketing: updated.marketing, stripe: updated.stripe, tools: updated.tools, admin: updated.admin };
-    });
-    showToast(`✅ Structure de charges appliquée — EBITDA cible: ${ebitda.toFixed(1)}%`);
-  };
-
-  const resetCosts = () => {
     setCosts({ ...DEFAULT_COSTS });
-    showToast('↩ Charges réinitialisées');
+    showToast('↩ Valeurs réinitialisées');
   };
 
   const costSliders = [
@@ -82,8 +144,40 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
     { key: 'autres', label: 'Autres', color: 'bg-gray-400', min: 0, max: 10, step: 0.5 },
   ];
 
+  if (loadingConfig) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-4 border-labarile-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
+      {/* Save Banner */}
+      <div className="bg-gradient-to-r from-labarile-primary to-labarile-primary-dark rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bebas text-xl text-white tracking-wide">💾 Enregistrer les modifications</h3>
+          <p className="text-xs text-white/80 mt-1">
+            {lastSaved ? `Dernière sauvegarde : ${lastSaved}` : 'Aucune configuration enregistrée'}
+          </p>
+        </div>
+        <button
+          onClick={saveToDatabase}
+          disabled={saving}
+          className="px-6 py-3 bg-white text-labarile-primary-dark rounded-lg font-bold text-sm hover:bg-white/90 transition-opacity disabled:opacity-50 flex items-center gap-2 shrink-0"
+        >
+          {saving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-labarile-primary border-t-transparent rounded-full animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>💾 Enregistrer pour tous les utilisateurs</>
+          )}
+        </button>
+      </div>
+
       {/* SECTION 1: Revenue Scenarios */}
       <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
         <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-5">
@@ -115,7 +209,7 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
                 showToast(`✅ CA ajusté de ${pct > 0 ? '+' : ''}${pct}% sur tous les mois`);
                 if (input) input.value = '0';
               }}
-              className="px-3 py-1.5 bg-labarile-primary text-labarile-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
+              className="px-3 py-1.5 bg-labarile-primary text-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
             >
               Appliquer
             </button>
@@ -155,7 +249,7 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-labarile-primary text-labarile-white">
+                <tr className="bg-labarile-primary text-white">
                   <th className="px-2 py-2 text-left">Mois</th>
                   <th className="px-2 py-2 text-right text-orange-200">📉 Faible</th>
                   <th className="px-2 py-2 text-right">📊 Base</th>
@@ -178,7 +272,7 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-labarile-primary text-labarile-white font-bold">
+                <tr className="bg-labarile-primary text-white font-bold">
                   <td className="px-2 py-2">TOTAL 2026</td>
                   <td className="px-2 py-2 text-right text-orange-200">{totalLow.toLocaleString()}k AED</td>
                   <td className="px-2 py-2 text-right">{totalBase.toLocaleString()}k AED</td>
@@ -190,7 +284,7 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button onClick={applyScenarios} className="px-5 py-2.5 bg-labarile-primary text-labarile-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
+          <button onClick={applyScenarios} className="px-5 py-2.5 bg-labarile-primary text-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
             ✅ Appliquer aux graphiques
           </button>
           <button onClick={resetScenarios} className="px-5 py-2.5 bg-labarile-white text-labarile-muted border border-labarile-border rounded-lg text-sm hover:bg-labarile-light-gray transition-colors">
@@ -252,21 +346,30 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
             <p className="font-bebas text-xl text-labarile-primary">{ebitdaAmount.toLocaleString()}k</p>
           </div>
         </div>
+      </div>
 
-        <div className="flex flex-wrap gap-3">
-          <button onClick={applyCosts} className="px-5 py-2.5 bg-blue-600 text-labarile-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
-            ✅ Appliquer aux graphiques
-          </button>
-          <button onClick={resetCosts} className="px-5 py-2.5 bg-labarile-white text-labarile-muted border border-labarile-border rounded-lg text-sm hover:bg-labarile-light-gray transition-colors">
-            ↩ Réinitialiser
-          </button>
-        </div>
+      {/* Bottom Save Button */}
+      <div className="flex justify-center">
+        <button
+          onClick={saveToDatabase}
+          disabled={saving}
+          className="px-8 py-3.5 bg-gradient-to-r from-labarile-primary to-labarile-primary-dark text-white rounded-xl font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2 shadow-lg"
+        >
+          {saving ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>💾 Enregistrer la configuration</>
+          )}
+        </button>
       </div>
 
       {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 right-6 bg-labarile-text text-labarile-white px-5 py-3 rounded-xl text-sm shadow-lg z-50 animate-fade-in max-w-sm">
-          {toast}
+      {toast2 && (
+        <div className="fixed bottom-6 right-6 bg-labarile-text text-white px-5 py-3 rounded-xl text-sm shadow-lg z-50 animate-fade-in max-w-sm">
+          {toast2}
         </div>
       )}
     </div>
