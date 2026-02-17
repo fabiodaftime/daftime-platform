@@ -17,6 +17,7 @@ import { LabarileCostsPage } from '@/components/dashboard/labarile/LabarileCosts
 import { LabarileTreasuryPage } from '@/components/dashboard/labarile/LabarileTreasuryPage';
 import { LabarileTaxesPage } from '@/components/dashboard/labarile/LabarileTaxesPage';
 import { LabarileConfigPage } from '@/components/dashboard/labarile/LabarileConfigPage';
+import { LabarileCommentsPage } from '@/components/dashboard/labarile/LabarileCommentsPage';
 import { 
   LabarileMainRevenueChart, 
   LabarileDonutChart, 
@@ -48,6 +49,7 @@ const NAV_ITEMS = [
   { id: 'taxes', label: 'Taxes & Provisions', icon: '🏛️' },
   { id: 'objectives', label: 'Objectifs 2026', icon: '🎖️' },
   { id: 'alerts', label: 'Alertes & Actions', icon: '⚠️' },
+  { id: 'comments', label: 'Commentaires', icon: '💬' },
   { id: 'config', label: 'Configuration', icon: '⚙️' },
 ];
 
@@ -60,6 +62,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   taxes: { title: "Taxes & Provisions", subtitle: "Fiscalité Q4 2025 & Prévisions 2026" },
   objectives: { title: "Objectifs & Projections 2026", subtitle: "Plan stratégique" },
   alerts: { title: "Alertes & Actions Prioritaires", subtitle: "Points d'attention urgents" },
+  comments: { title: "Commentaires", subtitle: "Échanges Labarile & Daftime" },
   config: { title: "Configuration Dashboard", subtitle: "Scénarios & structure de charges" },
 };
 
@@ -449,6 +452,10 @@ export default function DashboardLabarile() {
               </div>
             );
           })()}
+
+          {/* Config */}
+          {/* Comments */}
+          {activePage === 'comments' && <LabarileCommentsPage companyId={company.id} />}
 
           {/* Config */}
           {activePage === 'config' && (
