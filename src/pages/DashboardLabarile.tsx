@@ -83,7 +83,41 @@ export default function DashboardLabarile() {
 
   useEffect(() => {
     fetchCompany();
+    loadSavedConfig();
   }, [id]);
+
+  const loadSavedConfig = async () => {
+    try {
+      const { data } = await supabase
+        .from('dashboard_configs')
+        .select('config_value')
+        .eq('company_id', id)
+        .eq('config_key', 'labarile_scenarios');
+      
+      if (data && data.length > 0) {
+        const config = data[0].config_value as any;
+        const monthly = config.monthly || [];
+        const costsData = config.costs || {};
+        if (monthly.length === 12) {
+          const base = [...monthly];
+          const low = base.map((v: number) => Math.round(v * 0.85));
+          const high = base.map((v: number) => Math.round(v * 1.15));
+          const totalBase = base.reduce((a: number, b: number) => a + b, 0);
+          const totalLow = low.reduce((a: number, b: number) => a + b, 0);
+          const totalHigh = high.reduce((a: number, b: number) => a + b, 0);
+          const q4Ann = 5221;
+          const calcGrowth = (t: number) => (t >= q4Ann ? '+' : '') + Math.round((t - q4Ann) / q4Ann * 100) + '%';
+          
+          SCENARIOS.base = { ...SCENARIOS.base, forecast2026: base, total2026: totalBase, growth: calcGrowth(totalBase), costs: { ...SCENARIOS.base.costs, ...costsData } };
+          SCENARIOS.prudent = { ...SCENARIOS.prudent, forecast2026: low, total2026: totalLow, growth: calcGrowth(totalLow), costs: { ...SCENARIOS.prudent.costs, ...costsData } };
+          SCENARIOS.optimiste = { ...SCENARIOS.optimiste, forecast2026: high, total2026: totalHigh, growth: calcGrowth(totalHigh), costs: { ...SCENARIOS.optimiste.costs, ...costsData } };
+          forceUpdate(n => n + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved config:', error);
+    }
+  };
 
   const fetchCompany = async () => {
     try {
@@ -337,7 +371,7 @@ export default function DashboardLabarile() {
 
           {/* Config */}
           {activePage === 'config' && (
-            <LabarileConfigPage onScenariosUpdate={() => forceUpdate(n => n + 1)} />
+            <LabarileConfigPage companyId={company.id} onScenariosUpdate={() => forceUpdate(n => n + 1)} />
           )}
         </main>
       </div>
