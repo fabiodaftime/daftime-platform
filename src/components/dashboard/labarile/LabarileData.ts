@@ -233,9 +233,9 @@ export const TAXES_Q4_DETAIL = [
 ];
 
 export const CT_BY_SCENARIO = [
-  { scenario: 'Prudent', ebitda: '4,973k', profit: '4,598k', ct: '414k', mensuel: '32k/mois' },
-  { scenario: 'Base', ebitda: '5,850k', profit: '5,475k', ct: '493k', mensuel: '38k/mois', highlight: true },
-  { scenario: 'Optimiste', ebitda: '6,728k', profit: '6,353k', ct: '572k', mensuel: '44k/mois' },
+  { scenario: 'Prudent', ebitda: '4,973k', profit: '4,598k', ct: '414k', mensuel: '35k/mois' },
+  { scenario: 'Base', ebitda: '5,850k', profit: '5,475k', ct: '493k', mensuel: '41k/mois', highlight: true },
+  { scenario: 'Optimiste', ebitda: '6,728k', profit: '6,353k', ct: '572k', mensuel: '48k/mois' },
 ];
 
 // Evolution Quarter Comparison
