@@ -56,18 +56,18 @@ export function LabarileTaxesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
           <div className="bg-orange-100 rounded-lg p-4 text-center">
             <p className="text-xs font-semibold text-orange-600 mb-2">PRUDENT</p>
-            <p className="font-bebas text-2xl text-orange-600">88k AED</p>
-            <p className="text-xs text-labarile-muted mt-1">Total taxes/mois</p>
+            <p className="font-bebas text-2xl text-orange-600">34k AED</p>
+            <p className="text-xs text-labarile-muted mt-1">Corporate Tax/mois</p>
           </div>
           <div className="bg-blue-100 rounded-lg p-4 text-center border-2 border-blue-500">
             <p className="text-xs font-semibold text-blue-600 mb-2">BASE</p>
-            <p className="font-bebas text-2xl text-blue-600">100k AED</p>
-            <p className="text-xs text-labarile-muted mt-1">Total taxes/mois</p>
+            <p className="font-bebas text-2xl text-blue-600">41k AED</p>
+            <p className="text-xs text-labarile-muted mt-1">Corporate Tax/mois</p>
           </div>
           <div className="bg-emerald-100 rounded-lg p-4 text-center">
             <p className="text-xs font-semibold text-emerald-600 mb-2">OPTIMISTE</p>
-            <p className="font-bebas text-2xl text-emerald-600">122k AED</p>
-            <p className="text-xs text-labarile-muted mt-1">Total taxes/mois</p>
+            <p className="font-bebas text-2xl text-emerald-600">48k AED</p>
+            <p className="text-xs text-labarile-muted mt-1">Corporate Tax/mois</p>
           </div>
         </div>
 

@@ -31,7 +31,6 @@ import {
   ACTIONS, 
   OBJECTIVES,
   QUARTER_COMPARISON_BASE,
-  OBJECTIVES_COMPARISON,
   Scenario
 } from '@/components/dashboard/labarile/LabarileData';
 
@@ -200,7 +199,7 @@ export default function DashboardLabarile() {
           {activePage === 'overview' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard label="Run Rate Annualisé" value="5,008 kAED" subtext="Basé sur Q4 2025" />
+                <LabarileKPICard label="Run Rate Annualisé" value="5,221 kAED" subtext="Q4 2025 × 4" />
                 <LabarileKPICard label="CA Total Q4 2025" value="1,305 kAED" subtext="-64 kAED ajustements" variant="primary" />
                 <LabarileKPICard label="CA 2026 Prévu" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext={`Objectif 2026`} variant="success" />
                 <LabarileKPICard label="Marge EBITDA Q4" value="53.7%" subtext="Objectif 2026: 50%" variant="success" />
@@ -256,9 +255,9 @@ export default function DashboardLabarile() {
                       ))}
                       <tr className="bg-labarile-ice1">
                         <td className="px-3 py-2 text-sm font-bold">TOTAL 2026</td>
-                        <td className="px-3 py-2 text-sm text-right font-bold">10,000 kAED</td>
-                        <td className="px-3 py-2 text-sm text-right font-bold">5,220 kAED (Q4×4)</td>
-                        <td className="px-3 py-2 text-sm text-right font-bold text-labarile-success">+4,780k (+92%)</td>
+                        <td className="px-3 py-2 text-sm text-right font-bold">{currentScenario.total2026.toLocaleString()} kAED</td>
+                        <td className="px-3 py-2 text-sm text-right font-bold">5,221 kAED (Q4×4)</td>
+                        <td className="px-3 py-2 text-sm text-right font-bold text-labarile-success">+{(currentScenario.total2026 - 5221).toLocaleString()}k ({currentScenario.growth})</td>
                       </tr>
                     </tbody>
                   </table>
@@ -268,7 +267,7 @@ export default function DashboardLabarile() {
               <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-5">
                 <p className="font-bold text-sm text-emerald-700 mb-2">💡 Insight Clé:</p>
                 <p className="text-sm text-labarile-text leading-relaxed">
-                  L'objectif 10M AED représente un doublement du CA (+92% vs Q4 annualisé). Accélération progressive requise : 833k/mois en moyenne vs 435k/mois Q4 2025. Une structure de coûts maîtrisée (marge 53.7% Q4) offre une base solide pour ce scaling ambitieux.
+                  L'objectif {currentScenario.total2026.toLocaleString()} kAED représente une croissance de {currentScenario.growth} vs Q4 annualisé. Accélération progressive requise : {avgMonthly}k/mois en moyenne vs 435k/mois Q4 2025. Une structure de coûts maîtrisée (marge 53.7% Q4) offre une base solide pour ce scaling.
                 </p>
               </div>
             </div>
@@ -292,7 +291,7 @@ export default function DashboardLabarile() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
                 <LabarileKPICard label="Q4 2025 Annualisé (x4)" value="5,221 kAED" subtext="Référence performance Q4" />
                 <LabarileKPICard label="Objectif CA 2026" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext="Scénario retenu" variant="primary" />
-                <LabarileKPICard label="Progression vs Q4x4" value="+92%" subtext="+4,779k AED supplémentaires" variant="success" />
+                <LabarileKPICard label="Progression vs Q4x4" value={currentScenario.growth} subtext={`+${(currentScenario.total2026 - 5221).toLocaleString()} kAED`} variant="success" />
                 <LabarileKPICard label="Objectif Marge" value="50%" subtext="vs 53.7% Q4 2025" variant="success" />
               </div>
 
@@ -310,14 +309,19 @@ export default function DashboardLabarile() {
                       </tr>
                     </thead>
                     <tbody>
-                      {OBJECTIVES_COMPARISON.map((row, idx) => (
-                        <tr key={idx} className="hover:bg-labarile-light-gray">
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{row.metrique}</td>
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.q4x4}</td>
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.objectif2026}</td>
-                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right text-labarile-success font-semibold">{row.ecart}</td>
-                        </tr>
-                      ))}
+                    {[
+                      { metrique: 'CA Annuel', q4x4: '5,221 kAED', objectif2026: `${currentScenario.total2026.toLocaleString()} kAED`, ecart: `+${(currentScenario.total2026 - 5221).toLocaleString()}k (${currentScenario.growth})` },
+                      { metrique: 'EBITDA', q4x4: '2,805 kAED (53.7%)', objectif2026: `${Math.round(currentScenario.total2026 * 0.5).toLocaleString()} kAED (50%)`, ecart: `+${(Math.round(currentScenario.total2026 * 0.5) - 2805).toLocaleString()}k` },
+                      { metrique: 'CA Mensuel Moyen', q4x4: '435 kAED', objectif2026: `${avgMonthly} kAED`, ecart: `+${avgMonthly - 435}k/mois` },
+                      { metrique: 'Marge EBITDA', q4x4: '53.7%', objectif2026: '50%', ecart: 'Maintien' },
+                    ].map((row, idx) => (
+                      <tr key={idx} className="hover:bg-labarile-light-gray">
+                        <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{row.metrique}</td>
+                        <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.q4x4}</td>
+                        <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.objectif2026}</td>
+                        <td className="px-3 py-2 text-sm border-b border-labarile-border text-right text-labarile-success font-semibold">{row.ecart}</td>
+                      </tr>
+                    ))}
                     </tbody>
                   </table>
                 </div>
@@ -335,7 +339,7 @@ export default function DashboardLabarile() {
                 <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary mb-4 tracking-wide">🎯 Points Clés pour 2026</h3>
                 <div className="space-y-3">
                   <div className="bg-labarile-white rounded-lg p-3">
-                    <p className="text-sm"><strong className="text-labarile-success">🚀 Objectif Ambitieux 10M AED:</strong> Nécessite doubler le CA (+92% vs Q4 annualisé). Fort scaling requis : passer de 435k/mois à 833k/mois en moyenne 2026.</p>
+                    <p className="text-sm"><strong className="text-labarile-success">🚀 Objectif {currentScenario.total2026.toLocaleString()} AED:</strong> Croissance de {currentScenario.growth} vs Q4 annualisé. Fort scaling requis : passer de 435k/mois à {avgMonthly}k/mois en moyenne 2026.</p>
                   </div>
                   <div className="bg-labarile-white rounded-lg p-3">
                     <p className="text-sm"><strong className="text-labarile-primary">💰 Maintenir Excellence Opérationnelle:</strong> Marge Q4 2025 à 53.7% déjà supérieure à l'objectif 50%. Conserver cette structure de coûts tout en scalant le CA.</p>
