@@ -1,5 +1,6 @@
 import { ArrowLeft, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import labarileLogo from '@/assets/labarile-logo.png';
 
 interface NavItem {
   id: string;
@@ -37,18 +38,12 @@ export function LabarileSidebar({
           <ArrowLeft className="w-4 h-4 lg:w-5 lg:h-5 text-labarile-muted" />
         </button>
         
-        {/* Logo Icon */}
-        <div className="w-10 h-10 lg:w-[50px] lg:h-[50px] bg-labarile-primary rounded-xl flex items-center justify-center">
-          <span className="font-bebas text-lg lg:text-2xl text-white">LB</span>
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <h1 className="font-bebas text-lg lg:text-[22px] text-labarile-primary tracking-wider truncate">
-            LABARILE
-          </h1>
-          <p className="text-[10px] lg:text-[11px] text-labarile-muted font-medium uppercase tracking-wide">
-            Coaching Excellence
-          </p>
+        <div className="flex-1 flex justify-center lg:justify-start">
+          <img 
+            src={labarileLogo} 
+            alt="Labarile Coaching" 
+            className="h-10 lg:h-12 w-auto object-contain"
+          />
         </div>
 
         {/* Mobile Close Button */}
