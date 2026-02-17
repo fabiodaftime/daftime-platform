@@ -55,25 +55,25 @@ export function LabarileTaxesPage() {
 
         <div className="bg-blue-50 border-l-4 border-l-blue-500 rounded-lg p-4 mb-5">
           <p className="text-sm text-blue-800">
-            <strong>📅 Échéance:</strong> La Corporate Tax 2026 est due au <strong>30/09/2027</strong>. Les provisions démarrent en <strong>septembre 2026</strong> (13 mois de provisionnement: Sep 2026 → Sep 2027). Aucune provision CT à prévoir avant septembre 2026.
+            <strong>📅 Échéance:</strong> La Corporate Tax 2026 est due au <strong>30/09/2027</strong>. Les provisions s'étalent sur 12 mois, de <strong>septembre 2026 à août 2027</strong> pour un paiement complet en septembre 2027. Aucune provision CT à prévoir avant septembre 2026.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
           <div className="bg-orange-100 rounded-lg p-4 text-center">
             <p className="text-xs font-semibold text-orange-600 mb-2">PRUDENT</p>
-            <p className="font-bebas text-2xl text-orange-600">32k AED</p>
-            <p className="text-xs text-labarile-muted mt-1">CT/mois × 13 mois</p>
+            <p className="font-bebas text-2xl text-orange-600">35k AED</p>
+            <p className="text-xs text-labarile-muted mt-1">CT/mois (Sep 26 - Août 27)</p>
           </div>
           <div className="bg-blue-100 rounded-lg p-4 text-center border-2 border-blue-500">
             <p className="text-xs font-semibold text-blue-600 mb-2">BASE</p>
-            <p className="font-bebas text-2xl text-blue-600">38k AED</p>
-            <p className="text-xs text-labarile-muted mt-1">CT/mois × 13 mois</p>
+            <p className="font-bebas text-2xl text-blue-600">41k AED</p>
+            <p className="text-xs text-labarile-muted mt-1">CT/mois (Sep 26 - Août 27)</p>
           </div>
           <div className="bg-emerald-100 rounded-lg p-4 text-center">
             <p className="text-xs font-semibold text-emerald-600 mb-2">OPTIMISTE</p>
-            <p className="font-bebas text-2xl text-emerald-600">44k AED</p>
-            <p className="text-xs text-labarile-muted mt-1">CT/mois × 13 mois</p>
+            <p className="font-bebas text-2xl text-emerald-600">48k AED</p>
+            <p className="text-xs text-labarile-muted mt-1">CT/mois (Sep 26 - Août 27)</p>
           </div>
         </div>
 
@@ -85,7 +85,7 @@ export function LabarileTaxesPage() {
                 <th className="px-3 py-3 text-right text-xs font-bold border-b-2 border-labarile-border">EBITDA 2026</th>
                 <th className="px-3 py-3 text-right text-xs font-bold border-b-2 border-labarile-border">Profit Imposable</th>
                 <th className="px-3 py-3 text-right text-xs font-bold border-b-2 border-labarile-border">Corporate Tax</th>
-                <th className="px-3 py-3 text-right text-xs font-bold border-b-2 border-labarile-border">Provision/mois (×13)</th>
+                <th className="px-3 py-3 text-right text-xs font-bold border-b-2 border-labarile-border">Provision/mois (×12)</th>
               </tr>
             </thead>
             <tbody>
@@ -123,7 +123,7 @@ export function LabarileTaxesPage() {
           </div>
           <div className="bg-labarile-white rounded-lg p-3">
             <p className="text-sm"><strong className="text-amber-600">⚠️ Provisions Obligatoires</strong><br/>
-            TVA UAE mensuelle, TVA EU trimestrielle. Corporate Tax: provisionnement à partir de <strong>septembre 2026</strong> sur 13 mois (échéance 30/09/2027). Ne JAMAIS utiliser provisions pour autre chose.</p>
+            TVA UAE mensuelle, TVA EU trimestrielle. Corporate Tax: provisionnement de <strong>septembre 2026 à août 2027</strong> (12 mois, échéance 30/09/2027). Ne JAMAIS utiliser provisions pour autre chose.</p>
           </div>
         </div>
       </div>
