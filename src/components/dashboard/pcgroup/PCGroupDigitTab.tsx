@@ -57,7 +57,7 @@ export function PCGroupDigitTab() {
                 <th>Produit</th>
                 <th>CA</th>
                 <th>Deals</th>
-                <th>Ticket Moyen</th>
+                <th>Dépense Moy. / Client</th>
               </tr>
             </thead>
             <tbody>

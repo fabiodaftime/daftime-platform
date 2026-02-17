@@ -122,12 +122,12 @@ export const globalKPIs = [
   { label: "CA", value: "$114,649", sub: "CA Total Digit Solution", type: "primary" },
   { label: "Marge", value: "$40,848", sub: "35.6% du CA", type: "success" },
   { label: "Total Deals", value: "267", sub: "233 Setup + 34 Ad Account", type: "accent" },
-  { label: "Ticket Moyen Global", value: "$429", sub: "Moyenne générale", type: "warning" },
+  { label: "Dépense Moy. / Client Global", value: "$429", sub: "Moyenne générale", type: "warning" },
 ];
 
 export const globalTicketMoyens = [
-  { label: "Ticket Moyen Setup", value: "$332", sub: "233 deals", type: "accent" },
-  { label: "Ticket Moyen Ad Account", value: "$803", sub: "34 deals", type: "accent" },
+  { label: "Dépense Moy. / Client Setup", value: "$332", sub: "233 deals", type: "accent" },
+  { label: "Dépense Moy. / Client Ad Account", value: "$803", sub: "34 deals", type: "accent" },
 ];
 
 export const globalVariableCosts = [
@@ -154,7 +154,7 @@ export const spyKPIs = [
   { label: "CA SPY", value: "$16,750", sub: "Chiffre d'affaires", type: "primary" },
   { label: "Marge SPY", value: "$3,262", sub: "19.5% du CA", type: "success" },
   { label: "Total Deals", value: "5", sub: "Licences SPY", type: "accent" },
-  { label: "Ticket Moyen", value: "$3,350", sub: "CA / Deals", type: "warning" },
+  { label: "Dépense Moy. / Client", value: "$3,350", sub: "CA / Deals", type: "warning" },
 ];
 
 export const spyVariableCosts = [
@@ -174,7 +174,7 @@ export const commentTrustKPIs = [
   { label: "CA Comment/Trust", value: "$2,813", sub: "Chiffre d'affaires", type: "primary" },
   { label: "Marge", value: "$2,531", sub: "90.0% du CA", type: "success" },
   { label: "Total Deals", value: "20", sub: "16 Comment | 4 Trustpilot", type: "accent" },
-  { label: "Ticket Moyen", value: "$141", sub: "CA / Deals", type: "warning" },
+  { label: "Dépense Moy. / Client", value: "$141", sub: "CA / Deals", type: "warning" },
 ];
 
 export const commentVariableCosts = [
