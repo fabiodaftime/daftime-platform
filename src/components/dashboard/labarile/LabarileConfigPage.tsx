@@ -86,8 +86,41 @@ export function LabarileConfigPage({ onScenariosUpdate }: LabarileConfigPageProp
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       {/* SECTION 1: Revenue Scenarios */}
       <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
-        <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary mb-1 tracking-wide">📈 Scénarios de Chiffre d'Affaires 2026</h3>
-        <p className="text-xs text-labarile-muted mb-5">Définissez le scénario Base mois par mois. Les scénarios Faible (−15%) et Élevé (+15%) sont calculés automatiquement.</p>
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-5">
+          <div>
+            <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary mb-1 tracking-wide">📈 Scénarios de Chiffre d'Affaires 2026</h3>
+            <p className="text-xs text-labarile-muted">Définissez le scénario Base mois par mois. Les scénarios Faible (−15%) et Élevé (+15%) sont calculés automatiquement.</p>
+          </div>
+          <div className="flex items-end gap-2 shrink-0">
+            <div>
+              <label className="text-[11px] font-semibold text-labarile-muted uppercase mb-1 block">Augmentation globale</label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  id="global-pct"
+                  defaultValue={0}
+                  min={-50} max={200} step={1}
+                  className="w-20 px-2 py-1.5 border border-labarile-border rounded-md font-bebas text-lg text-labarile-primary text-right bg-labarile-white focus:outline-none focus:border-labarile-primary"
+                />
+                <span className="text-sm font-bold text-labarile-muted">%</span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const input = document.getElementById('global-pct') as HTMLInputElement;
+                const pct = parseFloat(input?.value || '0');
+                if (pct === 0) return;
+                const factor = 1 + pct / 100;
+                setConfigMonthly(prev => prev.map(v => Math.round(v * factor)));
+                showToast(`✅ CA ajusté de ${pct > 0 ? '+' : ''}${pct}% sur tous les mois`);
+                if (input) input.value = '0';
+              }}
+              className="px-3 py-1.5 bg-labarile-primary text-labarile-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
+            >
+              Appliquer
+            </button>
+          </div>
+        </div>
 
         {/* Monthly Inputs Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5">
