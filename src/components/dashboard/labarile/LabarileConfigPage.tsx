@@ -154,12 +154,28 @@ export function LabarileConfigPage({ companyId, onScenariosUpdate }: LabarileCon
 
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
-      {/* Save Banner */}
+      {/* Apply Banner - Temporary */}
+      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bebas text-xl text-white tracking-wide">👁️ Prévisualiser (session uniquement)</h3>
+          <p className="text-xs text-white/80 mt-1">
+            Applique les modifications aux graphiques et commentaires. <strong>Non sauvegardé</strong> — les changements disparaissent si vous quittez.
+          </p>
+        </div>
+        <button
+          onClick={applyScenarios}
+          className="px-6 py-3 bg-white text-emerald-700 rounded-lg font-bold text-sm hover:bg-white/90 transition-opacity flex items-center gap-2 shrink-0"
+        >
+          👁️ Appliquer (temporaire)
+        </button>
+      </div>
+
+      {/* Save Banner - Persistent */}
       <div className="bg-gradient-to-r from-labarile-primary to-labarile-primary-dark rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="font-bebas text-xl text-white tracking-wide">💾 Enregistrer les modifications</h3>
+          <h3 className="font-bebas text-xl text-white tracking-wide">💾 Enregistrer définitivement</h3>
           <p className="text-xs text-white/80 mt-1">
-            {lastSaved ? `Dernière sauvegarde : ${lastSaved}` : 'Aucune configuration enregistrée'}
+            {lastSaved ? `Dernière sauvegarde : ${lastSaved}` : 'Aucune configuration enregistrée'} — Les modifications seront visibles pour tous les utilisateurs, même après déconnexion.
           </p>
         </div>
         <button
@@ -173,7 +189,7 @@ export function LabarileConfigPage({ companyId, onScenariosUpdate }: LabarileCon
               Enregistrement...
             </>
           ) : (
-            <>💾 Enregistrer pour tous les utilisateurs</>
+            <>💾 Enregistrer pour tous</>
           )}
         </button>
       </div>
@@ -284,8 +300,8 @@ export function LabarileConfigPage({ companyId, onScenariosUpdate }: LabarileCon
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button onClick={applyScenarios} className="px-5 py-2.5 bg-labarile-primary text-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
-            ✅ Appliquer aux graphiques
+          <button onClick={applyScenarios} className="px-5 py-2.5 bg-emerald-500 text-white rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity">
+            👁️ Appliquer (temporaire)
           </button>
           <button onClick={resetScenarios} className="px-5 py-2.5 bg-labarile-white text-labarile-muted border border-labarile-border rounded-lg text-sm hover:bg-labarile-light-gray transition-colors">
             ↩ Réinitialiser
@@ -348,8 +364,14 @@ export function LabarileConfigPage({ companyId, onScenariosUpdate }: LabarileCon
         </div>
       </div>
 
-      {/* Bottom Save Button */}
-      <div className="flex justify-center">
+      {/* Bottom Buttons */}
+      <div className="flex flex-wrap justify-center gap-4">
+        <button
+          onClick={applyScenarios}
+          className="px-8 py-3.5 bg-emerald-500 text-white rounded-xl font-bold text-base hover:opacity-90 transition-opacity flex items-center gap-2 shadow-lg"
+        >
+          👁️ Appliquer (temporaire)
+        </button>
         <button
           onClick={saveToDatabase}
           disabled={saving}
@@ -361,7 +383,7 @@ export function LabarileConfigPage({ companyId, onScenariosUpdate }: LabarileCon
               Enregistrement...
             </>
           ) : (
-            <>💾 Enregistrer la configuration</>
+            <>💾 Enregistrer définitivement</>
           )}
         </button>
       </div>

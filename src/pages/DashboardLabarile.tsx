@@ -29,7 +29,6 @@ import {
   Q4_DATA, 
   ALERTS, 
   ACTIONS, 
-  OBJECTIVES,
   QUARTER_COMPARISON_BASE,
   Scenario
 } from '@/components/dashboard/labarile/LabarileData';
@@ -282,21 +281,21 @@ export default function DashboardLabarile() {
           {activePage === 'treasury' && <LabarileTreasuryPage />}
 
           {/* Taxes */}
-          {activePage === 'taxes' && <LabarileTaxesPage />}
+          {activePage === 'taxes' && <LabarileTaxesPage scenario={currentScenario} />}
 
           {/* Objectives */}
           {activePage === 'objectives' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
                 <LabarileKPICard label="Q4 2025 Annualisé (x4)" value="5,221 kAED" subtext="Référence performance Q4" />
-                <LabarileKPICard label="Objectif CA 2026" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext="Scénario retenu" variant="primary" />
+                <LabarileKPICard label="Objectif CA 2026" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext={`Scénario ${currentScenario.name}`} variant="primary" />
                 <LabarileKPICard label="Progression vs Q4x4" value={currentScenario.growth} subtext={`+${(currentScenario.total2026 - 5221).toLocaleString()} kAED`} variant="success" />
-                <LabarileKPICard label="Objectif Marge" value="50%" subtext="vs 53.7% Q4 2025" variant="success" />
+                <LabarileKPICard label="Objectif Marge" value={`${currentScenario.margins.operating}%`} subtext="vs 53.7% Q4 2025" variant="success" />
               </div>
 
-              {/* Comparison Table */}
+              {/* Comparison Table - Dynamic */}
               <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
-                <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary mb-4 tracking-wide">📊 Comparaison Q4 2025 (×4) vs Objectifs 2026</h3>
+                <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary mb-4 tracking-wide">📊 Comparaison Q4 2025 (×4) vs Objectifs 2026 — {currentScenario.name}</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -310,9 +309,9 @@ export default function DashboardLabarile() {
                     <tbody>
                     {[
                       { metrique: 'CA Annuel', q4x4: '5,221 kAED', objectif2026: `${currentScenario.total2026.toLocaleString()} kAED`, ecart: `+${(currentScenario.total2026 - 5221).toLocaleString()}k (${currentScenario.growth})` },
-                      { metrique: 'EBITDA', q4x4: '2,805 kAED (53.7%)', objectif2026: `${Math.round(currentScenario.total2026 * 0.5).toLocaleString()} kAED (50%)`, ecart: `+${(Math.round(currentScenario.total2026 * 0.5) - 2805).toLocaleString()}k` },
+                      { metrique: 'EBITDA', q4x4: '2,805 kAED (53.7%)', objectif2026: `${Math.round(currentScenario.total2026 * currentScenario.margins.operating / 100).toLocaleString()} kAED (${currentScenario.margins.operating}%)`, ecart: `+${(Math.round(currentScenario.total2026 * currentScenario.margins.operating / 100) - 2805).toLocaleString()}k` },
                       { metrique: 'CA Mensuel Moyen', q4x4: '435 kAED', objectif2026: `${avgMonthly} kAED`, ecart: `+${avgMonthly - 435}k/mois` },
-                      { metrique: 'Marge EBITDA', q4x4: '53.7%', objectif2026: '50%', ecart: 'Maintien' },
+                      { metrique: 'Marge EBITDA', q4x4: '53.7%', objectif2026: `${currentScenario.margins.operating}%`, ecart: currentScenario.margins.operating >= 53.7 ? 'Amélioration' : 'Maintien' },
                     ].map((row, idx) => (
                       <tr key={idx} className="hover:bg-labarile-light-gray">
                         <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{row.metrique}</td>
@@ -326,22 +325,27 @@ export default function DashboardLabarile() {
                 </div>
               </div>
 
-              <LabarileChartContainer title="🎯 Objectifs Stratégiques 2026">
+              <LabarileChartContainer title={`🎯 Objectifs Stratégiques 2026 — ${currentScenario.name}`}>
                 <div className="space-y-4">
-                  {OBJECTIVES.map((obj, idx) => (
-                    <LabarileObjectiveCard key={idx} {...obj} />
-                  ))}
+                  <LabarileObjectiveCard
+                    title={`Croissance CA: ${currentScenario.growth} vs Q4×4`}
+                    description={`Atteindre ${currentScenario.total2026.toLocaleString()}k AED en 2026 avec une croissance progressive. Passer de 435k/mois à ${avgMonthly}k/mois en moyenne.`}
+                  />
+                  <LabarileObjectiveCard
+                    title={`Maintenir Marge EBITDA: ${currentScenario.margins.operating}%`}
+                    description={`Conserver la structure de coûts excellente (53.7% en Q4 2025) tout en scalant le CA. EBITDA cible: ${Math.round(currentScenario.total2026 * currentScenario.margins.operating / 100).toLocaleString()}k AED.`}
+                  />
                 </div>
               </LabarileChartContainer>
 
               <div className="bg-gradient-to-br from-labarile-ice1 to-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
-                <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary mb-4 tracking-wide">🎯 Points Clés pour 2026</h3>
+                <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary mb-4 tracking-wide">🎯 Points Clés pour 2026 — {currentScenario.name}</h3>
                 <div className="space-y-3">
                   <div className="bg-labarile-white rounded-lg p-3">
                     <p className="text-sm"><strong className="text-labarile-success">🚀 Objectif {currentScenario.total2026.toLocaleString()} AED:</strong> Croissance de {currentScenario.growth} vs Q4 annualisé. Fort scaling requis : passer de 435k/mois à {avgMonthly}k/mois en moyenne 2026.</p>
                   </div>
                   <div className="bg-labarile-white rounded-lg p-3">
-                    <p className="text-sm"><strong className="text-labarile-primary">💰 Maintenir Excellence Opérationnelle:</strong> Marge Q4 2025 à 53.7% déjà supérieure à l'objectif 50%. Conserver cette structure de coûts tout en scalant le CA.</p>
+                    <p className="text-sm"><strong className="text-labarile-primary">💰 Maintenir Excellence Opérationnelle:</strong> Marge Q4 2025 à 53.7% — objectif {currentScenario.margins.operating}%. EBITDA visé: {Math.round(currentScenario.total2026 * currentScenario.margins.operating / 100).toLocaleString()}k AED.</p>
                   </div>
                 </div>
               </div>
