@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Menu } from 'lucide-react';
 
-// Labarile Components
 import { LabarileSidebar } from '@/components/dashboard/labarile/LabarileSidebar';
 import { LabarileHeader } from '@/components/dashboard/labarile/LabarileHeader';
 import { LabarileKPICard } from '@/components/dashboard/labarile/LabarileKPICard';
@@ -13,12 +12,16 @@ import { LabarileAlertCard } from '@/components/dashboard/labarile/LabarileAlert
 import { LabarileActionCard } from '@/components/dashboard/labarile/LabarileActionCard';
 import { LabarileDataTable } from '@/components/dashboard/labarile/LabarileDataTable';
 import { LabarileObjectiveCard } from '@/components/dashboard/labarile/LabarileObjectiveCard';
+import { LabarileBreakdownPage } from '@/components/dashboard/labarile/LabarileBreakdownPage';
+import { LabarileCostsPage } from '@/components/dashboard/labarile/LabarileCostsPage';
+import { LabarileTreasuryPage } from '@/components/dashboard/labarile/LabarileTreasuryPage';
+import { LabarileTaxesPage } from '@/components/dashboard/labarile/LabarileTaxesPage';
+import { LabarileConfigPage } from '@/components/dashboard/labarile/LabarileConfigPage';
 import { 
   LabarileMainRevenueChart, 
   LabarileDonutChart, 
   LabarileEvolutionChart,
   LabarileServicesMixChart,
-  LabarileCostsChart,
   LabarileMarginsChart
 } from '@/components/dashboard/labarile/LabarileCharts';
 import { 
@@ -27,6 +30,8 @@ import {
   ALERTS, 
   ACTIONS, 
   OBJECTIVES,
+  QUARTER_COMPARISON_BASE,
+  OBJECTIVES_COMPARISON,
   Scenario
 } from '@/components/dashboard/labarile/LabarileData';
 
@@ -41,21 +46,25 @@ interface Company {
 const NAV_ITEMS = [
   { id: 'overview', label: "Vue d'Ensemble", icon: '📊' },
   { id: 'evolution', label: 'Évolution CA', icon: '📈' },
-  { id: 'services', label: 'CA par Services', icon: '🎯' },
+  { id: 'breakdown', label: 'Breakdown Ventes', icon: '🎯' },
   { id: 'costs', label: 'Charges & Coûts', icon: '💰' },
-  { id: 'margins', label: 'Marges & Rentabilité', icon: '💹' },
+  { id: 'treasury', label: 'Trésorerie & Dettes', icon: '💵' },
+  { id: 'taxes', label: 'Taxes & Provisions', icon: '🏛️' },
   { id: 'objectives', label: 'Objectifs 2026', icon: '🎖️' },
   { id: 'alerts', label: 'Alertes & Actions', icon: '⚠️' },
+  { id: 'config', label: 'Configuration', icon: '⚙️' },
 ];
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   overview: { title: "Vue d'Ensemble Financière", subtitle: "Q4 2025 • Données Ajustées" },
   evolution: { title: "Évolution du Chiffre d'Affaires", subtitle: "Tendance mensuelle 2026" },
-  services: { title: "Répartition CA par Services", subtitle: "Mix produits et scalabilité" },
-  costs: { title: "Charges & Structure de Coûts", subtitle: "Optimisation des coûts" },
-  margins: { title: "Marges & Rentabilité", subtitle: "Performance financière" },
+  breakdown: { title: "Breakdown Ventes Q4 2025", subtitle: "Performance closers & programmes" },
+  costs: { title: "Charges & Structure de Coûts", subtitle: "Détail mensuel Q4 2025" },
+  treasury: { title: "Trésorerie & Dettes", subtitle: "Position au 31/12/2025" },
+  taxes: { title: "Taxes & Provisions", subtitle: "Fiscalité Q4 2025 & Prévisions 2026" },
   objectives: { title: "Objectifs & Projections 2026", subtitle: "Plan stratégique" },
   alerts: { title: "Alertes & Actions Prioritaires", subtitle: "Points d'attention urgents" },
+  config: { title: "Configuration Dashboard", subtitle: "Scénarios & structure de charges" },
 };
 
 export default function DashboardLabarile() {
@@ -67,6 +76,7 @@ export default function DashboardLabarile() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scenario, setScenario] = useState('base');
   const [period, setPeriod] = useState('q4-2025');
+  const [, forceUpdate] = useState(0);
   const { toast } = useToast();
 
   const currentScenario: Scenario = SCENARIOS[scenario];
@@ -77,21 +87,12 @@ export default function DashboardLabarile() {
 
   const fetchCompany = async () => {
     try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', id)
-        .single();
-
+      const { data, error } = await supabase.from('companies').select('*').eq('id', id).single();
       if (error) throw error;
       setCompany(data);
     } catch (error) {
       console.error('Error fetching company:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les données',
-        variant: 'destructive',
-      });
+      toast({ title: 'Erreur', description: 'Impossible de charger les données', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -116,13 +117,11 @@ export default function DashboardLabarile() {
     );
   }
 
-  // Computed values
-  const ebitda2026 = Math.round(currentScenario.total2026 * currentScenario.margins.operating / 100);
   const avgMonthly = Math.round(currentScenario.total2026 / 12);
   const peakRevenue = Math.max(...currentScenario.forecast2026);
+  const ebitda2026 = Math.round(currentScenario.total2026 * currentScenario.margins.operating / 100);
   const scalability = currentScenario.servicesMix.collective + currentScenario.servicesMix.elearning;
 
-  // Donut data
   const servicesDonutData = [
     { name: 'Coaching Individuel', value: currentScenario.servicesMix.individual, color: '#7CC9CC' },
     { name: 'Coaching Collectif', value: currentScenario.servicesMix.collective, color: '#4EB79F' },
@@ -141,253 +140,153 @@ export default function DashboardLabarile() {
 
   return (
     <div className="min-h-screen bg-labarile-light-gray flex">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setSidebarOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-labarile-white border border-labarile-border rounded-lg shadow-sm"
-      >
+      <button onClick={() => setSidebarOpen(true)} className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-labarile-white border border-labarile-border rounded-lg shadow-sm">
         <Menu className="w-5 h-5 text-labarile-text" />
       </button>
 
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {sidebarOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out
-        lg:translate-x-0 lg:static lg:z-20
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      <div className={`fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-20 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <LabarileSidebar
           companyName={company.name}
           logoUrl={company.logo_url}
           navItems={NAV_ITEMS}
           activePage={activePage}
-          onPageChange={(page) => {
-            setActivePage(page);
-            setSidebarOpen(false);
-          }}
+          onPageChange={(page) => { setActivePage(page); setSidebarOpen(false); }}
           onBack={() => navigate('/')}
           onClose={() => setSidebarOpen(false)}
         />
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 lg:ml-0 min-w-0">
-        {/* Header */}
-        <LabarileHeader
-          title={pageInfo.title}
-          subtitle={pageInfo.subtitle}
-          scenario={scenario}
-          onScenarioChange={setScenario}
-          period={period}
-          onPeriodChange={setPeriod}
-        />
+        <LabarileHeader title={pageInfo.title} subtitle={pageInfo.subtitle} scenario={scenario} onScenarioChange={setScenario} period={period} onPeriodChange={setPeriod} />
 
-        {/* Page Content */}
         <main className="p-4 lg:p-8 xl:p-10 max-w-[1600px]">
-          {/* Overview Page */}
+          {/* Overview */}
           {activePage === 'overview' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
-              {/* KPI Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard
-                  label="Run Rate Annualisé"
-                  value="5,008 kAED"
-                  subtext="Basé sur Q4 2025"
-                />
-                <LabarileKPICard
-                  label="CA Total Q4 2025"
-                  value="1,252 kAED"
-                  subtext="-64 kAED ajustements"
-                  variant="primary"
-                />
-                <LabarileKPICard
-                  label="CA 2026 Prévu"
-                  value={`${currentScenario.total2026.toLocaleString()} kAED`}
-                  subtext={`${currentScenario.growth} vs 2025`}
-                  variant="success"
-                />
-                <LabarileKPICard
-                  label="Marge EBITDA Q4"
-                  value="37.5%"
-                  subtext="Objectif: 35%"
-                  variant="success"
-                />
+                <LabarileKPICard label="Run Rate Annualisé" value="5,008 kAED" subtext="Basé sur Q4 2025" />
+                <LabarileKPICard label="CA Total Q4 2025" value="1,305 kAED" subtext="-64 kAED ajustements" variant="primary" />
+                <LabarileKPICard label="CA 2026 Prévu" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext={`Objectif 2026`} variant="success" />
+                <LabarileKPICard label="Marge EBITDA Q4" value="53.7%" subtext="Objectif 2026: 50%" variant="success" />
               </div>
 
-              {/* Main Revenue Chart */}
-              <LabarileChartContainer title="Évolution CA Mensuel Q4 2025 & Projections 2026" tall>
+              <LabarileChartContainer title="Évolution CA Mensuel Q4 2025 & Prévisionnel 2026" tall>
                 <LabarileMainRevenueChart scenario={currentScenario} />
               </LabarileChartContainer>
 
-              {/* Two Charts Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                <LabarileChartContainer title="Répartition CA par Service">
-                  <LabarileDonutChart data={servicesDonutData} />
-                </LabarileChartContainer>
+              <LabarileChartContainer title="Structure des Coûts Moyenne Q4 2025">
+                <LabarileDonutChart data={costsDonutData} />
+              </LabarileChartContainer>
 
-                <LabarileChartContainer title="Structure des Coûts">
-                  <LabarileDonutChart data={costsDonutData} />
-                </LabarileChartContainer>
-              </div>
-
-              {/* Data Table */}
               <LabarileDataTable data={Q4_DATA} />
             </div>
           )}
 
-          {/* Evolution Page */}
+          {/* Evolution */}
           {activePage === 'evolution' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard
-                  label="CA Total 2026"
-                  value={`${currentScenario.total2026.toLocaleString()} kAED`}
-                  variant="primary"
-                />
-                <LabarileKPICard
-                  label="Croissance vs 2025"
-                  value={currentScenario.growth}
-                  variant="success"
-                />
-                <LabarileKPICard
-                  label="CA Moyen Mensuel 2026"
-                  value={`${avgMonthly} kAED`}
-                />
-                <LabarileKPICard
-                  label="Pic de CA Prévu"
-                  value={`${peakRevenue} kAED`}
-                />
+                <LabarileKPICard label="CA Prévisionnel 2026" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext="Objectif retenu" variant="primary" />
+                <LabarileKPICard label="Q4 2025 Référence" value="1,305 kAED" subtext="Réel ajusté" />
+                <LabarileKPICard label="CA Moyen Mensuel 2026" value={`${avgMonthly} kAED`} subtext="vs 435k Q4 2025" />
+                <LabarileKPICard label="Croissance Requise" value={currentScenario.growth} subtext="vs Q4×4 annualisé" variant="warning" />
               </div>
 
-              <LabarileChartContainer title="Évolution Détaillée CA 2026" tall>
+              <LabarileChartContainer title="Évolution Prévisionnel CA 2026" tall>
                 <LabarileEvolutionChart scenario={currentScenario} />
               </LabarileChartContainer>
-            </div>
-          )}
 
-          {/* Services Page */}
-          {activePage === 'services' && (
-            <div className="space-y-6 lg:space-y-8 animate-fade-in">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard
-                  label="Coaching Individuel"
-                  value={`${currentScenario.servicesMix.individual}%`}
-                  variant="primary"
-                />
-                <LabarileKPICard
-                  label="Coaching Collectif"
-                  value={`${currentScenario.servicesMix.collective}%`}
-                  variant="success"
-                />
-                <LabarileKPICard
-                  label="E-learning"
-                  value={`${currentScenario.servicesMix.elearning}%`}
-                />
-                <LabarileKPICard
-                  label="Scalabilité"
-                  value={`${scalability}%`}
-                  subtext="Collectif + E-learning"
-                  variant="success"
-                />
+              {/* Quarter Comparison Table */}
+              <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
+                <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary mb-4 tracking-wide">📊 Comparaison Quarters 2026 vs Q4 2025</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-labarile-ice1">
+                        <th className="px-3 py-2 text-left text-xs font-bold border-b-2 border-labarile-border">Période</th>
+                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">CA Prévu</th>
+                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Q4 2025 Ref</th>
+                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Écart</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {QUARTER_COMPARISON_BASE.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-labarile-light-gray">
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{row.period}</td>
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.caPrev}</td>
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.q4Ref}</td>
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right text-labarile-success">{row.ecart}</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-labarile-ice1">
+                        <td className="px-3 py-2 text-sm font-bold">TOTAL 2026</td>
+                        <td className="px-3 py-2 text-sm text-right font-bold">10,000 kAED</td>
+                        <td className="px-3 py-2 text-sm text-right font-bold">5,220 kAED (Q4×4)</td>
+                        <td className="px-3 py-2 text-sm text-right font-bold text-labarile-success">+4,780k (+92%)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <LabarileChartContainer title="Mix Services par Scénario" tall>
-                <LabarileServicesMixChart />
-              </LabarileChartContainer>
-            </div>
-          )}
-
-          {/* Costs Page */}
-          {activePage === 'costs' && (
-            <div className="space-y-6 lg:space-y-8 animate-fade-in">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard
-                  label="Total Charges Q4"
-                  value="782 kAED"
-                />
-                <LabarileKPICard
-                  label="Coût Coaches"
-                  value={`${currentScenario.costs.coaches}%`}
-                  variant="warning"
-                />
-                <LabarileKPICard
-                  label="Marketing"
-                  value={`${currentScenario.costs.marketing}%`}
-                  variant="primary"
-                />
-                <LabarileKPICard
-                  label="Stripe / PSP"
-                  value={`${currentScenario.costs.stripe}%`}
-                />
+              <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-5">
+                <p className="font-bold text-sm text-emerald-700 mb-2">💡 Insight Clé:</p>
+                <p className="text-sm text-labarile-text leading-relaxed">
+                  L'objectif 10M AED représente un doublement du CA (+92% vs Q4 annualisé). Accélération progressive requise : 833k/mois en moyenne vs 435k/mois Q4 2025. Une structure de coûts maîtrisée (marge 53.7% Q4) offre une base solide pour ce scaling ambitieux.
+                </p>
               </div>
-
-              <LabarileChartContainer title="Structure des Coûts par Scénario" tall>
-                <LabarileCostsChart />
-              </LabarileChartContainer>
             </div>
           )}
 
-          {/* Margins Page */}
-          {activePage === 'margins' && (
-            <div className="space-y-6 lg:space-y-8 animate-fade-in">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard
-                  label="EBITDA 2026"
-                  value={`${ebitda2026.toLocaleString()} kAED`}
-                  variant="success"
-                />
-                <LabarileKPICard
-                  label="Marge Brute"
-                  value={`${currentScenario.margins.gross}%`}
-                  variant="primary"
-                />
-                <LabarileKPICard
-                  label="Marge Opérationnelle"
-                  value={`${currentScenario.margins.operating}%`}
-                  variant="success"
-                />
-                <LabarileKPICard
-                  label="EBITDA Mensuel Moyen"
-                  value={`${Math.round(ebitda2026 / 12)} kAED`}
-                />
-              </div>
+          {/* Breakdown Ventes */}
+          {activePage === 'breakdown' && <LabarileBreakdownPage />}
 
-              <LabarileChartContainer title="Comparaison Marges par Scénario" tall>
-                <LabarileMarginsChart />
-              </LabarileChartContainer>
-            </div>
-          )}
+          {/* Costs */}
+          {activePage === 'costs' && <LabarileCostsPage scenario={currentScenario} />}
 
-          {/* Objectives Page */}
+          {/* Treasury */}
+          {activePage === 'treasury' && <LabarileTreasuryPage />}
+
+          {/* Taxes */}
+          {activePage === 'taxes' && <LabarileTaxesPage />}
+
+          {/* Objectives */}
           {activePage === 'objectives' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard
-                  label="Objectif CA 2026"
-                  value={`${currentScenario.total2026.toLocaleString()} kAED`}
-                  variant="primary"
-                />
-                <LabarileKPICard
-                  label="Progression Requise"
-                  value={currentScenario.growth}
-                  variant="success"
-                />
-                <LabarileKPICard
-                  label="Objectif Marge Op."
-                  value={`${currentScenario.margins.operating}%`}
-                />
-                <LabarileKPICard
-                  label="Mois Restants"
-                  value="12"
-                  subtext="Toute l'année 2026"
-                />
+                <LabarileKPICard label="Q4 2025 Annualisé (x4)" value="5,221 kAED" subtext="Référence performance Q4" />
+                <LabarileKPICard label="Objectif CA 2026" value={`${currentScenario.total2026.toLocaleString()} kAED`} subtext="Scénario retenu" variant="primary" />
+                <LabarileKPICard label="Progression vs Q4x4" value="+92%" subtext="+4,779k AED supplémentaires" variant="success" />
+                <LabarileKPICard label="Objectif Marge" value="50%" subtext="vs 53.7% Q4 2025" variant="success" />
+              </div>
+
+              {/* Comparison Table */}
+              <div className="bg-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
+                <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary mb-4 tracking-wide">📊 Comparaison Q4 2025 (×4) vs Objectifs 2026</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-labarile-ice1">
+                        <th className="px-3 py-2 text-left text-xs font-bold border-b-2 border-labarile-border">Métrique</th>
+                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Q4 2025 ×4</th>
+                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Objectif 2026</th>
+                        <th className="px-3 py-2 text-right text-xs font-bold border-b-2 border-labarile-border">Écart</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {OBJECTIVES_COMPARISON.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-labarile-light-gray">
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border font-semibold">{row.metrique}</td>
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.q4x4}</td>
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right">{row.objectif2026}</td>
+                          <td className="px-3 py-2 text-sm border-b border-labarile-border text-right text-labarile-success font-semibold">{row.ecart}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <LabarileChartContainer title="🎯 Objectifs Stratégiques 2026">
@@ -397,49 +296,48 @@ export default function DashboardLabarile() {
                   ))}
                 </div>
               </LabarileChartContainer>
-            </div>
-          )}
 
-          {/* Alerts Page */}
-          {activePage === 'alerts' && (
-            <div className="space-y-6 lg:space-y-8 animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-                {/* Alerts Column */}
-                <div>
-                  <h3 className="font-bebas text-xl lg:text-2xl text-labarile-title mb-4 lg:mb-6 tracking-wide">
-                    ⚠️ Alertes Opérationnelles
-                  </h3>
-                  <div className="space-y-4">
-                    {ALERTS.map((alert, idx) => (
-                      <LabarileAlertCard 
-                        key={idx} 
-                        type={alert.type as 'warning' | 'critical'} 
-                        title={alert.title} 
-                        description={alert.description} 
-                      />
-                    ))}
+              <div className="bg-gradient-to-br from-labarile-ice1 to-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
+                <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary mb-4 tracking-wide">🎯 Points Clés pour 2026</h3>
+                <div className="space-y-3">
+                  <div className="bg-labarile-white rounded-lg p-3">
+                    <p className="text-sm"><strong className="text-labarile-success">🚀 Objectif Ambitieux 10M AED:</strong> Nécessite doubler le CA (+92% vs Q4 annualisé). Fort scaling requis : passer de 435k/mois à 833k/mois en moyenne 2026.</p>
                   </div>
-                </div>
-
-                {/* Actions Column */}
-                <div>
-                  <h3 className="font-bebas text-xl lg:text-2xl text-labarile-title mb-4 lg:mb-6 tracking-wide">
-                    🎯 Actions Recommandées
-                  </h3>
-                  <div className="space-y-4">
-                    {ACTIONS.map((action, idx) => (
-                      <LabarileActionCard 
-                        key={idx}
-                        priority={action.priority as 'critical' | 'haute' | 'moyenne'}
-                        icon={action.icon}
-                        title={action.title}
-                        description={action.description}
-                      />
-                    ))}
+                  <div className="bg-labarile-white rounded-lg p-3">
+                    <p className="text-sm"><strong className="text-labarile-primary">💰 Maintenir Excellence Opérationnelle:</strong> Marge Q4 2025 à 53.7% déjà supérieure à l'objectif 50%. Conserver cette structure de coûts tout en scalant le CA.</p>
                   </div>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Alerts */}
+          {activePage === 'alerts' && (
+            <div className="space-y-6 lg:space-y-8 animate-fade-in">
+              <div className="bg-labarile-ice1 rounded-xl p-8 text-center">
+                <h3 className="font-bebas text-2xl text-labarile-primary mb-4">⚠️ Alertes & Actions</h3>
+                <p className="text-labarile-muted">Cette section sera configurée selon vos priorités lors de la réunion.</p>
+              </div>
+
+              <div className="bg-labarile-white rounded-xl p-5 border-2 border-dashed border-labarile-border">
+                <h4 className="font-bebas text-lg text-labarile-title mb-3">📝 Notes - Alertes à Définir</h4>
+                <textarea 
+                  className="w-full min-h-[200px] p-4 border border-labarile-border rounded-lg font-sans text-sm resize-y focus:outline-none focus:border-labarile-primary"
+                  placeholder="Utilisez cet espace pour noter les alertes prioritaires pendant la réunion..."
+                />
+              </div>
+
+              <div className="bg-amber-50 border-l-4 border-l-amber-500 rounded-lg p-5">
+                <p className="text-sm text-labarile-muted">
+                  <strong className="text-amber-700">💡 Suggestion:</strong> Utilisez cette page pour tracker les actions prioritaires identifiées lors de vos réunions stratégiques.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Config */}
+          {activePage === 'config' && (
+            <LabarileConfigPage onScenariosUpdate={() => forceUpdate(n => n + 1)} />
           )}
         </main>
       </div>
