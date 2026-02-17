@@ -49,7 +49,7 @@ export const MONTHS_2026 = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'A
 
 export const Q4_DATA = [
   { month: 'Oct 2025', ca: 491.3, ebitda: 255.9, margin: 52.1, status: 'Excellent' },
-  { month: 'Nov 2025', ca: 438.4, ebitda: 264.2, margin: 60.3, status: 'Excellent' },
+  { month: 'Nov 2025', ca: 438.4, ebitda: 265.5, margin: 60.6, status: 'Excellent' },
   { month: 'Dec 2025', ca: 375.5, ebitda: 181.4, margin: 48.3, status: 'Bon' },
 ];
 
@@ -134,7 +134,7 @@ export const MONTHLY_COSTS: MonthlyCostData[] = [
       '✅ IT & Tools (2.0% vs 3% prévu): 8.9k — dont iClosed 12k/an lissé à 1k/mois. Sous le prévu, bonne optimisation.',
       '✅ Admin (0.5% vs 10% prévu): Seulement Accounting & Audit 2.1k — excellente optimisation',
       '✅ Stripe (4.8%): Conforme',
-      '📌 Conclusion: Meilleur mois du Q4 en termes de marge. Charges totales 39.7% — marge EBITDA 60.3%.',
+      '📌 Conclusion: Meilleur mois du Q4 en termes de marge. Charges totales 39.4% — marge EBITDA 60.6%.',
     ]
   },
   {
@@ -167,7 +167,7 @@ export const COSTS_Q4_DETAIL = [
 
 export const COSTS_Q4_INSIGHTS = [
   { type: 'warning' as const, text: '⚠️ Octobre = Setup UAE — Charges exceptionnelles 171k (OSS + Legal) liées transfert Suisse→UAE' },
-  { type: 'success' as const, text: '✅ Structure de coûts saine — Marge EBITDA Q4: 53.7%. IT lissé (iClosed 1k/mois). Novembre meilleur mois : 60.3%' },
+  { type: 'success' as const, text: '✅ Structure de coûts saine — Marge EBITDA Q4: 53.7%. IT lissé (iClosed 1k/mois). Novembre meilleur mois : 60.6%' },
   { type: 'info' as const, text: '💡 Performance solide — CA 1.3M + marge >53% = base excellente pour scaling 2026' },
 ];
 
@@ -233,9 +233,9 @@ export const TAXES_Q4_DETAIL = [
 ];
 
 export const CT_BY_SCENARIO = [
-  { scenario: 'Prudent', ebitda: '2,273k', profit: '1,898k', ct: '171k', mensuel: '14k/mois' },
-  { scenario: 'Base', ebitda: '2,710k', profit: '2,335k', ct: '210k', mensuel: '18k/mois', highlight: true },
-  { scenario: 'Optimiste', ebitda: '3,447k', profit: '3,072k', ct: '276k', mensuel: '23k/mois' },
+  { scenario: 'Prudent', ebitda: '4,973k', profit: '4,598k', ct: '414k', mensuel: '34k/mois' },
+  { scenario: 'Base', ebitda: '5,850k', profit: '5,475k', ct: '493k', mensuel: '41k/mois', highlight: true },
+  { scenario: 'Optimiste', ebitda: '6,728k', profit: '6,353k', ct: '572k', mensuel: '48k/mois' },
 ];
 
 // Evolution Quarter Comparison
