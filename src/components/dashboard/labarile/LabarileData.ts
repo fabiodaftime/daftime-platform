@@ -307,9 +307,5 @@ export const OBJECTIVES = [
   {
     title: 'Maintenir Marge EBITDA: 50%',
     description: 'Conserver la structure de coûts excellente (53.7% en Q4 2025) tout en scalant le CA. Objectif conservateur à 50%.'
-  },
-  {
-    title: 'Scaling Coaching Collectif: 35%',
-    description: 'Meilleure scalabilité, marges supérieures, moins dépendant des coaches individuels'
   }
 ];
