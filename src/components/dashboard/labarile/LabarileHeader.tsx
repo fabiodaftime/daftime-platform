@@ -5,17 +5,13 @@ interface LabarileHeaderProps {
   subtitle: string;
   scenario: string;
   onScenarioChange: (scenario: string) => void;
-  period: string;
-  onPeriodChange: (period: string) => void;
 }
 
 export function LabarileHeader({
   title,
   subtitle,
   scenario,
-  onScenarioChange,
-  period,
-  onPeriodChange
+  onScenarioChange
 }: LabarileHeaderProps) {
   return (
     <header className="bg-labarile-white border-b border-labarile-border sticky top-0 z-50">
@@ -36,16 +32,6 @@ export function LabarileHeader({
             <option value="base">Scénario Base</option>
             <option value="prudent">Scénario Prudent</option>
             <option value="optimiste">Scénario Optimiste</option>
-          </select>
-          
-          <select
-            value={period}
-            onChange={(e) => onPeriodChange(e.target.value)}
-            className="px-3 lg:px-4 py-2 lg:py-2.5 border-[1.5px] border-labarile-border rounded-lg font-inter text-sm bg-labarile-white cursor-pointer hover:border-labarile-primary transition-colors focus:outline-none focus:border-labarile-primary"
-          >
-            <option value="q4-2025">Q4 2025</option>
-            <option value="2025">Année 2025</option>
-            <option value="2026">Projection 2026</option>
           </select>
         </div>
       </div>

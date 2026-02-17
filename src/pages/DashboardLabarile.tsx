@@ -74,7 +74,6 @@ export default function DashboardLabarile() {
   const [activePage, setActivePage] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scenario, setScenario] = useState('base');
-  const [period, setPeriod] = useState('q4-2025');
   const [, forceUpdate] = useState(0);
   const { toast } = useToast();
 
@@ -192,7 +191,7 @@ export default function DashboardLabarile() {
       </div>
 
       <div className="flex-1 lg:ml-0 min-w-0">
-        <LabarileHeader title={pageInfo.title} subtitle={pageInfo.subtitle} scenario={scenario} onScenarioChange={setScenario} period={period} onPeriodChange={setPeriod} />
+        <LabarileHeader title={pageInfo.title} subtitle={pageInfo.subtitle} scenario={scenario} onScenarioChange={setScenario} />
 
         <main className="p-4 lg:p-8 xl:p-10 max-w-[1600px]">
           {/* Overview */}
