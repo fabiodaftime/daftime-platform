@@ -331,6 +331,7 @@ export type Database = {
         | "prime_circle_agency"
         | "digit"
         | "prime_circle_group"
+        | "nexus_test"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -472,6 +473,7 @@ export const Constants = {
         "prime_circle_agency",
         "digit",
         "prime_circle_group",
+        "nexus_test",
       ],
     },
   },

@@ -20,6 +20,7 @@ import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
 import DashboardPrimeCircleAgency from "./pages/DashboardPrimeCircleAgency";
 import DashboardDigit from "./pages/DashboardDigit";
 import DashboardPCGroup from "./pages/DashboardPCGroup";
+import DashboardNexus from "./pages/DashboardNexus";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -130,6 +131,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardPCGroup />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-nexus/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardNexus />
                 </ProtectedRoute>
               } 
             />
