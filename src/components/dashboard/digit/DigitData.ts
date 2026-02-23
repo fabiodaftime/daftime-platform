@@ -160,7 +160,7 @@ export const spyKPIs = [
 
 export const spyVariableCosts = [
   { label: "Cost Product", value: "$11,250", sub: "67.2% du CA", type: "warning" },
-  { label: "COM Blink", value: "$1,812", sub: "10.8% du CA", type: "accent" },
+  { label: "COM Blink", value: "$1,813", sub: "10.8% du CA", type: "accent" },
   { label: "COM Sales", value: "$425", sub: "2.5% du CA", type: "success" },
 ];
 
