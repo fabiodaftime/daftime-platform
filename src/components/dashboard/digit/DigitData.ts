@@ -21,8 +21,8 @@ export const fmtF = (n: number) => "$" + n.toLocaleString();
 // Overview
 export const overviewKPIs = [
   { label: "CA Total", value: "$134,212", sub: "Chiffre d'affaires", type: "primary" },
-  { label: "Marge", value: "$46,641", sub: "KPI Principal", type: "success" },
-  { label: "Taux de Marge", value: "34.8%", sub: "Marge / CA", type: "accent" },
+  { label: "Marge", value: "$40,198", sub: "KPI Principal", type: "success" },
+  { label: "Taux de Marge", value: "30.0%", sub: "Marge / CA", type: "accent" },
   { label: "Nombre de Deals", value: "292", sub: "Total tous produits", type: "warning" },
   { label: "Setup", value: "233", sub: "80% des deals", type: "warning" },
   { label: "Ad Account", value: "34", sub: "12% des deals", type: "warning" },
@@ -37,18 +37,18 @@ export const waterfallOverview = [
   { label: "Sales Com", value: -3896, color: "accent" },
   { label: "Spy Product", value: -11250, color: "indigo" },
   { label: "Cost Salary", value: -25366, color: "neutral" },
-  { label: "Business Expenses", value: -2616, color: "neutralLight" },
-  { label: "Company Margin", value: 46641, color: "green" },
+  { label: "Fees & Autres", value: -3265, color: "neutralLight" },
+  { label: "Company Margin", value: 40198, color: "green" },
 ];
 
 export const economicSplit = [
-  { name: "Company Margin", value: 46641 },
+  { name: "Company Margin", value: 40198 },
   { name: "Provider Cost", value: 29708 },
   { name: "Blink Com", value: 14735 },
   { name: "Sales Com", value: 3896 },
   { name: "Spy Product", value: 11250 },
   { name: "Cost Salary", value: 25366 },
-  { name: "Autres", value: 2616 },
+  { name: "Fees & Autres", value: 3265 },
 ];
 
 export const chargesDetail = [
@@ -57,7 +57,7 @@ export const chargesDetail = [
   { label: "Commission Sales", value: "$3,896", sub: "Global $3,190 + SPY $425 + CT $281", color: D.accent },
   { label: "Spy Cost Product", value: "$11,250", sub: "Licences outils SPY", color: D.indigo },
   { label: "Cost Salary", value: "$25,366", sub: "Salaires fixes équipe", color: D.textSecondary },
-  { label: "Business Expenses", value: "$2,616", sub: "Tools, Refunds, Business Exp, Referral", color: D.textMuted },
+  { label: "Fees & Autres", value: "$3,265", sub: "Tools $422, Fees Bank/Crypto $1,177, Refunds $1,591, Referral $75", color: D.textMuted },
 ];
 
 // Revenue
@@ -96,7 +96,7 @@ export const costsKPIs = [
   { label: "Provider Cost", value: "$29,708", sub: "22.1% du CA", type: "warning" },
   { label: "Blink Commission", value: "$16,325", sub: "12.2% (incl. refunds $1,591)", type: "accent" },
   { label: "Commission Sales", value: "$3,896", sub: "2.9% du CA", type: "success" },
-  { label: "Marge", value: "$46,641", sub: "34.8% du CA", type: "primary" },
+  { label: "Marge", value: "$40,198", sub: "30.0% du CA", type: "primary" },
 ];
 
 export const blinkDetail = [
@@ -113,14 +113,14 @@ export const fullWaterfall = [
   { label: "Sales Com", value: -3896, color: "accent" },
   { label: "Spy Product", value: -11250, color: "indigo" },
   { label: "Cost Salary", value: -25366, color: "neutral" },
-  { label: "Business Expenses", value: -2616, color: "neutralLight" },
-  { label: "Company Margin", value: 46641, color: "green" },
+  { label: "Fees & Autres", value: -3265, color: "neutralLight" },
+  { label: "Company Margin", value: 40198, color: "green" },
 ];
 
 // Global Product (Digit Solution)
 export const globalKPIs = [
   { label: "CA", value: "$114,649", sub: "CA Total Digit Solution", type: "primary" },
-  { label: "Marge", value: "$40,848", sub: "35.6% du CA", type: "success" },
+  { label: "Marge", value: "$40,198", sub: "35.1% du CA", type: "success" },
   { label: "Total Deals", value: "267", sub: "233 Setup + 34 Ad Account", type: "accent" },
   { label: "Dépense Moy. / Client Global", value: "$429", sub: "Moyenne générale", type: "warning" },
 ];
@@ -138,15 +138,16 @@ export const globalVariableCosts = [
 
 export const globalFixedCosts = [
   { label: "Cost Salary", value: "$25,366", sub: "Salaires fixes équipe", type: "indigo" },
-  { label: "Tools", value: "$423", sub: "Logiciels & outils", type: "warning" },
-  { label: "Business Expenses", value: "$528", sub: "Frais divers", type: "warning" },
+  { label: "Tools", value: "$422", sub: "Logiciels & outils", type: "warning" },
+  { label: "Fees Bank/Crypto", value: "$1,177", sub: "Frais bancaires & crypto", type: "warning" },
   { label: "Refunds", value: "$1,591", sub: "Remboursements clients", type: "warning" },
+  { label: "Referral", value: "$75", sub: "Programme de parrainage", type: "warning" },
 ];
 
 export const globalSynthesis = [
   { label: "CA", value: "$114,649", sub: "Chiffre d'affaires", type: "primary" },
-  { label: "Total Cost", value: "$70,612", sub: "61.6% du CA", type: "warning" },
-  { label: "Marge", value: "$40,848", sub: "35.6% du CA", type: "success" },
+  { label: "Total Cost", value: "$71,261", sub: "62.1% du CA", type: "warning" },
+  { label: "Marge", value: "$40,198", sub: "35.1% du CA", type: "success" },
 ];
 
 // SPY Product
