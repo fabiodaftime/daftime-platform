@@ -83,6 +83,7 @@ export default function Dashboard() {
         digit: `/dashboard-digit/${id}`,
         prime_circle_group: `/dashboard-pc-group/${id}`,
         nexus_test: `/dashboard-nexus/${id}`,
+        hotel_x: `/dashboard-hotel-x/${id}`,
       };
       if (data?.layout_type && layoutRoutes[data.layout_type]) {
         navigate(layoutRoutes[data.layout_type], { replace: true });
