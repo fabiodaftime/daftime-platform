@@ -9,7 +9,7 @@ export const ENTITY_ROUTES = {
 export const overviewHero = [
   { label: "Chiffre d'Affaires Groupe", value: "$198,900", detail: "5 entités consolidées", color: "navy" },
   { label: "Marge Brute Groupe", value: "$89,607", detail: "45.0% du CA", color: "success" },
-  { label: "Résultat Net Groupe", value: "$84,547", detail: "Après frais holding", color: "gold" },
+  { label: "Résultat Net Holding", value: "$73,586", detail: "Après frais holding", color: "gold" },
   { label: "Transactions", value: "365", detail: "Toutes entités", color: "primary" },
 ];
 
