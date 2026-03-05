@@ -120,14 +120,13 @@ export function PCGroupHoldingTab() {
           </div>
         </div>
       </div>
-      </div>
 
       {/* Directors */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <div>
             <h3 className="pcg-section-title">👥 Répartition Dirigeants - Janvier 2026</h3>
-            <p className="pcg-section-subtitle">90% du résultat net groupe = $76,677</p>
+            <p className="pcg-section-subtitle">100% du résultat net holding = $73,586</p>
           </div>
         </div>
         <div className="pcg-section-body">
