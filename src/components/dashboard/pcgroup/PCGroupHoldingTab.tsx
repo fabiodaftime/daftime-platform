@@ -16,16 +16,16 @@ export function PCGroupHoldingTab() {
       </div>
 
       <div className="pcg-charts-row">
-        {/* Management Fees */}
+        {/* Remontées Filiales (90%) */}
         <div className="pcg-section">
           <div className="pcg-section-header">
             <div>
-              <h3 className="pcg-section-title">📥 Management Fees (Entrées Holding)</h3>
-              <p className="pcg-section-subtitle">Remontées des filiales</p>
+              <h3 className="pcg-section-title">📥 Remontées Filiales (90%)</h3>
+              <p className="pcg-section-subtitle">Quote-part bénéfice vers Holding</p>
             </div>
           </div>
           <div className="pcg-section-body">
-            <p className="pcg-table-subheader">Quote-part Bénéfice</p>
+            <p className="pcg-table-subheader">Bénéfice par entité (100%)</p>
             <table className="pcg-waterfall">
               <tbody>
                 {holdingManagementFees.map((r, i) => (
@@ -36,16 +36,17 @@ export function PCGroupHoldingTab() {
                 ))}
               </tbody>
             </table>
-            <div style={{ height: 16 }} />
-            <p className="pcg-table-subheader">Refacturation Compta/CFO ($3,430)</p>
+            <div style={{ height: 12 }} />
             <table className="pcg-waterfall">
               <tbody>
-                {holdingRefacturation.map((r, i) => (
-                  <tr key={i} className={r.type.startsWith('total') ? 'pcg-row-total' : ''}>
-                    <td className="pcg-row-label" style={r.type === 'muted' ? { color: '#94A3B8', fontStyle: 'italic' } : undefined}>{r.label}</td>
-                    <td className={`pcg-row-value ${r.type === 'muted' ? 'muted' : 'positive'}`}>{r.value}</td>
-                  </tr>
-                ))}
+                <tr>
+                  <td className="pcg-row-label">Réserves Filiales (10%)</td>
+                  <td className="pcg-row-value negative">-$8,961</td>
+                </tr>
+                <tr className="pcg-row-highlight">
+                  <td className="pcg-row-label"><strong>REMONTÉE HOLDING (90%)</strong></td>
+                  <td className="pcg-row-value positive">$80,646</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -71,23 +72,27 @@ export function PCGroupHoldingTab() {
                   <td className="pcg-row-label">Salaire Assistante</td>
                   <td className="pcg-row-value negative">-$1,630</td>
                 </tr>
+                <tr>
+                  <td className="pcg-row-label">Salaires Fixes Sales</td>
+                  <td className="pcg-row-value negative">-$2,000</td>
+                </tr>
                 <tr className="pcg-row-total">
                   <td className="pcg-row-label">TOTAL FRAIS HOLDING</td>
-                  <td className="pcg-row-value negative">-$5,060</td>
+                  <td className="pcg-row-value negative">-$7,060</td>
                 </tr>
               </tbody>
             </table>
             <div style={{ height: 16 }} />
-            <p className="pcg-table-subheader">Salaires Management (90% résultat net)</p>
+            <p className="pcg-table-subheader">Salaires Management (100% résultat net)</p>
             <table className="pcg-waterfall">
               <tbody>
                 <tr>
                   <td className="pcg-row-label">Maxence (37.5%)</td>
-                  <td className="pcg-row-value negative">-$28,754</td>
+                  <td className="pcg-row-value negative">-$27,595</td>
                 </tr>
                 <tr>
                   <td className="pcg-row-label">Thibault (37.5%)</td>
-                  <td className="pcg-row-value negative">-$28,754</td>
+                  <td className="pcg-row-value negative">-$27,595</td>
                 </tr>
                 <tr>
                   <td className="pcg-row-label" style={{ paddingLeft: '1.5rem', fontSize: '0.85rem', color: '#64748b' }}>↳ dont Will</td>
@@ -95,11 +100,11 @@ export function PCGroupHoldingTab() {
                 </tr>
                 <tr>
                   <td className="pcg-row-label">Florian (25%)</td>
-                  <td className="pcg-row-value negative">-$19,169</td>
+                  <td className="pcg-row-value negative">-$18,396</td>
                 </tr>
                 <tr className="pcg-row-total">
                   <td className="pcg-row-label">TOTAL SALAIRES</td>
-                  <td className="pcg-row-value negative">-$76,677</td>
+                  <td className="pcg-row-value negative">-$73,586</td>
                 </tr>
               </tbody>
             </table>
@@ -107,13 +112,14 @@ export function PCGroupHoldingTab() {
             <table className="pcg-waterfall">
               <tbody>
                 <tr className="pcg-row-highlight">
-                  <td className="pcg-row-label"><strong>RÉSERVES HOLDING (10%)</strong></td>
-                  <td className="pcg-row-value">$8,520</td>
+                  <td className="pcg-row-label"><strong>SOLDE HOLDING</strong></td>
+                  <td className="pcg-row-value">$0</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Directors */}
