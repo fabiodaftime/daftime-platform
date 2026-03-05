@@ -18,7 +18,7 @@ const tabs = [
   { id: 'digit', icon: '⚡', label: 'Digit Solution', amount: '$40.8K' },
   { id: 'spy', icon: '🔍', label: 'SPY', amount: '$3.3K' },
   { id: 'comment', icon: '💬', label: 'Comment', amount: '$2.5K' },
-  { id: 'holding', icon: '🏛️', label: 'Holding', amount: '$7.5K' },
+  { id: 'holding', icon: '🏛️', label: 'Holding', amount: '$73.6K' },
 ];
 
 export default function DashboardPCGroup() {

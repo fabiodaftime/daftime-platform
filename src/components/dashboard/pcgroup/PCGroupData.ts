@@ -9,7 +9,7 @@ export const ENTITY_ROUTES = {
 export const overviewHero = [
   { label: "Chiffre d'Affaires Groupe", value: "$198,900", detail: "5 entités consolidées", color: "navy" },
   { label: "Marge Brute Groupe", value: "$89,607", detail: "45.0% du CA", color: "success" },
-  { label: "Résultat Net Groupe", value: "$84,547", detail: "Après frais holding", color: "gold" },
+  { label: "Résultat Net Holding", value: "$73,586", detail: "Après frais holding", color: "gold" },
   { label: "Transactions", value: "365", detail: "Toutes entités", color: "primary" },
 ];
 
@@ -96,17 +96,21 @@ export const consolidatedPL = [
   { label: 'Marge Nette Comment/Trustpilot', value: '$2,531', type: 'positive' },
   { label: 'MARGE BRUTE GROUPE', value: '$89,607', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
+  { label: 'Réserves Filiales (10%)', value: '-$8,961', type: 'negative' },
+  { label: 'REMONTÉE HOLDING (90%)', value: '$80,646', type: 'total-positive' },
+  { label: '', value: '', type: 'spacer' },
   { label: 'Compta + CFO Groupe', value: '-$3,430', type: 'negative' },
   { label: 'Salaire Assistante', value: '-$1,630', type: 'negative' },
-  { label: 'RÉSULTAT NET GROUPE', value: '$84,547', type: 'total-positive' },
+  { label: 'Salaires Fixes Sales', value: '-$2,000', type: 'negative' },
+  { label: 'RÉSULTAT NET HOLDING', value: '$73,586', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'Maxence (37.5%)', value: '-$28,535', type: 'negative' },
-  { label: 'Thibault (37.5%)', value: '-$28,535', type: 'negative' },
+  { label: 'Maxence (37.5%)', value: '-$27,595', type: 'negative' },
+  { label: 'Thibault (37.5%)', value: '-$27,595', type: 'negative' },
   { label: '↳ dont Will', value: '$10,000', type: 'indent-muted' },
-  { label: 'Florian (25%)', value: '-$19,023', type: 'negative' },
-  { label: 'SALAIRES MANAGEMENT (90%)', value: '-$76,092', type: 'total-negative' },
+  { label: 'Florian (25%)', value: '-$18,396', type: 'negative' },
+  { label: 'SALAIRES MANAGEMENT (100%)', value: '-$73,586', type: 'total-negative' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'RÉSERVES HOLDING (10%)', value: '$8,455', type: 'highlight' },
+  { label: 'SOLDE HOLDING', value: '$0', type: 'highlight' },
 ];
 
 export const pieData = [
@@ -287,10 +291,10 @@ export const commentComparison = [
 
 // Holding Tab
 export const holdingKPIs = [
-  { label: 'Résultat Net Groupe', value: '$84,547', detail: 'Après frais holding', color: 'navy' },
-  { label: 'Distribuable (90%)', value: '$76,092', detail: 'Salaires management', color: 'gold' },
-  { label: 'Réserves (10%)', value: '$8,455', detail: 'Trésorerie holding', color: 'green' },
-  { label: 'Frais Holding', value: '$5,060', detail: 'Compta + Assistante', color: 'pink' },
+  { label: 'Remontée Holding (90%)', value: '$80,646', detail: 'Bénéfices filiales', color: 'navy' },
+  { label: 'Résultat Net Holding', value: '$73,586', detail: '100% distribué', color: 'gold' },
+  { label: 'Réserves Filiales (10%)', value: '$8,961', detail: 'Trésorerie entités', color: 'green' },
+  { label: 'Frais Holding', value: '$7,060', detail: 'Compta + Assist. + Sales', color: 'pink' },
 ];
 
 export const holdingManagementFees = [
@@ -299,7 +303,7 @@ export const holdingManagementFees = [
   { label: 'Digit Solution', value: '$40,198', type: 'positive' },
   { label: 'SPY', value: '$3,262', type: 'positive' },
   { label: 'Comment/Trustpilot', value: '$2,531', type: 'positive' },
-  { label: 'TOTAL BÉNÉFICE', value: '$89,607', type: 'total-positive' },
+  { label: 'MARGE BRUTE GROUPE', value: '$89,607', type: 'total-positive' },
 ];
 
 export const holdingRefacturation = [
@@ -312,39 +316,44 @@ export const holdingRefacturation = [
 export const holdingCharges = [
   { label: 'Compta + CFO Groupe', value: '-$3,430', type: 'negative' },
   { label: 'Salaire Assistante', value: '-$1,630', type: 'negative' },
-  { label: 'TOTAL FRAIS HOLDING', value: '-$5,060', type: 'total-negative' },
+  { label: 'Salaires Fixes Sales', value: '-$2,000', type: 'negative' },
+  { label: 'TOTAL FRAIS HOLDING', value: '-$7,060', type: 'total-negative' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'Maxence (37.5%)', value: '-$28,535', type: 'negative' },
-  { label: 'Thibault (37.5%)', value: '-$28,535', type: 'negative' },
+  { label: 'Maxence (37.5%)', value: '-$27,595', type: 'negative' },
+  { label: 'Thibault (37.5%)', value: '-$27,595', type: 'negative' },
   { label: '↳ dont Will', value: '$10,000', type: 'indent-muted' },
-  { label: 'Florian (25%)', value: '-$19,023', type: 'negative' },
-  { label: 'TOTAL SALAIRES', value: '-$76,092', type: 'total-negative' },
+  { label: 'Florian (25%)', value: '-$18,396', type: 'negative' },
+  { label: 'TOTAL SALAIRES', value: '-$73,586', type: 'total-negative' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'RÉSERVES HOLDING (10%)', value: '$8,455', type: 'highlight' },
+  { label: 'SOLDE HOLDING', value: '$0', type: 'highlight' },
 ];
 
 export const holdingSynthese = [
   { label: 'MARGE BRUTE GROUPE', value: '$89,607', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
+  { label: 'Réserves Filiales (10%)', value: '-$8,961', type: 'negative', indent: true },
+  { label: 'REMONTÉE HOLDING (90%)', value: '$80,646', type: 'total-positive' },
+  { label: '', value: '', type: 'spacer' },
   { label: 'Compta + CFO', value: '-$3,430', type: 'negative', indent: true },
   { label: 'Salaire Assistante', value: '-$1,630', type: 'negative', indent: true },
-  { label: 'RÉSULTAT NET', value: '$84,547', type: 'total-positive' },
+  { label: 'Salaires Fixes Sales', value: '-$2,000', type: 'negative', indent: true },
+  { label: 'RÉSULTAT NET HOLDING', value: '$73,586', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'Salaires management (90%)', value: '-$76,092', type: 'negative', indent: true },
+  { label: 'Salaires management (100%)', value: '-$73,586', type: 'negative', indent: true },
   { label: '↳ dont Will (via Thibault)', value: '$10,000', type: 'indent-muted', indent: true },
   { label: '', value: '', type: 'spacer' },
-  { label: 'RÉSERVES HOLDING (10%)', value: '$8,455', type: 'highlight' },
+  { label: 'SOLDE HOLDING', value: '$0', type: 'highlight' },
 ];
 
 export const holdingPieData = [
-  { name: 'Maxence ($28.5K)', value: 28535, color: '#1E3A5F' },
-  { name: 'Thibault ($28.5K)', value: 28535, color: '#2D4A6F' },
-  { name: 'Florian ($19.0K)', value: 19023, color: '#4F5BD5' },
-  { name: 'Réserves ($8.5K)', value: 8455, color: '#C9A227' },
+  { name: 'Maxence ($27.6K)', value: 27595, color: '#1E3A5F' },
+  { name: 'Thibault ($27.6K)', value: 27595, color: '#2D4A6F' },
+  { name: 'Florian ($18.4K)', value: 18396, color: '#4F5BD5' },
+  { name: 'Réserves Fil. ($9.0K)', value: 8961, color: '#C9A227' },
 ];
 
 export const directors = [
-  { name: 'Maxence', pct: '37.5%', amount: '$28,535', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', subtitle: '' },
-  { name: 'Thibault', pct: '37.5%', amount: '$28,535', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', subtitle: 'dont $10K Will' },
-  { name: 'Florian', pct: '25%', amount: '$19,023', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', subtitle: '' },
+  { name: 'Maxence', pct: '37.5%', amount: '$27,595', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', subtitle: '' },
+  { name: 'Thibault', pct: '37.5%', amount: '$27,595', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', subtitle: 'dont $10K Will' },
+  { name: 'Florian', pct: '25%', amount: '$18,396', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', subtitle: '' },
 ];
