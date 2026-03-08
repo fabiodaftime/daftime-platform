@@ -1,18 +1,18 @@
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
-import { serviceCategories, statusData, formatCurrency } from './PrimeCircleData';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Legend, Tooltip } from 'recharts';
+import { serviceCategories, formatCurrency } from './PrimeCircleData';
 
-const barColors = ['#1E56A0', '#17B169', '#4A90D9', '#F59E0B', '#22D17B'];
-const pieColors = ['#17B169', '#F59E0B'];
+const barColors = ['#1E56A0', '#17B169', '#4A90D9', '#7C3AED', '#F59E0B', '#8899A6'];
 
-const pieData = [
-  { name: `Completed (${formatCurrency(statusData.completed.amount)})`, value: statusData.completed.amount },
-  { name: `In Progress (${formatCurrency(statusData.inProgress.amount)})`, value: statusData.inProgress.amount }
+const trendData = [
+  { name: 'Customers', jan: 39, feb: 53 },
+  { name: 'Turnover (k$)', jan: 53.1, feb: 73.5 },
+  { name: 'Margin (k$)', jan: 40.5, feb: 53.3 },
 ];
 
 export function PrimeCircleCharts() {
   return (
     <>
-      <div className="pc-section-title">Analytics</div>
+      <div className="pc-section-title">Analytics — February 2026</div>
       <div className="pc-charts-grid">
         <div className="pc-chart-card">
           <h3>Revenue by Service Category</h3>
@@ -49,35 +49,25 @@ export function PrimeCircleCharts() {
         </div>
         
         <div className="pc-chart-card">
-          <h3>Service Status Distribution</h3>
+          <h3>Monthly Trend (Jan vs Feb)</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="45%"
-                innerRadius={70}
-                outerRadius={90}
-                dataKey="value"
-                paddingAngle={2}
-              >
-                {pieData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={pieColors[index]} />
-                ))}
-              </Pie>
-              <Legend 
-                verticalAlign="bottom"
-                formatter={(value) => <span style={{ color: '#536471', fontWeight: 600, fontSize: '12px' }}>{value}</span>}
+            <BarChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+              <XAxis 
+                dataKey="name"
+                tick={{ fill: '#536471', fontSize: 11, fontWeight: 600 }}
+                tickLine={false}
+                axisLine={false}
               />
-              <Tooltip 
-                formatter={(value: number) => [formatCurrency(value), 'Amount']}
-                contentStyle={{ 
-                  background: 'white', 
-                  border: '2px solid #B8C5CC',
-                  borderRadius: '4px'
-                }}
+              <YAxis 
+                tick={{ fill: '#536471', fontSize: 11, fontWeight: 600 }}
+                tickLine={false}
+                axisLine={false}
               />
-            </PieChart>
+              <Tooltip contentStyle={{ background: 'white', border: '2px solid #B8C5CC', borderRadius: '4px' }} />
+              <Legend wrapperStyle={{ paddingTop: 16, fontWeight: 600 }} />
+              <Bar dataKey="jan" name="January" fill="#B8C5CC" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="feb" name="February" fill="#1E56A0" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
