@@ -524,18 +524,103 @@
   margin-bottom: 16px;
 }
 
+/* YTD Section */
+.primecircle-dashboard .pc-ytd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-ytd-card {
+  background: linear-gradient(135deg, #1E3A5F 0%, #1E56A0 100%);
+  border-radius: 6px;
+  padding: 20px;
+  color: white;
+}
+
+.primecircle-dashboard .pc-ytd-card .pc-kpi-label { color: rgba(255,255,255,0.7); }
+.primecircle-dashboard .pc-ytd-card .pc-kpi-value { color: white; font-size: 28px; }
+.primecircle-dashboard .pc-ytd-card .pc-kpi-detail { color: rgba(255,255,255,0.6); }
+
+/* M-1 Comparison on KPI cards */
+.primecircle-dashboard .pc-kpi-comparison {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.primecircle-dashboard .pc-kpi-comparison.positive { color: var(--accent-green); }
+.primecircle-dashboard .pc-kpi-comparison.negative { color: var(--red); }
+.primecircle-dashboard .pc-kpi-comparison .label { color: var(--text-muted); font-weight: 500; }
+
+/* Monthly Comparison Table */
+.primecircle-dashboard .pc-comparison-card {
+  background: var(--bg-white);
+  border-radius: 6px;
+  padding: 24px;
+  border: 2px solid var(--border-sharp);
+  margin-bottom: 24px;
+}
+
+.primecircle-dashboard .pc-comparison-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-dark);
+}
+
+.primecircle-dashboard .pc-comparison-table { width: 100%; border-collapse: collapse; }
+.primecircle-dashboard .pc-comparison-table th,
+.primecircle-dashboard .pc-comparison-table td { padding: 12px 16px; text-align: left; }
+.primecircle-dashboard .pc-comparison-table th {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  border-bottom: 2px solid var(--border-sharp); background: var(--bg-primary);
+}
+.primecircle-dashboard .pc-comparison-table td { border-bottom: 1px solid var(--bg-primary); font-weight: 500; }
+.primecircle-dashboard .pc-month-label { font-weight: 700; color: var(--text-dark); }
+
+.primecircle-dashboard .pc-var-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 700;
+}
+.primecircle-dashboard .pc-var-badge.positive { background: rgba(23, 177, 105, 0.12); color: var(--accent-green); }
+.primecircle-dashboard .pc-var-badge.negative { background: rgba(220, 38, 38, 0.12); color: var(--red); }
+
+.primecircle-dashboard .pc-ytd-row { background: var(--bg-primary); font-weight: 700; }
+.primecircle-dashboard .pc-ytd-row td { border-bottom: none; }
+
+/* Cancelled badge */
+.primecircle-dashboard .pc-status-badge.cancelled {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--red);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
-  .primecircle-dashboard .pc-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .primecircle-dashboard .pc-kpi-grid,
+  .primecircle-dashboard .pc-ytd-grid { grid-template-columns: repeat(2, 1fr); }
   .primecircle-dashboard .pc-charts-grid,
   .primecircle-dashboard .pc-expenses-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
   .primecircle-dashboard .pc-container { padding: 16px; }
-  .primecircle-dashboard .pc-kpi-grid { grid-template-columns: 1fr; }
+  .primecircle-dashboard .pc-kpi-grid,
+  .primecircle-dashboard .pc-ytd-grid { grid-template-columns: 1fr; }
   .primecircle-dashboard .pc-header { flex-direction: column; gap: 16px; }
   .primecircle-dashboard .pc-header-left { flex-direction: column; }
   .primecircle-dashboard .pc-divider { display: none; }
   .primecircle-dashboard .pc-status-grid { grid-template-columns: 1fr; }
+  .primecircle-dashboard .pc-comparison-table { font-size: 12px; }
+  .primecircle-dashboard .pc-comparison-table th,
+  .primecircle-dashboard .pc-comparison-table td { padding: 8px; }
 }
