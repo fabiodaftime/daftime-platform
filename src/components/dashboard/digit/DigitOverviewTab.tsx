@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { D, overviewKPIs, waterfallOverview, economicSplit, chargesDetail, PIE_COLORS, fmt } from './DigitData';
+import { D, overviewKPIs, waterfallOverview, economicSplit, chargesDetail, comparisonM1, PIE_COLORS, fmt } from './DigitData';
 
 export function DigitOverviewTab() {
   const colorMap: Record<string, string> = {
@@ -16,6 +16,18 @@ export function DigitOverviewTab() {
     primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
   };
 
+  const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
+    <div className="digit-kpi-grid">
+      {items.map((kpi, i) => (
+        <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] || D.primary }}>
+          <div className="digit-metric-label">{kpi.label}</div>
+          <div className="digit-metric-value">{kpi.value}</div>
+          <div className="digit-metric-sub">{kpi.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div>
       <div className="digit-kpi-grid">
@@ -29,6 +41,10 @@ export function DigitOverviewTab() {
       </div>
 
       <h2 className="digit-section-title">Performance Globale</h2>
+
+      <h2 className="digit-section-title">📊 Comparaison avec M-1 (Janvier 2026)</h2>
+      {renderKPIs(comparisonM1)}
+
       <div className="digit-charts-grid">
         <div className="digit-chart-container">
           <div className="digit-chart-title">Waterfall : Du CA à la Marge</div>
