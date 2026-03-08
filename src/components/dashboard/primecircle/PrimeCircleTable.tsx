@@ -15,10 +15,10 @@ export function PrimeCircleTable() {
 
   return (
     <>
-      <div className="pc-section-title">Transactions</div>
+      <div className="pc-section-title">Transactions — February 2026</div>
       <div className="pc-table-card">
         <div className="pc-table-header">
-          <h3>All Services — January 2026</h3>
+          <h3>All Services — February 2026</h3>
           <div className="pc-table-filters">
             <button 
               className={`pc-filter-btn ${filter === 'all' ? 'active' : ''}`}
@@ -58,8 +58,8 @@ export function PrimeCircleTable() {
                 <td className="pc-customer-name">{t.name}</td>
                 <td><span className="pc-service-tag">{t.service}</span></td>
                 <td>
-                  <span className={`pc-status-badge ${t.status === 'Closed' ? 'completed' : 'progress'}`}>
-                    {t.status === 'Closed' ? 'Completed' : 'In Progress'}
+                  <span className={`pc-status-badge ${t.status === 'Closed' ? 'completed' : t.status === 'Cancelled' ? 'cancelled' : 'progress'}`}>
+                    {t.status === 'Closed' ? 'Completed' : t.status}
                   </span>
                 </td>
                 <td className="pc-amount turnover">{formatCurrency(t.turnover)}</td>

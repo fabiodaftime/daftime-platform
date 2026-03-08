@@ -25,7 +25,7 @@ export function PrimeCircleHeader() {
         <div className="pc-header-left">
           <div className="pc-logo">
             <div className="pc-logo-main">Prime <span className="italic">Circle</span></div>
-            <div className="pc-logo-sub">Structuring</div>
+            <div className="pc-logo-sub">Banking</div>
           </div>
           <div className="pc-divider"></div>
           <div className="pc-header-title">
@@ -33,7 +33,7 @@ export function PrimeCircleHeader() {
             <p className="subtitle">U.S. Business Infrastructure Performance</p>
           </div>
         </div>
-        <div className="pc-period-badge">January 2026</div>
+        <div className="pc-period-badge">February 2026</div>
       </header>
     </>
   );

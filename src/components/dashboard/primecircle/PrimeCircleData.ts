@@ -1,83 +1,122 @@
 export interface Transaction {
   name: string;
   service: string;
-  status: 'Closed' | 'In progress';
+  status: 'Closed' | 'In progress' | 'Cancelled';
   turnover: number;
   margin: number;
 }
 
 export const transactions: Transaction[] = [
-  { name: "roheet", service: "parker bank", status: "Closed", turnover: 600, margin: 600 },
-  { name: "crypto gg", service: "delete llc", status: "Closed", turnover: 250, margin: 100 },
-  { name: "Kabangu John", service: "ein", status: "Closed", turnover: 250, margin: 165 },
-  { name: "@fabusinesss", service: "physical address us", status: "Closed", turnover: 2000, margin: 800 },
-  { name: "mehdihere", service: "sokin", status: "Closed", turnover: 550, margin: 550 },
-  { name: "@ppninjawarrior", service: "physical address + itin", status: "Closed", turnover: 2500, margin: 1050 },
-  { name: "33 7 69 71 70 13", service: "physical address us", status: "Closed", turnover: 1600, margin: 400 },
-  { name: "mehdihere", service: "revolut business", status: "In progress", turnover: 850, margin: 850 },
-  { name: "262692287542", service: "physical address monthly", status: "Closed", turnover: 200, margin: 0 },
-  { name: "youssdx", service: "ITIN", status: "In progress", turnover: 500, margin: 375 },
-  { name: "@fabusinesss", service: "amex", status: "In progress", turnover: 2000, margin: 2000 },
-  { name: "33686899219", service: "physical address + amex", status: "In progress", turnover: 4000, margin: 2800 },
-  { name: "dorian padel", service: "llc add member", status: "Closed", turnover: 400, margin: 239 },
-  { name: "math9097", service: "amex", status: "In progress", turnover: 2000, margin: 2000 },
-  { name: "dorian padel", service: "revolut business", status: "In progress", turnover: 1164, margin: 1164 },
-  { name: "Thomas_X10", service: "LLC + slash", status: "Closed", turnover: 1700, margin: 1450 },
-  { name: "mehdi berthé", service: "LLC", status: "Closed", turnover: 400, margin: 150 },
-  { name: "33672221442", service: "LLC", status: "Closed", turnover: 800, margin: 550 },
-  { name: "mouni sali", service: "LLC + slash", status: "Closed", turnover: 2000, margin: 1750 },
-  { name: "49 176 47621526", service: "physical address us", status: "Closed", turnover: 2000, margin: 1000 },
-  { name: "tharun cham", service: "slash", status: "Closed", turnover: 699, margin: 699 },
-  { name: "mansome12", service: "revolut business", status: "In progress", turnover: 1000, margin: 1000 },
-  { name: "64278722056", service: "LLC", status: "Closed", turnover: 1000, margin: 750 },
-  { name: "naraniya9", service: "2 LLC", status: "Closed", turnover: 1200, margin: 700 },
-  { name: "gradynio", service: "2 LLC", status: "Closed", turnover: 2000, margin: 1500 },
-  { name: "447973180800", service: "LLC", status: "Closed", turnover: 1000, margin: 750 },
-  { name: "keti", service: "capital one", status: "In progress", turnover: 1499, margin: 1499 },
-  { name: "nickm", service: "revolut business", status: "Closed", turnover: 1000, margin: 1000 },
-  { name: "mxh09any", service: "LLC + slash", status: "Closed", turnover: 1600, margin: 1350 },
-  { name: "MCH", service: "LLC", status: "Closed", turnover: 1000, margin: 1000 },
-  { name: "Alexklaric", service: "amex", status: "In progress", turnover: 2000, margin: 2000 },
-  { name: "971563656551", service: "LLC + slash + airwallex", status: "In progress", turnover: 2500, margin: 2250 },
-  { name: "baki2x banking", service: "amex", status: "In progress", turnover: 2000, margin: 2000 },
-  { name: "lampardcfc", service: "physical address us", status: "Closed", turnover: 2000, margin: 1000 },
-  { name: "dorian padel", service: "physical address + amex", status: "In progress", turnover: 3400, margin: 2400 },
-  { name: "klasverr1", service: "LLC + slash", status: "Closed", turnover: 1400, margin: 1150 },
-  { name: "rodeste", service: "sokin", status: "In progress", turnover: 1000, margin: 1000 },
-  { name: "gradynio", service: "LLC", status: "Closed", turnover: 1100, margin: 780 },
-  { name: "33659881468", service: "LLC", status: "Closed", turnover: 800, margin: 550 }
+  { name: "jognib", service: "ocean payment", status: "Closed", turnover: 1700, margin: 900 },
+  { name: "Fabien3713", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "jonecosmo", service: "delete", status: "Cancelled", turnover: 0, margin: 0 },
+  { name: "naraniya9", service: "llc", status: "Closed", turnover: 600, margin: 450 },
+  { name: "jonecosmo", service: "2 llc", status: "Closed", turnover: 2000, margin: 1506 },
+  { name: "33789667628 / allan", service: "ITIN", status: "In progress", turnover: 500, margin: 375 },
+  { name: "kelyan rd", service: "ITIN", status: "In progress", turnover: 500, margin: 375 },
+  { name: "nickm", service: "airwallex", status: "Closed", turnover: 0, margin: 500 },
+  { name: "daroyo", service: "LLC + slash", status: "Closed", turnover: 2000, margin: 1750 },
+  { name: "tb_th", service: "parker bank", status: "In progress", turnover: 1000, margin: 1000 },
+  { name: "tb_th", service: "physical address us", status: "Closed", turnover: 3000, margin: 1800 },
+  { name: "Omer", service: "amex", status: "In progress", turnover: 2000, margin: 2000 },
+  { name: "sultan09999", service: "llc", status: "Closed", turnover: 700, margin: 550 },
+  { name: "Noam LeadGen", service: "llc", status: "Closed", turnover: 1200, margin: 884 },
+  { name: "972502122005", service: "ein", status: "Closed", turnover: 500, margin: 432 },
+  { name: "Franco Zamudio", service: "llc", status: "Closed", turnover: 500, margin: 250 },
+  { name: "@traffi_cx", service: "physical address + itin", status: "In progress", turnover: 6500, margin: 4900 },
+  { name: "mathvand26", service: "LLC + slash", status: "Closed", turnover: 1600, margin: 1350 },
+  { name: "mowgliofm / lorenzo", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "jonecosmo", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "petkii", service: "physical address us", status: "Closed", turnover: 2000, margin: 800 },
+  { name: "jaymcfee", service: "llc", status: "Closed", turnover: 1000, margin: 650 },
+  { name: "262692287542", service: "physical address monthly", status: "Closed", turnover: 230, margin: 0 },
+  { name: "fabianstin", service: "sokin", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "Sy aboubakri", service: "LLC + slash", status: "Closed", turnover: 2000, margin: 1300 },
+  { name: "mowgliofm / lorenzo", service: "physical address", status: "Closed", turnover: 1800, margin: 600 },
+  { name: "sultan09999", service: "slash", status: "Closed", turnover: 700, margin: 700 },
+  { name: "cranberryjohnny", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "aaron743", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "iwanichan07", service: "physical address", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "mathvand26", service: "physical address", status: "Closed", turnover: 2160, margin: 940 },
+  { name: "jonecosmo", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "imomer7", service: "physical address", status: "Closed", turnover: 2000, margin: 800 },
+  { name: "iwanichan07", service: "amex", status: "In progress", turnover: 2000, margin: 2000 },
+  { name: "33645660875 / hugo", service: "physical address + amex", status: "In progress", turnover: 3500, margin: 2300 },
+  { name: "Zine", service: "llc", status: "Closed", turnover: 800, margin: 550 },
+  { name: "Luke J", service: "ITIN", status: "In progress", turnover: 500, margin: 375 },
+  { name: "coinGEOX", service: "LLC + sokin", status: "In progress", turnover: 2000, margin: 1750 },
+  { name: "33668457341 / quentin", service: "llc", status: "Closed", turnover: 900, margin: 563 },
+  { name: "dottorMA", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "33783537478 Nathan", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "447537166223", service: "llc", status: "Closed", turnover: 700, margin: 450 },
+  { name: "nunobrito7", service: "physical address", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "imomer7", service: "amex", status: "In progress", turnover: 1500, margin: 1500 },
+  { name: "affsophro", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "piraterie_tpm", service: "llc", status: "Closed", turnover: 1210, margin: 946 },
+  { name: "Jonathan", service: "physical address", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "33670666750", service: "llc", status: "Closed", turnover: 700, margin: 450 },
+  { name: "Rog1004", service: "LLC + slash", status: "Closed", turnover: 1700, margin: 1450 },
+  { name: "Nathanyel Sebbane", service: "revolut business", status: "In progress", turnover: 1000, margin: 1000 },
+  { name: "33620601178 victor", service: "physical address + llc", status: "Closed", turnover: 2800, margin: 1800 },
+  { name: "18199519066", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "REF-43633T jaurés", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
 ];
 
 export const kpis = {
-  totalCustomers: 39,
-  totalTurnover: 53962,
-  totalMargin: 41371,
-  marginRate: 76.7,
-  completedServices: 26,
-  inProgressServices: 13,
-  avgPerCustomer: 1384
+  totalCustomers: 53,
+  totalTurnover: 73500,
+  totalMargin: 53296,
+  marginRate: 72.5,
+  completedServices: 41,
+  inProgressServices: 11,
+  cancelledServices: 1,
+  avgPerCustomer: 1387
 };
 
+// M-1 comparison (vs January)
+export const m1Comparison = {
+  customers: { jan: 39, feb: 53, diff: 14, pct: 35.9 },
+  turnover: { jan: 53112, feb: 73500, diff: 20388, pct: 38.4 },
+  margin: { jan: 40521, feb: 53296, diff: 12775, pct: 31.5 },
+  completed: { jan: 26, feb: 41, diff: 15, pct: 57.7 },
+};
+
+// YTD (Jan + Feb)
+export const ytdData = {
+  customers: 92,
+  turnover: 126612,
+  margin: 93817,
+  marginRate: 74.1,
+  costs: 32795,
+  costsPct: 25.9,
+  avgPerMonth: 63306,
+};
+
+// Monthly comparison table
+export const monthlyComparison = [
+  { month: 'January 2026', customers: 39, turnover: 53112, margin: 40521, marginRate: 76.3, ads: 2957, commission: 4137, varTurnover: null },
+  { month: 'February 2026', customers: 53, turnover: 73500, margin: 53296, marginRate: 72.5, ads: 4525, commission: 5498, varTurnover: 38.4 },
+];
+
 export const costs = {
-  advertising: 2690,
-  salesCommission: 4213,
-  referralCommission: 350,
-  events: 1000,
-  serviceCosts: 4338,
-  total: 12591
+  advertising: 4525,
+  salesCommission: 5498,
+  serviceCosts: 10181,
+  total: 20204
 };
 
 export const serviceCategories = [
-  { name: 'LLC Services', value: 19400 },
-  { name: 'Physical Addr. US', value: 17700 },
-  { name: 'AMEX', value: 8000 },
-  { name: 'Other Banking', value: 4848 },
-  { name: 'Revolut Biz', value: 4014 }
+  { name: 'LLC Services', value: 22610 },
+  { name: 'Physical Addr.', value: 20690 },
+  { name: 'LLC + Bundle', value: 15800 },
+  { name: 'AMEX', value: 5500 },
+  { name: 'Slash', value: 2700 },
+  { name: 'Other', value: 6200 },
 ];
 
 export const statusData = {
-  completed: { count: 26, amount: 30049 },
-  inProgress: { count: 13, amount: 23913 }
+  completed: { count: 41, amount: 52500 },
+  inProgress: { count: 11, amount: 21000 }
 };
 
 export const formatCurrency = (value: number) => {

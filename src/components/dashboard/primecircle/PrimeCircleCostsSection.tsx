@@ -3,7 +3,7 @@ import { costs, kpis, formatCurrency } from './PrimeCircleData';
 export function PrimeCircleCostsSection() {
   return (
     <>
-      <div className="pc-section-title">Costs & Profitability</div>
+      <div className="pc-section-title">Costs & Profitability — February 2026</div>
       <div className="pc-expenses-grid">
         <div className="pc-expenses-card">
           <h3>Costs Breakdown (included in Margin)</h3>
@@ -20,20 +20,6 @@ export function PrimeCircleCostsSection() {
               <span>Sales Commission (Nathan)</span>
             </div>
             <div className="pc-expense-amount negative">-{formatCurrency(costs.salesCommission)}</div>
-          </div>
-          <div className="pc-expense-row">
-            <div className="pc-expense-label">
-              <div className="pc-expense-icon">🤝</div>
-              <span>Referral Commission</span>
-            </div>
-            <div className="pc-expense-amount negative">-{formatCurrency(costs.referralCommission)}</div>
-          </div>
-          <div className="pc-expense-row">
-            <div className="pc-expense-label">
-              <div className="pc-expense-icon">🎪</div>
-              <span>Events</span>
-            </div>
-            <div className="pc-expense-amount negative">-{formatCurrency(costs.events)}</div>
           </div>
           <div className="pc-expense-row">
             <div className="pc-expense-label">

@@ -4,7 +4,7 @@ export function PrimeCircleStatusGrid() {
   return (
     <div className="pc-status-grid">
       <div className="pc-status-card">
-        <h3>Service Status</h3>
+        <h3>Service Status — February</h3>
         <div className="pc-status-item">
           <div className="pc-status-label">
             <span className="pc-status-dot completed"></span>
