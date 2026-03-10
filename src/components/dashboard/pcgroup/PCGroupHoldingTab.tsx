@@ -1,6 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { holdingKPIs, holdingManagementFees, holdingRefacturation, holdingSynthese, holdingPieData, directors } from './PCGroupData';
+import { holdingKPIs, holdingComparison, holdingManagementFees, holdingSynthese, holdingPieData, directors } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
+import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 
 export function PCGroupHoldingTab() {
   return (
@@ -15,118 +16,22 @@ export function PCGroupHoldingTab() {
         ))}
       </div>
 
-      <div className="pcg-charts-row">
-        {/* Remontées Filiales (90%) */}
-        <div className="pcg-section">
-          <div className="pcg-section-header">
-            <div>
-              <h3 className="pcg-section-title">📥 Remontées Filiales (90%)</h3>
-              <p className="pcg-section-subtitle">Quote-part bénéfice vers Holding</p>
-            </div>
-          </div>
-          <div className="pcg-section-body">
-            <p className="pcg-table-subheader">Bénéfice par entité (100%)</p>
-            <table className="pcg-waterfall">
-              <tbody>
-                {holdingManagementFees.map((r, i) => (
-                  <tr key={i} className={r.type.startsWith('total') ? 'pcg-row-total' : ''}>
-                    <td className="pcg-row-label">{r.label}</td>
-                    <td className={`pcg-row-value ${r.type === 'positive' || r.type === 'total-positive' ? 'positive' : ''}`}>{r.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ height: 12 }} />
-            <table className="pcg-waterfall">
-              <tbody>
-                <tr>
-                  <td className="pcg-row-label">Réserves Filiales (10%)</td>
-                  <td className="pcg-row-value negative">-$8,961</td>
-                </tr>
-                <tr className="pcg-row-highlight">
-                  <td className="pcg-row-label"><strong>REMONTÉE HOLDING (90%)</strong></td>
-                  <td className="pcg-row-value positive">$80,646</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Charges */}
-        <div className="pcg-section">
-          <div className="pcg-section-header">
-            <div>
-              <h3 className="pcg-section-title">📤 Charges Holding</h3>
-              <p className="pcg-section-subtitle">Utilisation des fonds</p>
-            </div>
-          </div>
-           <div className="pcg-section-body">
-            <p className="pcg-table-subheader">Frais de structure</p>
-            <table className="pcg-waterfall">
-              <tbody>
-                <tr>
-                  <td className="pcg-row-label">Compta + CFO Groupe</td>
-                  <td className="pcg-row-value negative">-$3,430</td>
-                </tr>
-                <tr>
-                  <td className="pcg-row-label">Salaire Assistante</td>
-                  <td className="pcg-row-value negative">-$1,630</td>
-                </tr>
-                <tr>
-                  <td className="pcg-row-label">Salaires Fixes Sales</td>
-                  <td className="pcg-row-value negative">-$2,000</td>
-                </tr>
-                <tr className="pcg-row-total">
-                  <td className="pcg-row-label">TOTAL FRAIS HOLDING</td>
-                  <td className="pcg-row-value negative">-$7,060</td>
-                </tr>
-              </tbody>
-            </table>
-            <div style={{ height: 16 }} />
-            <p className="pcg-table-subheader">Salaires Management (100% résultat net)</p>
-            <table className="pcg-waterfall">
-              <tbody>
-                <tr>
-                  <td className="pcg-row-label">Maxence (37.5%)</td>
-                  <td className="pcg-row-value negative">-$27,595</td>
-                </tr>
-                <tr>
-                  <td className="pcg-row-label">Thibault (37.5%)</td>
-                  <td className="pcg-row-value negative">-$27,595</td>
-                </tr>
-                <tr>
-                  <td className="pcg-row-label" style={{ paddingLeft: '1.5rem', fontSize: '0.85rem', color: '#64748b' }}>↳ dont Will</td>
-                  <td className="pcg-row-value" style={{ fontSize: '0.85rem', color: '#64748b' }}>$10,000</td>
-                </tr>
-                <tr>
-                  <td className="pcg-row-label">Florian (25%)</td>
-                  <td className="pcg-row-value negative">-$18,396</td>
-                </tr>
-                <tr className="pcg-row-total">
-                  <td className="pcg-row-label">TOTAL SALAIRES</td>
-                  <td className="pcg-row-value negative">-$73,586</td>
-                </tr>
-              </tbody>
-            </table>
-            <div style={{ height: 16 }} />
-            <table className="pcg-waterfall">
-              <tbody>
-                <tr className="pcg-row-highlight">
-                  <td className="pcg-row-label"><strong>SOLDE HOLDING</strong></td>
-                  <td className="pcg-row-value">$0</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <PCGroupComparisonTable
+        title="📊 Comparatif M-1 Holding"
+        headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
+        rows={holdingComparison.map(r => ({
+          cells: [r.indicator, r.jan, r.feb, r.variation],
+          varIndex: 3,
+          varType: r.varType,
+        }))}
+      />
 
       {/* Directors */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <div>
-            <h3 className="pcg-section-title">👥 Répartition Dirigeants - Janvier 2026</h3>
-            <p className="pcg-section-subtitle">100% du résultat net holding = $73,586</p>
+            <h3 className="pcg-section-title">👥 Répartition Dirigeants - Février 2026</h3>
+            <p className="pcg-section-subtitle">100% du résultat net holding = $94,094</p>
           </div>
         </div>
         <div className="pcg-section-body">

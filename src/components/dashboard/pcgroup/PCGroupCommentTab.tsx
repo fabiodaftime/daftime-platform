@@ -1,4 +1,4 @@
-import { commentKPIs, commentWaterfall } from './PCGroupData';
+import { commentKPIs, commentWaterfall, commentWarning } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
 export function PCGroupCommentTab() {
@@ -14,8 +14,16 @@ export function PCGroupCommentTab() {
         ))}
       </div>
 
-      <div className="pcg-charts-row">
-        <PCGroupWaterfall data={commentWaterfall} title="💰 Waterfall Comment/Trustpilot" />
+      <div className="pcg-section">
+        <div className="pcg-section-header">
+          <h3 className="pcg-section-title">⚠️ Analyse Février</h3>
+        </div>
+        <div className="pcg-section-body">
+          <p style={{ color: '#F59E0B', fontWeight: 600, marginBottom: '1rem' }}>
+            {commentWarning}
+          </p>
+          <PCGroupWaterfall data={commentWaterfall} title="" />
+        </div>
       </div>
     </div>
   );

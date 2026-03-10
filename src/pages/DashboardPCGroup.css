@@ -634,6 +634,45 @@
   overflow: hidden;
 }
 
+/* Comparison Table */
+.pcg-comparison-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.pcg-comparison-table th { padding: 0.75rem 1rem; background: var(--pcg-bg); font-weight: 700; text-align: right; border-bottom: 2px solid var(--pcg-border-strong); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--pcg-text-muted); }
+.pcg-comparison-table th:first-child { text-align: left; }
+.pcg-comparison-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--pcg-border); text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; }
+.pcg-comparison-table td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+.pcg-comparison-total { background: var(--pcg-bg); font-weight: 700; }
+.pcg-comparison-total td { border-top: 2px solid var(--pcg-border-strong); }
+.pcg-var-positive { color: var(--pcg-success) !important; }
+.pcg-var-negative { color: var(--pcg-danger) !important; }
+
+/* Hero Variance Badge */
+.pcg-hero-var {
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 600;
+}
+.pcg-hero-var.positive { background: rgba(16, 185, 129, 0.1); color: var(--pcg-success); }
+.pcg-hero-var.negative { background: rgba(239, 68, 68, 0.1); color: var(--pcg-danger); }
+
+/* Reserve Cards */
+.pcg-reserve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.pcg-reserve-card {
+  background: linear-gradient(135deg, var(--pcg-navy) 0%, var(--pcg-navy-light) 100%);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: white;
+}
+.pcg-reserve-entity { font-size: 0.8rem; font-weight: 600; opacity: 0.8; margin-bottom: 0.5rem; }
+.pcg-reserve-amount { font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; }
+.pcg-reserve-detail { font-size: 0.7rem; opacity: 0.6; margin-top: 0.25rem; }
+
 /* Footer */
 .pcg-footer {
   text-align: center;
