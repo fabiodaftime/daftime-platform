@@ -19,110 +19,120 @@ export const fmt = (n: number) => {
   return "$" + n;
 };
 export const fmtF = (n: number) => "$" + n.toLocaleString();
+export const pctChg = (cur: number, prev: number) => {
+  if (!prev) return "N/A";
+  const d = ((cur - prev) / prev * 100).toFixed(0);
+  return (Number(d) > 0 ? "+" : "") + d + "%";
+};
 
+// ===== FEB DATA =====
 export const expenseBreakdown = [
-  { name: "Chris Referral", value: 2633 }, { name: "Setup Cost", value: 1300 },
-  { name: "Salary", value: 1200 }, { name: "Ads", value: 1038 }, { name: "Master Referral", value: 66 },
+  { name: "Ads", value: 6666 }, { name: "Setup Cost", value: 2500 },
+  { name: "Salary", value: 1200 }, { name: "Master Referral", value: 211 }, { name: "No Limit Referral", value: 30 },
 ];
 
 export const clientLifecycle = [
-  { status: "New", count: 21, color: C.green },
-  { status: "Trial", count: 20, color: C.orange },
+  { status: "New", count: 116, color: C.green },
   { status: "Renewed", count: 20, color: C.primary },
-  { status: "Upgraded", count: 1, color: C.purple },
+  { status: "Upgraded", count: 6, color: C.purple },
+  { status: "Trial", count: 3, color: C.orange },
 ];
 
 export const tierBreakdown = [
-  { tier: "Tier 1", count: 47 }, { tier: "Tier 2", count: 5 },
-  { tier: "Tier 3", count: 6 }, { tier: "Tier 6", count: 1 },
+  { tier: "Tier 1", count: 32 }, { tier: "Tier 2", count: 21 }, { tier: "Tier 3", count: 18 },
+  { tier: "Tier 4", count: 11 }, { tier: "Tier 5", count: 5 }, { tier: "Tier 6", count: 42 },
 ];
 
 export const topClientsRev = [
-  { name: "Stelio Audrey (098)", received: 15503, type: "CL", status: "Active", detail: "VIP - 2 CL payments" },
-  { name: "Don Dankowich (12)", received: 2938, type: "CL", status: "Stopped", detail: "New - CL media" },
-  { name: "Salmech (115)", received: 1960, type: "CL", status: "Active", detail: "Trial to Active" },
-  { name: "Deborah (42)", received: 1761, type: "CL", status: "Active", detail: "Renewed x3" },
-  { name: "Hugo VIP (58)", received: 1499, type: "CC", status: "Active", detail: "Tier 6 - $170K spend" },
-  { name: "Celementa (100)", received: 1343, type: "CL", status: "Active", detail: "Trial convert" },
-  { name: "Oscar (49)", received: 814, type: "CC", status: "Active", detail: "Renewed T3" },
-  { name: "Raphael (61)", received: 798, type: "CC", status: "Active", detail: "New T3" },
-  { name: "Lucas (43)", received: 699, type: "CC", status: "Active", detail: "Renewed" },
-  { name: "Jordan (91)", received: 682, type: "CC", status: "Active", detail: "New T2" },
+  { name: "Salmech (115)", received: 141328, type: "CL", status: "Active", detail: "Tier 6 - massive CL" },
+  { name: "8 Labs (127)", received: 92812, type: "CL", status: "Active", detail: "Tier 6 - new client" },
+  { name: "Stelio Audrey (098)", received: 60284, type: "CL", status: "Active", detail: "VIP - multi payments" },
+  { name: "Joel Lalazuelks (135)", received: 18440, type: "CL", status: "Active", detail: "Tier 4 - new" },
+  { name: "AY (130)", received: 8786, type: "CL", status: "Active", detail: "Tier 2>3 upgraded" },
+  { name: "Celementa (100)", received: 4576, type: "CL", status: "Active", detail: "Tier 2 multi" },
+  { name: "Hunter (125)", received: 3963, type: "CL", status: "Active", detail: "Tier 4 new" },
+  { name: "Bo (64)", received: 2776, type: "CC", status: "Active", detail: "Tier 3>4>6" },
+  { name: "Syed (78)", received: 2135, type: "CC", status: "Active", detail: "Tier 6 new" },
+  { name: "Sammy Ivan (139)", received: 1945, type: "CL", status: "Active", detail: "Tier 1 new" },
 ];
 
 export const topSpenders = [
-  { name: "Hugo (58) Tier 6", spend: 169965, pct: 60.8 },
-  { name: "Yolanda (94) Tier 1", spend: 21903, pct: 7.8 },
-  { name: "Lucas (43) Tier 4", spend: 17900, pct: 6.4 },
-  { name: "Miriano T (98) CL", spend: 16804, pct: 6.0 },
-  { name: "BO (64) Tier 3", spend: 10154, pct: 3.6 },
-  { name: "Oscar (49) Tier 3", spend: 9293, pct: 3.3 },
-  { name: "Raphael (61) Tier 3", spend: 9124, pct: 3.3 },
-  { name: "Jordan (91) Tier 2", spend: 6129, pct: 2.2 },
-  { name: "Ahmed (65) Tier 1", spend: 3542, pct: 1.3 },
-  { name: "Mateo (90) Tier 1", spend: 2787, pct: 1.0 },
+  { name: "Salmech (115) Tier 6", spend: 132012, pct: 25.6 },
+  { name: "Hugo (58) Tier 6", spend: 61449, pct: 11.9 },
+  { name: "BO (64) Tier 3-6", spend: 54887, pct: 10.6 },
+  { name: "Jordan (91) Tier 5", spend: 47405, pct: 9.2 },
+  { name: "Miriano T (98) CL", spend: 30204, pct: 5.9 },
+  { name: "Benjamin (141) Tier 6", spend: 21827, pct: 4.2 },
+  { name: "Joel (135) Tier 4", spend: 17334, pct: 3.4 },
+  { name: "Ladox (108) Tier 2", spend: 16264, pct: 3.2 },
+  { name: "8 Labs (127) Tier 6", spend: 16198, pct: 3.1 },
+  { name: "Mathias (48) Tier 3", spend: 14117, pct: 2.7 },
 ];
 
 export const currencyMix = [
-  { name: "USD", value: 247805 }, { name: "SEK", value: 21903 },
-  { name: "EUR", value: 6994 }, { name: "AED", value: 2787 }, { name: "Others", value: 203 },
+  { name: "USD", value: 398812 }, { name: "EUR", value: 84884 },
+  { name: "CHF", value: 21827 }, { name: "NOK", value: 8073 }, { name: "GBP", value: 1643 }, { name: "Others", value: 714 },
 ];
 
 export const newClientsDetail = [
-  { name: "Hugo (58)", sub: 1499, tier: "T6", type: "CC", note: "VIP biggest spender" },
-  { name: "Raphael (61)", sub: 499, tier: "T3", type: "CC", note: "2 ad accounts" },
-  { name: "Julius (68)", sub: 499, tier: "T3", type: "CL", note: "Master referral" },
-  { name: "Fellipe (87)", sub: 299, tier: "T2", type: "CC", note: "" },
-  { name: "Jordan (91)", sub: 299, tier: "T2", type: "CC", note: "$6K spend" },
-  { name: "Oussi (59)", sub: 299, tier: "T2", type: "CC", note: "" },
-  { name: "Lawrence (89)", sub: 299, tier: "T2", type: "CC", note: "" },
-  { name: "Edward (69)", sub: 199, tier: "T1", type: "CC", note: "Master ref" },
-  { name: "Kirin (96)", sub: 199, tier: "T1", type: "CC", note: "" },
-  { name: "Mateo (90)", sub: 199, tier: "T1", type: "CC", note: "$2.8K spend" },
-  { name: "Don Dankowich (12)", sub: 0, tier: "T1", type: "CL", note: "$2,938 CL - Stopped" },
-  { name: "Stelio (098)", sub: 0, tier: "---", type: "CL", note: "$15.5K received" },
+  { name: "Salmech (115)", sub: 1499, tier: "T6", type: "CL", note: "$141K received" },
+  { name: "8 Labs (127)", sub: 1499, tier: "T6", type: "CL", note: "$93K received" },
+  { name: "Hugo (58)", sub: 1499, tier: "T6", type: "CC", note: "Renewing VIP" },
+  { name: "Syed (78)", sub: 1499, tier: "T6", type: "CC", note: "Multiple setups" },
+  { name: "Bo (64)", sub: 1499, tier: "T3>6", type: "CC", note: "8 lines, upgraded" },
+  { name: "Jordan (91)", sub: 1199, tier: "T5", type: "CC", note: "5 lines" },
+  { name: "Joel (135)", sub: 799, tier: "T4", type: "CL", note: "$18K CL" },
+  { name: "Hunter (125)", sub: 799, tier: "T4", type: "CL", note: "$4K received" },
+  { name: "Stelio (098)", sub: 199, tier: "---", type: "CL", note: "$60K CL" },
+  { name: "Benjamin Centra (141)", sub: 1499, tier: "T6", type: "CC", note: "Master ref" },
 ];
 
-export const trialClients = [
-  { name: "Salmech (115)", converted: true, received: 1960, note: "CL - High value" },
-  { name: "Celementa (100)", converted: true, received: 1343, note: "CL - Active" },
-  { name: "FFC Sander (105)", converted: true, received: 199, note: "" },
-  { name: "FFC Gabrielle (103)", converted: true, received: 199, note: "Then New" },
-  { name: "FFC Kelly (107)", converted: true, received: 0, note: "Then New" },
-  { name: "FFC Amy (106)", converted: true, received: 0, note: "Then Renewed" },
-  { name: "Kirin (96)", converted: true, received: 0, note: "Then New $199" },
-  { name: "Sam (101)", converted: false, received: 0, note: "No payment" },
-  { name: "FFC Kemi (109)", converted: false, received: 0, note: "No payment" },
-  { name: "Florian (92)", converted: false, received: 0, note: "Stopped" },
-  { name: "Maduro (97)", converted: false, received: 0, note: "Stopped x2" },
-  { name: "Yolanda (94)", converted: false, received: 0, note: "Stopped x3 $22K spend!" },
-  { name: "Balli (55)", converted: false, received: 100, note: "Stopped" },
+// M-1 comparison
+export const janData = { gross: 10726, expenses: 6237, net: 4489, pcaShare: 2244, transactions: 62, mediaSpend: 279691 };
+export const febData = { gross: 35080, expenses: 10606, net: 24473, pcaShare: 12237, transactions: 145, mediaSpend: 515952 };
+export const ytdData = { gross: 45806, expenses: 16843, net: 28962, pcaShare: 14481 };
+
+export const monthlyTrend = [
+  { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691 },
+  { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952 },
 ];
 
 export const risks = [
-  { label: "Hugo = 60.8% du spend", desc: "Un seul client genere $170K de media spend. Depart = perte massive de volume.", severity: "high", icon: "🎯" },
-  { label: "20 Trials, conversion incertaine", desc: "32% des transactions sont des trials. Beaucoup n'ont pas paye.", severity: "high", icon: "🧪" },
-  { label: "Yolanda: $22K spend, $0 revenu", desc: "3 trials, toutes stopped. $21.9K de media spend en SEK sans paiement.", severity: "high", icon: "⚠️" },
-  { label: "CL Exposure: $21K", desc: "$21K de media avance sur comptes CL en janvier.", severity: "medium", icon: "💳" },
-  { label: "Referral costs en hausse", desc: "Chris referral: $2,633 (41.7% des depenses). Tendance croissante.", severity: "medium", icon: "📣" },
-  { label: "14 clients Stopped", desc: "23% des transactions Jan ont abouti a un arret.", severity: "medium", icon: "📉" },
-  { label: "FFC batch : 7 trials simultanes", desc: "Amy, Gabrielle, Jolene, Kelly, Sander, Kemi - pipeline fragile.", severity: "medium", icon: "🏭" },
+  { label: "Concentration Salmech", desc: "25.6% du media spend Feb ($132K). Concentration plus saine que Hugo en Jan (60.8%).", severity: "medium", icon: "🎯" },
+  { label: "CL Exposure croissante", desc: "$211K de media CL en Feb vs $21K en Jan (x10). Volume a surveiller.", severity: "high", icon: "💳" },
+  { label: "Marge Nette 69.8%", desc: "En forte hausse vs 41.8% en Jan. Portee par le volume CL a haute valeur.", severity: "low", icon: "📈" },
 ];
 
 export const waterfallRows = [
-  { l: "Subscriptions", v: 8074, bg: "primarySoft", b: false },
-  { l: "Setup Fees", v: 2787, bg: "primarySoft", b: false },
-  { l: "Discounts", v: -135, bg: null, b: false },
-  { l: "GROSS REVENUE", v: 10726, bg: "primarySoft", b: true },
-  { l: "", v: null, bg: null, b: false },
-  { l: "Setup Cost (agents)", v: -1300, bg: null, b: false },
-  { l: "Salary", v: -1200, bg: null, b: false },
-  { l: "Advertising", v: -1038, bg: null, b: false },
-  { l: "Chris Referral (10%)", v: -2633, bg: null, b: false },
-  { l: "Master Referral (5%)", v: -66, bg: null, b: false },
-  { l: "TOTAL EXPENSES", v: -6237, bg: "redSoft", b: true },
-  { l: "", v: null, bg: null, b: false },
-  { l: "NET REVENUE", v: 4489, bg: "greenSoft", b: true },
-  { l: "PCA Share (50%)", v: -2245, bg: "purpleSoft", b: true },
-  { l: "PC RETAINED", v: 2244, bg: "greenSoft", b: true },
+  { l: "Subscriptions", v: 28889, jan: 8074, bg: null as string | null, b: false },
+  { l: "Setup Fees", v: 7959, jan: 2787, bg: null as string | null, b: false },
+  { l: "Discounts", v: -718, jan: -135, bg: null as string | null, b: false },
+  { l: "GROSS REVENUE", v: 35080, jan: 10726, bg: "greenSoft", b: true },
+  { l: "Setup Cost", v: -2500, jan: -1300, bg: null as string | null, b: false },
+  { l: "Salary", v: -1200, jan: -1200, bg: null as string | null, b: false },
+  { l: "Ads", v: -6666, jan: -1038, bg: null as string | null, b: false },
+  { l: "Master Referral", v: -211, jan: -66, bg: null as string | null, b: false },
+  { l: "No Limit Referral", v: -30, jan: 0, bg: null as string | null, b: false },
+  { l: "TOTAL EXPENSES", v: -10606, jan: -6237, bg: "redSoft", b: true },
+  { l: "NET REVENUE", v: 24473, jan: 4489, bg: "primarySoft", b: true },
+  { l: "PCA Share (50%)", v: 12237, jan: 2244, bg: "purpleSoft", b: true },
+  { l: "PC Retained (50%)", v: 12236, jan: 2244, bg: "accentSoft", b: true },
+];
+
+export const blinkRows = [
+  { l: "Revenu Net", v: [4489, 24473, 28962], bg: null as string | null, b: false, sep: false },
+  { l: "CA PCA (50%)", v: [2244, 12237, 14481], bg: null as string | null, b: false, sep: false },
+  { l: "CA Blink a payer (50%)", v: [2244, 12237, 14481], bg: null as string | null, b: false, sep: false },
+  { l: "Paye par PCA sur Benefit", v: [2244, 12237, 14481], bg: "greenSoft", b: true, sep: true },
+  { l: "Total Media a payer (CL)", v: [21009, 210984, 231993], bg: null as string | null, b: false, sep: false },
+  { l: "Paye par PCA sur Media", v: [21009, 210984, 231993], bg: "greenSoft", b: true, sep: true },
+  { l: "Total Blink a payer / Mois", v: [23253, 223220, 246473], bg: "primarySoft", b: true, sep: false },
+];
+
+export const blinkHeaders = ["", "Jan-26", "Feb-26", "YTD"];
+
+export const trialClients = [
+  { name: "Sam (101)", converted: false, received: 0, note: "No payment" },
+  { name: "FFC Kemi (109)", converted: false, received: 0, note: "No payment" },
+  { name: "Florian (92)", converted: false, received: 0, note: "Stopped" },
 ];
