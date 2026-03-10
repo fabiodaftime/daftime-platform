@@ -42,9 +42,9 @@ export default function DashboardPrimeCircleAgency() {
               <img src={pcaLogo} alt="Prime Circle Agency" style={{ height: 50 }} />
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="pca-badge" style={{ background: C.accentSoft, color: C.accent }}>JANVIER 2026</span>
+                  <span className="pca-badge" style={{ background: C.accentSoft, color: C.accent }}>FEVRIER 2026</span>
                 </div>
-                <p className="pca-subtitle">Monthly Financial & Operational Dashboard</p>
+                <p className="pca-subtitle">Dashboard Financier & Operationnel Mensuel</p>
               </div>
             </div>
             <div className="pca-month-badge">
