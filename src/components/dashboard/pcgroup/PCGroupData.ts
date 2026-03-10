@@ -123,44 +123,43 @@ export const pieData = [
 
 // Agency Tab
 export const agencyKPIs = [
-  { label: 'CA Brut', value: '$10,726', detail: 'Abo + Setup', color: 'blue' },
-  { label: 'Total Charges', value: '$6,237', detail: '58.2% du CA', color: 'orange' },
-  { label: 'Marge Nette', value: '$4,489', detail: '41.8% du CA', color: 'green' },
-  { label: 'Part PCA (50%)', value: '$2,245', detail: 'Après partage Blink', color: 'pink' },
-  { label: 'Transactions', value: '59', detail: '21 Nouveaux - 20 Essai', color: 'blue' },
-  { label: 'Clients Actifs', value: '47', detail: '12 Arrêtés', color: 'green' },
-  { label: 'Total Encaissé', value: '$28,975', detail: 'Incl. media CL', color: 'navy' },
-  { label: 'Media Géré', value: '$279.7K', detail: '33 ad accounts', color: 'gold' },
+  { label: 'CA Brut', value: '$35,080', detail: 'Abo + Setup', color: 'blue' },
+  { label: 'Total Charges', value: '$10,606', detail: '30.2% du CA', color: 'orange' },
+  { label: 'Marge Nette', value: '$24,473', detail: '69.8% du CA', color: 'green' },
+  { label: 'Part PCA (50%)', value: '$12,237', detail: 'Après partage Blink', color: 'pink' },
+  { label: 'Transactions', value: '145', detail: '116 Nouveaux - 3 Essai', color: 'blue' },
+  { label: 'Clients Actifs', value: '129', detail: '6 Upgraded', color: 'green' },
+  { label: 'Total Encaissé', value: '$343K', detail: 'Incl. media CL', color: 'navy' },
+  { label: 'Media Géré', value: '$516.0K', detail: '63 ad accounts', color: 'gold' },
 ];
 
 export const agencyWaterfall = [
-  { label: 'Subscriptions', value: '$8,074', type: 'positive' },
-  { label: 'Frais Setup', value: '$2,787', type: 'positive' },
-  { label: 'Discounts', value: '-$135', type: 'negative' },
-  { label: 'CA BRUT', value: '$10,726', type: 'total-positive' },
+  { label: 'Subscriptions', value: '$28,889', type: 'positive' },
+  { label: 'Frais Setup', value: '$7,959', type: 'positive' },
+  { label: 'Discounts', value: '-$718', type: 'negative' },
+  { label: 'CA BRUT', value: '$35,080', type: 'total-positive' },
   { label: '', value: '', type: 'spacer' },
-  { label: 'Coûts Setup (agents)', value: '-$1,300', type: 'negative' },
+  { label: 'Coûts Setup', value: '-$2,500', type: 'negative' },
   { label: 'Salaires', value: '-$1,200', type: 'negative' },
-  { label: 'Publicité', value: '-$1,038', type: 'negative' },
-  { label: 'Com. Chris (10%)', value: '-$2,633', type: 'negative' },
-  { label: 'Com. Master (5%)', value: '-$66', type: 'negative' },
-  { label: 'TOTAL CHARGES', value: '-$6,237', type: 'total-negative' },
-  { label: 'MARGE NETTE', value: '$4,489', type: 'highlight' },
+  { label: 'Publicité', value: '-$6,666', type: 'negative' },
+  { label: 'Com. Master (5%)', value: '-$211', type: 'negative' },
+  { label: 'No Limit Referral', value: '-$30', type: 'negative' },
+  { label: 'TOTAL CHARGES', value: '-$10,606', type: 'total-negative' },
+  { label: 'MARGE NETTE', value: '$24,473', type: 'highlight' },
 ];
 
 export const agencyExpensesPie = [
-  { name: 'Com. Chris', value: 2633, color: '#EF4444' },
-  { name: 'Coûts Setup', value: 1300, color: '#F59E0B' },
+  { name: 'Publicité', value: 6666, color: '#D946A8' },
+  { name: 'Coûts Setup', value: 2500, color: '#F59E0B' },
   { name: 'Salaires', value: 1200, color: '#4F5BD5' },
-  { name: 'Publicité', value: 1038, color: '#D946A8' },
-  { name: 'Com. Master', value: 66, color: '#94A3B8' },
+  { name: 'Com. Master', value: 211, color: '#94A3B8' },
+  { name: 'No Limit Ref.', value: 30, color: '#10B981' },
 ];
 
 export const agencyRisks = [
-  { label: 'Concentration Hugo', value: '60.8%', detail: 'du media dépensé', severity: 'danger' },
-  { label: 'CL Exposure', value: '$21.0K', detail: 'media avancé', severity: 'danger' },
-  { label: 'Marge Nette', value: '41.8%', detail: 'vs 54.8% en Dec', severity: 'warning' },
-  { label: 'Clients Arrêtés', value: '14', detail: '23% des tx', severity: 'warning' },
+  { label: 'Concentration Salmech', value: '25.6%', detail: 'du media dépensé', severity: 'warning' },
+  { label: 'CL Exposure', value: '$211K', detail: 'x10 vs Jan', severity: 'danger' },
+  { label: 'Marge Nette', value: '69.8%', detail: 'vs 41.8% en Jan', severity: 'success' },
 ];
 
 // Structuring Tab
