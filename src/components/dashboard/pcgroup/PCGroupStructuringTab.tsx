@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { structuringKPIs, structuringWaterfall, structuringServices, structuringServicesChart, ENTITY_ROUTES } from './PCGroupData';
+import { structuringKPIs, structuringComparison, structuringWaterfall, ENTITY_ROUTES } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
+import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 import { ExternalLink } from 'lucide-react';
 
 export function PCGroupStructuringTab() {
@@ -25,54 +25,22 @@ export function PCGroupStructuringTab() {
         ))}
       </div>
 
-      <div className="pcg-charts-row">
-        <PCGroupWaterfall data={structuringWaterfall} title="💰 P&L Summary" />
-        <div className="pcg-section">
-          <div className="pcg-section-header">
-            <h3 className="pcg-section-title">📊 Revenue par Service</h3>
-          </div>
-          <div className="pcg-section-body">
-            <div style={{ height: 280 }}>
-              <ResponsiveContainer>
-                <BarChart data={structuringServicesChart}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                    {structuringServicesChart.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PCGroupComparisonTable
+        title="📊 Comparatif M-1"
+        headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
+        rows={structuringComparison.map(r => ({
+          cells: [r.indicator, r.jan, r.feb, r.variation],
+          varIndex: 3,
+          varType: r.varType,
+        }))}
+      />
 
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📋 Top Services by Turnover</h3>
+          <h3 className="pcg-section-title">💰 Détail Charges Février</h3>
         </div>
         <div className="pcg-section-body">
-          <table className="pcg-data-table">
-            <thead>
-              <tr>
-                <th>Service</th>
-                <th>Turnover</th>
-                <th>% Total</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {structuringServices.map((s, i) => (
-                <tr key={i}>
-                  <td>{s.name}</td>
-                  <td className="pcg-amount positive">${s.value.toLocaleString()}</td>
-                  <td>{s.pct}</td>
-                  <td><span className={`pcg-status-badge ${s.status === 'Top' ? 'success' : 'warning'}`}>{s.status}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <PCGroupWaterfall data={structuringWaterfall} title="" />
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { digitKPIs, digitWaterfall, digitRevenueBreakdown, digitRevenueChart, ENTITY_ROUTES } from './PCGroupData';
+import { digitKPIs, digitComparison, digitWaterfall, ENTITY_ROUTES } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
+import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 import { ExternalLink } from 'lucide-react';
 
 export function PCGroupDigitTab() {
@@ -25,52 +25,22 @@ export function PCGroupDigitTab() {
         ))}
       </div>
 
-      <div className="pcg-charts-row">
-        <PCGroupWaterfall data={digitWaterfall} title="💰 Waterfall Digit Solution" />
-        <div className="pcg-section">
-          <div className="pcg-section-header">
-            <h3 className="pcg-section-title">📊 Répartition CA</h3>
-          </div>
-          <div className="pcg-section-body">
-            <div style={{ height: 280 }}>
-              <ResponsiveContainer>
-                <BarChart data={digitRevenueChart}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
-                  <Bar dataKey="value" fill="#D946A8" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PCGroupComparisonTable
+        title="📊 Comparatif M-1"
+        headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
+        rows={digitComparison.map(r => ({
+          cells: [r.indicator, r.jan, r.feb, r.variation],
+          varIndex: 3,
+          varType: r.varType,
+        }))}
+      />
 
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📈 Détail par Type de Produit</h3>
+          <h3 className="pcg-section-title">💰 Détail Charges Février</h3>
         </div>
         <div className="pcg-section-body">
-          <table className="pcg-data-table">
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>CA</th>
-                <th>Deals</th>
-                <th>Dépense Moy. / Client</th>
-              </tr>
-            </thead>
-            <tbody>
-              {digitRevenueBreakdown.map((p, i) => (
-                <tr key={i}>
-                  <td>{p.name}</td>
-                  <td className="pcg-amount positive">${p.value.toLocaleString()}</td>
-                  <td>{p.deals}</td>
-                  <td>{p.ticket}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <PCGroupWaterfall data={digitWaterfall} title="" />
         </div>
       </div>
     </div>
