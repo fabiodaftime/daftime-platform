@@ -23,10 +23,9 @@ export function PCARisksTab() {
   const [loading, setLoading] = useState(false);
 
   const riskKPIs = [
-    { l: "Concentration Hugo", v: "60.8%", s: "du media spend", c: C.redText },
-    { l: "CL Exposure", v: "$21.0K", s: "media avance", c: C.redText },
-    { l: "Marge Nette", v: "41.8%", s: "vs 54.8% en Dec", c: C.orangeText },
-    { l: "Clients Stopped", v: "14", s: "23% des tx", c: C.orangeText },
+    { l: "Top Spender Concentration", v: "25.6%", s: "Salmech - mieux reparti vs Jan", c: C.orangeText },
+    { l: "CL Exposure", v: "$211K", s: "x10 vs Jan ($21K)", c: C.redText },
+    { l: "Marge Nette", v: "69.8%", s: "vs 41.8% en Jan", c: C.greenText },
   ];
 
   useEffect(() => {
@@ -72,12 +71,13 @@ export function PCARisksTab() {
     <div>
       <div className="pca-section">
         <div style={{ marginBottom: 20 }}>
-          <h3 className="pca-section-title">Indicateurs Cles de Risque - Janvier 2026</h3>
+          <h3 className="pca-section-title">Indicateurs Cles de Risque - Fevrier 2026</h3>
+          <p className="pca-section-subtitle">3 points d'attention identifies</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14 }}>
           {riskKPIs.map((item, i) => (
             <div key={i} style={{
-              background: item.c === C.redText ? C.redSoft : C.orangeSoft,
+              background: item.c === C.redText ? C.redSoft : item.c === C.greenText ? C.greenSoft : C.orangeSoft,
               borderRadius: 12, padding: '16px 14px', textAlign: 'center',
               border: '1px solid ' + C.border,
             }}>

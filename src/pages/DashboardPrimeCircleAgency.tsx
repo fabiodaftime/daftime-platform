@@ -48,8 +48,9 @@ export default function DashboardPrimeCircleAgency() {
               </div>
             </div>
             <div className="pca-month-badge">
-              <div className="pca-month-label">MOIS</div>
-              <div className="pca-month-value">JAN 2026</div>
+              <div className="pca-month-label">NET REVENUE</div>
+              <div className="pca-month-value">$24,473</div>
+              <div style={{ fontSize: 10, color: C.greenText, fontWeight: 700 }}>+445% vs Jan</div>
             </div>
           </div>
           <div className="pca-tabs">
