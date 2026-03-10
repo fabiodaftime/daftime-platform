@@ -52,7 +52,7 @@ export function PCGroupAgencyTab() {
           <h3 className="pcg-section-title">⚠️ Points de Vigilance</h3>
         </div>
         <div className="pcg-section-body">
-          <div className="pcg-kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="pcg-kpi-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {agencyRisks.map((r, i) => (
               <div key={i} className="pcg-kpi-card" style={{ borderLeft: `4px solid var(--pcg-${r.severity})` }}>
                 <div className="pcg-kpi-label">{r.label}</div>

@@ -21,10 +21,10 @@ export const entityCards = [
     gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)',
     cssClass: 'agency',
     metrics: [
-      { label: 'CA', value: '$10,726' },
-      { label: 'Marge Nette', value: '$2,245', colorClass: 'success' },
+      { label: 'CA', value: '$35,080' },
+      { label: 'Marge Nette', value: '$12,237', colorClass: 'success' },
     ],
-    margin: 20.9,
+    margin: 34.9,
     marginLevel: 'medium' as const,
   },
   {
