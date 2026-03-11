@@ -3,96 +3,76 @@ import { D, PIE_COLORS, fmt, type DigitMonthData } from './DigitData';
 
 interface Props { data: DigitMonthData; }
 
+const typeColor: Record<string, string> = {
+  primary: D.primary, success: D.green, accent: D.primary, warning: D.orange,
+};
+
 export function DigitOverviewTab({ data }: Props) {
-  const { overviewKPIs, comparisonM1, waterfallOverview, economicSplit, chargesDetail } = data;
-
-  const colorMap: Record<string, string> = {
-    green: D.green, red: D.red, orange: D.orange, neutral: D.textMuted, accent: D.accent, indigo: D.indigo, neutralLight: "#9ca3af",
-  };
-
-  const barData = waterfallOverview.map(w => ({
-    name: w.label,
-    value: Math.abs(w.value),
-    fill: colorMap[w.color],
-  }));
-
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
-  };
-
-  const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
-    <div className="digit-kpi-grid">
-      {items.map((kpi, i) => (
-        <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] || D.primary }}>
-          <div className="digit-metric-label">{kpi.label}</div>
-          <div className="digit-metric-value">{kpi.value}</div>
-          <div className="digit-metric-sub">{kpi.sub}</div>
-        </div>
-      ))}
-    </div>
-  );
+  const { overviewKPIs, overviewProducts, overviewChartData, comparisonM1 } = data;
 
   return (
     <div>
+      <h2 className="digit-section-title">Performance {data.monthLabel}</h2>
       <div className="digit-kpi-grid">
         {overviewKPIs.map((kpi, i) => (
-          <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] }}>
+          <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] || D.primary }}>
             <div className="digit-metric-label">{kpi.label}</div>
             <div className="digit-metric-value">{kpi.value}</div>
             <div className="digit-metric-sub">{kpi.sub}</div>
+            {comparisonM1 && i === 0 && (
+              <div className="digit-metric-comparison">
+                <span className="digit-badge positive">+11.7%</span>
+                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier (+$15,751)</span>
+              </div>
+            )}
+            {comparisonM1 && i === 1 && (
+              <div className="digit-metric-comparison">
+                <span className="digit-badge positive">+2.1%</span>
+                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier (+$955)</span>
+              </div>
+            )}
+            {comparisonM1 && i === 2 && (
+              <div className="digit-metric-comparison">
+                <span className="digit-badge negative">-12</span>
+                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier (225 deals)</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      <h2 className="digit-section-title">Performance Globale</h2>
+      <h2 className="digit-section-title">Répartition par Produit</h2>
+      <div className="digit-kpi-grid">
+        {overviewProducts.map((p, i) => (
+          <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[p.type] || D.primary }}>
+            <div className="digit-metric-label">{p.label}</div>
+            <div className="digit-metric-value">{p.value}</div>
+            <div className="digit-metric-sub">{p.sub}</div>
+            {p.chg && (
+              <div className="digit-metric-comparison">
+                <span className={`digit-badge ${p.chg.startsWith('+') ? 'positive' : 'negative'}`}>{p.chg}</span>
+                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier {p.chg.startsWith('+') && parseFloat(p.chg) > 50 ? '🚀' : p.chg.startsWith('-') ? '⚠️' : ''}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
-      {comparisonM1 && (
-        <>
-          <h2 className="digit-section-title">📊 Comparaison avec M-1</h2>
-          {renderKPIs(comparisonM1)}
-        </>
-      )}
-
-      <div className="digit-charts-grid">
+      {overviewChartData && (
         <div className="digit-chart-container">
-          <div className="digit-chart-title">Waterfall : Du CA à la Marge</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={barData}>
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
-              <YAxis tickFormatter={(v) => fmt(v)} tick={{ fontSize: 11 }} />
+          <div className="digit-chart-title">Évolution CA & Marge (Janvier vs Février)</div>
+          <ResponsiveContainer width="100%" height={340}>
+            <BarChart data={overviewChartData.labels.map((l, i) => ({ name: l, 'CA Total': overviewChartData.ca[i], 'Marge Totale': overviewChartData.marge[i] }))}>
+              <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 600 }} />
+              <YAxis tickFormatter={(v) => fmt(v)} tick={{ fontSize: 11, fontWeight: 600 }} />
               <Tooltip formatter={(v: number) => '$' + v.toLocaleString()} />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                {barData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-              </Bar>
+              <Legend wrapperStyle={{ fontSize: 12, fontWeight: 600 }} />
+              <Bar dataKey="CA Total" fill={D.primary} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Marge Totale" fill={D.green} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        <div className="digit-chart-container">
-          <div className="digit-chart-title">Répartition Économique</div>
-          <ResponsiveContainer width="100%" height={280}>
-            <PieChart>
-              <Pie data={economicSplit} dataKey="value" nameKey="name" cx="50%" cy="45%" innerRadius={45} outerRadius={85} paddingAngle={2}>
-                {economicSplit.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
-              </Pie>
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => '$' + v.toLocaleString()} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="digit-chart-container" style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: D.primary, marginBottom: 16 }}>💡 Détail des Charges</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-          {chargesDetail.map((item, i) => (
-            <div key={i}>
-              <strong style={{ color: item.color }}>{item.label} ({item.value})</strong><br />
-              <span style={{ fontSize: 14, color: D.textSecondary }}>{item.sub}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
