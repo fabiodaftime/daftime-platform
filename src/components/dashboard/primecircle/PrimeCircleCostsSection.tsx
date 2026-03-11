@@ -43,6 +43,15 @@ export function PrimeCircleCostsSection({ data }: Props) {
               <div className="pc-expense-amount negative">-{formatCurrency(costs.events)}</div>
             </div>
           )}
+          {costs.bankFees != null && costs.bankFees > 0 && (
+            <div className="pc-expense-row">
+              <div className="pc-expense-label">
+                <div className="pc-expense-icon">🏦</div>
+                <span>Bank Fees</span>
+              </div>
+              <div className="pc-expense-amount negative">-{formatCurrency(costs.bankFees)}</div>
+            </div>
+          )}
           <div className="pc-expense-row">
             <div className="pc-expense-label">
               <div className="pc-expense-icon">🏢</div>
@@ -70,11 +79,11 @@ export function PrimeCircleCostsSection({ data }: Props) {
           </div>
           <div className="pc-pnl-row highlight">
             <span>NET PROFIT</span>
-            <span className="pc-pnl-value">{formatCurrency(kpis.totalMargin)}</span>
+            <span className="pc-pnl-value">{formatCurrency(kpis.totalTurnover - costs.total)}</span>
           </div>
           <div className="pc-pnl-row" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
             <span>Net Margin Rate</span>
-            <span className="pc-pnl-value">{kpis.marginRate}%</span>
+            <span className="pc-pnl-value">{((kpis.totalTurnover - costs.total) / kpis.totalTurnover * 100).toFixed(1)}%</span>
           </div>
         </div>
       </div>
