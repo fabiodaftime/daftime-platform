@@ -231,7 +231,8 @@ const febData: PCAMonthData = {
   marginPct: 69.8,
   prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2244,
   prevTransactions: 62, prevMediaSpend: 279691,
-  ytdNet: 28962, ytdPcaShare: 14481,
+  ytdNet: 28962, ytdPcaShare: 14481, ytdGross: 45806, ytdExpenses: 16843,
+  expenseRatio: 30.2,
   expenseBreakdown: [
     { name: "Ads", value: 6666 }, { name: "Setup Cost", value: 2500 },
     { name: "Salary", value: 1200 }, { name: "Master Referral", value: 211 }, { name: "No Limit Referral", value: 30 },
