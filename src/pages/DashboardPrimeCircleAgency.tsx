@@ -7,7 +7,7 @@ import { PCAOverviewTab } from '@/components/dashboard/primecircle-agency/PCAOve
 import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClientsTab';
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
-import { PCARisksTab } from '@/components/dashboard/primecircle-agency/PCARisksTab';
+
 import { C, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthId } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import pcaLogo from '@/assets/prime-circle-agency-logo.png';
