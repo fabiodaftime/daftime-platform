@@ -105,7 +105,8 @@ const janData: PCAMonthData = {
   transactions: 62, mediaSpend: 279691, clientsActifs: 47, totalEncaisse: 28975, adAccounts: 33,
   marginPct: 41.8,
   prevGross: 0, prevExpenses: 0, prevNet: 0, prevPcaShare: 0, prevTransactions: 0, prevMediaSpend: 0,
-  ytdNet: 4489, ytdPcaShare: 2245,
+  ytdNet: 4489, ytdPcaShare: 2245, ytdGross: 10726, ytdExpenses: 6237,
+  expenseRatio: 58.2,
   expenseBreakdown: [
     { name: "Chris Referral", value: 2633 }, { name: "Setup Cost", value: 1300 },
     { name: "Salary", value: 1200 }, { name: "Ads", value: 1038 }, { name: "Master Referral", value: 66 },
