@@ -55,6 +55,7 @@ export interface PCMonthData {
   costs: {
     advertising: number;
     salesCommission: number;
+    bankFees?: number;
     serviceCosts: number;
     referralCommission?: number;
     events?: number;
