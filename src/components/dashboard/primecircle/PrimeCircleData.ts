@@ -254,8 +254,9 @@ const febData: PCMonthData = {
   costs: {
     advertising: 4525,
     salesCommission: 5498,
+    bankFees: 50,
     serviceCosts: 10181,
-    total: 20204,
+    total: 20254,
   },
   serviceCategories: [
     { name: 'LLC Services', value: 22610 },
