@@ -43,6 +43,15 @@ export function PrimeCircleCostsSection({ data }: Props) {
               <div className="pc-expense-amount negative">-{formatCurrency(costs.events)}</div>
             </div>
           )}
+          {costs.bankFees != null && costs.bankFees > 0 && (
+            <div className="pc-expense-row">
+              <div className="pc-expense-label">
+                <div className="pc-expense-icon">🏦</div>
+                <span>Bank Fees</span>
+              </div>
+              <div className="pc-expense-amount negative">-{formatCurrency(costs.bankFees)}</div>
+            </div>
+          )}
           <div className="pc-expense-row">
             <div className="pc-expense-label">
               <div className="pc-expense-icon">🏢</div>
