@@ -1,20 +1,14 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { D, costsKPIs, blinkDetail, fullWaterfall, fmt } from './DigitData';
+import { D, fmt, type DigitMonthData } from './DigitData';
 
-export function DigitCostsTab() {
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange, indigo: D.indigo,
-  };
+interface Props { data: DigitMonthData; }
 
-  const colorMap: Record<string, string> = {
-    green: D.green, red: D.red, orange: D.orange, neutral: D.textMuted, accent: D.accent, indigo: D.indigo, neutralLight: "#9ca3af",
-  };
+export function DigitCostsTab({ data }: Props) {
+  const { costsKPIs, blinkDetail, fullWaterfall } = data;
+  const typeColor: Record<string, string> = { primary: D.primary, success: D.green, accent: D.accent, warning: D.orange, indigo: D.indigo };
+  const colorMap: Record<string, string> = { green: D.green, red: D.red, orange: D.orange, neutral: D.textMuted, accent: D.accent, indigo: D.indigo, neutralLight: "#9ca3af" };
 
-  const barData = fullWaterfall.map(w => ({
-    name: w.label,
-    value: Math.abs(w.value),
-    fill: colorMap[w.color],
-  }));
+  const barData = fullWaterfall.map(w => ({ name: w.label, value: Math.abs(w.value), fill: colorMap[w.color] }));
 
   const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
     <div className="digit-kpi-grid">
@@ -31,10 +25,8 @@ export function DigitCostsTab() {
   return (
     <div>
       {renderKPIs(costsKPIs)}
-
       <h2 className="digit-section-title">Détail Blink Commission</h2>
       {renderKPIs(blinkDetail)}
-
       <h2 className="digit-section-title">Waterfall des Charges</h2>
       <div className="digit-chart-container" style={{ maxWidth: 1000, margin: '0 auto' }}>
         <div className="digit-chart-title">Du CA à la Marge - Détail de toutes les charges</div>

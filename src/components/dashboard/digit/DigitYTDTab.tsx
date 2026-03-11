@@ -1,10 +1,11 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { D, ytdMainKPIs, ytdMonthlyKPIs, ytdProductKPIs, ytdEvolutionData, ytdProductDistribution, YTD_PRODUCT_COLORS, fmt } from './DigitData';
+import { D, YTD_PRODUCT_COLORS, fmt, type DigitMonthData } from './DigitData';
 
-export function DigitYTDTab() {
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
-  };
+interface Props { data: DigitMonthData; }
+
+export function DigitYTDTab({ data }: Props) {
+  const { ytdMainKPIs, ytdMonthlyKPIs, ytdProductKPIs, ytdEvolutionData, ytdProductDistribution } = data;
+  const typeColor: Record<string, string> = { primary: D.primary, success: D.green, accent: D.accent, warning: D.orange };
 
   const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
     <div className="digit-kpi-grid">
@@ -20,18 +21,15 @@ export function DigitYTDTab() {
 
   return (
     <div>
-      <h2 className="digit-section-title">📈 Year-To-Date 2026 (Janvier + Février)</h2>
+      <h2 className="digit-section-title">📈 Year-To-Date 2026</h2>
       {renderKPIs(ytdMainKPIs)}
-
       <h2 className="digit-section-title">📊 Évolution Mensuelle</h2>
       {renderKPIs(ytdMonthlyKPIs)}
-
       <h2 className="digit-section-title">🎯 Répartition par Produit (YTD)</h2>
       {renderKPIs(ytdProductKPIs)}
-
       <div className="digit-charts-grid">
         <div className="digit-chart-container">
-          <div className="digit-chart-title">Évolution CA & Marge (Jan-Fév)</div>
+          <div className="digit-chart-title">Évolution CA & Marge</div>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={ytdEvolutionData}>
               <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} />
@@ -43,7 +41,6 @@ export function DigitYTDTab() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-
         <div className="digit-chart-container">
           <div className="digit-chart-title">Répartition CA YTD par Produit</div>
           <ResponsiveContainer width="100%" height={280}>

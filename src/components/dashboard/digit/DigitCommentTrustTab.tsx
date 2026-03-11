@@ -1,9 +1,10 @@
-import { D, commentTrustKPIs, commentVariableCosts, commentSynthesis } from './DigitData';
+import { D, type DigitMonthData } from './DigitData';
 
-export function DigitCommentTrustTab() {
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
-  };
+interface Props { data: DigitMonthData; }
+
+export function DigitCommentTrustTab({ data }: Props) {
+  const { commentTrustKPIs, commentVariableCosts, commentSynthesis } = data;
+  const typeColor: Record<string, string> = { primary: D.primary, success: D.green, accent: D.accent, warning: D.orange };
 
   const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
     <div className="digit-kpi-grid">
@@ -21,10 +22,8 @@ export function DigitCommentTrustTab() {
     <div>
       <h2 className="digit-section-title">Comment / Trustpilot - Services d'Engagement</h2>
       {renderKPIs(commentTrustKPIs)}
-
       <h2 className="digit-section-title">Coûts Variables</h2>
       {renderKPIs(commentVariableCosts)}
-
       <h2 className="digit-section-title">Synthèse Financière</h2>
       {renderKPIs(commentSynthesis)}
     </div>
