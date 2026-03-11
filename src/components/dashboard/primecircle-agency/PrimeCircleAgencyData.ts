@@ -93,7 +93,7 @@ export interface PCAMonthData {
   riskKPIs: { l: string; v: string; s: string; c: string }[];
   risks: { label: string; desc: string; severity: string; icon: string }[];
   // Monthly trend (for chart)
-  monthlyTrend: { month: string; gross: number; net: number; expenses: number; media: number }[];
+  monthlyTrend: { month: string; gross: number; net: number; expenses: number; media: number; ccMedia: number; clMedia: number; newClients: number; renewed: number; upgraded: number; trial: number }[];
 }
 
 // ===== JAN 2026 DATA =====
