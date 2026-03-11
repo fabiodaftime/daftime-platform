@@ -1,9 +1,12 @@
-import { reservesHero, reservesEntityTable, reservesEntityTotal, reservesCards } from './PCGroupData';
+import { type PCGroupMonthData } from './PCGroupData';
 
-export function PCGroupReservesTab() {
+interface Props { data: PCGroupMonthData; }
+
+export function PCGroupReservesTab({ data }: Props) {
+  const { reservesHero, reservesEntityTable, reservesEntityTotal, reservesCards } = data;
+
   return (
     <div>
-      {/* Hero KPIs */}
       <div className="pcg-hero-grid">
         {reservesHero.map((kpi, i) => (
           <div key={i} className={`pcg-hero-card ${kpi.color}`}>
@@ -14,7 +17,6 @@ export function PCGroupReservesTab() {
         ))}
       </div>
 
-      {/* Suivi Réserves par Entité */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <div>
@@ -25,34 +27,20 @@ export function PCGroupReservesTab() {
         <div className="pcg-section-body">
           <table className="pcg-comparison-table">
             <thead>
-              <tr>
-                <th>Entité</th>
-                <th>Réserve Jan</th>
-                <th>Réserve Fév</th>
-                <th>Cumul YTD</th>
-              </tr>
+              <tr><th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th><th>Cumul YTD</th></tr>
             </thead>
             <tbody>
               {reservesEntityTable.map((row, i) => (
-                <tr key={i}>
-                  <td>{row.entity}</td>
-                  <td>{row.jan}</td>
-                  <td>{row.feb}</td>
-                  <td>{row.ytd}</td>
-                </tr>
+                <tr key={i}><td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td><td>{row.ytd}</td></tr>
               ))}
               <tr className="pcg-comparison-total">
-                <td>{reservesEntityTotal.entity}</td>
-                <td>{reservesEntityTotal.jan}</td>
-                <td>{reservesEntityTotal.feb}</td>
-                <td>{reservesEntityTotal.ytd}</td>
+                <td>{reservesEntityTotal.entity}</td><td>{reservesEntityTotal.jan}</td><td>{reservesEntityTotal.feb}</td><td>{reservesEntityTotal.ytd}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Répartition Réserves YTD */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <h3 className="pcg-section-title">📊 Répartition Réserves YTD</h3>

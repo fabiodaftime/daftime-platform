@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { overviewHero, entityCards, consolidatedPL, pieData, overviewComparison, overviewComparisonTotal, ENTITY_ROUTES } from './PCGroupData';
+import { ENTITY_ROUTES, type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
-export function PCGroupOverviewTab() {
+interface Props { data: PCGroupMonthData; }
+
+export function PCGroupOverviewTab({ data }: Props) {
   const navigate = useNavigate();
+  const { overviewHero, entityCards, consolidatedPL, pieData, overviewComparison, overviewComparisonTotal, monthLabel } = data;
 
   const handleEntityClick = (entityId: string) => {
     const route = ENTITY_ROUTES[entityId as keyof typeof ENTITY_ROUTES];
@@ -13,7 +16,6 @@ export function PCGroupOverviewTab() {
 
   return (
     <div>
-      {/* Hero KPIs with variance */}
       <div className="pcg-hero-grid">
         {overviewHero.map((kpi, i) => (
           <div key={i} className={`pcg-hero-card ${kpi.color}`}>
@@ -27,45 +29,35 @@ export function PCGroupOverviewTab() {
         ))}
       </div>
 
-      {/* Comparatif Mensuel */}
-      <div className="pcg-section">
-        <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📊 Comparatif Janvier vs Février 2026</h3>
-        </div>
-        <div className="pcg-section-body">
-          <table className="pcg-comparison-table">
-            <thead>
-              <tr>
-                <th>Entité</th>
-                <th>Janvier</th>
-                <th>Février</th>
-                <th>Variation</th>
-                <th>YTD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {overviewComparison.map((row, i) => (
-                <tr key={i}>
-                  <td>{row.entity}</td>
-                  <td>{row.jan}</td>
-                  <td>{row.feb}</td>
-                  <td className={`pcg-var-${row.varType}`}>{row.variation}</td>
-                  <td>{row.ytd}</td>
+      {overviewComparison && overviewComparisonTotal && (
+        <div className="pcg-section">
+          <div className="pcg-section-header">
+            <h3 className="pcg-section-title">📊 Comparatif Janvier vs Février 2026</h3>
+          </div>
+          <div className="pcg-section-body">
+            <table className="pcg-comparison-table">
+              <thead>
+                <tr>
+                  <th>Entité</th><th>Janvier</th><th>Février</th><th>Variation</th><th>YTD</th>
                 </tr>
-              ))}
-              <tr className="pcg-comparison-total">
-                <td>{overviewComparisonTotal.entity}</td>
-                <td>{overviewComparisonTotal.jan}</td>
-                <td>{overviewComparisonTotal.feb}</td>
-                <td className={`pcg-var-${overviewComparisonTotal.varType}`}>{overviewComparisonTotal.variation}</td>
-                <td>{overviewComparisonTotal.ytd}</td>
-              </tr>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {overviewComparison.map((row: any, i: number) => (
+                  <tr key={i}>
+                    <td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td>
+                    <td className={`pcg-var-${row.varType}`}>{row.variation}</td><td>{row.ytd}</td>
+                  </tr>
+                ))}
+                <tr className="pcg-comparison-total">
+                  <td>{overviewComparisonTotal.entity}</td><td>{overviewComparisonTotal.jan}</td><td>{overviewComparisonTotal.feb}</td>
+                  <td className={`pcg-var-${overviewComparisonTotal.varType}`}>{overviewComparisonTotal.variation}</td><td>{overviewComparisonTotal.ytd}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Entity Cards */}
       <div className="pcg-entities-grid pcg-entities-5">
         {entityCards.map((entity) => (
           <div key={entity.id} className={`pcg-entity-card ${entity.cssClass}`}>
@@ -100,11 +92,10 @@ export function PCGroupOverviewTab() {
         ))}
       </div>
 
-      {/* P&L Consolidé */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <div>
-            <h3 className="pcg-section-title">📈 P&L Consolidé - Février 2026</h3>
+            <h3 className="pcg-section-title">📈 P&L Consolidé - {monthLabel}</h3>
             <p className="pcg-section-subtitle">Synthèse financière des 5 entités</p>
           </div>
         </div>

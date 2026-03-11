@@ -1,11 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { structuringKPIs, structuringComparison, structuringWaterfall, ENTITY_ROUTES } from './PCGroupData';
+import { ENTITY_ROUTES, type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 import { ExternalLink } from 'lucide-react';
 
-export function PCGroupStructuringTab() {
+interface Props { data: PCGroupMonthData; }
+
+export function PCGroupStructuringTab({ data }: Props) {
   const navigate = useNavigate();
+  const { structuringKPIs, structuringComparison, structuringWaterfall } = data;
 
   return (
     <div>
@@ -25,19 +28,21 @@ export function PCGroupStructuringTab() {
         ))}
       </div>
 
-      <PCGroupComparisonTable
-        title="📊 Comparatif M-1"
-        headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
-        rows={structuringComparison.map(r => ({
-          cells: [r.indicator, r.jan, r.feb, r.variation],
-          varIndex: 3,
-          varType: r.varType,
-        }))}
-      />
+      {structuringComparison && (
+        <PCGroupComparisonTable
+          title="📊 Comparatif M-1"
+          headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
+          rows={structuringComparison.map((r: any) => ({
+            cells: [r.indicator, r.jan, r.feb, r.variation],
+            varIndex: 3,
+            varType: r.varType,
+          }))}
+        />
+      )}
 
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">💰 Détail Charges Février</h3>
+          <h3 className="pcg-section-title">💰 Détail Charges {data.monthLabel}</h3>
         </div>
         <div className="pcg-section-body">
           <PCGroupWaterfall data={structuringWaterfall} title="" />

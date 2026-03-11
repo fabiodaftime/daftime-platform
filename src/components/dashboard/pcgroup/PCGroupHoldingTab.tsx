@@ -1,9 +1,13 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { holdingKPIs, holdingComparison, holdingManagementFees, holdingSynthese, holdingPieData, directors } from './PCGroupData';
+import { type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 
-export function PCGroupHoldingTab() {
+interface Props { data: PCGroupMonthData; }
+
+export function PCGroupHoldingTab({ data }: Props) {
+  const { holdingKPIs, holdingComparison, holdingSynthese, holdingPieData, directors, holdingNetResult, monthLabel } = data;
+
   return (
     <div>
       <div className="pcg-kpi-grid">
@@ -16,22 +20,23 @@ export function PCGroupHoldingTab() {
         ))}
       </div>
 
-      <PCGroupComparisonTable
-        title="📊 Comparatif M-1 Holding"
-        headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
-        rows={holdingComparison.map(r => ({
-          cells: [r.indicator, r.jan, r.feb, r.variation],
-          varIndex: 3,
-          varType: r.varType,
-        }))}
-      />
+      {holdingComparison && (
+        <PCGroupComparisonTable
+          title="📊 Comparatif M-1 Holding"
+          headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
+          rows={holdingComparison.map((r: any) => ({
+            cells: [r.indicator, r.jan, r.feb, r.variation],
+            varIndex: 3,
+            varType: r.varType,
+          }))}
+        />
+      )}
 
-      {/* Directors */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <div>
-            <h3 className="pcg-section-title">👥 Répartition Dirigeants - Février 2026</h3>
-            <p className="pcg-section-subtitle">100% du résultat net holding = $94,094</p>
+            <h3 className="pcg-section-title">👥 Répartition Dirigeants - {monthLabel}</h3>
+            <p className="pcg-section-subtitle">100% du résultat net holding = {holdingNetResult}</p>
           </div>
         </div>
         <div className="pcg-section-body">
@@ -54,7 +59,6 @@ export function PCGroupHoldingTab() {
         </div>
       </div>
 
-      {/* Synthèse */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <h3 className="pcg-section-title">📊 Synthèse Flux Holding</h3>
