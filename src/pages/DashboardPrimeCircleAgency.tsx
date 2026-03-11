@@ -85,7 +85,7 @@ export default function DashboardPrimeCircleAgency() {
         {tab === "clients" && <PCAClientsTab data={data} />}
         {tab === "media" && <PCAMediaTab data={data} />}
         {tab === "blink" && <PCABlinkTab data={data} />}
-        {tab === "risks" && <PCARisksTab data={data} />}
+        
       </main>
     </div>
   );
