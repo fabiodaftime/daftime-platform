@@ -1,9 +1,15 @@
-import { ytdData, monthlyComparison, formatCurrency } from './PrimeCircleData';
+import { formatCurrency, type PCMonthData } from './PrimeCircleData';
 
-export function PrimeCircleYTDSection() {
+interface Props { data: PCMonthData; }
+
+export function PrimeCircleYTDSection({ data }: Props) {
+  const { ytdData, monthlyComparison } = data;
+  const totalAds = monthlyComparison.reduce((s, m) => s + m.ads, 0);
+  const totalCommission = monthlyComparison.reduce((s, m) => s + m.commission, 0);
+
   return (
     <>
-      <div className="pc-section-title">Year-to-Date (Jan–Feb 2026)</div>
+      <div className="pc-section-title">Year-to-Date</div>
       <div className="pc-ytd-grid">
         <div className="pc-ytd-card">
           <div className="pc-kpi-label">YTD Customers</div>
@@ -65,8 +71,8 @@ export function PrimeCircleYTDSection() {
               <td className="pc-amount turnover"><strong>{formatCurrency(ytdData.turnover)}</strong></td>
               <td className="pc-amount margin"><strong>{formatCurrency(ytdData.margin)}</strong></td>
               <td><strong>{ytdData.marginRate}%</strong></td>
-              <td><strong>{formatCurrency(7482)}</strong></td>
-              <td><strong>{formatCurrency(9635)}</strong></td>
+              <td><strong>{formatCurrency(totalAds)}</strong></td>
+              <td><strong>{formatCurrency(totalCommission)}</strong></td>
               <td>—</td>
             </tr>
           </tbody>

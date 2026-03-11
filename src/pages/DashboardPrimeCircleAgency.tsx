@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MonthSelector } from '@/components/dashboard/MonthSelector';
 import { PCAOverviewTab } from '@/components/dashboard/primecircle-agency/PCAOverviewTab';
 import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClientsTab';
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
 import { PCARisksTab } from '@/components/dashboard/primecircle-agency/PCARisksTab';
-import { C } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
+import { C, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthId } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import pcaLogo from '@/assets/prime-circle-agency-logo.png';
 import './DashboardPrimeCircleAgency.css';
@@ -22,7 +23,10 @@ const tabs = [
 
 export default function DashboardPrimeCircleAgency() {
   const [tab, setTab] = useState("overview");
+  const [selectedMonth, setSelectedMonth] = useState<PCAMonthId>('feb-2026');
   const navigate = useNavigate();
+
+  const data = getPCAMonthData(selectedMonth);
 
   return (
     <div className="pca-dashboard">
@@ -42,15 +46,25 @@ export default function DashboardPrimeCircleAgency() {
               <img src={pcaLogo} alt="Prime Circle Agency" style={{ height: 50 }} />
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="pca-badge" style={{ background: C.accentSoft, color: C.accent }}>FEVRIER 2026</span>
+                  <span className="pca-badge" style={{ background: C.accentSoft, color: C.accent }}>{data.monthShort}</span>
+                  <MonthSelector
+                    months={PCA_AVAILABLE_MONTHS}
+                    selectedMonth={selectedMonth}
+                    onMonthChange={(id) => setSelectedMonth(id as PCAMonthId)}
+                    variant="accent"
+                  />
                 </div>
                 <p className="pca-subtitle">Dashboard Financier & Operationnel Mensuel</p>
               </div>
             </div>
             <div className="pca-month-badge">
               <div className="pca-month-label">NET REVENUE</div>
-              <div className="pca-month-value">$24,473</div>
-              <div style={{ fontSize: 10, color: C.greenText, fontWeight: 700 }}>+445% vs Jan</div>
+              <div className="pca-month-value">${data.net.toLocaleString()}</div>
+              {data.prevNet > 0 && (
+                <div style={{ fontSize: 10, color: C.greenText, fontWeight: 700 }}>
+                  {((data.net - data.prevNet) / data.prevNet * 100).toFixed(0)}% vs M-1
+                </div>
+              )}
             </div>
           </div>
           <div className="pca-tabs">
@@ -68,11 +82,11 @@ export default function DashboardPrimeCircleAgency() {
       </header>
 
       <main className="pca-container">
-        {tab === "overview" && <PCAOverviewTab />}
-        {tab === "clients" && <PCAClientsTab />}
-        {tab === "media" && <PCAMediaTab />}
-        {tab === "blink" && <PCABlinkTab />}
-        {tab === "risks" && <PCARisksTab />}
+        {tab === "overview" && <PCAOverviewTab data={data} />}
+        {tab === "clients" && <PCAClientsTab data={data} />}
+        {tab === "media" && <PCAMediaTab data={data} />}
+        {tab === "blink" && <PCABlinkTab data={data} />}
+        {tab === "risks" && <PCARisksTab data={data} />}
       </main>
     </div>
   );

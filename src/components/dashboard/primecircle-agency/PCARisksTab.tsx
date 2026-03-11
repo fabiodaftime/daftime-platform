@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Trash2 } from 'lucide-react';
-import { C } from './PrimeCircleAgencyData';
+import { C, type PCAMonthData } from './PrimeCircleAgencyData';
 
 interface Comment {
   id: string;
@@ -15,18 +15,14 @@ interface Comment {
   user_id: string;
 }
 
-export function PCARisksTab() {
+interface Props { data: PCAMonthData; }
+
+export function PCARisksTab({ data }: Props) {
   const { id: companyId } = useParams();
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const riskKPIs = [
-    { l: "Top Spender Concentration", v: "25.6%", s: "Salmech - mieux reparti vs Jan", c: C.orangeText },
-    { l: "CL Exposure", v: "$211K", s: "x10 vs Jan ($21K)", c: C.redText },
-    { l: "Marge Nette", v: "69.8%", s: "vs 41.8% en Jan", c: C.greenText },
-  ];
 
   useEffect(() => {
     if (companyId) fetchComments();
@@ -44,21 +40,12 @@ export function PCARisksTab() {
   const handleSubmit = async () => {
     if (!newComment.trim() || !user || !companyId) return;
     setLoading(true);
-
     const { data: profile } = await supabase.from('profiles').select('full_name, email').eq('id', user.id).single();
     const authorName = profile?.full_name || profile?.email || user.email || 'Anonyme';
-
     const { error } = await supabase.from('dashboard_comments').insert({
-      company_id: companyId,
-      user_id: user.id,
-      author_name: authorName,
-      content: newComment.trim(),
+      company_id: companyId, user_id: user.id, author_name: authorName, content: newComment.trim(),
     });
-
-    if (!error) {
-      setNewComment('');
-      fetchComments();
-    }
+    if (!error) { setNewComment(''); fetchComments(); }
     setLoading(false);
   };
 
@@ -71,11 +58,11 @@ export function PCARisksTab() {
     <div>
       <div className="pca-section">
         <div style={{ marginBottom: 20 }}>
-          <h3 className="pca-section-title">Indicateurs Cles de Risque - Fevrier 2026</h3>
-          <p className="pca-section-subtitle">3 points d'attention identifies</p>
+          <h3 className="pca-section-title">Indicateurs Cles de Risque - {data.monthLabel}</h3>
+          <p className="pca-section-subtitle">{data.riskKPIs.length} points d'attention identifies</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 14 }}>
-          {riskKPIs.map((item, i) => (
+          {data.riskKPIs.map((item, i) => (
             <div key={i} style={{
               background: item.c === C.redText ? C.redSoft : item.c === C.greenText ? C.greenSoft : C.orangeSoft,
               borderRadius: 12, padding: '16px 14px', textAlign: 'center',
@@ -94,7 +81,6 @@ export function PCARisksTab() {
           <h3 className="pca-section-title">💬 Commentaires</h3>
           <p className="pca-section-subtitle">Notes et observations partagées sur ce dashboard</p>
         </div>
-
         <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
           <Textarea
             placeholder="Écrire un commentaire..."
@@ -108,10 +94,9 @@ export function PCARisksTab() {
             Envoyer
           </Button>
         </div>
-
         {comments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 0', color: C.textMuted, fontSize: 13 }}>
-            Aucun commentaire pour le moment. Soyez le premier à commenter !
+            Aucun commentaire pour le moment.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
