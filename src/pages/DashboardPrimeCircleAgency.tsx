@@ -29,7 +29,7 @@ export default function DashboardPrimeCircleAgency() {
 
   return (
     <div className="pca-dashboard">
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
 
       <header className="pca-header">
         <div className="pca-header-inner">
@@ -44,26 +44,31 @@ export default function DashboardPrimeCircleAgency() {
             <div className="pca-logo-area">
               <img src={pcaLogo} alt="Prime Circle Agency" style={{ height: 50 }} />
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="pca-badge" style={{ background: C.accentSoft, color: C.accent }}>{data.monthShort}</span>
+                <div className="pca-title-main">
+                  Prime Circle <span className="pca-title-accent">Agency</span>
+                </div>
+                <div className="pca-subtitle">Dashboard Financier</div>
+                <div style={{ marginTop: 8 }}>
                   <MonthSelector
                     months={PCA_AVAILABLE_MONTHS}
                     selectedMonth={selectedMonth}
                     onMonthChange={(id) => setSelectedMonth(id as PCAMonthId)}
-                    variant="accent"
+                    variant="blue"
                   />
                 </div>
-                <p className="pca-subtitle">Dashboard Financier & Operationnel Mensuel</p>
               </div>
             </div>
             <div className="pca-month-badge">
-              <div className="pca-month-label">NET REVENUE</div>
-              <div className="pca-month-value">${data.net.toLocaleString()}</div>
-              {data.prevNet > 0 && (
-                <div style={{ fontSize: 10, color: C.greenText, fontWeight: 700 }}>
-                  {((data.net - data.prevNet) / data.prevNet * 100).toFixed(0)}% vs M-1
-                </div>
-              )}
+              <div className="pca-nr-box">
+                <div className="pca-month-label">NET REVENUE</div>
+                <div className="pca-month-value">${data.net.toLocaleString()}</div>
+                {data.prevNet > 0 && (
+                  <div style={{ fontSize: 11, color: C.greenText, fontWeight: 600 }}>
+                    +{((data.net - data.prevNet) / data.prevNet * 100).toFixed(0)}% vs Jan
+                  </div>
+                )}
+              </div>
+              <div className="pca-period-badge">{data.monthLabel}</div>
             </div>
           </div>
           <div className="pca-tabs">
@@ -85,8 +90,11 @@ export default function DashboardPrimeCircleAgency() {
         {tab === "clients" && <PCAClientsTab data={data} />}
         {tab === "media" && <PCAMediaTab data={data} />}
         {tab === "blink" && <PCABlinkTab data={data} />}
-        
       </main>
+
+      <div className="pca-footer" style={{ maxWidth: 1280, margin: '0 auto' }}>
+        Prime Circle Agency — Dashboard Financier & Opérationnel — {data.monthLabel}
+      </div>
     </div>
   );
 }
