@@ -58,6 +58,9 @@ export interface PCAMonthData {
   // YTD
   ytdNet: number;
   ytdPcaShare: number;
+  ytdGross: number;
+  ytdExpenses: number;
+  expenseRatio: number;
   // Expense breakdown
   expenseBreakdown: { name: string; value: number }[];
   // Client lifecycle
@@ -90,7 +93,7 @@ export interface PCAMonthData {
   riskKPIs: { l: string; v: string; s: string; c: string }[];
   risks: { label: string; desc: string; severity: string; icon: string }[];
   // Monthly trend (for chart)
-  monthlyTrend: { month: string; gross: number; net: number; expenses: number; media: number }[];
+  monthlyTrend: { month: string; gross: number; net: number; expenses: number; media: number; ccMedia: number; clMedia: number; newClients: number; renewed: number; upgraded: number; trial: number }[];
 }
 
 // ===== JAN 2026 DATA =====
@@ -102,7 +105,8 @@ const janData: PCAMonthData = {
   transactions: 62, mediaSpend: 279691, clientsActifs: 47, totalEncaisse: 28975, adAccounts: 33,
   marginPct: 41.8,
   prevGross: 0, prevExpenses: 0, prevNet: 0, prevPcaShare: 0, prevTransactions: 0, prevMediaSpend: 0,
-  ytdNet: 4489, ytdPcaShare: 2245,
+  ytdNet: 4489, ytdPcaShare: 2245, ytdGross: 10726, ytdExpenses: 6237,
+  expenseRatio: 58.2,
   expenseBreakdown: [
     { name: "Chris Referral", value: 2633 }, { name: "Setup Cost", value: 1300 },
     { name: "Salary", value: 1200 }, { name: "Ads", value: 1038 }, { name: "Master Referral", value: 66 },
@@ -213,7 +217,7 @@ const janData: PCAMonthData = {
     { label: "Yolanda: $22K spend, $0 revenu", desc: "3 trials, toutes stopped. $21.9K de media.", severity: "high", icon: "⚠️" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691 },
+    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
   ],
 };
 
@@ -227,7 +231,8 @@ const febData: PCAMonthData = {
   marginPct: 69.8,
   prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2244,
   prevTransactions: 62, prevMediaSpend: 279691,
-  ytdNet: 28962, ytdPcaShare: 14481,
+  ytdNet: 28962, ytdPcaShare: 14481, ytdGross: 45806, ytdExpenses: 16843,
+  expenseRatio: 30.2,
   expenseBreakdown: [
     { name: "Ads", value: 6666 }, { name: "Setup Cost", value: 2500 },
     { name: "Salary", value: 1200 }, { name: "Master Referral", value: 211 }, { name: "No Limit Referral", value: 30 },
@@ -335,8 +340,8 @@ const febData: PCAMonthData = {
     { label: "Marge Nette 69.8%", desc: "En forte hausse vs 41.8% en Jan.", severity: "low", icon: "📈" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691 },
-    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952 },
+    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 116, renewed: 20, upgraded: 6, trial: 3 },
   ],
 };
 

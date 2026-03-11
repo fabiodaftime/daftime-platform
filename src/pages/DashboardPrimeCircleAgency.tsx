@@ -7,7 +7,7 @@ import { PCAOverviewTab } from '@/components/dashboard/primecircle-agency/PCAOve
 import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClientsTab';
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
-import { PCARisksTab } from '@/components/dashboard/primecircle-agency/PCARisksTab';
+
 import { C, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthId } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import pcaLogo from '@/assets/prime-circle-agency-logo.png';
@@ -18,7 +18,6 @@ const tabs = [
   { id: "clients", label: "Clients", icon: "👥" },
   { id: "media", label: "Media Spend", icon: "📡" },
   { id: "blink", label: "Suivi Blink", icon: "🏦" },
-  { id: "risks", label: "Risques et Commentaires", icon: "⚠️" },
 ];
 
 export default function DashboardPrimeCircleAgency() {
@@ -86,7 +85,7 @@ export default function DashboardPrimeCircleAgency() {
         {tab === "clients" && <PCAClientsTab data={data} />}
         {tab === "media" && <PCAMediaTab data={data} />}
         {tab === "blink" && <PCABlinkTab data={data} />}
-        {tab === "risks" && <PCARisksTab data={data} />}
+        
       </main>
     </div>
   );

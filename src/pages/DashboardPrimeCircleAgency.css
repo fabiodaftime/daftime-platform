@@ -331,6 +331,119 @@
   margin-bottom: 0;
 }
 
+/* Section Header */
+.pca-dashboard .pca-section-header {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #64668B;
+  margin-bottom: 16px;
+  margin-top: 8px;
+}
+
+/* KPI accent borders */
+.pca-dashboard .pca-kpi-accent-green { border-bottom: 4px solid #22C55E; }
+.pca-dashboard .pca-kpi-accent-blue { border-bottom: 4px solid #4F5BD5; }
+.pca-dashboard .pca-kpi-accent-red { border-bottom: 4px solid #EF4444; }
+.pca-dashboard .pca-kpi-accent-orange { border-bottom: 4px solid #F59E0B; }
+.pca-dashboard .pca-kpi-accent-purple { border-bottom: 4px solid #8B5CF6; }
+
+/* Change badge */
+.pca-dashboard .pca-change-badge {
+  display: inline-block;
+  background: #ECFDF5;
+  color: #16A34A;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+/* Waterfall (dark panel) */
+.pca-dashboard .pca-waterfall-section {
+  background: linear-gradient(135deg, #1E3A5F 0%, #4F5BD5 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 18px;
+  color: #fff;
+}
+
+.pca-dashboard .pca-waterfall-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pca-dashboard .pca-waterfall-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.pca-dashboard .pca-waterfall-table th:not(:first-child) {
+  text-align: right;
+}
+
+.pca-dashboard .pca-waterfall-table td {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.pca-dashboard .pca-waterfall-table td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.pca-dashboard .pca-waterfall-table tr.pca-wf-highlight td {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+}
+
+/* YTD Cards */
+.pca-dashboard .pca-ytd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.pca-dashboard .pca-ytd-card {
+  background: linear-gradient(135deg, #1E3A5F 0%, #4F5BD5 100%);
+  border-radius: 12px;
+  padding: 24px;
+  color: #fff;
+}
+
+.pca-dashboard .pca-ytd-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.pca-dashboard .pca-ytd-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.pca-dashboard .pca-ytd-detail {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 4px;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .pca-dashboard .pca-two-col {
