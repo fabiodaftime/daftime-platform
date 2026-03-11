@@ -1,9 +1,10 @@
-import { D, globalKPIs, globalTicketMoyens, globalVariableCosts, globalFixedCosts, globalSynthesis } from './DigitData';
+import { D, type DigitMonthData } from './DigitData';
 
-export function DigitGlobalTab() {
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange, indigo: D.indigo,
-  };
+interface Props { data: DigitMonthData; }
+
+export function DigitGlobalTab({ data }: Props) {
+  const { globalKPIs, globalTicketMoyens, globalVariableCosts, globalFixedCosts, globalSynthesis } = data;
+  const typeColor: Record<string, string> = { primary: D.primary, success: D.green, accent: D.accent, warning: D.orange, indigo: D.indigo };
 
   const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
     <div className="digit-kpi-grid">
@@ -21,16 +22,12 @@ export function DigitGlobalTab() {
     <div>
       <h2 className="digit-section-title">Digit Solution - Main Product (Setup + Ad Account)</h2>
       {renderKPIs(globalKPIs)}
-
       <h2 className="digit-section-title">Tickets Moyens par Type</h2>
       {renderKPIs(globalTicketMoyens)}
-
       <h2 className="digit-section-title">Coûts Variables</h2>
       {renderKPIs(globalVariableCosts)}
-
       <h2 className="digit-section-title">Coûts Fixes & Opérationnels</h2>
       {renderKPIs(globalFixedCosts)}
-
       <h2 className="digit-section-title">Synthèse Financière</h2>
       {renderKPIs(globalSynthesis)}
     </div>

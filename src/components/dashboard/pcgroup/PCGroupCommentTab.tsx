@@ -1,7 +1,11 @@
-import { commentKPIs, commentWaterfall, commentWarning } from './PCGroupData';
+import { type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
-export function PCGroupCommentTab() {
+interface Props { data: PCGroupMonthData; }
+
+export function PCGroupCommentTab({ data }: Props) {
+  const { commentKPIs, commentWaterfall, commentWarning } = data;
+
   return (
     <div>
       <div className="pcg-kpi-grid">
@@ -16,12 +20,14 @@ export function PCGroupCommentTab() {
 
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">⚠️ Analyse Février</h3>
+          <h3 className="pcg-section-title">⚠️ Analyse {data.monthLabel}</h3>
         </div>
         <div className="pcg-section-body">
-          <p style={{ color: '#F59E0B', fontWeight: 600, marginBottom: '1rem' }}>
-            {commentWarning}
-          </p>
+          {commentWarning && (
+            <p style={{ color: '#F59E0B', fontWeight: 600, marginBottom: '1rem' }}>
+              {commentWarning}
+            </p>
+          )}
           <PCGroupWaterfall data={commentWaterfall} title="" />
         </div>
       </div>

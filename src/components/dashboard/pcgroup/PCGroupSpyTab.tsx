@@ -1,7 +1,11 @@
-import { spyKPIs, spyWaterfall } from './PCGroupData';
+import { type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
-export function PCGroupSpyTab() {
+interface Props { data: PCGroupMonthData; }
+
+export function PCGroupSpyTab({ data }: Props) {
+  const { spyKPIs, spyWaterfall } = data;
+
   return (
     <div>
       <div className="pcg-kpi-grid">
@@ -16,7 +20,7 @@ export function PCGroupSpyTab() {
 
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">💰 Détail Charges Février</h3>
+          <h3 className="pcg-section-title">💰 Détail Charges {data.monthLabel}</h3>
         </div>
         <div className="pcg-section-body">
           <PCGroupWaterfall data={spyWaterfall} title="" />

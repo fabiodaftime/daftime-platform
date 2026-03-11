@@ -1,9 +1,10 @@
-import { D, spyKPIs, spyVariableCosts, spySynthesis } from './DigitData';
+import { D, type DigitMonthData } from './DigitData';
 
-export function DigitSpyTab() {
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
-  };
+interface Props { data: DigitMonthData; }
+
+export function DigitSpyTab({ data }: Props) {
+  const { spyKPIs, spyVariableCosts, spySynthesis } = data;
+  const typeColor: Record<string, string> = { primary: D.primary, success: D.green, accent: D.accent, warning: D.orange };
 
   const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
     <div className="digit-kpi-grid">
@@ -21,10 +22,8 @@ export function DigitSpyTab() {
     <div>
       <h2 className="digit-section-title">SPY - Outils d'Analyse Concurrentielle</h2>
       {renderKPIs(spyKPIs)}
-
       <h2 className="digit-section-title">Coûts Variables</h2>
       {renderKPIs(spyVariableCosts)}
-
       <h2 className="digit-section-title">Synthèse Financière</h2>
       {renderKPIs(spySynthesis)}
     </div>

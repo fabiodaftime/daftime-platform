@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MonthSelector } from '@/components/dashboard/MonthSelector';
+import { DIGIT_AVAILABLE_MONTHS, getDigitMonthData, type DigitMonthId } from '@/components/dashboard/digit/DigitData';
 import { DigitOverviewTab } from '@/components/dashboard/digit/DigitOverviewTab';
 import { DigitYTDTab } from '@/components/dashboard/digit/DigitYTDTab';
 import { DigitRevenueTab } from '@/components/dashboard/digit/DigitRevenueTab';
@@ -26,7 +28,10 @@ const tabs = [
 
 export default function DashboardDigit() {
   const [tab, setTab] = useState("overview");
+  const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('feb-2026');
   const navigate = useNavigate();
+
+  const monthData = getDigitMonthData(selectedMonth);
 
   return (
     <div className="digit-dashboard">
@@ -42,8 +47,14 @@ export default function DashboardDigit() {
             <ConsolidatedAccessButton />
           </div>
           <h1 className="digit-title">Digit - Dashboard Financier</h1>
-          <div className="digit-subtitle">
-            <strong style={{ color: '#D946A8' }}>Février 2026</strong>
+          <div className="digit-subtitle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div />
+            <MonthSelector
+              months={DIGIT_AVAILABLE_MONTHS}
+              selectedMonth={selectedMonth}
+              onMonthChange={(id) => setSelectedMonth(id as DigitMonthId)}
+              variant="accent"
+            />
           </div>
         </div>
       </header>
@@ -61,18 +72,18 @@ export default function DashboardDigit() {
       </div>
 
       <div className="digit-tab-content">
-        {tab === "overview" && <DigitOverviewTab />}
-        {tab === "ytd" && <DigitYTDTab />}
-        {tab === "revenue" && <DigitRevenueTab />}
-        {tab === "costs" && <DigitCostsTab />}
-        {tab === "global" && <DigitGlobalTab />}
-        {tab === "spy" && <DigitSpyTab />}
-        {tab === "comment-trust" && <DigitCommentTrustTab />}
+        {tab === "overview" && <DigitOverviewTab data={monthData} />}
+        {tab === "ytd" && <DigitYTDTab data={monthData} />}
+        {tab === "revenue" && <DigitRevenueTab data={monthData} />}
+        {tab === "costs" && <DigitCostsTab data={monthData} />}
+        {tab === "global" && <DigitGlobalTab data={monthData} />}
+        {tab === "spy" && <DigitSpyTab data={monthData} />}
+        {tab === "comment-trust" && <DigitCommentTrustTab data={monthData} />}
         {tab === "comments" && <DigitCommentsTab />}
       </div>
 
       <footer className="digit-footer">
-        <p><strong>Digit</strong> — Dashboard Financier CFO | Février 2026 | Confidentiel</p>
+        <p><strong>Digit</strong> — Dashboard Financier CFO | {monthData.monthLabel} | Confidentiel</p>
       </footer>
     </div>
   );

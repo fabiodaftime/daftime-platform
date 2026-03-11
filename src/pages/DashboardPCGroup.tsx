@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MonthSelector } from '@/components/dashboard/MonthSelector';
+import { AVAILABLE_MONTHS, getMonthData, type MonthId } from '@/components/dashboard/pcgroup/PCGroupData';
 import { PCGroupOverviewTab } from '@/components/dashboard/pcgroup/PCGroupOverviewTab';
 import { PCGroupYTDTab } from '@/components/dashboard/pcgroup/PCGroupYTDTab';
 import { PCGroupAgencyTab } from '@/components/dashboard/pcgroup/PCGroupAgencyTab';
@@ -15,19 +17,34 @@ import './DashboardPCGroup.css';
 
 const tabs = [
   { id: 'overview', icon: '📊', label: 'Vue Groupe' },
-  { id: 'ytd', icon: '📈', label: 'YTD 2026', amount: '$202K' },
-  { id: 'agency', icon: '📢', label: 'Agency', amount: '$12.2K' },
-  { id: 'structuring', icon: '🏛️', label: 'Structuring', amount: '$53.3K' },
-  { id: 'digit', icon: '💻', label: 'Digit Solution', amount: '$43.2K' },
-  { id: 'spy', icon: '🔍', label: 'SPY', amount: '$3.6K' },
-  { id: 'comment', icon: '💬', label: 'Comment', amount: '$52' },
-  { id: 'holding', icon: '🏛️', label: 'Holding', amount: '$94.1K' },
-  { id: 'reserves', icon: '💰', label: 'Réserves', amount: '$20.2K' },
+  { id: 'ytd', icon: '📈', label: 'YTD 2026' },
+  { id: 'agency', icon: '📢', label: 'Agency' },
+  { id: 'structuring', icon: '🏛️', label: 'Structuring' },
+  { id: 'digit', icon: '💻', label: 'Digit Solution' },
+  { id: 'spy', icon: '🔍', label: 'SPY' },
+  { id: 'comment', icon: '💬', label: 'Comment' },
+  { id: 'holding', icon: '🏛️', label: 'Holding' },
+  { id: 'reserves', icon: '💰', label: 'Réserves' },
 ];
 
 export default function DashboardPCGroup() {
   const [tab, setTab] = useState('overview');
+  const [selectedMonth, setSelectedMonth] = useState<MonthId>('feb-2026');
   const navigate = useNavigate();
+
+  const monthData = getMonthData(selectedMonth);
+
+  // Dynamic tab amounts from selected month data
+  const tabAmounts: Record<string, string> = {
+    ytd: monthData.ytdHero[1]?.value || '',
+    agency: monthData.agencyKPIs[2]?.value || '',
+    structuring: monthData.structuringKPIs[1]?.value || '',
+    digit: monthData.digitKPIs[1]?.value || '',
+    spy: monthData.spyKPIs[1]?.value || '',
+    comment: monthData.commentKPIs[1]?.value || '',
+    holding: monthData.holdingKPIs[1]?.value || '',
+    reserves: monthData.reservesHero[monthData.reservesHero.length > 2 ? 2 : 1]?.value || '',
+  };
 
   return (
     <div className="pcg-dashboard">
@@ -50,7 +67,12 @@ export default function DashboardPCGroup() {
               <p className="subtitle">6 Entités • Holding Model</p>
             </div>
           </div>
-          <div className="pcg-period-badge">Février 2026</div>
+          <MonthSelector
+            months={AVAILABLE_MONTHS}
+            selectedMonth={selectedMonth}
+            onMonthChange={(id) => setSelectedMonth(id as MonthId)}
+            variant="gold"
+          />
         </div>
 
         <nav className="pcg-nav-tabs">
@@ -62,26 +84,26 @@ export default function DashboardPCGroup() {
             >
               <span>{t.icon}</span>
               {t.label}
-              {t.amount && <span className="pcg-tab-amount">{t.amount}</span>}
+              {tabAmounts[t.id] && <span className="pcg-tab-amount">{tabAmounts[t.id]}</span>}
             </button>
           ))}
         </nav>
       </header>
 
       <main className="pcg-main">
-        {tab === 'overview' && <PCGroupOverviewTab />}
-        {tab === 'ytd' && <PCGroupYTDTab />}
-        {tab === 'agency' && <PCGroupAgencyTab />}
-        {tab === 'structuring' && <PCGroupStructuringTab />}
-        {tab === 'digit' && <PCGroupDigitTab />}
-        {tab === 'spy' && <PCGroupSpyTab />}
-        {tab === 'comment' && <PCGroupCommentTab />}
-        {tab === 'holding' && <PCGroupHoldingTab />}
-        {tab === 'reserves' && <PCGroupReservesTab />}
+        {tab === 'overview' && <PCGroupOverviewTab data={monthData} />}
+        {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
+        {tab === 'agency' && <PCGroupAgencyTab data={monthData} />}
+        {tab === 'structuring' && <PCGroupStructuringTab data={monthData} />}
+        {tab === 'digit' && <PCGroupDigitTab data={monthData} />}
+        {tab === 'spy' && <PCGroupSpyTab data={monthData} />}
+        {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
+        {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
+        {tab === 'reserves' && <PCGroupReservesTab data={monthData} />}
       </main>
 
       <footer className="pcg-footer">
-        <strong>Prime Circle Group</strong> — Dashboard Consolidé | Février 2026 | Confidentiel
+        <strong>Prime Circle Group</strong> — Dashboard Consolidé | {monthData.monthLabel} | Confidentiel
       </footer>
     </div>
   );

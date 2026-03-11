@@ -1,7 +1,11 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { D, overviewKPIs, waterfallOverview, economicSplit, chargesDetail, comparisonM1, PIE_COLORS, fmt } from './DigitData';
+import { D, PIE_COLORS, fmt, type DigitMonthData } from './DigitData';
 
-export function DigitOverviewTab() {
+interface Props { data: DigitMonthData; }
+
+export function DigitOverviewTab({ data }: Props) {
+  const { overviewKPIs, comparisonM1, waterfallOverview, economicSplit, chargesDetail } = data;
+
   const colorMap: Record<string, string> = {
     green: D.green, red: D.red, orange: D.orange, neutral: D.textMuted, accent: D.accent, indigo: D.indigo, neutralLight: "#9ca3af",
   };
@@ -42,8 +46,12 @@ export function DigitOverviewTab() {
 
       <h2 className="digit-section-title">Performance Globale</h2>
 
-      <h2 className="digit-section-title">📊 Comparaison avec M-1 (Janvier 2026)</h2>
-      {renderKPIs(comparisonM1)}
+      {comparisonM1 && (
+        <>
+          <h2 className="digit-section-title">📊 Comparaison avec M-1</h2>
+          {renderKPIs(comparisonM1)}
+        </>
+      )}
 
       <div className="digit-charts-grid">
         <div className="digit-chart-container">
@@ -74,7 +82,6 @@ export function DigitOverviewTab() {
         </div>
       </div>
 
-      {/* Détail des Charges */}
       <div className="digit-chart-container" style={{ marginTop: 24 }}>
         <h3 style={{ fontSize: 18, fontWeight: 700, color: D.primary, marginBottom: 16 }}>💡 Détail des Charges</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>

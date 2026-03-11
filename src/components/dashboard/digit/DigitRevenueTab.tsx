@@ -1,10 +1,11 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { D, revenueKPIsRow1, revenueKPIsRow2, revenueByCategory, revenueDistribution, REVENUE_PIE_COLORS, fmt } from './DigitData';
+import { D, REVENUE_PIE_COLORS, fmt, type DigitMonthData } from './DigitData';
 
-export function DigitRevenueTab() {
-  const typeColor: Record<string, string> = {
-    primary: D.primary, success: D.green, accent: D.accent, warning: D.orange,
-  };
+interface Props { data: DigitMonthData; }
+
+export function DigitRevenueTab({ data }: Props) {
+  const { revenueKPIsRow1, revenueKPIsRow2, revenueByCategory, revenueDistribution } = data;
+  const typeColor: Record<string, string> = { primary: D.primary, success: D.green, accent: D.accent, warning: D.orange };
 
   const renderKPIs = (items: { label: string; value: string; sub: string; type: string }[]) => (
     <div className="digit-kpi-grid">
@@ -21,10 +22,7 @@ export function DigitRevenueTab() {
   return (
     <div>
       {renderKPIs(revenueKPIsRow1)}
-      <div style={{ marginTop: '1.5rem' }}>
-        {renderKPIs(revenueKPIsRow2)}
-      </div>
-
+      <div style={{ marginTop: '1.5rem' }}>{renderKPIs(revenueKPIsRow2)}</div>
       <h2 className="digit-section-title">Répartition du CA</h2>
       <div className="digit-charts-grid">
         <div className="digit-chart-container">
@@ -38,7 +36,6 @@ export function DigitRevenueTab() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
         <div className="digit-chart-container">
           <div className="digit-chart-title">Distribution du CA</div>
           <ResponsiveContainer width="100%" height={280}>
