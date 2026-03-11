@@ -12,7 +12,7 @@ export const C = {
   gold: "#C9A227",
 };
 
-export const PIE_COLORS = [C.primary, C.green, C.orange, C.red, C.purple, C.cyan, C.accent];
+export const PIE_COLORS = [C.primary, C.green, C.cyan, C.red, C.purple, C.orange, C.gold];
 
 export const fmt = (n: number) => {
   if (n >= 1e6) return "$" + (n / 1e6).toFixed(1) + "M";
