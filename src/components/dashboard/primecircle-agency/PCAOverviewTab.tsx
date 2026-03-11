@@ -1,25 +1,30 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { C, fmtF, fmt, pctChg, expenseBreakdown, clientLifecycle, waterfallRows, monthlyTrend, PIE_COLORS, janData, febData, ytdData } from './PrimeCircleAgencyData';
+import { C, fmtF, fmt, pctChg, PIE_COLORS, type PCAMonthData } from './PrimeCircleAgencyData';
 import { PCATooltip } from './PCAShared';
 
-export function PCAOverviewTab() {
+interface Props { data: PCAMonthData; }
+
+export function PCAOverviewTab({ data }: Props) {
   const bgMap: Record<string, string> = {
     primarySoft: C.primarySoft, redSoft: C.redSoft, greenSoft: C.greenSoft, purpleSoft: C.purpleSoft, accentSoft: C.accentSoft,
   };
 
+  const hasPrev = data.prevGross > 0;
+  const kpis = [
+    { label: "Gross Revenue", value: fmtF(data.gross), icon: "💰", sub: hasPrev ? `${pctChg(data.gross, data.prevGross)} vs M-1 (${fmtF(data.prevGross)})` : "Sub + Setup" },
+    { label: "Total Expenses", value: fmtF(data.expenses), icon: "📉", sub: hasPrev ? `${pctChg(data.expenses, data.prevExpenses)} vs M-1 (${fmtF(data.prevExpenses)})` : `${(data.expenses / data.gross * 100).toFixed(1)}% du revenue` },
+    { label: "Net Revenue", value: fmtF(data.net), icon: "🏆", sub: hasPrev ? `${pctChg(data.net, data.prevNet)} vs M-1 (${fmtF(data.prevNet)})` : `Marge ${data.marginPct}%` },
+    { label: "PCA Share (50%)", value: fmtF(data.pcaShare), icon: "🤝", sub: hasPrev ? `${pctChg(data.pcaShare, data.prevPcaShare)} vs M-1` : "Du a Blink" },
+    { label: "Transactions", value: String(data.transactions), icon: "📋", sub: hasPrev ? `${pctChg(data.transactions, data.prevTransactions)} vs M-1 (${data.prevTransactions})` : `${data.clientLifecycle[0]?.count} New` },
+    { label: "Media Gere", value: fmt(data.mediaSpend), icon: "📡", sub: hasPrev ? `${pctChg(data.mediaSpend, data.prevMediaSpend)} vs M-1 (${fmt(data.prevMediaSpend)})` : `${data.adAccounts} ad accounts` },
+    { label: "YTD Net Rev", value: fmtF(data.ytdNet), icon: "📅", sub: "YTD 2026" },
+    { label: "YTD PCA Share", value: fmtF(data.ytdPcaShare), icon: "💎", sub: "YTD 2026" },
+  ];
+
   return (
     <div>
       <div className="pca-kpi-grid">
-        {[
-          { label: "Gross Revenue", value: "$35,080", icon: "💰", sub: `${pctChg(35080, 10726)} vs Jan ($10,726)` },
-          { label: "Total Expenses", value: "$10,606", icon: "📉", sub: `${pctChg(10606, 6237)} vs Jan ($6,237)` },
-          { label: "Net Revenue", value: "$24,473", icon: "🏆", sub: `${pctChg(24473, 4489)} vs Jan ($4,489)` },
-          { label: "PCA Share (50%)", value: "$12,237", icon: "🤝", sub: `${pctChg(12237, 2244)} vs Jan` },
-          { label: "Transactions", value: "145", icon: "📋", sub: `${pctChg(145, 62)} vs Jan (62)` },
-          { label: "Media Gere", value: "$516.0K", icon: "📡", sub: `${pctChg(515952, 279691)} vs Jan ($279.7K)` },
-          { label: "YTD Net Rev", value: "$28,962", icon: "📅", sub: "Jan + Feb 2026" },
-          { label: "YTD PCA Share", value: "$14,481", icon: "💎", sub: "Jan + Feb 2026" },
-        ].map((kpi, i) => (
+        {kpis.map((kpi, i) => (
           <div key={i} className="pca-kpi-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -36,7 +41,7 @@ export function PCAOverviewTab() {
       <div className="pca-two-col">
         <div className="pca-section">
           <div style={{ marginBottom: 20 }}>
-            <h3 className="pca-section-title">P&L Waterfall - Fevrier 2026</h3>
+            <h3 className="pca-section-title">P&L Waterfall - {data.monthLabel}</h3>
             <p className="pca-section-subtitle">Du revenu brut au split PCA</p>
           </div>
           <table className="pca-table">
@@ -44,19 +49,21 @@ export function PCAOverviewTab() {
               <tr>
                 <th style={{ textAlign: 'left' }}>Ligne</th>
                 <th style={{ textAlign: 'right' }}>Montant</th>
-                <th style={{ textAlign: 'right' }}>vs Jan</th>
+                {hasPrev && <th style={{ textAlign: 'right' }}>vs M-1</th>}
               </tr>
             </thead>
             <tbody>
-              {waterfallRows.map((r, i) => (
+              {data.waterfallRows.map((r, i) => (
                 <tr key={i}>
-                  <td style={{ fontWeight: r.b ? 700 : 400, background: r.bg ? bgMap[r.bg] : 'transparent', textAlign: 'left' }}>{r.l}</td>
-                  <td style={{ fontWeight: r.b ? 700 : 400, background: r.bg ? bgMap[r.bg] : 'transparent', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                  <td style={{ fontWeight: r.b ? 700 : 400, background: r.bg ? bgMap[r.bg] || 'transparent' : 'transparent', textAlign: 'left' }}>{r.l}</td>
+                  <td style={{ fontWeight: r.b ? 700 : 400, background: r.bg ? bgMap[r.bg] || 'transparent' : 'transparent', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {r.v < 0 ? `-${fmtF(Math.abs(r.v))}` : fmtF(r.v)}
                   </td>
-                  <td style={{ textAlign: 'right', color: C.textMuted, fontSize: 11, background: r.bg ? bgMap[r.bg] : 'transparent' }}>
-                    {r.jan !== 0 ? pctChg(Math.abs(r.v), Math.abs(r.jan)) : "NEW"}
-                  </td>
+                  {hasPrev && (
+                    <td style={{ textAlign: 'right', color: C.textMuted, fontSize: 11, background: r.bg ? bgMap[r.bg] || 'transparent' : 'transparent' }}>
+                      {r.prev !== 0 ? pctChg(Math.abs(r.v), Math.abs(r.prev)) : "NEW"}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -66,13 +73,13 @@ export function PCAOverviewTab() {
         <div className="pca-section">
           <div style={{ marginBottom: 20 }}>
             <h3 className="pca-section-title">Charges Operationnelles</h3>
-            <p className="pca-section-subtitle">{`$10,606 total - Ads = ${(6666/10606*100).toFixed(0)}%`}</p>
+            <p className="pca-section-subtitle">{`${fmtF(data.expenses)} total`}</p>
           </div>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie data={expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={90} paddingAngle={3}
+              <Pie data={data.expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={90} paddingAngle={3}
                 label={(e) => `${e.name} $${e.value.toLocaleString()}`} labelLine={{ stroke: C.textLight }}>
-                {expenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                {data.expenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
               </Pie>
               <Tooltip content={<PCATooltip />} />
             </PieChart>
@@ -80,36 +87,38 @@ export function PCAOverviewTab() {
         </div>
       </div>
 
-      <div className="pca-section">
-        <div style={{ marginBottom: 20 }}>
-          <h3 className="pca-section-title">Comparatif Jan vs Feb 2026</h3>
-          <p className="pca-section-subtitle">Revenu brut, net et charges</p>
+      {data.monthlyTrend.length > 1 && (
+        <div className="pca-section">
+          <div style={{ marginBottom: 20 }}>
+            <h3 className="pca-section-title">Comparatif Mensuel</h3>
+            <p className="pca-section-subtitle">Revenu brut, net et charges</p>
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <ComposedChart data={data.monthlyTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
+              <XAxis dataKey="month" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={fmt} />
+              <Tooltip content={<PCATooltip />} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="gross" name="Revenu Brut" fill={C.primary} radius={[5, 5, 0, 0]} barSize={22} />
+              <Bar dataKey="expenses" name="Charges" fill={C.red} radius={[5, 5, 0, 0]} barSize={22} opacity={0.6} />
+              <Line dataKey="net" name="Revenu Net" type="monotone" stroke={C.green} strokeWidth={3} dot={{ r: 5, fill: C.green, strokeWidth: 2, stroke: "#fff" }} />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
-        <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart data={monthlyTrend}>
-            <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
-            <XAxis dataKey="month" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={fmt} />
-            <Tooltip content={<PCATooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar dataKey="gross" name="Revenu Brut" fill={C.primary} radius={[5, 5, 0, 0]} barSize={22} />
-            <Bar dataKey="expenses" name="Charges" fill={C.red} radius={[5, 5, 0, 0]} barSize={22} opacity={0.6} />
-            <Line dataKey="net" name="Revenu Net" type="monotone" stroke={C.green} strokeWidth={3} dot={{ r: 5, fill: C.green, strokeWidth: 2, stroke: "#fff" }} />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      )}
 
       <div className="pca-section">
         <div style={{ marginBottom: 20 }}>
-          <h3 className="pca-section-title">Client Lifecycle - Fevrier 2026</h3>
-          <p className="pca-section-subtitle">145 transactions : 116 New, 20 Renewed, 6 Upgraded, 3 Trial</p>
+          <h3 className="pca-section-title">Client Lifecycle - {data.monthLabel}</h3>
+          <p className="pca-section-subtitle">{data.transactions} transactions</p>
         </div>
         <div className="pca-lifecycle-grid">
-          {clientLifecycle.map((c, i) => (
+          {data.clientLifecycle.map((c, i) => (
             <div key={i} className="pca-lifecycle-card" style={{ background: c.color + "10" }}>
               <div className="pca-lifecycle-count" style={{ color: c.color }}>{c.count}</div>
               <div className="pca-lifecycle-label">{c.status}</div>
-              <div className="pca-lifecycle-pct">{Math.round(c.count / 145 * 100)}% des tx</div>
+              <div className="pca-lifecycle-pct">{Math.round(c.count / data.transactions * 100)}% des tx</div>
             </div>
           ))}
         </div>

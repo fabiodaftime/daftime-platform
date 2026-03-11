@@ -2,8 +2,16 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
+import { MonthSelector } from '@/components/dashboard/MonthSelector';
+import { PC_AVAILABLE_MONTHS, type PCMonthId, type PCMonthData } from './PrimeCircleData';
 
-export function PrimeCircleHeader() {
+interface Props {
+  data: PCMonthData;
+  selectedMonth: PCMonthId;
+  onMonthChange: (id: PCMonthId) => void;
+}
+
+export function PrimeCircleHeader({ data, selectedMonth, onMonthChange }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -33,7 +41,14 @@ export function PrimeCircleHeader() {
             <p className="subtitle">U.S. Business Infrastructure Performance</p>
           </div>
         </div>
-        <div className="pc-period-badge">February 2026</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <MonthSelector
+            months={PC_AVAILABLE_MONTHS}
+            selectedMonth={selectedMonth}
+            onMonthChange={(id) => onMonthChange(id as PCMonthId)}
+            variant="blue"
+          />
+        </div>
       </header>
     </>
   );

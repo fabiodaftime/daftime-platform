@@ -1,41 +1,34 @@
 import { useState } from 'react';
-import { transactions, Transaction, formatCurrency } from './PrimeCircleData';
+import { formatCurrency, type PCMonthData } from './PrimeCircleData';
 
 type FilterType = 'all' | 'Closed' | 'In progress';
 
-export function PrimeCircleTable() {
+interface Props { data: PCMonthData; }
+
+export function PrimeCircleTable({ data }: Props) {
   const [filter, setFilter] = useState<FilterType>('all');
 
   const filteredTransactions = filter === 'all' 
-    ? transactions 
-    : transactions.filter(t => t.status === filter);
+    ? data.transactions 
+    : data.transactions.filter(t => t.status === filter);
 
-  const closedCount = transactions.filter(t => t.status === 'Closed').length;
-  const inProgressCount = transactions.filter(t => t.status === 'In progress').length;
+  const closedCount = data.transactions.filter(t => t.status === 'Closed').length;
+  const inProgressCount = data.transactions.filter(t => t.status === 'In progress').length;
 
   return (
     <>
-      <div className="pc-section-title">Transactions — February 2026</div>
+      <div className="pc-section-title">Transactions — {data.monthLabel}</div>
       <div className="pc-table-card">
         <div className="pc-table-header">
-          <h3>All Services — February 2026</h3>
+          <h3>All Services — {data.monthLabel}</h3>
           <div className="pc-table-filters">
-            <button 
-              className={`pc-filter-btn ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              All ({transactions.length})
+            <button className={`pc-filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
+              All ({data.transactions.length})
             </button>
-            <button 
-              className={`pc-filter-btn ${filter === 'Closed' ? 'active' : ''}`}
-              onClick={() => setFilter('Closed')}
-            >
+            <button className={`pc-filter-btn ${filter === 'Closed' ? 'active' : ''}`} onClick={() => setFilter('Closed')}>
               Completed ({closedCount})
             </button>
-            <button 
-              className={`pc-filter-btn ${filter === 'In progress' ? 'active' : ''}`}
-              onClick={() => setFilter('In progress')}
-            >
+            <button className={`pc-filter-btn ${filter === 'In progress' ? 'active' : ''}`} onClick={() => setFilter('In progress')}>
               In Progress ({inProgressCount})
             </button>
           </div>

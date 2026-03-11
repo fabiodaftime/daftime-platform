@@ -1,9 +1,13 @@
-import { costs, kpis, formatCurrency } from './PrimeCircleData';
+import { formatCurrency, type PCMonthData } from './PrimeCircleData';
 
-export function PrimeCircleCostsSection() {
+interface Props { data: PCMonthData; }
+
+export function PrimeCircleCostsSection({ data }: Props) {
+  const { costs, kpis } = data;
+
   return (
     <>
-      <div className="pc-section-title">Costs & Profitability — February 2026</div>
+      <div className="pc-section-title">Costs & Profitability — {data.monthLabel}</div>
       <div className="pc-expenses-grid">
         <div className="pc-expenses-card">
           <h3>Costs Breakdown (included in Margin)</h3>
@@ -21,6 +25,24 @@ export function PrimeCircleCostsSection() {
             </div>
             <div className="pc-expense-amount negative">-{formatCurrency(costs.salesCommission)}</div>
           </div>
+          {costs.referralCommission && (
+            <div className="pc-expense-row">
+              <div className="pc-expense-label">
+                <div className="pc-expense-icon">🤝</div>
+                <span>Referral Commission</span>
+              </div>
+              <div className="pc-expense-amount negative">-{formatCurrency(costs.referralCommission)}</div>
+            </div>
+          )}
+          {costs.events && (
+            <div className="pc-expense-row">
+              <div className="pc-expense-label">
+                <div className="pc-expense-icon">🎪</div>
+                <span>Events</span>
+              </div>
+              <div className="pc-expense-amount negative">-{formatCurrency(costs.events)}</div>
+            </div>
+          )}
           <div className="pc-expense-row">
             <div className="pc-expense-label">
               <div className="pc-expense-icon">🏢</div>
