@@ -1,14 +1,15 @@
 export const C = {
-  bg: "#F7F8FC", surface: "#FFFFFF", surfaceAlt: "#F0F1F8", card: "#FFFFFF",
-  border: "#E4E6F1", borderLight: "#EDEDF5",
-  primary: "#4F5BD5", primarySoft: "#E8EAFF",
-  accent: "#D946A8", accentSoft: "#FDE8F5",
-  green: "#22C55E", greenSoft: "#ECFDF5", greenText: "#16A34A",
-  red: "#EF4444", redSoft: "#FEF2F2", redText: "#DC2626",
+  bg: "#F4F7FA", surface: "#FFFFFF", surfaceAlt: "#F4F7FA", card: "#FFFFFF",
+  border: "#CFD9DE", borderLight: "#B8C5CC",
+  primary: "#1E56A0", primarySoft: "#E8F0FA",
+  accent: "#1E56A0", accentSoft: "#E8F0FA",
+  green: "#17B169", greenSoft: "#ECFDF5", greenText: "#16A34A",
+  red: "#DC2626", redSoft: "#FEF2F2", redText: "#DC2626",
   orange: "#F59E0B", orangeSoft: "#FFFBEB", orangeText: "#D97706",
-  purple: "#8B5CF6", purpleSoft: "#F3F0FF",
-  cyan: "#06B6D4", cyanSoft: "#ECFEFF",
-  text: "#1E1E2F", textSecondary: "#64668B", textMuted: "#9496B3", textLight: "#B4B6CD",
+  purple: "#7C3AED", purpleSoft: "#F3F0FF",
+  cyan: "#4A90D9", cyanSoft: "#E8F0FA",
+  text: "#0F1419", textSecondary: "#536471", textMuted: "#8899A6", textLight: "#B8C5CC",
+  gold: "#C9A227",
 };
 
 export const PIE_COLORS = [C.primary, C.green, C.orange, C.red, C.purple, C.cyan, C.accent];
