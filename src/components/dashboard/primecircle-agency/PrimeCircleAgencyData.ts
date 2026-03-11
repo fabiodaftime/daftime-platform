@@ -58,6 +58,9 @@ export interface PCAMonthData {
   // YTD
   ytdNet: number;
   ytdPcaShare: number;
+  ytdGross: number;
+  ytdExpenses: number;
+  expenseRatio: number;
   // Expense breakdown
   expenseBreakdown: { name: string; value: number }[];
   // Client lifecycle
