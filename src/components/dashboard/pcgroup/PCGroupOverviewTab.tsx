@@ -1,16 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { ENTITY_ROUTES, type PCGroupMonthData } from './PCGroupData';
+import { type PCGroupEntityRoutes, type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
-interface Props { data: PCGroupMonthData; }
+interface Props {
+  data: PCGroupMonthData;
+  entityRoutes: PCGroupEntityRoutes;
+}
 
-export function PCGroupOverviewTab({ data }: Props) {
+export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
   const navigate = useNavigate();
   const { overviewHero, entityCards, consolidatedPL, pieData, overviewComparison, overviewComparisonTotal, monthLabel } = data;
 
   const handleEntityClick = (entityId: string) => {
-    const route = ENTITY_ROUTES[entityId as keyof typeof ENTITY_ROUTES];
+    const route = entityRoutes[entityId as keyof PCGroupEntityRoutes];
     if (route) navigate(route);
   };
 
@@ -59,37 +62,42 @@ export function PCGroupOverviewTab({ data }: Props) {
       )}
 
       <div className="pcg-entities-grid pcg-entities-5">
-        {entityCards.map((entity) => (
-          <div key={entity.id} className={`pcg-entity-card ${entity.cssClass}`}>
-            <div className="pcg-entity-header" style={{ background: entity.gradient }}>
-              <span className="pcg-entity-name">{entity.name}</span>
-              <span className="pcg-entity-badge">{entity.badge}</span>
-            </div>
-            <div className="pcg-entity-body">
-              <div className="pcg-entity-metrics pcg-entity-metrics-single" style={{ gridTemplateColumns: '1fr' }}>
-                {entity.metrics.map((m, j) => (
-                  <div key={j} className="pcg-entity-metric">
-                    <div className="pcg-entity-metric-label">{m.label}</div>
-                    <div className={`pcg-entity-metric-value ${m.colorClass || ''}`}>{m.value}</div>
-                  </div>
-                ))}
+        {entityCards.map((entity) => {
+          const route = entityRoutes[entity.id as keyof PCGroupEntityRoutes];
+          const isLinked = Boolean(route);
+
+          return (
+            <div key={entity.id} className={`pcg-entity-card ${entity.cssClass}`}>
+              <div className="pcg-entity-header" style={{ background: entity.gradient }}>
+                <span className="pcg-entity-name">{entity.name}</span>
+                <span className="pcg-entity-badge">{entity.badge}</span>
               </div>
-              <div className="pcg-entity-footer">
-                <div className="pcg-entity-margin">
-                  <div className="pcg-margin-bar">
-                    <div className={`pcg-margin-fill ${entity.marginLevel}`} style={{ width: `${entity.margin}%` }} />
-                  </div>
-                  <span className="pcg-margin-text">{entity.margin}%</span>
+              <div className="pcg-entity-body">
+                <div className="pcg-entity-metrics pcg-entity-metrics-single" style={{ gridTemplateColumns: '1fr' }}>
+                  {entity.metrics.map((m, j) => (
+                    <div key={j} className="pcg-entity-metric">
+                      <div className="pcg-entity-metric-label">{m.label}</div>
+                      <div className={`pcg-entity-metric-value ${m.colorClass || ''}`}>{m.value}</div>
+                    </div>
+                  ))}
                 </div>
-                {ENTITY_ROUTES[entity.id as keyof typeof ENTITY_ROUTES] ? (
-                  <span className="pcg-entity-link" onClick={() => handleEntityClick(entity.id)}>→</span>
-                ) : (
-                  <span className="pcg-entity-link" style={{ visibility: 'hidden' }}>→</span>
-                )}
+                <div className="pcg-entity-footer">
+                  <div className="pcg-entity-margin">
+                    <div className="pcg-margin-bar">
+                      <div className={`pcg-margin-fill ${entity.marginLevel}`} style={{ width: `${entity.margin}%` }} />
+                    </div>
+                    <span className="pcg-margin-text">{entity.margin}%</span>
+                  </div>
+                  {isLinked ? (
+                    <span className="pcg-entity-link" onClick={() => handleEntityClick(entity.id)}>→</span>
+                  ) : (
+                    <span className="pcg-entity-link" style={{ visibility: 'hidden' }}>→</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="pcg-section">
