@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
-import { AVAILABLE_MONTHS, getMonthData, type MonthId } from '@/components/dashboard/pcgroup/PCGroupData';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AVAILABLE_MONTHS,
+  EMPTY_ENTITY_ROUTES,
+  getMonthData,
+  type MonthId,
+  type PCGroupEntityRoutes,
+} from '@/components/dashboard/pcgroup/PCGroupData';
 import { PCGroupOverviewTab } from '@/components/dashboard/pcgroup/PCGroupOverviewTab';
 import { PCGroupYTDTab } from '@/components/dashboard/pcgroup/PCGroupYTDTab';
 import { PCGroupAgencyTab } from '@/components/dashboard/pcgroup/PCGroupAgencyTab';
@@ -30,7 +37,40 @@ const tabs = [
 export default function DashboardPCGroup() {
   const [tab, setTab] = useState('overview');
   const [selectedMonth, setSelectedMonth] = useState<MonthId>('feb-2026');
+  const [entityRoutes, setEntityRoutes] = useState<PCGroupEntityRoutes>(EMPTY_ENTITY_ROUTES);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadEntityRoutes = async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, layout_type')
+        .in('layout_type', ['prime_circle_agency', 'prime_circle', 'digit']);
+
+      if (error || !data) {
+        console.error('[DashboardPCGroup] Unable to load entity routes:', error);
+        return;
+      }
+
+      const nextRoutes: PCGroupEntityRoutes = { ...EMPTY_ENTITY_ROUTES };
+
+      for (const company of data) {
+        if (company.layout_type === 'prime_circle_agency' && !nextRoutes.agency) {
+          nextRoutes.agency = `/dashboard-prime-circle-agency/${company.id}`;
+        }
+        if (company.layout_type === 'prime_circle' && !nextRoutes.structuring) {
+          nextRoutes.structuring = `/dashboard-prime-circle/${company.id}`;
+        }
+        if (company.layout_type === 'digit' && !nextRoutes.digit) {
+          nextRoutes.digit = `/dashboard-digit/${company.id}`;
+        }
+      }
+
+      setEntityRoutes(nextRoutes);
+    };
+
+    loadEntityRoutes();
+  }, []);
 
   const monthData = getMonthData(selectedMonth);
 
@@ -91,11 +131,11 @@ export default function DashboardPCGroup() {
       </header>
 
       <main className="pcg-main">
-        {tab === 'overview' && <PCGroupOverviewTab data={monthData} />}
+        {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
-        {tab === 'agency' && <PCGroupAgencyTab data={monthData} />}
-        {tab === 'structuring' && <PCGroupStructuringTab data={monthData} />}
-        {tab === 'digit' && <PCGroupDigitTab data={monthData} />}
+        {tab === 'agency' && <PCGroupAgencyTab data={monthData} entityRoutes={entityRoutes} />}
+        {tab === 'structuring' && <PCGroupStructuringTab data={monthData} entityRoutes={entityRoutes} />}
+        {tab === 'digit' && <PCGroupDigitTab data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'spy' && <PCGroupSpyTab data={monthData} />}
         {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
         {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}

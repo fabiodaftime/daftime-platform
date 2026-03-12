@@ -1,19 +1,23 @@
 import { useNavigate } from 'react-router-dom';
-import { ENTITY_ROUTES, type PCGroupMonthData } from './PCGroupData';
+import { type PCGroupEntityRoutes, type PCGroupMonthData } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 import { ExternalLink } from 'lucide-react';
 
-interface Props { data: PCGroupMonthData; }
+interface Props {
+  data: PCGroupMonthData;
+  entityRoutes: PCGroupEntityRoutes;
+}
 
-export function PCGroupStructuringTab({ data }: Props) {
+export function PCGroupStructuringTab({ data, entityRoutes }: Props) {
   const navigate = useNavigate();
   const { structuringKPIs, structuringComparison, structuringWaterfall } = data;
+  const route = entityRoutes.structuring;
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-        <button className="pcg-entity-link-btn" onClick={() => navigate(ENTITY_ROUTES.structuring)}>
+        <button className="pcg-entity-link-btn" onClick={() => route && navigate(route)} disabled={!route}>
           <ExternalLink size={14} /> Ouvrir le dashboard Structuring complet
         </button>
       </div>

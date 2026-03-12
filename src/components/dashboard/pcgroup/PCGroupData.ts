@@ -7,10 +7,14 @@ export const AVAILABLE_MONTHS = [
   { id: 'feb-2026' as MonthId, label: 'Février 2026' },
 ];
 
-export const ENTITY_ROUTES = {
-  agency: '/dashboard-prime-circle-agency/856d4617-0956-45f9-860e-baa0662e78e5',
-  structuring: '/dashboard-prime-circle/84c179cf-20d2-4d56-b9b0-c6273cd3dd8b',
-  digit: '/dashboard-digit/edb0ce96-ad6f-45bf-842a-8f237976ac4f',
+export type PCGroupEntityKey = 'agency' | 'structuring' | 'digit';
+
+export type PCGroupEntityRoutes = Record<PCGroupEntityKey, string | null>;
+
+export const EMPTY_ENTITY_ROUTES: PCGroupEntityRoutes = {
+  agency: null,
+  structuring: null,
+  digit: null,
 };
 
 // ============ JANUARY 2026 ============
