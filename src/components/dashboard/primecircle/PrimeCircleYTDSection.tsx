@@ -4,8 +4,6 @@ interface Props { data: PCMonthData; }
 
 export function PrimeCircleYTDSection({ data }: Props) {
   const { ytdData, monthlyComparison } = data;
-  const totalAds = monthlyComparison.reduce((s, m) => s + m.ads, 0);
-  const totalCommission = monthlyComparison.reduce((s, m) => s + m.commission, 0);
 
   return (
     <>
@@ -22,9 +20,9 @@ export function PrimeCircleYTDSection({ data }: Props) {
           <div className="pc-kpi-detail">Avg. {formatCurrency(ytdData.avgPerMonth)} / month</div>
         </div>
         <div className="pc-ytd-card">
-          <div className="pc-kpi-label">YTD Margin</div>
-          <div className="pc-kpi-value">{formatCurrency(ytdData.margin)}</div>
-          <div className="pc-kpi-detail">{ytdData.marginRate}% avg margin rate</div>
+          <div className="pc-kpi-label">YTD Net Profit</div>
+          <div className="pc-kpi-value">{formatCurrency(ytdData.netProfit)}</div>
+          <div className="pc-kpi-detail">{ytdData.netMarginRate}% avg net margin</div>
         </div>
         <div className="pc-ytd-card">
           <div className="pc-kpi-label">YTD Costs</div>
@@ -41,26 +39,26 @@ export function PrimeCircleYTDSection({ data }: Props) {
               <th>Month</th>
               <th>Customers</th>
               <th>Turnover</th>
-              <th>Margin</th>
-              <th>Margin Rate</th>
-              <th>ADS</th>
-              <th>Commission</th>
-              <th>Var. Turnover</th>
+              <th>Total Costs</th>
+              <th>Net Profit</th>
+              <th>Net Margin</th>
+              <th>Var. Profit</th>
             </tr>
           </thead>
           <tbody>
             {monthlyComparison.map((m, i) => (
-              <tr key={i}>
-                <td className="pc-month-label">{m.month}</td>
-                <td>{m.customers}</td>
-                <td className="pc-amount turnover">{formatCurrency(m.turnover)}</td>
-                <td className="pc-amount margin">{formatCurrency(m.margin)}</td>
-                <td>{m.marginRate}%</td>
-                <td>{formatCurrency(m.ads)}</td>
-                <td>{formatCurrency(m.commission)}</td>
+              <tr key={i} style={m.isExclRow ? { background: 'rgba(124, 58, 237, 0.05)' } : undefined}>
+                <td className="pc-month-label" style={m.isExclRow ? { fontSize: '12px', color: '#8899A6' } : undefined}>{m.month}</td>
+                <td style={m.isExclRow ? { color: '#8899A6' } : undefined}>{m.customers}</td>
+                <td className={`pc-amount ${m.isExclRow ? '' : 'turnover'}`} style={m.isExclRow ? { color: '#8899A6' } : undefined}>{formatCurrency(m.turnover)}</td>
+                <td className="pc-amount" style={m.isExclRow ? { color: '#8899A6' } : undefined}>{formatCurrency(m.totalCosts)}</td>
+                <td className={`pc-amount ${m.isExclRow ? '' : 'margin'}`} style={m.isExclRow ? { color: '#7C3AED' } : undefined}>{formatCurrency(m.netProfit)}</td>
+                <td style={m.isExclRow ? { color: '#7C3AED' } : undefined}>{m.netMarginRate}%</td>
                 <td>
-                  {m.varTurnover ? (
-                    <span className="pc-var-badge positive">▲ +{m.varTurnover}%</span>
+                  {m.varProfit != null ? (
+                    <span className={`pc-var-badge ${m.varProfitDirection || (m.varProfit >= 0 ? 'positive' : 'negative')}`}>
+                      {m.varProfit >= 0 ? '▲' : '▼'} {m.varProfit >= 0 ? '+' : ''}{m.varProfit}%
+                    </span>
                   ) : '—'}
                 </td>
               </tr>
@@ -69,10 +67,9 @@ export function PrimeCircleYTDSection({ data }: Props) {
               <td className="pc-month-label">YTD TOTAL</td>
               <td><strong>{ytdData.customers}</strong></td>
               <td className="pc-amount turnover"><strong>{formatCurrency(ytdData.turnover)}</strong></td>
-              <td className="pc-amount margin"><strong>{formatCurrency(ytdData.margin)}</strong></td>
-              <td><strong>{ytdData.marginRate}%</strong></td>
-              <td><strong>{formatCurrency(totalAds)}</strong></td>
-              <td><strong>{formatCurrency(totalCommission)}</strong></td>
+              <td className="pc-amount"><strong>{formatCurrency(ytdData.costs)}</strong></td>
+              <td className="pc-amount margin"><strong>{formatCurrency(ytdData.netProfit)}</strong></td>
+              <td><strong>{ytdData.netMarginRate}%</strong></td>
               <td>—</td>
             </tr>
           </tbody>
