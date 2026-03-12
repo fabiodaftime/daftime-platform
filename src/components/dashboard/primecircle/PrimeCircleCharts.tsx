@@ -6,6 +6,9 @@ const barColors = ['#1E56A0', '#17B169', '#4A90D9', '#7C3AED', '#F59E0B', '#8899
 interface Props { data: PCMonthData; }
 
 export function PrimeCircleCharts({ data }: Props) {
+  // Filter out "excl." rows for the trend chart
+  const mainMonths = data.monthlyComparison.filter(m => !m.isExclRow);
+
   return (
     <>
       <div className="pc-section-title">Analytics — {data.monthLabel}</div>
@@ -26,15 +29,15 @@ export function PrimeCircleCharts({ data }: Props) {
           </ResponsiveContainer>
         </div>
 
-        {data.monthlyComparison.length > 1 && (
+        {mainMonths.length > 1 && (
           <div className="pc-chart-card">
-            <h3>Monthly Trend</h3>
+            <h3>Monthly Trend (Jan vs Feb)</h3>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
                 data={[
-                  { name: 'Customers', ...Object.fromEntries(data.monthlyComparison.map(m => [m.month.split(' ')[0], m.customers])) },
-                  { name: 'Turnover (k$)', ...Object.fromEntries(data.monthlyComparison.map(m => [m.month.split(' ')[0], +(m.turnover / 1000).toFixed(1)])) },
-                  { name: 'Margin (k$)', ...Object.fromEntries(data.monthlyComparison.map(m => [m.month.split(' ')[0], +(m.margin / 1000).toFixed(1)])) },
+                  { name: 'Customers', ...Object.fromEntries(mainMonths.map(m => [m.month.split(' ')[0], m.customers])) },
+                  { name: 'Turnover (k$)', ...Object.fromEntries(mainMonths.map(m => [m.month.split(' ')[0], +(m.turnover / 1000).toFixed(1)])) },
+                  { name: 'Net Profit (k$)', ...Object.fromEntries(mainMonths.map(m => [m.month.split(' ')[0], +(m.netProfit / 1000).toFixed(1)])) },
                 ]}
                 margin={{ top: 10, right: 10, left: 0, bottom: 5 }}
               >
@@ -42,7 +45,7 @@ export function PrimeCircleCharts({ data }: Props) {
                 <YAxis tick={{ fill: '#536471', fontSize: 11, fontWeight: 600 }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ background: 'white', border: '2px solid #B8C5CC', borderRadius: '4px' }} />
                 <Legend wrapperStyle={{ paddingTop: 16, fontWeight: 600 }} />
-                {data.monthlyComparison.map((m, i) => (
+                {mainMonths.map((m, i) => (
                   <Bar key={m.month} dataKey={m.month.split(' ')[0]} name={m.month.split(' ')[0]} fill={i === 0 ? '#B8C5CC' : '#1E56A0'} radius={[4, 4, 0, 0]} />
                 ))}
               </BarChart>

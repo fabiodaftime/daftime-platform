@@ -16,7 +16,7 @@ export function PrimeCircleKPIGrid({ data }: Props) {
           {m1Comparison && (
             <div className="pc-kpi-comparison positive">
               <span>▲ +{m1Comparison.customers.diff}</span>
-              <span className="label">vs M-1 (+{m1Comparison.customers.pct}%)</span>
+              <span className="label">vs Jan (+{m1Comparison.customers.pct}%)</span>
             </div>
           )}
         </div>
@@ -27,18 +27,18 @@ export function PrimeCircleKPIGrid({ data }: Props) {
           {m1Comparison && (
             <div className="pc-kpi-comparison positive">
               <span>▲ +{formatCurrency(m1Comparison.turnover.diff)}</span>
-              <span className="label">vs M-1 (+{m1Comparison.turnover.pct}%)</span>
+              <span className="label">vs Jan (+{m1Comparison.turnover.pct}%)</span>
             </div>
           )}
         </div>
         <div className="pc-kpi-card orange">
-          <div className="pc-kpi-label">Total Margin</div>
-          <div className="pc-kpi-value">{formatCurrency(kpis.totalMargin)}</div>
-          <div className="pc-kpi-detail">{kpis.marginRate}% margin rate</div>
+          <div className="pc-kpi-label">Net Profit</div>
+          <div className="pc-kpi-value">{formatCurrency(kpis.netProfit)}</div>
+          <div className="pc-kpi-detail">{kpis.netMarginRate}% net margin</div>
           {m1Comparison && (
-            <div className="pc-kpi-comparison positive">
-              <span>▲ +{formatCurrency(m1Comparison.margin.diff)}</span>
-              <span className="label">vs M-1 (+{m1Comparison.margin.pct}%)</span>
+            <div className={`pc-kpi-comparison ${m1Comparison.netProfit.direction}`}>
+              <span>{m1Comparison.netProfit.direction === 'negative' ? '▼' : '▲'} {m1Comparison.netProfit.diff >= 0 ? '+' : ''}{formatCurrency(m1Comparison.netProfit.diff)}</span>
+              <span className="label">vs Jan ({m1Comparison.netProfit.pct >= 0 ? '+' : ''}{m1Comparison.netProfit.pct}%)</span>
             </div>
           )}
         </div>
@@ -49,7 +49,7 @@ export function PrimeCircleKPIGrid({ data }: Props) {
           {m1Comparison && (
             <div className="pc-kpi-comparison positive">
               <span>▲ +{m1Comparison.completed.diff}</span>
-              <span className="label">vs M-1 (+{m1Comparison.completed.pct}%)</span>
+              <span className="label">vs Jan (+{m1Comparison.completed.pct}%)</span>
             </div>
           )}
         </div>

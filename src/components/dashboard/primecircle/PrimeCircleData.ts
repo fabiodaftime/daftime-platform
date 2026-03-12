@@ -20,8 +20,8 @@ export interface PCMonthData {
   kpis: {
     totalCustomers: number;
     totalTurnover: number;
-    totalMargin: number;
-    marginRate: number;
+    netProfit: number;
+    netMarginRate: number;
     completedServices: number;
     inProgressServices: number;
     cancelledServices: number;
@@ -30,14 +30,14 @@ export interface PCMonthData {
   m1Comparison: {
     customers: { prev: number; cur: number; diff: number; pct: number };
     turnover: { prev: number; cur: number; diff: number; pct: number };
-    margin: { prev: number; cur: number; diff: number; pct: number };
+    netProfit: { prev: number; cur: number; diff: number; pct: number; direction: 'positive' | 'negative' };
     completed: { prev: number; cur: number; diff: number; pct: number };
   } | null;
   ytdData: {
     customers: number;
     turnover: number;
-    margin: number;
-    marginRate: number;
+    netProfit: number;
+    netMarginRate: number;
     costs: number;
     costsPct: number;
     avgPerMonth: number;
@@ -46,20 +46,30 @@ export interface PCMonthData {
     month: string;
     customers: number;
     turnover: number;
-    margin: number;
-    marginRate: number;
-    ads: number;
-    commission: number;
-    varTurnover: number | null;
+    totalCosts: number;
+    netProfit: number;
+    netMarginRate: number;
+    varProfit: number | null;
+    varProfitDirection?: 'positive' | 'negative';
+    isExclRow?: boolean;
+    exclLabel?: string;
   }[];
   costs: {
+    awdEvent?: number;
+    productProviderCosts?: number;
+    productProviderDetail?: string;
     advertising: number;
-    salesCommission: number;
+    advertisingDetail?: string;
+    marketing?: number;
+    marketingDetail?: string;
+    alibabaPurchases?: number;
+    salesCommission?: number;
     bankFees?: number;
-    serviceCosts: number;
+    serviceCosts?: number;
     referralCommission?: number;
     events?: number;
     total: number;
+    recurringTotal?: number;
   };
   serviceCategories: { name: string; value: number }[];
   statusData: {
@@ -119,26 +129,26 @@ const janData: PCMonthData = {
   transactions: janTransactions,
   kpis: {
     totalCustomers: 39,
-    totalTurnover: 53962,
-    totalMargin: 41371,
-    marginRate: 76.7,
+    totalTurnover: 53112,
+    netProfit: 40521,
+    netMarginRate: 76.3,
     completedServices: 26,
     inProgressServices: 13,
     cancelledServices: 0,
-    avgPerCustomer: 1384,
+    avgPerCustomer: 1362,
   },
   m1Comparison: null,
   ytdData: {
     customers: 39,
-    turnover: 53962,
-    margin: 41371,
-    marginRate: 76.7,
+    turnover: 53112,
+    netProfit: 40521,
+    netMarginRate: 76.3,
     costs: 12591,
-    costsPct: 23.3,
-    avgPerMonth: 53962,
+    costsPct: 23.7,
+    avgPerMonth: 53112,
   },
   monthlyComparison: [
-    { month: 'January 2026', customers: 39, turnover: 53962, margin: 41371, marginRate: 76.7, ads: 2690, commission: 4213, varTurnover: null },
+    { month: 'January 2026', customers: 39, turnover: 53112, totalCosts: 12591, netProfit: 40521, netMarginRate: 76.3, varProfit: null },
   ],
   costs: {
     advertising: 2690,
@@ -225,8 +235,8 @@ const febData: PCMonthData = {
   kpis: {
     totalCustomers: 53,
     totalTurnover: 73500,
-    totalMargin: 53296,
-    marginRate: 72.5,
+    netProfit: 21036,
+    netMarginRate: 28.6,
     completedServices: 41,
     inProgressServices: 11,
     cancelledServices: 1,
@@ -235,28 +245,35 @@ const febData: PCMonthData = {
   m1Comparison: {
     customers: { prev: 39, cur: 53, diff: 14, pct: 35.9 },
     turnover: { prev: 53112, cur: 73500, diff: 20388, pct: 38.4 },
-    margin: { prev: 40521, cur: 53296, diff: 12775, pct: 31.5 },
+    netProfit: { prev: 40521, cur: 21036, diff: -19485, pct: -48.1, direction: 'negative' },
     completed: { prev: 26, cur: 41, diff: 15, pct: 57.7 },
   },
   ytdData: {
     customers: 92,
     turnover: 126612,
-    margin: 93817,
-    marginRate: 74.1,
-    costs: 32795,
-    costsPct: 25.9,
+    netProfit: 61557,
+    netMarginRate: 48.6,
+    costs: 65055,
+    costsPct: 51.4,
     avgPerMonth: 63306,
   },
   monthlyComparison: [
-    { month: 'January 2026', customers: 39, turnover: 53112, margin: 40521, marginRate: 76.3, ads: 2957, commission: 4137, varTurnover: null },
-    { month: 'February 2026', customers: 53, turnover: 73500, margin: 53296, marginRate: 72.5, ads: 4525, commission: 5498, varTurnover: 38.4 },
+    { month: 'January 2026', customers: 39, turnover: 53112, totalCosts: 12591, netProfit: 40521, netMarginRate: 76.3, varProfit: null },
+    { month: 'February 2026', customers: 53, turnover: 73500, totalCosts: 52464, netProfit: 21036, netMarginRate: 28.6, varProfit: -48.1, varProfitDirection: 'negative' },
+    { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
   ],
   costs: {
-    advertising: 4525,
-    salesCommission: 5498,
+    awdEvent: 28399,
+    productProviderCosts: 18939,
+    productProviderDetail: 'Fiverr $8,139 + Tony Durant LLC $10,800',
+    advertising: 4309,
+    advertisingDetail: 'Facebook Ads $4,059 + WLP Marketing $250',
+    marketing: 436,
+    marketingDetail: 'Notebook Advertising LLC (Prime Circle)',
+    alibabaPurchases: 331,
     bankFees: 50,
-    serviceCosts: 10181,
-    total: 20254,
+    total: 52464,
+    recurringTotal: 24065,
   },
   serviceCategories: [
     { name: 'LLC Services', value: 22610 },
