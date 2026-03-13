@@ -239,8 +239,8 @@ const febData: PCAMonthData = {
     { name: "Salary", value: 1200 }, { name: "Master Referral", value: 211 }, { name: "No Limit Referral", value: 30 },
   ],
   clientLifecycle: [
-    { status: "New", count: 116, color: C.green },
-    { status: "Renewed", count: 20, color: C.primary },
+    { status: "New", count: 118, color: C.green },
+    { status: "Renewed", count: 21, color: C.primary },
     { status: "Upgraded", count: 6, color: C.purple },
     { status: "Trial", count: 3, color: C.orange },
   ],
