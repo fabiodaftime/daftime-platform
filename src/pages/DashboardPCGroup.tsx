@@ -137,7 +137,6 @@ export default function DashboardPCGroup() {
         {tab === 'spy' && <PCGroupSpyTab data={monthData} />}
         {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
         {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
-        {tab === 'reserves' && <PCGroupReservesTab data={monthData} />}
       </main>
 
       <footer className="pcg-footer">
