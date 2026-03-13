@@ -19,7 +19,6 @@ import { PCGroupDigitTab } from '@/components/dashboard/pcgroup/PCGroupDigitTab'
 import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
 import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
-import { PCGroupReservesTab } from '@/components/dashboard/pcgroup/PCGroupReservesTab';
 import './DashboardPCGroup.css';
 
 const tabs = [
