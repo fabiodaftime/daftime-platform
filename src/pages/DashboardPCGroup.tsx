@@ -30,7 +30,6 @@ const tabs = [
   { id: 'spy', icon: '🔍', label: 'SPY' },
   { id: 'comment', icon: '💬', label: 'Comment' },
   { id: 'holding', icon: '🏛️', label: 'Holding' },
-  { id: 'reserves', icon: '💰', label: 'Réserves' },
 ];
 
 export default function DashboardPCGroup() {
