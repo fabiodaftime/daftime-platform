@@ -260,12 +260,12 @@ const febData: PCAMonthData = {
     { l: "PC Retained (50%)", v: 12236, prev: 2244, bg: "accentSoft", b: true },
   ],
   clientKPIs: [
-    { label: "Nouveaux", value: "116", icon: "🆕", sub: "vs 21 en Jan" },
-    { label: "Renouveles", value: "20", icon: "🔄", sub: "vs 20 en Jan" },
+    { label: "Nouveaux", value: "118", icon: "🆕", sub: "vs 21 en Jan" },
+    { label: "Renouveles", value: "21", icon: "🔄", sub: "vs 20 en Jan" },
     { label: "Upgraded", value: "6", icon: "⬆️", sub: "vs 1 en Jan" },
     { label: "Trials", value: "3", icon: "🧪" },
-    { label: "CC Comptes", value: "66", icon: "💳" },
-    { label: "CL Comptes", value: "79", icon: "⚡", sub: "54.5% des tx" },
+    { label: "CC Comptes", value: "70", icon: "💳" },
+    { label: "CL Comptes", value: "78", icon: "⚡", sub: "52.7% des tx" },
   ],
   topClientsRev: [
     { name: "Salmech (115)", received: 141328, type: "CL", status: "Active", detail: "Tier 6 - massive CL" },
