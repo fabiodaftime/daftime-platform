@@ -411,11 +411,12 @@ const FEB_2026 = {
     { label: 'Hors AWD (récurrent)', value: '$49,435', type: 'indent-muted' },
   ],
   structuringServices: [
-    { name: 'LLC Services', value: 19400, pct: '36%', status: 'Top' },
-    { name: 'Physical Address US', value: 17700, pct: '33%', status: 'Top' },
-    { name: 'AMEX', value: 8000, pct: '15%', status: 'Croissance' },
-    { name: 'Autres Banking', value: 4848, pct: '9%', status: 'Stable' },
-    { name: 'Revolut Business', value: 4014, pct: '7%', status: 'Stable' },
+    { name: 'LLC Services', value: 22610, pct: '31%', status: 'Top' },
+    { name: 'Physical Address US', value: 20690, pct: '28%', status: 'Top' },
+    { name: 'LLC + Bundle', value: 15800, pct: '21%', status: 'Croissance' },
+    { name: 'AMEX', value: 5500, pct: '7%', status: 'Stable' },
+    { name: 'Slash', value: 2700, pct: '4%', status: 'Stable' },
+    { name: 'Other', value: 6200, pct: '8%', status: 'Stable' },
   ],
 
   digitKPIs: [
@@ -444,11 +445,11 @@ const FEB_2026 = {
     { label: 'MARGE NETTE', value: '$43,249', type: 'highlight' },
   ],
   digitRevenueBreakdown: [
-    { name: 'Set-up', value: 77409, deals: '170', ticket: '$455' },
-    { name: 'Ad Account', value: 27305, deals: '43', ticket: '$635' },
-    { name: 'BM', value: 5651, deals: '—', ticket: '—' },
-    { name: 'Page', value: 2770, deals: '—', ticket: '—' },
-    { name: 'Autres', value: 1514, deals: '—', ticket: '—' },
+    { name: 'Set-up', value: 79141, deals: '170', ticket: '$465' },
+    { name: 'Ad Account', value: 25309, deals: '43', ticket: '$588' },
+    { name: 'BM', value: 8100, deals: '—', ticket: '—' },
+    { name: 'Page', value: 5080, deals: '—', ticket: '—' },
+    { name: 'Autres', value: 4700, deals: '—', ticket: '—' },
   ],
 
   spyKPIs: [

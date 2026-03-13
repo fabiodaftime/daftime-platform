@@ -230,9 +230,9 @@ const febData: PCAMonthData = {
   gross: 35080, expenses: 10606, net: 24473, pcaShare: 12237,
   transactions: 148, mediaSpend: 515952, clientsActifs: 0, totalEncaisse: 0, adAccounts: 63,
   marginPct: 69.8,
-  prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2244,
+  prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2245,
   prevTransactions: 62, prevMediaSpend: 279691,
-  ytdNet: 28962, ytdPcaShare: 14481, ytdGross: 45806, ytdExpenses: 16843,
+  ytdNet: 28962, ytdPcaShare: 14482, ytdGross: 45806, ytdExpenses: 16843,
   expenseRatio: 30.2,
   expenseBreakdown: [
     { name: "Ads", value: 6666 }, { name: "Setup Cost", value: 2500 },
