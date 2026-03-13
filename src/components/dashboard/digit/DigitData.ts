@@ -69,6 +69,12 @@ const DIGIT_JAN = {
   ],
   costsTotal: "$88,220",
   costsChartData: [29708, 14735, 25366, 0, 422, 1177, 4909],
+  spyCostsKPIs: null as any[] | null,
+  spyCostsBreakdown: null as any[] | null,
+  spyCostsTotal: null as string | null,
+  ctCostsKPIs: null as any[] | null,
+  ctCostsBreakdown: null as any[] | null,
+  ctCostsTotal: null as string | null,
   // Revenue tab
   revenueKPIs: [
     { label: "CA Setup", value: "$77,409", sub: "233 deals • $332/deal", type: "primary" },
@@ -94,7 +100,7 @@ const DIGIT_JAN = {
     { label: "CA SPY", value: "$16,750", sub: "", type: "success", chg: null as string | null },
     { label: "Marge SPY", value: "$3,262", sub: "19.5% du CA SPY", type: "primary" },
   ],
-  spyDetail: { jan: "$16,750", janMarge: "$3,262", feb: null as string | null, febMarge: null as string | null },
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: null as string | null, febMarge: null as string | null },
   ctKPIs: [
     { label: "CA Comment/Trust", value: "$2,813", sub: "", type: "warning", chg: null as string | null },
     { label: "Marge", value: "$2,531", sub: "90.0% du CA CT", type: "warning" },
@@ -169,6 +175,34 @@ const DIGIT_FEB = {
   ],
   costsTotal: "$76,425",
   costsChartData: [33906, 12912, 21971, 6668, 332, 503, 134],
+  // SPY costs
+  spyCostsKPIs: [
+    { label: "CA SPY", value: "$27,300", sub: "Produit SPY", type: "primary" },
+    { label: "Cost Product SPY", value: "$16,930", sub: "62.0% du CA SPY", type: "warning" },
+    { label: "COM Blink SPY", value: "$5,527", sub: "20.2% du CA SPY", type: "accent" },
+    { label: "Marge SPY", value: "$3,559", sub: "13.0% du CA SPY", type: "success" },
+  ],
+  spyCostsBreakdown: [
+    { label: "CA SPY", value: "$27,300", negative: false },
+    { label: "Cost Product", value: "-$16,930", negative: true },
+    { label: "COM Blink", value: "-$5,527", negative: true },
+    { label: "COM Sales", value: "-$1,285", negative: true },
+  ],
+  spyCostsTotal: "$3,559",
+  // CT costs
+  ctCostsKPIs: [
+    { label: "CA Comment/Trust", value: "$333", sub: "Services annexes", type: "primary" },
+    { label: "Cost Product CT", value: "$160", sub: "48.0% du CA CT", type: "warning" },
+    { label: "COM Sales CT", value: "$33", sub: "10.0% du CA CT", type: "accent" },
+    { label: "Marge CT", value: "$140", sub: "42.0% du CA CT", type: "success" },
+  ],
+  ctCostsBreakdown: [
+    { label: "CA Comment/Trust", value: "$333", negative: false },
+    { label: "Cost Product", value: "-$160", negative: true },
+    { label: "COM Blink", value: "$0", negative: false },
+    { label: "COM Sales", value: "-$33", negative: true },
+  ],
+  ctCostsTotal: "$140",
   // Revenue tab
   revenueKPIs: [
     { label: "CA Setup", value: "$79,141", sub: "170 deals • $465/deal", type: "primary" },
@@ -199,7 +233,7 @@ const DIGIT_FEB = {
     { label: "CA SPY", value: "$27,300", sub: "", type: "success", chg: "+63.0%" },
     { label: "Marge SPY", value: "$3,559", sub: "13.0% du CA SPY", type: "primary" },
   ],
-  spyDetail: { jan: "$16,750", janMarge: "$3,262", feb: "$27,300", febMarge: "$3,559" },
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559" },
   ctKPIs: [
     { label: "CA Comment/Trust", value: "$333", sub: "", type: "warning", chg: "-88.2%" },
     { label: "Marge", value: "$140", sub: "42.0% du CA CT", type: "warning" },
@@ -219,7 +253,7 @@ const DIGIT_FEB = {
     { label: "Croissance Marge", value: "+2.1%", sub: "Février vs Janvier", type: "warning" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$236,979", sub: "Marge $83,447 (35.2%)", type: "primary" },
+    { label: "Digit Solution", value: "$244,660", sub: "Marge $83,447 (35.2%)", type: "primary" },
     { label: "SPY", value: "$44,050", sub: "Marge $6,822", type: "success" },
     { label: "Comment/Trust", value: "$3,146", sub: "Marge $2,671", type: "warning" },
   ],
@@ -228,7 +262,7 @@ const DIGIT_FEB = {
     { name: "Février", ca: 149963, marge: 46948 },
   ],
   ytdProductDistribution: [
-    { name: "Digit Solution", value: 236979 },
+    { name: "Digit Solution", value: 244660 },
     { name: "SPY", value: 44050 },
     { name: "Comment/Trust", value: 3146 },
   ],
