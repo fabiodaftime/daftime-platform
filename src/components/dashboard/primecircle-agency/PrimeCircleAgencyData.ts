@@ -228,7 +228,7 @@ const febData: PCAMonthData = {
   monthLabel: 'Février 2026',
   monthShort: 'FEB 2026',
   gross: 35080, expenses: 10606, net: 24473, pcaShare: 12237,
-  transactions: 145, mediaSpend: 515952, clientsActifs: 0, totalEncaisse: 0, adAccounts: 63,
+  transactions: 148, mediaSpend: 515952, clientsActifs: 0, totalEncaisse: 0, adAccounts: 63,
   marginPct: 69.8,
   prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2244,
   prevTransactions: 62, prevMediaSpend: 279691,
@@ -239,8 +239,8 @@ const febData: PCAMonthData = {
     { name: "Salary", value: 1200 }, { name: "Master Referral", value: 211 }, { name: "No Limit Referral", value: 30 },
   ],
   clientLifecycle: [
-    { status: "New", count: 116, color: C.green },
-    { status: "Renewed", count: 20, color: C.primary },
+    { status: "New", count: 118, color: C.green },
+    { status: "Renewed", count: 21, color: C.primary },
     { status: "Upgraded", count: 6, color: C.purple },
     { status: "Trial", count: 3, color: C.orange },
   ],
@@ -260,12 +260,12 @@ const febData: PCAMonthData = {
     { l: "PC Retained (50%)", v: 12236, prev: 2244, bg: "accentSoft", b: true },
   ],
   clientKPIs: [
-    { label: "Nouveaux", value: "116", icon: "🆕", sub: "vs 21 en Jan" },
-    { label: "Renouveles", value: "20", icon: "🔄", sub: "vs 20 en Jan" },
+    { label: "Nouveaux", value: "118", icon: "🆕", sub: "vs 21 en Jan" },
+    { label: "Renouveles", value: "21", icon: "🔄", sub: "vs 20 en Jan" },
     { label: "Upgraded", value: "6", icon: "⬆️", sub: "vs 1 en Jan" },
     { label: "Trials", value: "3", icon: "🧪" },
-    { label: "CC Comptes", value: "66", icon: "💳" },
-    { label: "CL Comptes", value: "79", icon: "⚡", sub: "54.5% des tx" },
+    { label: "CC Comptes", value: "70", icon: "💳" },
+    { label: "CL Comptes", value: "78", icon: "⚡", sub: "52.7% des tx" },
   ],
   topClientsRev: [
     { name: "Salmech (115)", received: 141328, type: "CL", status: "Active", detail: "Tier 6 - massive CL" },
@@ -274,10 +274,10 @@ const febData: PCAMonthData = {
     { name: "Joel Lalazuelks (135)", received: 18440, type: "CL", status: "Active", detail: "Tier 4 - new" },
     { name: "AY (130)", received: 8786, type: "CL", status: "Active", detail: "Tier 2>3 upgraded" },
     { name: "Celementa (100)", received: 4576, type: "CL", status: "Active", detail: "Tier 2 multi" },
-    { name: "Hunter (125)", received: 3963, type: "CL", status: "Active", detail: "Tier 4 new" },
+    { name: "Hunter (125)", received: 4378, type: "CL", status: "Active", detail: "Tier 4 new" },
     { name: "Bo (64)", received: 2776, type: "CC", status: "Active", detail: "Tier 3>4>6" },
+    { name: "Jordan (91)", received: 2557, type: "CC", status: "Active", detail: "Tier 5 renewed" },
     { name: "Syed (78)", received: 2135, type: "CC", status: "Active", detail: "Tier 6 new" },
-    { name: "Sammy Ivan (139)", received: 1945, type: "CL", status: "Active", detail: "Tier 1 new" },
   ],
   newClientsDetail: [
     { name: "Salmech (115)", sub: 1499, tier: "T6", type: "CL", note: "$141K received" },
@@ -292,10 +292,10 @@ const febData: PCAMonthData = {
     { name: "Benjamin Centra (141)", sub: 1499, tier: "T6", type: "CC", note: "Master ref" },
   ],
   tierBreakdown: [
-    { tier: "Tier 1", count: 32 }, { tier: "Tier 2", count: 21 }, { tier: "Tier 3", count: 18 },
-    { tier: "Tier 4", count: 11 }, { tier: "Tier 5", count: 5 }, { tier: "Tier 6", count: 42 },
+    { tier: "Tier 1", count: 32 }, { tier: "Tier 2", count: 22 }, { tier: "Tier 3", count: 18 },
+    { tier: "Tier 4", count: 12 }, { tier: "Tier 5", count: 6 }, { tier: "Tier 6", count: 42 },
   ],
-  ccCount: 66, clCount: 79, ccPct: "45.5", clPct: "54.5",
+  ccCount: 70, clCount: 78, ccPct: "47.3", clPct: "52.7",
   mediaKPIs: [
     { label: "Total Media Spend", value: "$516.0K", icon: "📡", sub: pctChg(515952, 279691) + " vs Jan" },
     { label: "CC Spend", value: "$305.0K", icon: "💳", sub: "59.1% du total" },
@@ -342,7 +342,7 @@ const febData: PCAMonthData = {
   ],
   monthlyTrend: [
     { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
-    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 116, renewed: 20, upgraded: 6, trial: 3 },
+    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
   ],
 };
 
