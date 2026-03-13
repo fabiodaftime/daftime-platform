@@ -69,6 +69,12 @@ const DIGIT_JAN = {
   ],
   costsTotal: "$88,220",
   costsChartData: [29708, 14735, 25366, 0, 422, 1177, 4909],
+  spyCostsKPIs: null as any[] | null,
+  spyCostsBreakdown: null as any[] | null,
+  spyCostsTotal: null as string | null,
+  ctCostsKPIs: null as any[] | null,
+  ctCostsBreakdown: null as any[] | null,
+  ctCostsTotal: null as string | null,
   // Revenue tab
   revenueKPIs: [
     { label: "CA Setup", value: "$77,409", sub: "233 deals • $332/deal", type: "primary" },
