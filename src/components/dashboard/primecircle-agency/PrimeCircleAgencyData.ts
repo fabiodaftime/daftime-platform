@@ -274,10 +274,10 @@ const febData: PCAMonthData = {
     { name: "Joel Lalazuelks (135)", received: 18440, type: "CL", status: "Active", detail: "Tier 4 - new" },
     { name: "AY (130)", received: 8786, type: "CL", status: "Active", detail: "Tier 2>3 upgraded" },
     { name: "Celementa (100)", received: 4576, type: "CL", status: "Active", detail: "Tier 2 multi" },
-    { name: "Hunter (125)", received: 3963, type: "CL", status: "Active", detail: "Tier 4 new" },
+    { name: "Hunter (125)", received: 4378, type: "CL", status: "Active", detail: "Tier 4 new" },
     { name: "Bo (64)", received: 2776, type: "CC", status: "Active", detail: "Tier 3>4>6" },
+    { name: "Jordan (91)", received: 2557, type: "CC", status: "Active", detail: "Tier 5 renewed" },
     { name: "Syed (78)", received: 2135, type: "CC", status: "Active", detail: "Tier 6 new" },
-    { name: "Sammy Ivan (139)", received: 1945, type: "CL", status: "Active", detail: "Tier 1 new" },
   ],
   newClientsDetail: [
     { name: "Salmech (115)", sub: 1499, tier: "T6", type: "CL", note: "$141K received" },
