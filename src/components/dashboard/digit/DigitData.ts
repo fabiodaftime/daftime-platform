@@ -94,7 +94,7 @@ const DIGIT_JAN = {
     { label: "CA SPY", value: "$16,750", sub: "", type: "success", chg: null as string | null },
     { label: "Marge SPY", value: "$3,262", sub: "19.5% du CA SPY", type: "primary" },
   ],
-  spyDetail: { jan: "$16,750", janMarge: "$3,262", feb: null as string | null, febMarge: null as string | null },
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: null as string | null, febMarge: null as string | null },
   ctKPIs: [
     { label: "CA Comment/Trust", value: "$2,813", sub: "", type: "warning", chg: null as string | null },
     { label: "Marge", value: "$2,531", sub: "90.0% du CA CT", type: "warning" },
