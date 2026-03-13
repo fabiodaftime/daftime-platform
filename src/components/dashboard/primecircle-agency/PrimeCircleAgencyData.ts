@@ -342,7 +342,7 @@ const febData: PCAMonthData = {
   ],
   monthlyTrend: [
     { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
-    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 116, renewed: 20, upgraded: 6, trial: 3 },
+    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
   ],
 };
 
