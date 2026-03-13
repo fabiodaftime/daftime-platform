@@ -169,6 +169,34 @@ const DIGIT_FEB = {
   ],
   costsTotal: "$76,425",
   costsChartData: [33906, 12912, 21971, 6668, 332, 503, 134],
+  // SPY costs
+  spyCostsKPIs: [
+    { label: "CA SPY", value: "$27,300", sub: "Produit SPY", type: "primary" },
+    { label: "Cost Product SPY", value: "$16,930", sub: "62.0% du CA SPY", type: "warning" },
+    { label: "COM Blink SPY", value: "$5,527", sub: "20.2% du CA SPY", type: "accent" },
+    { label: "Marge SPY", value: "$3,559", sub: "13.0% du CA SPY", type: "success" },
+  ],
+  spyCostsBreakdown: [
+    { label: "CA SPY", value: "$27,300", negative: false },
+    { label: "Cost Product", value: "-$16,930", negative: true },
+    { label: "COM Blink", value: "-$5,527", negative: true },
+    { label: "COM Sales", value: "-$1,285", negative: true },
+  ],
+  spyCostsTotal: "$3,559",
+  // CT costs
+  ctCostsKPIs: [
+    { label: "CA Comment/Trust", value: "$333", sub: "Services annexes", type: "primary" },
+    { label: "Cost Product CT", value: "$160", sub: "48.0% du CA CT", type: "warning" },
+    { label: "COM Sales CT", value: "$33", sub: "10.0% du CA CT", type: "accent" },
+    { label: "Marge CT", value: "$140", sub: "42.0% du CA CT", type: "success" },
+  ],
+  ctCostsBreakdown: [
+    { label: "CA Comment/Trust", value: "$333", negative: false },
+    { label: "Cost Product", value: "-$160", negative: true },
+    { label: "COM Blink", value: "$0", negative: false },
+    { label: "COM Sales", value: "-$33", negative: true },
+  ],
+  ctCostsTotal: "$140",
   // Revenue tab
   revenueKPIs: [
     { label: "CA Setup", value: "$79,141", sub: "170 deals • $465/deal", type: "primary" },
