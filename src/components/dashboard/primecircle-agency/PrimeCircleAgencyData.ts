@@ -292,10 +292,10 @@ const febData: PCAMonthData = {
     { name: "Benjamin Centra (141)", sub: 1499, tier: "T6", type: "CC", note: "Master ref" },
   ],
   tierBreakdown: [
-    { tier: "Tier 1", count: 32 }, { tier: "Tier 2", count: 21 }, { tier: "Tier 3", count: 18 },
-    { tier: "Tier 4", count: 11 }, { tier: "Tier 5", count: 5 }, { tier: "Tier 6", count: 42 },
+    { tier: "Tier 1", count: 32 }, { tier: "Tier 2", count: 22 }, { tier: "Tier 3", count: 18 },
+    { tier: "Tier 4", count: 12 }, { tier: "Tier 5", count: 6 }, { tier: "Tier 6", count: 42 },
   ],
-  ccCount: 66, clCount: 79, ccPct: "45.5", clPct: "54.5",
+  ccCount: 70, clCount: 78, ccPct: "47.3", clPct: "52.7",
   mediaKPIs: [
     { label: "Total Media Spend", value: "$516.0K", icon: "📡", sub: pctChg(515952, 279691) + " vs Jan" },
     { label: "CC Spend", value: "$305.0K", icon: "💳", sub: "59.1% du total" },
