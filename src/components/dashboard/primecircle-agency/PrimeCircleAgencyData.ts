@@ -228,7 +228,7 @@ const febData: PCAMonthData = {
   monthLabel: 'Février 2026',
   monthShort: 'FEB 2026',
   gross: 35080, expenses: 10606, net: 24473, pcaShare: 12237,
-  transactions: 145, mediaSpend: 515952, clientsActifs: 0, totalEncaisse: 0, adAccounts: 63,
+  transactions: 148, mediaSpend: 515952, clientsActifs: 0, totalEncaisse: 0, adAccounts: 63,
   marginPct: 69.8,
   prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2244,
   prevTransactions: 62, prevMediaSpend: 279691,
