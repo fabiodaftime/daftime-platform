@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
 import { PCAOverviewTab } from '@/components/dashboard/primecircle-agency/PCAOverviewTab';
+import { PCAYTDTab } from '@/components/dashboard/primecircle-agency/PCAYTDTab';
 import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClientsTab';
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
@@ -15,6 +16,7 @@ import './DashboardPrimeCircleAgency.css';
 
 const tabs = [
   { id: "overview", label: "Vue d'ensemble", icon: "📊" },
+  { id: "ytd", label: "YTD 2026", icon: "📈" },
   { id: "clients", label: "Clients", icon: "👥" },
   { id: "media", label: "Media Spend", icon: "📡" },
   { id: "blink", label: "Suivi Blink", icon: "🏦" },
@@ -87,6 +89,7 @@ export default function DashboardPrimeCircleAgency() {
 
       <main className="pca-container">
         {tab === "overview" && <PCAOverviewTab data={data} />}
+        {tab === "ytd" && <PCAYTDTab data={data} />}
         {tab === "clients" && <PCAClientsTab data={data} />}
         {tab === "media" && <PCAMediaTab data={data} />}
         {tab === "blink" && <PCABlinkTab data={data} />}
