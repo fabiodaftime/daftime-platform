@@ -257,6 +257,10 @@ const JAN_2026 = {
   ],
   ytdEntityTotal: { entity: 'TOTAL GROUPE', jan: '$89,607', feb: '', ytd: '$89,607', pct: '100%' },
   ytdTrendData: [{ month: 'Janvier', ca: 198900, margin: 89607, net: 73586 }],
+  ytdPLHoldingFees: null as { label: string; jan: string; feb: string; ytd: string }[] | null,
+  ytdPLHoldingFeesTotal: null as { label: string; jan: string; feb: string; ytd: string } | null,
+  ytdPLNetResult: null as { label: string; jan: string; feb: string; ytd: string } | null,
+  ytdPLDistribution: null as { label: string; jan: string; feb: string; ytd: string; style?: string }[] | null,
 
   // RESERVES TAB
   reservesHero: [
