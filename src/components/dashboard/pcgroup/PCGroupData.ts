@@ -554,6 +554,21 @@ const FEB_2026 = {
     { month: 'Janvier', ca: 198900, margin: 89607, net: 73586 },
     { month: 'Février', ca: 258543, margin: 80221, net: 61309 },
   ],
+  ytdPLHoldingFees: [
+    { label: 'Compta + CFO Groupe', jan: '-$3,430', feb: '-$3,430', ytd: '-$6,860' },
+    { label: 'Salaire Assistante', jan: '-$1,630', feb: '-$1,630', ytd: '-$3,260' },
+    { label: 'Salaires Fixes Sales', jan: '-$2,000', feb: '-$2,000', ytd: '-$4,000' },
+    { label: 'Travel Expenses', jan: '—', feb: '-$3,781', ytd: '-$3,781' },
+    { label: 'Bank Fees', jan: '—', feb: '-$50', ytd: '-$50' },
+  ] as { label: string; jan: string; feb: string; ytd: string }[] | null,
+  ytdPLHoldingFeesTotal: { label: 'Total Frais Holding', jan: '-$7,060', feb: '-$10,890', ytd: '-$17,950' } as { label: string; jan: string; feb: string; ytd: string } | null,
+  ytdPLNetResult: { label: 'RÉSULTAT NET HOLDING', jan: '$73,586', feb: '$61,309', ytd: '$134,895' } as { label: string; jan: string; feb: string; ytd: string } | null,
+  ytdPLDistribution: [
+    { label: 'Maxence (37.5%)', jan: '$27,595', feb: '$22,991', ytd: '$50,586' },
+    { label: 'Thibault (37.5%)', jan: '$27,595', feb: '$22,991', ytd: '$50,586' },
+    { label: '↳ dont Will', jan: '$10,000', feb: '$10,000', ytd: '$20,000', style: 'muted' },
+    { label: 'Florian (25%)', jan: '$18,396', feb: '$15,327', ytd: '$33,723' },
+  ] as { label: string; jan: string; feb: string; ytd: string; style?: string }[] | null,
 
   reservesHero: [
     { label: "Réserves Janvier", value: "$8,961", detail: "10% marge brute Jan", color: "navy" },
