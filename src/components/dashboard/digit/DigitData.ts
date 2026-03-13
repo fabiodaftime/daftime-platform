@@ -256,7 +256,7 @@ const DIGIT_FEB = {
     { name: "Février", ca: 149963, marge: 46948 },
   ],
   ytdProductDistribution: [
-    { name: "Digit Solution", value: 236979 },
+    { name: "Digit Solution", value: 244660 },
     { name: "SPY", value: 44050 },
     { name: "Comment/Trust", value: 3146 },
   ],
