@@ -227,7 +227,7 @@ const DIGIT_FEB = {
     { label: "CA SPY", value: "$27,300", sub: "", type: "success", chg: "+63.0%" },
     { label: "Marge SPY", value: "$3,559", sub: "13.0% du CA SPY", type: "primary" },
   ],
-  spyDetail: { jan: "$16,750", janMarge: "$3,262", feb: "$27,300", febMarge: "$3,559" },
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559" },
   ctKPIs: [
     { label: "CA Comment/Trust", value: "$333", sub: "", type: "warning", chg: "-88.2%" },
     { label: "Marge", value: "$140", sub: "42.0% du CA CT", type: "warning" },
