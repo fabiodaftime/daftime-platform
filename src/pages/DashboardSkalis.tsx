@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import skalisLogo from '@/assets/skalis-logo.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
