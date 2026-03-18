@@ -152,6 +152,14 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/dashboard-skalis/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardSkalis />
+                </ProtectedRoute>
+              } 
+            />
             <Route
               path="/admin/company/:id"
               element={
