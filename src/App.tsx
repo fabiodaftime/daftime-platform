@@ -22,6 +22,7 @@ import DashboardDigit from "./pages/DashboardDigit";
 import DashboardPCGroup from "./pages/DashboardPCGroup";
 import DashboardNexus from "./pages/DashboardNexus";
 import DashboardHotelX from "./pages/DashboardHotelX";
+import DashboardSkalis from "./pages/DashboardSkalis";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
@@ -148,6 +149,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardHotelX />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-skalis/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardSkalis />
                 </ProtectedRoute>
               } 
             />

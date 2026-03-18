@@ -333,6 +333,7 @@ export type Database = {
         | "prime_circle_group"
         | "nexus_test"
         | "hotel_x"
+        | "skalis"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -476,6 +477,7 @@ export const Constants = {
         "prime_circle_group",
         "nexus_test",
         "hotel_x",
+        "skalis",
       ],
     },
   },

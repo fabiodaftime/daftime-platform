@@ -43,6 +43,9 @@ export function CompanyCard({
                 if (layoutType === 'prime_circle_agency') route = `/dashboard-prime-circle-agency/${id}`;
                 if (layoutType === 'digit') route = `/dashboard-digit/${id}`;
                 if (layoutType === 'prime_circle_group') route = `/dashboard-pc-group/${id}`;
+                if (layoutType === 'nexus_test') route = `/dashboard-nexus/${id}`;
+                if (layoutType === 'hotel_x') route = `/dashboard-hotel-x/${id}`;
+                if (layoutType === 'skalis') route = `/dashboard-skalis/${id}`;
                 console.log('[CompanyCard] Navigating:', { id, layoutType, route });
                 navigate(route);
               }}
