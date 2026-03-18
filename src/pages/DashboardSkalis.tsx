@@ -736,7 +736,7 @@ const DashboardSkalis = () => {
       {/* Sidebar */}
       <nav className={`sk-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sk-sidebar-logo">
-          <div className="sk-mark">SK</div>
+          <img src={skalisLogo} alt="Skalis" style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 4 }} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--sk-tx)' }}>SKALIS</div>
             <div style={{ fontSize: 9, color: 'var(--sk-t3)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>DUBAI · DIFC</div>
