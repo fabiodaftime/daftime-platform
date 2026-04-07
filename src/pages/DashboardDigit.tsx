@@ -81,7 +81,7 @@ export default function DashboardDigit() {
         {tab === "costs" && <DigitCostsTab data={monthData} />}
         {tab === "products" && <DigitProductsTab data={monthData} />}
         {tab === "evolution" && <DigitEvolutionTab data={monthData} />}
-        {tab === "comments" && <DigitCommentsTab />}
+        {tab === "comments" && <DigitCommentsTab monthLabel={monthData.monthLabel} />}
       </div>
 
       <footer className="digit-footer">
