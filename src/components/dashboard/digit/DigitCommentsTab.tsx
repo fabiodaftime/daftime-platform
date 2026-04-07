@@ -22,7 +22,7 @@ const SECTIONS = [
   { id: 'daftime', label: '📊 Commentaires Fabio / Daftime', color: D.green },
 ];
 
-export function DigitCommentsTab() {
+export function DigitCommentsTab({ monthLabel }: { monthLabel?: string }) {
   const { id: companyId } = useParams();
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -66,7 +66,7 @@ export function DigitCommentsTab() {
 
   return (
     <div>
-      <h2 className="digit-section-title">Commentaires - Janvier 2026</h2>
+      <h2 className="digit-section-title">Commentaires - {monthLabel || 'Digit Solution'}</h2>
 
       {SECTIONS.map((section) => {
         const sectionComments = comments.filter(c => c.section === section.id);
