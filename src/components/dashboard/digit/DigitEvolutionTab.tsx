@@ -28,7 +28,7 @@ export function DigitEvolutionTab({ data }: Props) {
 
   return (
     <div>
-      <h2 className="digit-section-title">Month-over-Month Evolution (Feb vs Jan)</h2>
+      <h2 className="digit-section-title">Month-over-Month Evolution — {data.monthLabel}</h2>
       <div className="digit-kpi-grid">
         {evolutionKPIs.map((kpi: any, i: number) => (
           <div key={i} className="digit-metric-card" style={{ borderLeftColor: typeColor[kpi.type] || D.primary }}>

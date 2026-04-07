@@ -1,10 +1,11 @@
 // Digit Dashboard Data - Multi-Month Support
 
-export type DigitMonthId = 'jan-2026' | 'feb-2026';
+export type DigitMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026';
 
 export const DIGIT_AVAILABLE_MONTHS = [
   { id: 'jan-2026' as DigitMonthId, label: 'Janvier 2026' },
   { id: 'feb-2026' as DigitMonthId, label: 'Février 2026' },
+  { id: 'mar-2026' as DigitMonthId, label: 'Mars 2026' },
 ];
 
 export const D = {
@@ -295,8 +296,173 @@ const DIGIT_FEB = {
   },
 };
 
+// ============ MARCH 2026 ============
+const DIGIT_MAR = {
+  monthLabel: 'Mars 2026',
+  overviewKPIs: [
+    { label: "CA Total", value: "$158,668", sub: "288 deals • Ticket moyen $551", type: "primary" },
+    { label: "Marge Totale", value: "$61,631", sub: "38.8% du CA", type: "success" },
+    { label: "Deals Mars", value: "288", sub: "239 Setup • 49 Ad Account", type: "warning" },
+    { label: "Taux de Marge", value: "38.8%", sub: "Performance globale", type: "accent" },
+  ],
+  overviewProducts: [
+    { label: "Digit Solution (Core)", value: "$120,458", sub: "Marge $57,458 (47.7%)", type: "primary", chg: "-1.5%" },
+    { label: "SPY", value: "$37,350", sub: "Marge $3,470", type: "success", chg: "+36.8%" },
+    { label: "Comment/Trust", value: "$861", sub: "Marge $703", type: "warning", chg: "+158.6%" },
+  ],
+  overviewChartData: { labels: ['Février', 'Mars'], ca: [149963, 158668], marge: [46948, 61631] },
+  comparisonM1: [
+    { label: "CA Février", value: "$149,963", sub: "213 deals", type: "primary" },
+    { label: "Marge Février", value: "$46,948", sub: "31.3% du CA", type: "success" },
+    { label: "Évolution CA", value: "+5.8%", sub: "+$8,705", type: "success" },
+    { label: "Évolution Marge", value: "+31.3%", sub: "+$14,683", type: "success" },
+  ] as any[] | null,
+  // Costs tab
+  costsKPIs: [
+    { label: "Provider Cost", value: "$23,591", sub: "19.6% du CA Global", type: "primary" },
+    { label: "Cost Salary", value: "$22,455", sub: "18.6% du CA Global", type: "accent" },
+    { label: "Business Expenses", value: "$2,431", sub: "2.0% du CA Global", type: "warning" },
+    { label: "Total Cost", value: "$60,740", sub: "50.4% du CA Global", type: "success" },
+  ],
+  costsDetail: [
+    { label: "Provider Cost", value: "$23,591" },
+    { label: "To Blink", value: "$8,752" },
+    { label: "Cost Salary", value: "$22,455" },
+    { label: "Tools", value: "$1,299" },
+    { label: "Referral", value: "$0" },
+    { label: "Business Expenses", value: "$2,431" },
+    { label: "Fees Bank/Crypto", value: "$503" },
+    { label: "Refunds (Setup + Ad)", value: "$91" },
+    { label: "Sales Salary (commissions)", value: "$2,259" },
+  ],
+  costsTotal: "$60,740",
+  costsChartData: [23591, 8752, 22455, 2431, 1299, 503, 91],
+  // SPY costs
+  spyCostsKPIs: [
+    { label: "CA SPY", value: "$37,350", sub: "Produit SPY", type: "primary" },
+    { label: "Cost Product SPY", value: "$28,400", sub: "76.0% du CA SPY", type: "warning" },
+    { label: "COM Blink SPY", value: "$3,745", sub: "10.0% du CA SPY", type: "accent" },
+    { label: "Marge SPY", value: "$3,470", sub: "9.3% du CA SPY", type: "success" },
+  ],
+  spyCostsBreakdown: [
+    { label: "CA SPY", value: "$37,350", negative: false },
+    { label: "Cost Product", value: "-$28,400", negative: true },
+    { label: "COM Blink", value: "-$3,745", negative: true },
+    { label: "COM Sales", value: "-$1,735", negative: true },
+  ],
+  spyCostsTotal: "$3,470",
+  // CT costs
+  ctCostsKPIs: [
+    { label: "CA Comment/Trust", value: "$861", sub: "Services annexes", type: "primary" },
+    { label: "Cost Product CT", value: "$120", sub: "13.9% du CA CT", type: "warning" },
+    { label: "COM Sales CT", value: "$37", sub: "4.3% du CA CT", type: "accent" },
+    { label: "Marge CT", value: "$703", sub: "81.7% du CA CT", type: "success" },
+  ],
+  ctCostsBreakdown: [
+    { label: "CA Comment/Trust", value: "$861", negative: false },
+    { label: "Cost Product", value: "-$120", negative: true },
+    { label: "COM Blink", value: "$0", negative: false },
+    { label: "COM Sales", value: "-$37", negative: true },
+  ],
+  ctCostsTotal: "$703",
+  // Revenue tab
+  revenueKPIs: [
+    { label: "CA Setup", value: "$93,426", sub: "239 deals • $391/deal", type: "primary" },
+    { label: "CA Ad Account", value: "$16,469", sub: "49 deals • $336/deal", type: "success" },
+    { label: "CA SPY", value: "$37,350", sub: "23.5% du CA total", type: "accent" },
+    { label: "CA Comment/Trust", value: "$861", sub: "0.5% du CA total", type: "warning" },
+  ],
+  revenueComparison: {
+    setup: "$79,141 (Fév) → $93,426 (Mar) = +18.0% 🚀",
+    ad: "$25,309 (Fév) → $16,469 (Mar) = -34.9%",
+    spy: "$27,300 (Fév) → $37,350 (Mar) = +36.8% 🚀",
+    ct: "$333 (Fév) → $861 (Mar) = +158.2% 🚀",
+  },
+  revenueDistribution: [
+    { name: "Setup", value: 93426 },
+    { name: "Ad Account", value: 16469 },
+    { name: "SPY", value: 37350 },
+    { name: "Comment/Trust", value: 861 },
+  ],
+  // Products tab
+  digitCoreKPIs: [
+    { label: "CA Global", value: "$120,458", sub: "288 deals (Setup + Ad Account)", type: "primary" },
+    { label: "Company Margin", value: "$57,458", sub: "47.7% du CA", type: "success" },
+    { label: "Setup", value: "$93,426", sub: "239 deals • $391/deal", type: "accent" },
+    { label: "Ad Account", value: "$16,469", sub: "49 deals • $336/deal", type: "warning" },
+  ],
+  spyKPIs: [
+    { label: "CA SPY", value: "$37,350", sub: "", type: "success", chg: "+36.8%" },
+    { label: "Marge SPY", value: "$3,470", sub: "9.3% du CA SPY", type: "primary" },
+  ],
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559", mar: "$37,350", marMarge: "$3,470" },
+  ctKPIs: [
+    { label: "CA Comment/Trust", value: "$861", sub: "", type: "warning", chg: "+158.6%" },
+    { label: "Marge", value: "$703", sub: "81.7% du CA CT", type: "warning" },
+  ],
+  ctAlert: null as string | null,
+  // YTD tab
+  ytdMainKPIs: [
+    { label: "CA Total YTD", value: "$442,843", sub: "3 mois • 726 deals" },
+    { label: "Marge Totale YTD", value: "$154,571", sub: "34.9% du CA" },
+    { label: "Taux de Marge Moyen", value: "34.9%", sub: "Performance globale YTD" },
+    { label: "Ticket Moyen YTD", value: "$610", sub: "Sur 726 deals" },
+  ],
+  ytdMonthlyKPIs: [
+    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $45,992", type: "primary" },
+    { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
+    { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,631", type: "accent" },
+    { label: "Moyenne Mensuelle Q1", value: "$147,614", sub: "CA moyen • 242 deals/mois", type: "warning" },
+  ],
+  ytdProductKPIs: [
+    { label: "Digit Solution", value: "$357,437", sub: "Marge $140,905 (39.4%)", type: "primary" },
+    { label: "SPY", value: "$81,400", sub: "Marge $10,292", type: "success" },
+    { label: "Comment/Trust", value: "$4,007", sub: "Marge $3,374", type: "warning" },
+  ],
+  ytdEvolutionData: [
+    { name: "Janvier", ca: 134212, marge: 45992 },
+    { name: "Février", ca: 149963, marge: 46948 },
+    { name: "Mars", ca: 158668, marge: 61631 },
+  ],
+  ytdProductDistribution: [
+    { name: "Digit Solution", value: 357437 },
+    { name: "SPY", value: 81400 },
+    { name: "Comment/Trust", value: 4007 },
+  ],
+  // Evolution MoM tab
+  evolutionKPIs: [
+    { label: "CA Total Growth", value: "+5.8%", sub: "+$8,705", detail: "Fév: $149,963 → Mar: $158,668", type: "primary" },
+    { label: "Margin Growth", value: "+31.3%", sub: "+$14,683", detail: "Fév: $46,948 → Mar: $61,631", type: "success" },
+    { label: "Deals Evolution", value: "+35.2%", sub: "+75 deals", detail: "Fév: 213 → Mar: 288", type: "warning" },
+    { label: "Ticket Moyen Growth", value: "-21.7%", sub: "-$153", detail: "Fév: $704 → Mar: $551", type: "accent" },
+  ],
+  evolutionProductKPIs: [
+    { label: "Digit Solution", value: "-1.5%", sub: "-$1,872", detail: "Fév: $122,330 → Mar: $120,458", type: "primary" },
+    { label: "SPY Growth", value: "+36.8%", sub: "+$10,050 🚀", detail: "Fév: $27,300 → Mar: $37,350", type: "success" },
+    { label: "Comment/Trust", value: "+158.6%", sub: "+$528 🚀", detail: "Fév: $333 → Mar: $861", type: "success" },
+  ],
+  evolutionChartData: [5.8, 31.3, 35.2, -1.5, 36.8, 158.6],
+  evolutionInsights: {
+    positives: [
+      "CA en hausse de 5.8% (+$8,705)",
+      "Marge exceptionnelle +31.3% (+$14,683) 🚀",
+      "Taux de marge record : 38.8% (meilleur du Q1)",
+      "SPY en forte croissance (+36.8%, +$10,050)",
+      "Comment/Trust rebond spectaculaire (+158.6%)",
+      "Deals en forte hausse +35.2% (+75 deals)",
+    ],
+    warnings: [
+      "Ticket moyen en baisse -21.7% (normal avec hausse volume)",
+      "Digit légèrement en baisse -1.5% (-$1,872)",
+    ],
+    conclusion: "Meilleur mois du Q1 en marge (38.8%). La hausse du volume de deals (+75) compense la baisse du ticket moyen. SPY et Comment/Trust retrouvent une dynamique positive.",
+  },
+};
+
 export type DigitMonthData = typeof DIGIT_FEB;
 
 export function getDigitMonthData(month: DigitMonthId): DigitMonthData {
-  return month === 'jan-2026' ? DIGIT_JAN as DigitMonthData : DIGIT_FEB;
+  if (month === 'jan-2026') return DIGIT_JAN as DigitMonthData;
+  if (month === 'mar-2026') return DIGIT_MAR as DigitMonthData;
+  return DIGIT_FEB;
 }
