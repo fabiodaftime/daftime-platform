@@ -54,7 +54,7 @@ export function DigitOverviewTab({ data }: Props) {
 
       {overviewChartData && (
         <div className="digit-chart-container">
-          <div className="digit-chart-title">Évolution CA & Marge (Janvier vs Février)</div>
+          <div className="digit-chart-title">Évolution CA & Marge ({overviewChartData.labels.join(' vs ')})</div>
           <ResponsiveContainer width="100%" height={340}>
             <BarChart data={overviewChartData.labels.map((l, i) => ({ name: l, 'CA Total': overviewChartData.ca[i], 'Marge Totale': overviewChartData.marge[i] }))}>
               <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 600 }} />
