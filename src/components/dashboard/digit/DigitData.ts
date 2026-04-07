@@ -366,6 +366,21 @@ const DIGIT_MAR = {
   ],
   ctCostsTotal: "$703",
   // Revenue tab
+  revenueGlobalKPIs: [
+    { label: "Digit Solution", value: "$120,458", sub: "288 deals • 75.9% du CA total", type: "primary" },
+    { label: "SPY", value: "$37,350", sub: "23.5% du CA total", type: "success" },
+    { label: "Comment/Trust", value: "$861", sub: "0.5% du CA total", type: "warning" },
+    { label: "CA Total", value: "$158,668", sub: "3 produits", type: "accent" },
+  ],
+  revenueDetailKPIs: [
+    { label: "Setup", value: "$93,426", sub: "239 deals • $391/deal", type: "primary" },
+    { label: "Ad Account", value: "$16,469", sub: "49 deals • $336/deal", type: "success" },
+    { label: "Page", value: "$2,310", sub: "Pages Facebook", type: "accent" },
+    { label: "BM", value: "$6,403", sub: "Business Manager", type: "warning" },
+    { label: "Gmail / Proxy", value: "$550", sub: "Comptes Gmail & Proxy", type: "primary" },
+    { label: "Gas Fees", value: "$1,201", sub: "Frais blockchain", type: "success" },
+    { label: "Profils FB", value: "$100", sub: "Profils Facebook", type: "accent" },
+  ],
   revenueKPIs: [
     { label: "CA Setup", value: "$93,426", sub: "239 deals • $391/deal", type: "primary" },
     { label: "CA Ad Account", value: "$16,469", sub: "49 deals • $336/deal", type: "success" },
@@ -377,6 +392,8 @@ const DIGIT_MAR = {
     ad: "$25,309 (Fév) → $16,469 (Mar) = -34.9%",
     spy: "$27,300 (Fév) → $37,350 (Mar) = +36.8% 🚀",
     ct: "$333 (Fév) → $861 (Mar) = +158.2% 🚀",
+    page: "$2,392 (Fév) → $2,310 (Mar) = -3.4%",
+    bm: "$12,290 (Fév) → $6,403 (Mar) = -47.9%",
   },
   revenueDistribution: [
     { name: "Setup", value: 93426 },
