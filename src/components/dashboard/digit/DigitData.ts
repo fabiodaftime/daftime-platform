@@ -1,6 +1,6 @@
 // Digit Dashboard Data - Multi-Month Support
 
-export type DigitMonthId = 'jan-2026' | 'feb-2026';
+export type DigitMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026';
 
 export const DIGIT_AVAILABLE_MONTHS = [
   { id: 'jan-2026' as DigitMonthId, label: 'Janvier 2026' },
