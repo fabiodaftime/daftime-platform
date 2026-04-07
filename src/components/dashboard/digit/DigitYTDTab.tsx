@@ -12,7 +12,7 @@ export function DigitYTDTab({ data }: Props) {
 
   return (
     <div>
-      <h2 className="digit-section-title">Year-To-Date 2026 (Janvier + Février)</h2>
+      <h2 className="digit-section-title">Year-To-Date 2026 ({ytdMainKPIs[0]?.sub || ''})</h2>
       <div className="digit-kpi-grid">
         {ytdMainKPIs.map((kpi, i) => (
           <div key={i} className="digit-ytd-card">

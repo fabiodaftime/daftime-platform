@@ -21,20 +21,14 @@ export function DigitOverviewTab({ data }: Props) {
             <div className="digit-metric-sub">{kpi.sub}</div>
             {comparisonM1 && i === 0 && (
               <div className="digit-metric-comparison">
-                <span className="digit-badge positive">+11.7%</span>
-                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier (+$15,751)</span>
+                <span className={`digit-badge ${parseFloat(String(comparisonM1[2]?.value).replace('%','')) >= 0 ? 'positive' : 'negative'}`}>{comparisonM1[2]?.value}</span>
+                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs {comparisonM1[0]?.label?.replace('CA ','') || 'M-1'} ({comparisonM1[2]?.sub})</span>
               </div>
             )}
             {comparisonM1 && i === 1 && (
               <div className="digit-metric-comparison">
-                <span className="digit-badge positive">+2.1%</span>
-                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier (+$955)</span>
-              </div>
-            )}
-            {comparisonM1 && i === 2 && (
-              <div className="digit-metric-comparison">
-                <span className="digit-badge negative">-12</span>
-                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs Janvier (225 deals)</span>
+                <span className={`digit-badge ${parseFloat(String(comparisonM1[3]?.value).replace('%','')) >= 0 ? 'positive' : 'negative'}`}>{comparisonM1[3]?.value}</span>
+                <span style={{ fontSize: '0.75rem', color: D.textMuted }}>vs {comparisonM1[0]?.label?.replace('CA ','') || 'M-1'} ({comparisonM1[3]?.sub})</span>
               </div>
             )}
           </div>
