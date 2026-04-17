@@ -8,8 +8,9 @@ import { RevenueChart } from '@/components/dashboard/charts/RevenueChart';
 import { ExpenseDonutChart } from '@/components/dashboard/charts/ExpenseDonutChart';
 import { CashFlowChart } from '@/components/dashboard/charts/CashFlowChart';
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
-import { DollarSign, TrendingUp, Wallet, PieChart } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, PieChart, BarChart3, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AccountingTab } from '@/components/revision/AccountingTab';
 
 interface Company {
   id: string;
