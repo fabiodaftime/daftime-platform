@@ -8,8 +8,9 @@ import { RevenueChart } from '@/components/dashboard/charts/RevenueChart';
 import { ExpenseDonutChart } from '@/components/dashboard/charts/ExpenseDonutChart';
 import { CashFlowChart } from '@/components/dashboard/charts/CashFlowChart';
 import { DrillDownDrawer } from '@/components/dashboard/DrillDownDrawer';
-import { DollarSign, TrendingUp, Wallet, PieChart } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, PieChart, BarChart3, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AccountingTab } from '@/components/revision/AccountingTab';
 
 interface Company {
   id: string;
@@ -177,6 +178,17 @@ export default function Dashboard() {
       />
 
       <main className="p-6">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="bg-dashboard-card border border-dashboard-border mb-6">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground gap-2">
+              <BarChart3 className="w-4 h-4" /> Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="accounting" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground gap-2">
+              <BookOpen className="w-4 h-4" /> Accounting
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="animate-fade-in">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-dashboard-card border border-dashboard-border mb-6">
             <TabsTrigger value="executive" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
@@ -325,6 +337,12 @@ export default function Dashboard() {
               />
             </div>
             <CashFlowChart data={DEMO_CASH_DATA} currency={company.currency} />
+          </TabsContent>
+        </Tabs>
+          </TabsContent>
+
+          <TabsContent value="accounting" className="animate-fade-in">
+            <AccountingTab companyId={company.id} currency={company.currency} />
           </TabsContent>
         </Tabs>
       </main>
