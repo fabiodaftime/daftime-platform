@@ -266,6 +266,574 @@ export type Database = {
         }
         Relationships: []
       }
+      revision_anomalies: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string
+          credit_account: string | null
+          cycle_id: string
+          debit_account: string | null
+          description: string
+          id: string
+          proposed_adjustment_amount: number | null
+          resolved_at: string | null
+          revision_file_id: string
+          severity: Database["public"]["Enums"]["revision_anomaly_severity"]
+          status: Database["public"]["Enums"]["revision_anomaly_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by: string
+          credit_account?: string | null
+          cycle_id: string
+          debit_account?: string | null
+          description: string
+          id?: string
+          proposed_adjustment_amount?: number | null
+          resolved_at?: string | null
+          revision_file_id: string
+          severity?: Database["public"]["Enums"]["revision_anomaly_severity"]
+          status?: Database["public"]["Enums"]["revision_anomaly_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string
+          credit_account?: string | null
+          cycle_id?: string
+          debit_account?: string | null
+          description?: string
+          id?: string
+          proposed_adjustment_amount?: number | null
+          resolved_at?: string | null
+          revision_file_id?: string
+          severity?: Database["public"]["Enums"]["revision_anomaly_severity"]
+          status?: Database["public"]["Enums"]["revision_anomaly_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_anomalies_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "revision_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_anomalies_revision_file_id_fkey"
+            columns: ["revision_file_id"]
+            isOneToOne: false
+            referencedRelation: "revision_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_attachments: {
+        Row: {
+          checklist_item_id: string | null
+          cycle_id: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          revision_file_id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          cycle_id?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          revision_file_id: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          checklist_item_id?: string | null
+          cycle_id?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          revision_file_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_attachments_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "revision_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_attachments_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "revision_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_attachments_revision_file_id_fkey"
+            columns: ["revision_file_id"]
+            isOneToOne: false
+            referencedRelation: "revision_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          actor_name: string | null
+          created_at: string
+          id: string
+          payload: Json | null
+          revision_file_id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          revision_file_id: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          revision_file_id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_audit_log_revision_file_id_fkey"
+            columns: ["revision_file_id"]
+            isOneToOne: false
+            referencedRelation: "revision_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_checklist_items: {
+        Row: {
+          created_at: string
+          cycle_id: string
+          description: string | null
+          done_at: string | null
+          done_by: string | null
+          evidence_required: boolean
+          id: string
+          is_mandatory: boolean
+          item_code: string
+          label: string
+          note: string | null
+          order_index: number
+          status: Database["public"]["Enums"]["revision_checklist_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_id: string
+          description?: string | null
+          done_at?: string | null
+          done_by?: string | null
+          evidence_required?: boolean
+          id?: string
+          is_mandatory?: boolean
+          item_code: string
+          label: string
+          note?: string | null
+          order_index?: number
+          status?: Database["public"]["Enums"]["revision_checklist_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cycle_id?: string
+          description?: string | null
+          done_at?: string | null
+          done_by?: string | null
+          evidence_required?: boolean
+          id?: string
+          is_mandatory?: boolean
+          item_code?: string
+          label?: string
+          note?: string | null
+          order_index?: number
+          status?: Database["public"]["Enums"]["revision_checklist_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_checklist_items_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "revision_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_comments: {
+        Row: {
+          author_id: string
+          author_name: string
+          body: string
+          checklist_item_id: string | null
+          created_at: string
+          cycle_id: string | null
+          id: string
+          is_review_note: boolean
+          parent_id: string | null
+          resolved: boolean
+          revision_file_id: string
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          body: string
+          checklist_item_id?: string | null
+          created_at?: string
+          cycle_id?: string | null
+          id?: string
+          is_review_note?: boolean
+          parent_id?: string | null
+          resolved?: boolean
+          revision_file_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          body?: string
+          checklist_item_id?: string | null
+          created_at?: string
+          cycle_id?: string | null
+          id?: string
+          is_review_note?: boolean
+          parent_id?: string | null
+          resolved?: boolean
+          revision_file_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_comments_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "revision_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_comments_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "revision_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "revision_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_comments_revision_file_id_fkey"
+            columns: ["revision_file_id"]
+            isOneToOne: false
+            referencedRelation: "revision_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_cycles: {
+        Row: {
+          assigned_to: string | null
+          closing_balance: number | null
+          comments: string | null
+          created_at: string
+          cycle_code: string
+          cycle_name: string
+          id: string
+          opening_balance: number | null
+          order_index: number
+          progress_pct: number
+          revision_file_id: string
+          status: Database["public"]["Enums"]["revision_cycle_status"]
+          updated_at: string
+          variance: number | null
+          variance_pct: number | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          closing_balance?: number | null
+          comments?: string | null
+          created_at?: string
+          cycle_code: string
+          cycle_name: string
+          id?: string
+          opening_balance?: number | null
+          order_index?: number
+          progress_pct?: number
+          revision_file_id: string
+          status?: Database["public"]["Enums"]["revision_cycle_status"]
+          updated_at?: string
+          variance?: number | null
+          variance_pct?: number | null
+        }
+        Update: {
+          assigned_to?: string | null
+          closing_balance?: number | null
+          comments?: string | null
+          created_at?: string
+          cycle_code?: string
+          cycle_name?: string
+          id?: string
+          opening_balance?: number | null
+          order_index?: number
+          progress_pct?: number
+          revision_file_id?: string
+          status?: Database["public"]["Enums"]["revision_cycle_status"]
+          updated_at?: string
+          variance?: number | null
+          variance_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_cycles_revision_file_id_fkey"
+            columns: ["revision_file_id"]
+            isOneToOne: false
+            referencedRelation: "revision_files"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_entities: {
+        Row: {
+          code: string
+          company_id: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          jurisdiction: Database["public"]["Enums"]["revision_jurisdiction"]
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          company_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          jurisdiction?: Database["public"]["Enums"]["revision_jurisdiction"]
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          company_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          jurisdiction?: Database["public"]["Enums"]["revision_jurisdiction"]
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_entities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_files: {
+        Row: {
+          assigned_to: string | null
+          closed_at: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          entity_id: string | null
+          fiscal_year: number
+          id: string
+          jurisdiction: Database["public"]["Enums"]["revision_jurisdiction"]
+          period_end: string
+          period_start: string
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["revision_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          closed_at?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          entity_id?: string | null
+          fiscal_year: number
+          id?: string
+          jurisdiction?: Database["public"]["Enums"]["revision_jurisdiction"]
+          period_end: string
+          period_start: string
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["revision_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          closed_at?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          entity_id?: string | null
+          fiscal_year?: number
+          id?: string
+          jurisdiction?: Database["public"]["Enums"]["revision_jurisdiction"]
+          period_end?: string
+          period_start?: string
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["revision_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_files_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revision_files_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "revision_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_lead_schedules: {
+        Row: {
+          account_label: string
+          account_number: string
+          created_at: string
+          cycle_id: string
+          id: string
+          justification_note: string | null
+          justified: boolean
+          n_balance: number
+          n1_balance: number
+          order_index: number
+          updated_at: string
+          variance_amount: number | null
+          variance_pct: number | null
+        }
+        Insert: {
+          account_label: string
+          account_number: string
+          created_at?: string
+          cycle_id: string
+          id?: string
+          justification_note?: string | null
+          justified?: boolean
+          n_balance?: number
+          n1_balance?: number
+          order_index?: number
+          updated_at?: string
+          variance_amount?: number | null
+          variance_pct?: number | null
+        }
+        Update: {
+          account_label?: string
+          account_number?: string
+          created_at?: string
+          cycle_id?: string
+          id?: string
+          justification_note?: string | null
+          justified?: boolean
+          n_balance?: number
+          n1_balance?: number
+          order_index?: number
+          updated_at?: string
+          variance_amount?: number | null
+          variance_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revision_lead_schedules_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "revision_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revision_templates: {
+        Row: {
+          created_at: string
+          cycle_code: string
+          cycle_name: string
+          default_checklist_items: Json
+          id: string
+          is_active: boolean
+          jurisdiction: Database["public"]["Enums"]["revision_jurisdiction"]
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_code: string
+          cycle_name: string
+          default_checklist_items?: Json
+          id?: string
+          is_active?: boolean
+          jurisdiction: Database["public"]["Enums"]["revision_jurisdiction"]
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cycle_code?: string
+          cycle_name?: string
+          default_checklist_items?: Json
+          id?: string
+          is_active?: boolean
+          jurisdiction?: Database["public"]["Enums"]["revision_jurisdiction"]
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           company_id: string | null
@@ -307,6 +875,10 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
+      has_revision_file_access: {
+        Args: { _file_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -334,6 +906,22 @@ export type Database = {
         | "nexus_test"
         | "hotel_x"
         | "skalis"
+      revision_anomaly_severity: "low" | "medium" | "high" | "blocking"
+      revision_anomaly_status: "open" | "in_progress" | "resolved" | "accepted"
+      revision_checklist_status: "todo" | "done" | "na" | "anomaly"
+      revision_cycle_status:
+        | "not_started"
+        | "in_progress"
+        | "in_review"
+        | "validated"
+        | "anomaly"
+      revision_jurisdiction: "uae" | "france" | "portugal"
+      revision_status:
+        | "todo"
+        | "in_progress"
+        | "in_review"
+        | "validated"
+        | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -478,6 +1066,24 @@ export const Constants = {
         "nexus_test",
         "hotel_x",
         "skalis",
+      ],
+      revision_anomaly_severity: ["low", "medium", "high", "blocking"],
+      revision_anomaly_status: ["open", "in_progress", "resolved", "accepted"],
+      revision_checklist_status: ["todo", "done", "na", "anomaly"],
+      revision_cycle_status: [
+        "not_started",
+        "in_progress",
+        "in_review",
+        "validated",
+        "anomaly",
+      ],
+      revision_jurisdiction: ["uae", "france", "portugal"],
+      revision_status: [
+        "todo",
+        "in_progress",
+        "in_review",
+        "validated",
+        "closed",
       ],
     },
   },
