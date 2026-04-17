@@ -339,6 +339,12 @@ export default function Dashboard() {
             <CashFlowChart data={DEMO_CASH_DATA} currency={company.currency} />
           </TabsContent>
         </Tabs>
+          </TabsContent>
+
+          <TabsContent value="accounting" className="animate-fade-in">
+            <AccountingTab companyId={company.id} currency={company.currency} />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <DrillDownDrawer
