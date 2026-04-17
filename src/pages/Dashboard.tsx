@@ -178,6 +178,17 @@ export default function Dashboard() {
       />
 
       <main className="p-6">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="bg-dashboard-card border border-dashboard-border mb-6">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground gap-2">
+              <BarChart3 className="w-4 h-4" /> Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="accounting" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground gap-2">
+              <BookOpen className="w-4 h-4" /> Accounting
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="animate-fade-in">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-dashboard-card border border-dashboard-border mb-6">
             <TabsTrigger value="executive" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
