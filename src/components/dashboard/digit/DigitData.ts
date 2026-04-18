@@ -404,7 +404,7 @@ const DIGIT_MAR = {
   // Products tab
   digitCoreKPIs: [
     { label: "CA Global", value: "$120,458", sub: "288 deals (Setup + Ad Account)", type: "primary" },
-    { label: "Company Margin", value: "$57,458", sub: "47.7% du CA", type: "success" },
+    { label: "Company Margin", value: "$57,659", sub: "47.9% du CA", type: "success" },
     { label: "Setup", value: "$93,426", sub: "239 deals • $391/deal", type: "accent" },
     { label: "Ad Account", value: "$16,469", sub: "49 deals • $336/deal", type: "warning" },
   ],
