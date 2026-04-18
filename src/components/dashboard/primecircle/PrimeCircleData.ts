@@ -29,6 +29,7 @@ export interface PCMonthData {
     avgPerCustomer: number;
   };
   m1Comparison: {
+    prevMonthLabel?: string;
     customers: { prev: number; cur: number; diff: number; pct: number };
     turnover: { prev: number; cur: number; diff: number; pct: number };
     netProfit: { prev: number; cur: number; diff: number; pct: number; direction: 'positive' | 'negative' };
