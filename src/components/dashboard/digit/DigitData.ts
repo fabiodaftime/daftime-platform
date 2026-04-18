@@ -310,12 +310,12 @@ const DIGIT_MAR = {
     { label: "SPY", value: "$37,350", sub: "Marge $3,470", type: "success", chg: "+36.8%" },
     { label: "Comment/Trust", value: "$861", sub: "Marge $703", type: "warning", chg: "+158.6%" },
   ],
-  overviewChartData: { labels: ['Février', 'Mars'], ca: [149963, 158668], marge: [46948, 61631] },
+  overviewChartData: { labels: ['Février', 'Mars'], ca: [149963, 158668], marge: [46948, 61832] },
   comparisonM1: [
     { label: "CA Février", value: "$149,963", sub: "213 deals", type: "primary" },
     { label: "Marge Février", value: "$46,948", sub: "31.3% du CA", type: "success" },
     { label: "Évolution CA", value: "+5.8%", sub: "+$8,705", type: "success" },
-    { label: "Évolution Marge", value: "+31.3%", sub: "+$14,683", type: "success" },
+    { label: "Évolution Marge", value: "+31.7%", sub: "+$14,884", type: "success" },
   ] as any[] | null,
   // Costs tab
   costsKPIs: [
