@@ -458,12 +458,12 @@ const DIGIT_MAR = {
     { label: "SPY Growth", value: "+36.8%", sub: "+$10,050 🚀", detail: "Fév: $27,300 → Mar: $37,350", type: "success" },
     { label: "Comment/Trust", value: "+158.6%", sub: "+$528 🚀", detail: "Fév: $333 → Mar: $861", type: "success" },
   ],
-  evolutionChartData: [5.8, 31.3, 35.2, -1.5, 36.8, 158.6],
+  evolutionChartData: [5.8, 31.7, 35.2, -1.5, 36.8, 158.6],
   evolutionInsights: {
     positives: [
       "CA en hausse de 5.8% (+$8,705)",
-      "Marge exceptionnelle +31.3% (+$14,683) 🚀",
-      "Taux de marge record : 38.8% (meilleur du Q1)",
+      "Marge exceptionnelle +31.7% (+$14,884) 🚀",
+      "Taux de marge record : 39.0% (meilleur du Q1)",
       "SPY en forte croissance (+36.8%, +$10,050)",
       "Comment/Trust rebond spectaculaire (+158.6%)",
       "Deals en forte hausse +35.2% (+75 deals)",
