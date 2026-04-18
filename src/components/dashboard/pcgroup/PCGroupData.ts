@@ -1,10 +1,11 @@
 // Prime Circle Group - Consolidated Dashboard Data - Multi-Month
 
-export type MonthId = 'jan-2026' | 'feb-2026';
+export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026';
 
 export const AVAILABLE_MONTHS = [
   { id: 'jan-2026' as MonthId, label: 'Janvier 2026' },
   { id: 'feb-2026' as MonthId, label: 'Février 2026' },
+  { id: 'mar-2026' as MonthId, label: 'Mars 2026' },
 ];
 
 export type PCGroupEntityKey = 'agency' | 'structuring' | 'digit';
@@ -593,8 +594,328 @@ const FEB_2026 = {
   ],
 };
 
+// ============ MARCH 2026 ============
+const MAR_2026 = {
+  monthLabel: 'Mars 2026',
+  footerLabel: 'Mars 2026',
+
+  overviewHero: [
+    { label: "CA Groupe", value: "$260,071", detail: "6 entités consolidées", color: "navy", variance: "+0.6% vs Fév" as string | null, varType: "positive" as string | null },
+    { label: "Marge Brute Groupe", value: "$106,183", detail: "40.8% du CA", color: "success", variance: "+32.4% vs Fév", varType: "positive" },
+    { label: "Résultat Net Holding", value: "$87,187", detail: "Après frais holding", color: "gold", variance: "+42.2% vs Fév", varType: "positive" },
+    { label: "Réserves Filiales", value: "$10,618", detail: "10% marge brute", color: "primary", variance: "+32.4% vs Fév", varType: "positive" },
+  ],
+  overviewComparison: [
+    { entity: 'Agency (Part PCA 50%)', jan: '$12,237', feb: '$14,946', variation: '+22.1%', varType: 'positive', ytd: '$29,427' },
+    { entity: 'Structuring', jan: '$21,036', feb: '$29,606', variation: '+40.7%', varType: 'positive', ytd: '$92,013' },
+    { entity: 'Digit Solution', jan: '$43,249', feb: '$57,458', variation: '+32.9%', varType: 'positive', ytd: '$140,905' },
+    { entity: 'SPY', jan: '$3,559', feb: '$3,470', variation: '-2.5%', varType: 'negative', ytd: '$10,291' },
+    { entity: 'Comment/Trustpilot', jan: '$140', feb: '$703', variation: '+402.1%', varType: 'positive', ytd: '$3,374' },
+  ] as any[] | null,
+  overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$80,221', feb: '$106,183', variation: '+32.4%', varType: 'positive', ytd: '$276,010' },
+  entityCards: [
+    { id: 'agency', name: 'Agency', badge: 'PCA 50%', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
+      metrics: [{ label: 'CA Brut', value: '$46,402' }, { label: 'Part PCA', value: '$14,946', colorClass: 'success' }], margin: 64.4, marginLevel: 'high' as const },
+    { id: 'structuring', name: 'Structuring', badge: 'Banking', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', cssClass: 'structuring',
+      metrics: [{ label: 'CA', value: '$55,000' }, { label: 'Marge Nette', value: '$29,606', colorClass: 'success' }], margin: 53.8, marginLevel: 'high' as const },
+    { id: 'digit', name: 'Digit Solution', badge: 'Setup', gradient: 'linear-gradient(135deg, #D946A8 0%, #EC4899 100%)', cssClass: 'digit',
+      metrics: [{ label: 'CA', value: '$120,458' }, { label: 'Marge Nette', value: '$57,458', colorClass: 'success' }], margin: 47.7, marginLevel: 'medium' as const },
+    { id: 'spy', name: 'SPY', badge: 'Licences', gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', cssClass: 'spy',
+      metrics: [{ label: 'CA', value: '$37,350' }, { label: 'Marge Nette', value: '$3,470', colorClass: 'success' }], margin: 9.3, marginLevel: 'low' as const },
+    { id: 'comment', name: 'Comment', badge: 'Trust', gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', cssClass: 'comment',
+      metrics: [{ label: 'CA', value: '$861' }, { label: 'Marge Nette', value: '$703', colorClass: 'success' }], margin: 81.6, marginLevel: 'high' as const },
+  ],
+  consolidatedPL: [
+    { label: 'Marge Nette Agency (après 50% Blink)', value: '$14,946', type: 'positive' },
+    { label: 'Marge Nette Structuring', value: '$29,606', type: 'positive' },
+    { label: 'Marge Nette Digit Solution', value: '$57,458', type: 'positive' },
+    { label: 'Marge Nette SPY', value: '$3,470', type: 'positive' },
+    { label: 'Marge Nette Comment/Trustpilot', value: '$703', type: 'positive' },
+    { label: 'MARGE BRUTE GROUPE', value: '$106,183', type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Réserves Filiales (10%)', value: '-$10,618', type: 'negative' },
+    { label: 'REMONTÉE HOLDING (90%)', value: '$95,565', type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'CFO + Compta Groupe', value: '-$3,430', type: 'negative' },
+    { label: 'AI Agent', value: '-$2,000', type: 'negative' },
+    { label: 'Salaire Fixe Sales', value: '-$2,000', type: 'negative' },
+    { label: 'Tools', value: '-$780', type: 'negative' },
+    { label: 'Frais Bancaires', value: '-$88', type: 'negative' },
+    { label: 'Frais Paddel (non remboursés)', value: '-$80', type: 'negative' },
+    { label: 'TOTAL FRAIS HOLDING', value: '-$8,378', type: 'total-negative' },
+    { label: 'RÉSULTAT NET HOLDING', value: '$87,187', type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Maxence (37.5%)', value: '-$32,695', type: 'negative' },
+    { label: 'Thibault (37.5%)', value: '-$32,695', type: 'negative' },
+    { label: '↳ dont Will', value: '$10,000', type: 'indent-muted' },
+    { label: 'Florian (25%)', value: '-$21,797', type: 'negative' },
+    { label: 'SALAIRES MANAGEMENT (100%)', value: '-$87,187', type: 'total-negative' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'SOLDE HOLDING', value: '$0', type: 'highlight' },
+  ],
+  pieData: [
+    { name: 'Agency ($14.9K)', value: 14946, color: '#F59E0B' },
+    { name: 'Structuring ($29.6K)', value: 29606, color: '#1E3A5F' },
+    { name: 'Digit Sol. ($57.5K)', value: 57458, color: '#4F5BD5' },
+    { name: 'SPY ($3.5K)', value: 3470, color: '#10B981' },
+    { name: 'Comment ($703)', value: 703, color: '#D946A8' },
+  ],
+
+  agencyKPIs: [
+    { label: 'CA Brut', value: '$46,402', detail: '+32.3% vs Fév ($35,080)', color: 'navy' },
+    { label: 'Marge Nette', value: '$29,892', detail: '64.4% du CA', color: 'green' },
+    { label: 'Part PCA (50%)', value: '$14,946', detail: 'Après split Blink', color: 'gold' },
+    { label: 'Total Charges', value: '$16,555', detail: '35.7% du CA', color: 'pink' },
+  ],
+  agencyComparison: [
+    { indicator: 'CA Brut', jan: '$35,080', feb: '$46,402', variation: '+32.3%', varType: 'positive' },
+    { indicator: 'Charges', jan: '$10,606', feb: '$16,555', variation: '+56.1%', varType: 'negative' },
+    { indicator: 'Marge Nette', jan: '$24,473', feb: '$29,892', variation: '+22.1%', varType: 'positive' },
+    { indicator: 'Part PCA (50%)', jan: '$12,237', feb: '$14,946', variation: '+22.1%', varType: 'positive' },
+  ] as any[] | null,
+  agencyWaterfall: [
+    { label: 'CA Brut', value: '$46,402', type: 'positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Publicité (Ads)', value: '-$11,163', type: 'negative' },
+    { label: 'Coûts Setup', value: '-$3,500', type: 'negative' },
+    { label: 'Salaires', value: '-$1,400', type: 'negative' },
+    { label: 'Referrals (Master + No Limit)', value: '-$447', type: 'negative' },
+    { label: 'Transaction Fees', value: '-$45', type: 'negative' },
+    { label: 'TOTAL CHARGES', value: '-$16,555', type: 'total-negative' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'MARGE NETTE (100%)', value: '$29,892', type: 'highlight' },
+    { label: 'Part Blink (50%)', value: '-$14,946', type: 'negative' },
+    { label: 'PART PCA (50%)', value: '$14,946', type: 'total-positive' },
+  ],
+  agencyRisks: [
+    { label: 'Marge Nette', value: '64.4%', detail: 'vs 69.8% Fév', severity: 'success' },
+    { label: 'Cumul dû à Blink', value: '$112,789', detail: 'Benefit + Media', severity: 'warning' },
+    { label: 'Solde Media dû', value: '$93,920', detail: 'cumulé', severity: 'warning' },
+  ],
+
+  structuringKPIs: [
+    { label: 'CA (Turnover)', value: '$55,000', detail: '-25.2% vs Fév ($73,500)', color: 'navy' },
+    { label: 'Marge Nette', value: '$29,606', detail: '53.8% du CA', color: 'green' },
+    { label: 'Clients', value: '51', detail: 'Nathan uniquement', color: 'gold' },
+    { label: 'Total Charges', value: '$25,394', detail: 'COGS + OPEX', color: 'pink' },
+  ],
+  structuringComparison: [
+    { indicator: 'CA (Turnover)', jan: '$73,500', feb: '$55,000', variation: '-25.2%', varType: 'negative' },
+    { indicator: 'Marge Brute', jan: '$49,435', feb: '$44,981', variation: '-9.0%', varType: 'negative' },
+    { indicator: 'Marge Nette', jan: '$21,036', feb: '$29,606', variation: '+40.7%', varType: 'positive' },
+    { indicator: 'Taux Marge Nette', jan: '28.6%', feb: '53.8%', variation: '+25.2pts', varType: 'positive' },
+    { indicator: 'Clients', jan: '53', feb: '51', variation: '-3.8%', varType: 'negative' },
+    { indicator: 'Ticket Moyen', jan: '$1,387', feb: '$1,078', variation: '-22.3%', varType: 'negative' },
+  ] as any[] | null,
+  structuringWaterfall: [
+    { label: 'CA (Turnover)', value: '$55,000', type: 'positive' },
+    { label: 'COGS (Coût produit)', value: '-$10,019', type: 'negative' },
+    { label: 'MARGE BRUTE', value: '$44,981', type: 'highlight' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Publicité (ADS)', value: '-$9,828', type: 'negative' },
+    { label: 'Commission Nathan (15% + bonus)', value: '-$4,698', type: 'negative' },
+    { label: 'Autres (Alibaba, Fees...)', value: '-$849', type: 'negative' },
+    { label: 'TOTAL CHARGES OPEX', value: '-$15,375', type: 'total-negative' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'MARGE NETTE', value: '$29,606', type: 'highlight' },
+  ],
+  structuringServices: [
+    { name: 'LLC Services', value: 0, pct: '—', status: '—' },
+    { name: 'Physical Address US', value: 0, pct: '—', status: '—' },
+  ],
+
+  digitKPIs: [
+    { label: 'CA', value: '$120,458', detail: '-1.5% vs Fév ($122,330)', color: 'navy' },
+    { label: 'Marge Nette', value: '$57,458', detail: '47.7% du CA', color: 'green' },
+    { label: 'Deals', value: '288', detail: '239 Setup + 49 Ad Account', color: 'gold' },
+    { label: 'Total Charges', value: '$63,000', detail: '52.3% du CA', color: 'pink' },
+  ],
+  digitComparison: [
+    { indicator: 'CA', jan: '$122,330', feb: '$120,458', variation: '-1.5%', varType: 'negative' },
+    { indicator: 'Marge Nette', jan: '$43,249', feb: '$57,458', variation: '+32.9%', varType: 'positive' },
+    { indicator: 'Taux de Marge', jan: '35.4%', feb: '47.7%', variation: '+12.3pts', varType: 'positive' },
+    { indicator: 'Deals', jan: '213', feb: '288', variation: '+35.2%', varType: 'positive' },
+    { indicator: 'Ticket Moyen', jan: '$574', feb: '$418', variation: '-27.2%', varType: 'negative' },
+  ] as any[] | null,
+  digitWaterfall: [
+    { label: 'CA', value: '$120,458', type: 'positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Provider Cost', value: '-$23,591', type: 'negative' },
+    { label: 'Cost Salary', value: '-$22,455', type: 'negative' },
+    { label: 'To Blink (COM)', value: '-$8,752', type: 'negative' },
+    { label: 'Business Expenses', value: '-$2,431', type: 'negative' },
+    { label: 'Sales Salary', value: '-$2,259', type: 'negative' },
+    { label: 'Tools', value: '-$1,299', type: 'negative' },
+    { label: 'Fees (Bank/Crypto)', value: '-$503', type: 'negative' },
+    { label: 'Refunds', value: '-$91', type: 'negative' },
+    { label: 'TOTAL CHARGES', value: '-$63,000', type: 'total-negative' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'MARGE NETTE', value: '$57,458', type: 'highlight' },
+  ],
+  digitRevenueBreakdown: [
+    { name: 'Setup', value: 93426, deals: '239', ticket: '$391' },
+    { name: 'Ad Account', value: 16469, deals: '49', ticket: '$336' },
+    { name: 'BM', value: 6403, deals: '—', ticket: '—' },
+    { name: 'Page', value: 2310, deals: '—', ticket: '—' },
+    { name: 'Gas Fees', value: 1201, deals: '—', ticket: '—' },
+    { name: 'Gmail/Proxy', value: 550, deals: '—', ticket: '—' },
+    { name: 'Profils FB', value: 100, deals: '—', ticket: '—' },
+  ],
+
+  spyKPIs: [
+    { label: 'CA', value: '$37,350', detail: '+36.8% vs Fév ($27,300)', color: 'navy' },
+    { label: 'Marge Nette', value: '$3,470', detail: '9.3% du CA', color: 'green' },
+    { label: 'Cost Product', value: '$28,520', detail: '76.4% du CA', color: 'gold' },
+    { label: 'Total Charges', value: '$33,880', detail: '90.7% du CA', color: 'pink' },
+  ],
+  spyWaterfall: [
+    { label: 'CA', value: '$37,350', type: 'positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Cost Product', value: '-$28,520', type: 'negative' },
+    { label: 'COM Blink', value: '-$3,745', type: 'negative' },
+    { label: 'COM Sales', value: '-$1,615', type: 'negative' },
+    { label: 'TOTAL CHARGES', value: '-$33,880', type: 'total-negative' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'MARGE NETTE', value: '$3,470', type: 'highlight' },
+  ],
+
+  commentKPIs: [
+    { label: 'CA', value: '$861', detail: '+158.6% vs Fév ($333)', color: 'navy' },
+    { label: 'Marge Nette', value: '$703', detail: '81.6% du CA', color: 'green' },
+    { label: 'Cost Product', value: '$120', detail: '13.9% du CA', color: 'gold' },
+    { label: 'Total Charges', value: '$158', detail: '18.4% du CA', color: 'pink' },
+  ],
+  commentWaterfall: [
+    { label: 'CA', value: '$861', type: 'positive' },
+    { label: 'Cost Product', value: '-$120', type: 'negative' },
+    { label: 'COM Blink', value: '$0', type: 'muted' },
+    { label: 'COM Sales', value: '-$37', type: 'negative' },
+    { label: 'TOTAL CHARGES', value: '-$158', type: 'total-negative' },
+    { label: 'MARGE NETTE', value: '$703', type: 'highlight' },
+  ],
+  commentWarning: 'Rebond significatif vs Février. Marge nette excellente à 81.6%.',
+
+  holdingKPIs: [
+    { label: 'Remontée Holding (90%)', value: '$95,565', detail: 'Bénéfices filiales', color: 'navy' },
+    { label: 'Résultat Net Holding', value: '$87,187', detail: '+42.2% vs Fév', color: 'gold' },
+    { label: 'Réserves Filiales (10%)', value: '$10,618', detail: 'Trésorerie entités', color: 'green' },
+    { label: 'Frais Holding', value: '$8,378', detail: '-23.1% vs Fév ($10,890)', color: 'pink' },
+  ],
+  holdingComparison: [
+    { indicator: 'Marge Brute Groupe', jan: '$80,221', feb: '$106,183', variation: '+32.4%', varType: 'positive' },
+    { indicator: 'Réserves Filiales (10%)', jan: '$8,022', feb: '$10,618', variation: '+32.4%', varType: 'positive' },
+    { indicator: 'Remontée Holding (90%)', jan: '$72,199', feb: '$95,565', variation: '+32.4%', varType: 'positive' },
+    { indicator: 'Frais Holding', jan: '$10,890', feb: '$8,378', variation: '-23.1%', varType: 'positive' },
+    { indicator: 'Résultat Net Holding', jan: '$61,309', feb: '$87,187', variation: '+42.2%', varType: 'positive' },
+  ] as any[] | null,
+  holdingManagementFees: [
+    { label: 'Prime Circle Agency', value: '$14,946', type: 'positive' },
+    { label: 'Prime Circle Structuring', value: '$29,606', type: 'positive' },
+    { label: 'Digit Solution', value: '$57,458', type: 'positive' },
+    { label: 'SPY', value: '$3,470', type: 'positive' },
+    { label: 'Comment/Trustpilot', value: '$703', type: 'positive' },
+    { label: 'MARGE BRUTE GROUPE', value: '$106,183', type: 'total-positive' },
+  ],
+  holdingSynthese: [
+    { label: 'MARGE BRUTE GROUPE', value: '$106,183', type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Réserves Filiales (10%)', value: '-$10,618', type: 'negative', indent: true },
+    { label: 'REMONTÉE HOLDING (90%)', value: '$95,565', type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'CFO + Compta Groupe', value: '-$3,430', type: 'negative', indent: true },
+    { label: 'AI Agent', value: '-$2,000', type: 'negative', indent: true },
+    { label: 'Salaire Fixe Sales', value: '-$2,000', type: 'negative', indent: true },
+    { label: 'Tools', value: '-$780', type: 'negative', indent: true },
+    { label: 'Frais Bancaires', value: '-$88', type: 'negative', indent: true },
+    { label: 'Frais Paddel (non remboursés)', value: '-$80', type: 'negative', indent: true },
+    { label: 'RÉSULTAT NET HOLDING', value: '$87,187', type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Salaires management (100%)', value: '-$87,187', type: 'negative', indent: true },
+    { label: '↳ dont Will (via Thibault)', value: '$10,000', type: 'indent-muted', indent: true },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'SOLDE HOLDING', value: '$0', type: 'highlight' },
+  ],
+  holdingPieData: [
+    { name: 'Maxence ($32.7K)', value: 32695, color: '#1E3A5F' },
+    { name: 'Thibault ($32.7K)', value: 32695, color: '#2D4A6F' },
+    { name: 'Florian ($21.8K)', value: 21797, color: '#4F5BD5' },
+    { name: 'Réserves Fil. ($10.6K)', value: 10618, color: '#C9A227' },
+  ],
+  directors: [
+    { name: 'Maxence', pct: '37.5%', amount: '$32,695', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', subtitle: '+42.2% vs Fév' },
+    { name: 'Thibault', pct: '37.5%', amount: '$32,695', gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', subtitle: 'dont $10K Will' },
+    { name: 'Florian', pct: '25%', amount: '$21,797', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', subtitle: '+42.2% vs Fév' },
+  ],
+  holdingNetResult: '$87,187',
+
+  ytdHero: [
+    { label: "CA YTD", value: "$717,514", detail: "Jan + Fév + Mars 2026", color: "navy" },
+    { label: "Marge Brute YTD", value: "$276,010", detail: "38.5% du CA", color: "success" },
+    { label: "Résultat Net YTD", value: "$222,082", detail: "Holding cumulé Q1", color: "gold" },
+    { label: "Réserves Cumulées", value: "$27,601", detail: "Toutes filiales", color: "primary" },
+  ],
+  ytdMonthlyTable: [
+    { month: 'Janvier 2026', ca: '$198,900', margin: '$89,607', taux: '45.1%', net: '$73,586' },
+    { month: 'Février 2026', ca: '$258,543', margin: '$80,221', taux: '31.0%', net: '$61,309' },
+    { month: 'Mars 2026', ca: '$260,071', margin: '$106,183', taux: '40.8%', net: '$87,187' },
+  ],
+  ytdMonthlyTotal: { month: 'YTD TOTAL Q1', ca: '$717,514', margin: '$276,010', taux: '38.5%', net: '$222,082' },
+  ytdEntityTable: [
+    { entity: 'Agency (Part PCA)', jan: '$2,244', feb: '$12,237', ytd: '$29,427', pct: '10.7%' },
+    { entity: 'Structuring', jan: '$41,371', feb: '$21,036', ytd: '$92,013', pct: '33.3%' },
+    { entity: 'Digit Solution', jan: '$40,198', feb: '$43,249', ytd: '$140,905', pct: '51.1%' },
+    { entity: 'SPY', jan: '$3,262', feb: '$3,559', ytd: '$10,291', pct: '3.7%' },
+    { entity: 'Comment/Trustpilot', jan: '$2,531', feb: '$140', ytd: '$3,374', pct: '1.2%' },
+  ],
+  ytdEntityTotal: { entity: 'TOTAL GROUPE', jan: '$89,607', feb: '$80,221', ytd: '$276,010', pct: '100%' },
+  ytdTrendData: [
+    { month: 'Janvier', ca: 198900, margin: 89607, net: 73586 },
+    { month: 'Février', ca: 258543, margin: 80221, net: 61309 },
+    { month: 'Mars', ca: 260071, margin: 106183, net: 87187 },
+  ],
+  ytdPLHoldingFees: [
+    { label: 'Compta + CFO Groupe', jan: '-$3,430', feb: '-$3,430', ytd: '-$10,290' },
+    { label: 'Salaire Assistante / AI Agent', jan: '-$1,630', feb: '-$1,630', ytd: '-$5,260' },
+    { label: 'Salaires Fixes Sales', jan: '-$2,000', feb: '-$2,000', ytd: '-$6,000' },
+    { label: 'Travel Expenses', jan: '—', feb: '-$3,781', ytd: '-$3,781' },
+    { label: 'Tools', jan: '—', feb: '—', ytd: '-$780' },
+    { label: 'Bank Fees + Paddel', jan: '—', feb: '-$50', ytd: '-$218' },
+  ] as { label: string; jan: string; feb: string; ytd: string }[] | null,
+  ytdPLHoldingFeesTotal: { label: 'Total Frais Holding', jan: '-$7,060', feb: '-$10,890', ytd: '-$26,328' } as { label: string; jan: string; feb: string; ytd: string } | null,
+  ytdPLNetResult: { label: 'RÉSULTAT NET HOLDING', jan: '$73,586', feb: '$61,309', ytd: '$222,082' } as { label: string; jan: string; feb: string; ytd: string } | null,
+  ytdPLDistribution: [
+    { label: 'Maxence (37.5%)', jan: '$27,595', feb: '$22,991', ytd: '$83,281' },
+    { label: 'Thibault (37.5%)', jan: '$27,595', feb: '$22,991', ytd: '$83,281' },
+    { label: '↳ dont Will', jan: '$10,000', feb: '$10,000', ytd: '$30,000', style: 'muted' },
+    { label: 'Florian (25%)', jan: '$18,396', feb: '$15,327', ytd: '$55,520' },
+  ] as { label: string; jan: string; feb: string; ytd: string; style?: string }[] | null,
+
+  reservesHero: [
+    { label: "Réserves Janvier", value: "$8,961", detail: "10% marge brute Jan", color: "navy" },
+    { label: "Réserves Février", value: "$8,022", detail: "10% marge brute Fév", color: "success" },
+    { label: "Réserves Mars", value: "$10,618", detail: "10% marge brute Mars", color: "primary" },
+    { label: "Réserves YTD Q1", value: "$27,601", detail: "Cumul 2026", color: "gold" },
+  ],
+  reservesEntityTable: [
+    { entity: 'Agency (Part PCA)', jan: '$224', feb: '$1,495', ytd: '$2,943' },
+    { entity: 'Structuring', jan: '$4,137', feb: '$2,961', ytd: '$9,201' },
+    { entity: 'Digit Solution', jan: '$4,020', feb: '$5,746', ytd: '$14,091' },
+    { entity: 'SPY', jan: '$326', feb: '$347', ytd: '$1,029' },
+    { entity: 'Comment/Trustpilot', jan: '$253', feb: '$70', ytd: '$337' },
+  ],
+  reservesEntityTotal: { entity: 'TOTAL RÉSERVES', jan: '$8,961', feb: '$10,618', ytd: '$27,601' },
+  reservesCards: [
+    { name: 'Digit Solution', amount: '$14,091', pct: '51.1%' },
+    { name: 'Structuring', amount: '$9,201', pct: '33.3%' },
+    { name: 'Agency (Part PCA)', amount: '$2,943', pct: '10.7%' },
+    { name: 'SPY + Comment', amount: '$1,366', pct: '4.9%' },
+  ],
+};
+
 export type PCGroupMonthData = typeof FEB_2026;
 
 export function getMonthData(month: MonthId): PCGroupMonthData {
-  return month === 'jan-2026' ? JAN_2026 as PCGroupMonthData : FEB_2026;
+  if (month === 'jan-2026') return JAN_2026 as PCGroupMonthData;
+  if (month === 'mar-2026') return MAR_2026 as PCGroupMonthData;
+  return FEB_2026;
 }
