@@ -449,7 +449,7 @@ const DIGIT_MAR = {
   // Evolution MoM tab
   evolutionKPIs: [
     { label: "CA Total Growth", value: "+5.8%", sub: "+$8,705", detail: "Fév: $149,963 → Mar: $158,668", type: "primary" },
-    { label: "Margin Growth", value: "+31.3%", sub: "+$14,683", detail: "Fév: $46,948 → Mar: $61,631", type: "success" },
+    { label: "Margin Growth", value: "+31.7%", sub: "+$14,884", detail: "Fév: $46,948 → Mar: $61,832", type: "success" },
     { label: "Deals Evolution", value: "+35.2%", sub: "+75 deals", detail: "Fév: 213 → Mar: 288", type: "warning" },
     { label: "Ticket Moyen Growth", value: "-21.7%", sub: "-$153", detail: "Fév: $704 → Mar: $551", type: "accent" },
   ],
