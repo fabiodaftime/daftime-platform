@@ -428,7 +428,7 @@ const DIGIT_MAR = {
   ytdMonthlyKPIs: [
     { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $45,992", type: "primary" },
     { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
-    { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,631", type: "accent" },
+    { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,832", type: "accent" },
     { label: "Moyenne Mensuelle Q1", value: "$147,614", sub: "CA moyen • 242 deals/mois", type: "warning" },
   ],
   ytdProductKPIs: [
