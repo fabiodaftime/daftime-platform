@@ -301,12 +301,12 @@ const DIGIT_MAR = {
   monthLabel: 'Mars 2026',
   overviewKPIs: [
     { label: "CA Total", value: "$158,668", sub: "288 deals • Ticket moyen $551", type: "primary" },
-    { label: "Marge Totale", value: "$61,631", sub: "38.8% du CA", type: "success" },
+    { label: "Marge Totale", value: "$61,832", sub: "39.0% du CA", type: "success" },
     { label: "Deals Mars", value: "288", sub: "239 Setup • 49 Ad Account", type: "warning" },
-    { label: "Taux de Marge", value: "38.8%", sub: "Performance globale", type: "accent" },
+    { label: "Taux de Marge", value: "39.0%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core)", value: "$120,458", sub: "Marge $57,458 (47.7%)", type: "primary", chg: "-1.5%" },
+    { label: "Digit Solution (Core)", value: "$120,458", sub: "Marge $57,659 (47.9%)", type: "primary", chg: "-1.5%" },
     { label: "SPY", value: "$37,350", sub: "Marge $3,470", type: "success", chg: "+36.8%" },
     { label: "Comment/Trust", value: "$861", sub: "Marge $703", type: "warning", chg: "+158.6%" },
   ],
