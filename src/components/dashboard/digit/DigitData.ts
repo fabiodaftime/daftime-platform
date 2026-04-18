@@ -421,7 +421,7 @@ const DIGIT_MAR = {
   // YTD tab
   ytdMainKPIs: [
     { label: "CA Total YTD", value: "$442,843", sub: "3 mois • 726 deals" },
-    { label: "Marge Totale YTD", value: "$154,571", sub: "34.9% du CA" },
+    { label: "Marge Totale YTD", value: "$154,772", sub: "35.0% du CA" },
     { label: "Taux de Marge Moyen", value: "34.9%", sub: "Performance globale YTD" },
     { label: "Ticket Moyen YTD", value: "$610", sub: "Sur 726 deals" },
   ],
