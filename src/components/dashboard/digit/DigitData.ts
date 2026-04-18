@@ -472,7 +472,7 @@ const DIGIT_MAR = {
       "Ticket moyen en baisse -21.7% (normal avec hausse volume)",
       "Digit légèrement en baisse -1.5% (-$1,872)",
     ],
-    conclusion: "Meilleur mois du Q1 en marge (38.8%). La hausse du volume de deals (+75) compense la baisse du ticket moyen. SPY et Comment/Trust retrouvent une dynamique positive.",
+    conclusion: "Meilleur mois du Q1 en marge (39.0%). La hausse du volume de deals (+75) compense la baisse du ticket moyen. SPY et Comment/Trust retrouvent une dynamique positive.",
   },
 };
 
