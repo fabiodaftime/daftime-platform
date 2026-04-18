@@ -432,7 +432,7 @@ const DIGIT_MAR = {
     { label: "Moyenne Mensuelle Q1", value: "$147,614", sub: "CA moyen • 242 deals/mois", type: "warning" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$357,437", sub: "Marge $140,905 (39.4%)", type: "primary" },
+    { label: "Digit Solution", value: "$357,437", sub: "Marge $141,106 (39.5%)", type: "primary" },
     { label: "SPY", value: "$81,400", sub: "Marge $10,292", type: "success" },
     { label: "Comment/Trust", value: "$4,007", sub: "Marge $3,374", type: "warning" },
   ],
