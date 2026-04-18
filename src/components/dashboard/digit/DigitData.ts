@@ -439,7 +439,7 @@ const DIGIT_MAR = {
   ytdEvolutionData: [
     { name: "Janvier", ca: 134212, marge: 45992 },
     { name: "Février", ca: 149963, marge: 46948 },
-    { name: "Mars", ca: 158668, marge: 61631 },
+    { name: "Mars", ca: 158668, marge: 61832 },
   ],
   ytdProductDistribution: [
     { name: "Digit Solution", value: 357437 },
