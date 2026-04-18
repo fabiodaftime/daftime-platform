@@ -361,6 +361,7 @@ const marData: PCMonthData = {
     avgPerCustomer: 1078,
   },
   m1Comparison: {
+    prevMonthLabel: 'Feb',
     customers: { prev: 53, cur: 51, diff: -2, pct: -3.8 },
     turnover: { prev: 73500, cur: 55000, diff: -18500, pct: -25.2 },
     netProfit: { prev: 21036, cur: 29606, diff: 8570, pct: 40.7, direction: 'positive' },
