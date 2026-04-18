@@ -301,21 +301,21 @@ const DIGIT_MAR = {
   monthLabel: 'Mars 2026',
   overviewKPIs: [
     { label: "CA Total", value: "$158,668", sub: "288 deals • Ticket moyen $551", type: "primary" },
-    { label: "Marge Totale", value: "$61,631", sub: "38.8% du CA", type: "success" },
+    { label: "Marge Totale", value: "$61,832", sub: "39.0% du CA", type: "success" },
     { label: "Deals Mars", value: "288", sub: "239 Setup • 49 Ad Account", type: "warning" },
-    { label: "Taux de Marge", value: "38.8%", sub: "Performance globale", type: "accent" },
+    { label: "Taux de Marge", value: "39.0%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core)", value: "$120,458", sub: "Marge $57,458 (47.7%)", type: "primary", chg: "-1.5%" },
+    { label: "Digit Solution (Core)", value: "$120,458", sub: "Marge $57,659 (47.9%)", type: "primary", chg: "-1.5%" },
     { label: "SPY", value: "$37,350", sub: "Marge $3,470", type: "success", chg: "+36.8%" },
     { label: "Comment/Trust", value: "$861", sub: "Marge $703", type: "warning", chg: "+158.6%" },
   ],
-  overviewChartData: { labels: ['Février', 'Mars'], ca: [149963, 158668], marge: [46948, 61631] },
+  overviewChartData: { labels: ['Février', 'Mars'], ca: [149963, 158668], marge: [46948, 61832] },
   comparisonM1: [
     { label: "CA Février", value: "$149,963", sub: "213 deals", type: "primary" },
     { label: "Marge Février", value: "$46,948", sub: "31.3% du CA", type: "success" },
     { label: "Évolution CA", value: "+5.8%", sub: "+$8,705", type: "success" },
-    { label: "Évolution Marge", value: "+31.3%", sub: "+$14,683", type: "success" },
+    { label: "Évolution Marge", value: "+31.7%", sub: "+$14,884", type: "success" },
   ] as any[] | null,
   // Costs tab
   costsKPIs: [
@@ -404,7 +404,7 @@ const DIGIT_MAR = {
   // Products tab
   digitCoreKPIs: [
     { label: "CA Global", value: "$120,458", sub: "288 deals (Setup + Ad Account)", type: "primary" },
-    { label: "Company Margin", value: "$57,458", sub: "47.7% du CA", type: "success" },
+    { label: "Company Margin", value: "$57,659", sub: "47.9% du CA", type: "success" },
     { label: "Setup", value: "$93,426", sub: "239 deals • $391/deal", type: "accent" },
     { label: "Ad Account", value: "$16,469", sub: "49 deals • $336/deal", type: "warning" },
   ],
@@ -421,25 +421,25 @@ const DIGIT_MAR = {
   // YTD tab
   ytdMainKPIs: [
     { label: "CA Total YTD", value: "$442,843", sub: "3 mois • 726 deals" },
-    { label: "Marge Totale YTD", value: "$154,571", sub: "34.9% du CA" },
-    { label: "Taux de Marge Moyen", value: "34.9%", sub: "Performance globale YTD" },
+    { label: "Marge Totale YTD", value: "$154,772", sub: "35.0% du CA" },
+    { label: "Taux de Marge Moyen", value: "35.0%", sub: "Performance globale YTD" },
     { label: "Ticket Moyen YTD", value: "$610", sub: "Sur 726 deals" },
   ],
   ytdMonthlyKPIs: [
     { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $45,992", type: "primary" },
     { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
-    { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,631", type: "accent" },
+    { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,832", type: "accent" },
     { label: "Moyenne Mensuelle Q1", value: "$147,614", sub: "CA moyen • 242 deals/mois", type: "warning" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$357,437", sub: "Marge $140,905 (39.4%)", type: "primary" },
+    { label: "Digit Solution", value: "$357,437", sub: "Marge $141,106 (39.5%)", type: "primary" },
     { label: "SPY", value: "$81,400", sub: "Marge $10,292", type: "success" },
     { label: "Comment/Trust", value: "$4,007", sub: "Marge $3,374", type: "warning" },
   ],
   ytdEvolutionData: [
     { name: "Janvier", ca: 134212, marge: 45992 },
     { name: "Février", ca: 149963, marge: 46948 },
-    { name: "Mars", ca: 158668, marge: 61631 },
+    { name: "Mars", ca: 158668, marge: 61832 },
   ],
   ytdProductDistribution: [
     { name: "Digit Solution", value: 357437 },
@@ -449,7 +449,7 @@ const DIGIT_MAR = {
   // Evolution MoM tab
   evolutionKPIs: [
     { label: "CA Total Growth", value: "+5.8%", sub: "+$8,705", detail: "Fév: $149,963 → Mar: $158,668", type: "primary" },
-    { label: "Margin Growth", value: "+31.3%", sub: "+$14,683", detail: "Fév: $46,948 → Mar: $61,631", type: "success" },
+    { label: "Margin Growth", value: "+31.7%", sub: "+$14,884", detail: "Fév: $46,948 → Mar: $61,832", type: "success" },
     { label: "Deals Evolution", value: "+35.2%", sub: "+75 deals", detail: "Fév: 213 → Mar: 288", type: "warning" },
     { label: "Ticket Moyen Growth", value: "-21.7%", sub: "-$153", detail: "Fév: $704 → Mar: $551", type: "accent" },
   ],
@@ -458,12 +458,12 @@ const DIGIT_MAR = {
     { label: "SPY Growth", value: "+36.8%", sub: "+$10,050 🚀", detail: "Fév: $27,300 → Mar: $37,350", type: "success" },
     { label: "Comment/Trust", value: "+158.6%", sub: "+$528 🚀", detail: "Fév: $333 → Mar: $861", type: "success" },
   ],
-  evolutionChartData: [5.8, 31.3, 35.2, -1.5, 36.8, 158.6],
+  evolutionChartData: [5.8, 31.7, 35.2, -1.5, 36.8, 158.6],
   evolutionInsights: {
     positives: [
       "CA en hausse de 5.8% (+$8,705)",
-      "Marge exceptionnelle +31.3% (+$14,683) 🚀",
-      "Taux de marge record : 38.8% (meilleur du Q1)",
+      "Marge exceptionnelle +31.7% (+$14,884) 🚀",
+      "Taux de marge record : 39.0% (meilleur du Q1)",
       "SPY en forte croissance (+36.8%, +$10,050)",
       "Comment/Trust rebond spectaculaire (+158.6%)",
       "Deals en forte hausse +35.2% (+75 deals)",
@@ -472,7 +472,7 @@ const DIGIT_MAR = {
       "Ticket moyen en baisse -21.7% (normal avec hausse volume)",
       "Digit légèrement en baisse -1.5% (-$1,872)",
     ],
-    conclusion: "Meilleur mois du Q1 en marge (38.8%). La hausse du volume de deals (+75) compense la baisse du ticket moyen. SPY et Comment/Trust retrouvent une dynamique positive.",
+    conclusion: "Meilleur mois du Q1 en marge (39.0%). La hausse du volume de deals (+75) compense la baisse du ticket moyen. SPY et Comment/Trust retrouvent une dynamique positive.",
   },
 };
 
