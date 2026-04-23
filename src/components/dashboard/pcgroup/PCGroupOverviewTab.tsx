@@ -32,34 +32,44 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
         ))}
       </div>
 
-      {overviewComparison && overviewComparisonTotal && (
-        <div className="pcg-section">
-          <div className="pcg-section-header">
-            <h3 className="pcg-section-title">📊 Comparatif Janvier vs Février 2026</h3>
-          </div>
-          <div className="pcg-section-body">
-            <table className="pcg-comparison-table">
-              <thead>
-                <tr>
-                  <th>Entité</th><th>Janvier</th><th>Février</th><th>Variation</th><th>YTD</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overviewComparison.map((row: any, i: number) => (
-                  <tr key={i}>
-                    <td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td>
-                    <td className={`pcg-var-${row.varType}`}>{row.variation}</td><td>{row.ytd}</td>
+      {overviewComparison && overviewComparisonTotal && (() => {
+        const hasMar = Boolean((overviewComparisonTotal as any).mar);
+        const title = hasMar
+          ? '📊 Comparatif Janvier / Février / Mars 2026'
+          : '📊 Comparatif Janvier vs Février 2026';
+        return (
+          <div className="pcg-section">
+            <div className="pcg-section-header">
+              <h3 className="pcg-section-title">{title}</h3>
+            </div>
+            <div className="pcg-section-body">
+              <table className="pcg-comparison-table">
+                <thead>
+                  <tr>
+                    <th>Entité</th><th>Janvier</th><th>Février</th>
+                    {hasMar && <th>Mars</th>}
+                    <th>Variation{hasMar ? ' (Fév→Mars)' : ''}</th><th>YTD</th>
                   </tr>
-                ))}
-                <tr className="pcg-comparison-total">
-                  <td>{overviewComparisonTotal.entity}</td><td>{overviewComparisonTotal.jan}</td><td>{overviewComparisonTotal.feb}</td>
-                  <td className={`pcg-var-${overviewComparisonTotal.varType}`}>{overviewComparisonTotal.variation}</td><td>{overviewComparisonTotal.ytd}</td>
-                </tr>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {overviewComparison.map((row: any, i: number) => (
+                    <tr key={i}>
+                      <td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td>
+                      {hasMar && <td>{row.mar}</td>}
+                      <td className={`pcg-var-${row.varType}`}>{row.variation}</td><td>{row.ytd}</td>
+                    </tr>
+                  ))}
+                  <tr className="pcg-comparison-total">
+                    <td>{overviewComparisonTotal.entity}</td><td>{overviewComparisonTotal.jan}</td><td>{overviewComparisonTotal.feb}</td>
+                    {hasMar && <td>{(overviewComparisonTotal as any).mar}</td>}
+                    <td className={`pcg-var-${overviewComparisonTotal.varType}`}>{overviewComparisonTotal.variation}</td><td>{overviewComparisonTotal.ytd}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="pcg-entities-grid pcg-entities-5">
         {entityCards.map((entity) => {
