@@ -19,6 +19,7 @@ import { PCGroupDigitTab } from '@/components/dashboard/pcgroup/PCGroupDigitTab'
 import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
 import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
+import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
 import './DashboardPCGroup.css';
 
 const tabs = [
@@ -30,6 +31,7 @@ const tabs = [
   { id: 'spy', icon: '🔍', label: 'SPY' },
   { id: 'comment', icon: '💬', label: 'Comment' },
   { id: 'holding', icon: '🏛️', label: 'Holding' },
+  { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
 ];
 
 export default function DashboardPCGroup() {
@@ -137,6 +139,7 @@ export default function DashboardPCGroup() {
         {tab === 'spy' && <PCGroupSpyTab data={monthData} />}
         {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
         {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
+        {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
       </main>
 
       <footer className="pcg-footer">

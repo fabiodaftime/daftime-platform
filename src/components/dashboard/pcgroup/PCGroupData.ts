@@ -18,7 +18,71 @@ export const EMPTY_ENTITY_ROUTES: PCGroupEntityRoutes = {
   digit: null,
 };
 
-// ============ JANUARY 2026 ============
+// ============ INTERCOS DATA (shared YTD - cumulative situation) ============
+const INTERCOS_DATA = {
+  kpis: [
+    { label: 'Remontées Attendues', value: '$152,845', detail: 'Jan + Fév (exigibles)', color: 'navy' as const },
+    { label: 'Réellement Reçu', value: '$38,173', detail: 'Encaissé à date', color: 'danger' as const },
+    { label: 'Solde Dû', value: '$114,672', detail: 'Écart à régulariser', color: 'warning' as const },
+    { label: 'Mars (Exigible Avril)', value: '$95,565', detail: 'Non encore exigible', color: 'success' as const },
+  ],
+  alert: {
+    title: 'Retard de remontée significatif',
+    body: 'Sur les $152,845 exigibles (Jan+Fév), seulement $38,173 ont été remontés à la Holding, soit 25.0% du montant attendu.',
+    rate: '25.0%',
+    balance: '$114,672',
+  },
+  table: {
+    rows: [
+      { entity: 'Agency (PCA 50%)', jan: '$2,020', feb: '$11,013', exigible: '$13,033', mars: '$13,451', ytd: '$26,484' },
+      { entity: 'Structuring', jan: '$37,234', feb: '$18,932', exigible: '$56,166', mars: '$26,645', ytd: '$82,812' },
+      { entity: 'Digit Solution', jan: '$36,178', feb: '$38,924', exigible: '$75,102', mars: '$51,712', ytd: '$126,815' },
+      { entity: 'SPY', jan: '$2,936', feb: '$3,203', exigible: '$6,139', mars: '$3,123', ytd: '$9,262' },
+      { entity: 'Comment/Trust', jan: '$2,278', feb: '$126', exigible: '$2,404', mars: '$633', ytd: '$3,037' },
+    ],
+    total: { entity: 'TOTAL ATTENDU', jan: '$80,646', feb: '$72,199', exigible: '$152,845', mars: '$95,565', ytd: '$248,409' },
+  },
+  scenarios: {
+    base: {
+      title: 'Scénario Base',
+      lines: [
+        { label: 'Remontées exigibles (Jan+Fév)', value: '$152,845', type: 'neutral' as const },
+        { label: 'Montants reçus à date', value: '-$38,173', type: 'negative' as const },
+      ],
+      total: { label: 'SOLDE DÛ À LA HOLDING', value: '$114,672' },
+      rateLabel: 'Taux de recouvrement',
+      rate: '25.0%',
+    },
+    apport: {
+      title: 'Scénario avec Apport Max',
+      lines: [
+        { label: 'Remontées exigibles (Jan+Fév)', value: '$152,845', type: 'neutral' as const },
+        { label: 'Montants reçus à date', value: '-$38,173', type: 'negative' as const },
+        { label: '+ Apport Maxence', value: '-$54,458', type: 'positive' as const },
+      ],
+      total: { label: 'SOLDE DÛ RÉVISÉ', value: '$60,214' },
+      rateLabel: 'Taux de recouvrement ajusté',
+      rate: '60.6%',
+    },
+  },
+  calendar: [
+    { month: 'Janvier 2026', amount: '$80,646', status: '⚠️ Exigible Fév', tag: 'EN RETARD', level: 'danger' as const },
+    { month: 'Février 2026', amount: '$72,199', status: '⚠️ Exigible Mars', tag: 'EN RETARD', level: 'danger' as const },
+    { month: 'Mars 2026', amount: '$95,565', status: '🕐 Exigible Avril', tag: 'NON EXIGIBLE', level: 'warning' as const },
+    { month: 'Total YTD', amount: '$248,409', status: 'Remontées attendues', tag: 'Q1 2026', level: 'navy' as const },
+  ],
+  recap: [
+    { label: 'Total exigible (Jan + Fév)', s1: '$152,845', s2: '$152,845' },
+    { label: 'Encaissements reçus', s1: '$38,173', s2: '$38,173' },
+    { label: 'Apport Maxence', s1: '—', s2: '+$54,458', s2Color: 'success' as const },
+    { label: 'Total fonds disponibles', s1: '$38,173', s2: '$92,631' },
+    { label: 'Solde dû', s1: '$114,672', s2: '$60,214', s1Color: 'danger' as const, s2Color: 'warning' as const, bold: true, highlight: true },
+    { label: 'Taux de recouvrement', s1: '25.0%', s2: '50.0%', s1Color: 'danger' as const, s2Color: 'success' as const },
+  ],
+  marsNote: '$95,565 → exigible en Avril',
+};
+
+
 const JAN_2026 = {
   monthLabel: 'Janvier 2026',
   footerLabel: 'Janvier 2026',
@@ -283,6 +347,8 @@ const JAN_2026 = {
     { name: 'SPY', amount: '$326', pct: '3.6%' },
     { name: 'Comment/Trustpilot', amount: '$253', pct: '2.8%' },
   ],
+
+  intercos: INTERCOS_DATA,
 };
 
 // ============ FEBRUARY 2026 ============
@@ -592,6 +658,8 @@ const FEB_2026 = {
     { name: 'Agency (Part PCA)', amount: '$1,448', pct: '8.5%' },
     { name: 'SPY + Comment', amount: '$949', pct: '5.6%' },
   ],
+
+  intercos: INTERCOS_DATA,
 };
 
 // ============ MARCH 2026 ============
@@ -910,6 +978,8 @@ const MAR_2026 = {
     { name: 'Agency (Part PCA)', amount: '$2,943', pct: '10.7%' },
     { name: 'SPY + Comment', amount: '$1,366', pct: '4.9%' },
   ],
+
+  intercos: INTERCOS_DATA,
 };
 
 export type PCGroupMonthData = typeof FEB_2026;
