@@ -6,27 +6,9 @@ interface Props { data: PCGroupMonthData; }
 export function PCGroupYTDTab({ data }: Props) {
   const { ytdHero, ytdMonthlyTable, ytdMonthlyTotal, ytdEntityTable, ytdEntityTotal, ytdTrendData, reservesEntityTable, reservesEntityTotal } = data;
 
-  // Full P&L Consolidé data
-  const plSections = [
-    {
-      header: 'MARGES NETTES PAR ENTITÉ',
-      rows: ytdEntityTable.map(r => ({
-        label: r.entity,
-        jan: r.jan,
-        feb: r.feb,
-        ytd: r.ytd,
-        indent: true,
-      })),
-      total: { label: 'MARGE BRUTE GROUPE', jan: ytdEntityTotal.jan, feb: ytdEntityTotal.feb, ytd: ytdEntityTotal.ytd, style: 'navy' },
-    },
-    {
-      header: 'MÉCANISME HOLDING',
-      rows: [
-        { label: 'Réserves Filiales (10%)', jan: `-$${Math.round(parseNum(ytdEntityTotal.jan) * 0.1).toLocaleString()}`, feb: `-$${Math.round(parseNum(ytdEntityTotal.feb) * 0.1).toLocaleString()}`, ytd: reservesEntityTotal.ytd ? `-${reservesEntityTotal.ytd}` : '', indent: true, negative: true },
-        { label: 'Remontée Holding (90%)', jan: `$${Math.round(parseNum(ytdEntityTotal.jan) * 0.9).toLocaleString()}`, feb: `$${Math.round(parseNum(ytdEntityTotal.feb) * 0.9).toLocaleString()}`, ytd: `$${Math.round(parseNum(ytdEntityTotal.ytd) * 0.9).toLocaleString()}`, indent: true, bold: true, positive: true },
-      ],
-    },
-  ];
+  const hasMar = Boolean((ytdEntityTotal as any).mar);
+  const colSpan = hasMar ? 5 : 4;
+  const titleSuffix = hasMar ? 'Janvier / Février / Mars / YTD 2026' : 'Janvier / Février / YTD 2026';
 
   return (
     <div>
@@ -83,7 +65,7 @@ export function PCGroupYTDTab({ data }: Props) {
       {ytdMonthlyTable.length > 1 && (
         <div className="pcg-section">
           <div className="pcg-section-header">
-            <h3 className="pcg-section-title">📊 P&L Consolidé — Janvier / Février / YTD 2026</h3>
+            <h3 className="pcg-section-title">📊 P&L Consolidé — {titleSuffix}</h3>
           </div>
           <div className="pcg-section-body">
             <table className="pcg-comparison-table" style={{ fontSize: '0.9rem' }}>
@@ -92,19 +74,21 @@ export function PCGroupYTDTab({ data }: Props) {
                   <th style={{ textAlign: 'left' }}>Ligne</th>
                   <th style={{ textAlign: 'right' }}>Janvier</th>
                   <th style={{ textAlign: 'right' }}>Février</th>
+                  {hasMar && <th style={{ textAlign: 'right' }}>Mars</th>}
                   <th style={{ textAlign: 'right' }}>YTD 2026</th>
                 </tr>
               </thead>
               <tbody>
                 {/* Marges par entité */}
                 <tr style={{ background: 'rgba(30, 58, 95, 0.05)' }}>
-                  <td colSpan={4} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>MARGES NETTES PAR ENTITÉ</td>
+                  <td colSpan={colSpan} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>MARGES NETTES PAR ENTITÉ</td>
                 </tr>
-                {ytdEntityTable.map((r, i) => (
+                {ytdEntityTable.map((r: any, i) => (
                   <tr key={`entity-${i}`}>
                     <td style={{ paddingLeft: '1.5rem' }}>{r.entity}</td>
                     <td style={{ textAlign: 'right' }}>{r.jan}</td>
                     <td style={{ textAlign: 'right' }}>{r.feb}</td>
+                    {hasMar && <td style={{ textAlign: 'right' }}>{r.mar}</td>}
                     <td style={{ textAlign: 'right', fontWeight: 600 }}>{r.ytd}</td>
                   </tr>
                 ))}
@@ -112,35 +96,39 @@ export function PCGroupYTDTab({ data }: Props) {
                   <td>{ytdEntityTotal.entity === 'TOTAL GROUPE' ? 'MARGE BRUTE GROUPE' : ytdEntityTotal.entity}</td>
                   <td style={{ textAlign: 'right' }}>{ytdEntityTotal.jan}</td>
                   <td style={{ textAlign: 'right' }}>{ytdEntityTotal.feb}</td>
+                  {hasMar && <td style={{ textAlign: 'right' }}>{(ytdEntityTotal as any).mar}</td>}
                   <td style={{ textAlign: 'right', fontWeight: 700 }}>{ytdEntityTotal.ytd}</td>
                 </tr>
 
                 {/* Mécanisme Holding */}
                 <tr style={{ background: 'rgba(30, 58, 95, 0.05)' }}>
-                  <td colSpan={4} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>MÉCANISME HOLDING</td>
+                  <td colSpan={colSpan} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>MÉCANISME HOLDING</td>
                 </tr>
                 <tr>
                   <td style={{ paddingLeft: '1.5rem' }}>Réserves Filiales (10%)</td>
                   <td style={{ textAlign: 'right', color: '#EF4444' }}>-{reservesEntityTotal.jan}</td>
-                  <td style={{ textAlign: 'right', color: '#EF4444' }}>-{reservesEntityTotal.feb}</td>
+                  <td style={{ textAlign: 'right', color: '#EF4444' }}>{reservesEntityTotal.feb ? `-${reservesEntityTotal.feb}` : '—'}</td>
+                  {hasMar && <td style={{ textAlign: 'right', color: '#EF4444' }}>{(reservesEntityTotal as any).mar ? `-${(reservesEntityTotal as any).mar}` : '—'}</td>}
                   <td style={{ textAlign: 'right', color: '#EF4444' }}>-{reservesEntityTotal.ytd}</td>
                 </tr>
                 <tr style={{ fontWeight: 600 }}>
                   <td style={{ paddingLeft: '1.5rem' }}>Remontée Holding (90%)</td>
                   <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.jan, reservesEntityTotal.jan)}</td>
                   <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.feb || '', reservesEntityTotal.feb || '')}</td>
+                  {hasMar && <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee((ytdEntityTotal as any).mar || '', (reservesEntityTotal as any).mar || '')}</td>}
                   <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.ytd, reservesEntityTotal.ytd)}</td>
                 </tr>
 
                 {/* Frais Holding */}
                 <tr style={{ background: 'rgba(30, 58, 95, 0.05)' }}>
-                  <td colSpan={4} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>FRAIS HOLDING</td>
+                  <td colSpan={colSpan} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>FRAIS HOLDING</td>
                 </tr>
-                {data.ytdPLHoldingFees && data.ytdPLHoldingFees.map((fee, i) => (
+                {data.ytdPLHoldingFees && data.ytdPLHoldingFees.map((fee: any, i) => (
                   <tr key={`fee-${i}`}>
                     <td style={{ paddingLeft: '1.5rem' }}>{fee.label}</td>
                     <td style={{ textAlign: 'right', color: fee.jan === '—' ? '#94A3B8' : '#EF4444' }}>{fee.jan}</td>
                     <td style={{ textAlign: 'right', color: fee.feb === '—' ? '#94A3B8' : '#EF4444' }}>{fee.feb}</td>
+                    {hasMar && <td style={{ textAlign: 'right', color: !fee.mar || fee.mar === '—' ? '#94A3B8' : '#EF4444' }}>{fee.mar || '—'}</td>}
                     <td style={{ textAlign: 'right', color: '#EF4444' }}>{fee.ytd}</td>
                   </tr>
                 ))}
@@ -149,6 +137,7 @@ export function PCGroupYTDTab({ data }: Props) {
                     <td style={{ paddingLeft: '1.5rem' }}>{data.ytdPLHoldingFeesTotal.label}</td>
                     <td style={{ textAlign: 'right', color: '#EF4444' }}>{data.ytdPLHoldingFeesTotal.jan}</td>
                     <td style={{ textAlign: 'right', color: '#EF4444' }}>{data.ytdPLHoldingFeesTotal.feb}</td>
+                    {hasMar && <td style={{ textAlign: 'right', color: '#EF4444' }}>{(data.ytdPLHoldingFeesTotal as any).mar || '—'}</td>}
                     <td style={{ textAlign: 'right', color: '#EF4444' }}>{data.ytdPLHoldingFeesTotal.ytd}</td>
                   </tr>
                 )}
@@ -159,6 +148,7 @@ export function PCGroupYTDTab({ data }: Props) {
                     <td>{data.ytdPLNetResult.label}</td>
                     <td style={{ textAlign: 'right' }}>{data.ytdPLNetResult.jan}</td>
                     <td style={{ textAlign: 'right' }}>{data.ytdPLNetResult.feb}</td>
+                    {hasMar && <td style={{ textAlign: 'right' }}>{(data.ytdPLNetResult as any).mar || '—'}</td>}
                     <td style={{ textAlign: 'right', fontWeight: 700 }}>{data.ytdPLNetResult.ytd}</td>
                   </tr>
                 )}
@@ -167,20 +157,25 @@ export function PCGroupYTDTab({ data }: Props) {
                 {data.ytdPLDistribution && (
                   <>
                     <tr style={{ background: 'rgba(30, 58, 95, 0.05)' }}>
-                      <td colSpan={4} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>DISTRIBUTION MANAGEMENT (100%)</td>
+                      <td colSpan={colSpan} style={{ fontWeight: 600, color: '#1E3A5F', paddingTop: '1rem' }}>DISTRIBUTION MANAGEMENT (100%)</td>
                     </tr>
-                    {data.ytdPLDistribution.map((d, i) => (
-                      <tr key={`dist-${i}`} style={d.style === 'muted' ? {} : undefined}>
-                        <td style={{ paddingLeft: d.style === 'muted' ? '2.5rem' : '1.5rem', ...(d.style === 'muted' ? { fontSize: '0.85rem', color: '#475569' } : {}) }}>{d.label}</td>
-                        <td style={{ textAlign: 'right', ...(d.style === 'muted' ? { fontSize: '0.85rem', color: '#475569' } : {}) }}>{d.jan}</td>
-                        <td style={{ textAlign: 'right', ...(d.style === 'muted' ? { fontSize: '0.85rem', color: '#475569' } : {}) }}>{d.feb}</td>
-                        <td style={{ textAlign: 'right', fontWeight: d.style === 'muted' ? 400 : 600, ...(d.style === 'muted' ? { fontSize: '0.85rem', color: '#475569' } : {}) }}>{d.ytd}</td>
-                      </tr>
-                    ))}
+                    {data.ytdPLDistribution.map((d: any, i) => {
+                      const mutedStyle = d.style === 'muted' ? { fontSize: '0.85rem', color: '#475569' } : {};
+                      return (
+                        <tr key={`dist-${i}`}>
+                          <td style={{ paddingLeft: d.style === 'muted' ? '2.5rem' : '1.5rem', ...mutedStyle }}>{d.label}</td>
+                          <td style={{ textAlign: 'right', ...mutedStyle }}>{d.jan}</td>
+                          <td style={{ textAlign: 'right', ...mutedStyle }}>{d.feb}</td>
+                          {hasMar && <td style={{ textAlign: 'right', ...mutedStyle }}>{d.mar || '—'}</td>}
+                          <td style={{ textAlign: 'right', fontWeight: d.style === 'muted' ? 400 : 600, ...mutedStyle }}>{d.ytd}</td>
+                        </tr>
+                      );
+                    })}
                     <tr className="pcg-comparison-total">
                       <td>SOLDE HOLDING</td>
                       <td style={{ textAlign: 'right' }}>$0</td>
                       <td style={{ textAlign: 'right' }}>$0</td>
+                      {hasMar && <td style={{ textAlign: 'right' }}>$0</td>}
                       <td style={{ textAlign: 'right', fontWeight: 700 }}>$0</td>
                     </tr>
                   </>
@@ -199,21 +194,31 @@ export function PCGroupYTDTab({ data }: Props) {
         <div className="pcg-section-body">
           <table className="pcg-comparison-table">
             <thead>
-              <tr><th>Entité</th><th>Janvier</th><th>Février</th><th>YTD</th><th>% du Total</th></tr>
+              <tr>
+                <th>Entité</th><th>Janvier</th><th>Février</th>
+                {hasMar && <th>Mars</th>}
+                <th>YTD</th><th>% du Total</th>
+              </tr>
             </thead>
             <tbody>
-              {ytdEntityTable.map((row, i) => (
-                <tr key={i}><td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td><td>{row.ytd}</td><td>{row.pct}</td></tr>
+              {ytdEntityTable.map((row: any, i) => (
+                <tr key={i}>
+                  <td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td>
+                  {hasMar && <td>{row.mar}</td>}
+                  <td>{row.ytd}</td><td>{row.pct}</td>
+                </tr>
               ))}
               <tr className="pcg-comparison-total">
-                <td>{ytdEntityTotal.entity}</td><td>{ytdEntityTotal.jan}</td><td>{ytdEntityTotal.feb}</td><td>{ytdEntityTotal.ytd}</td><td>{ytdEntityTotal.pct}</td>
+                <td>{ytdEntityTotal.entity}</td><td>{ytdEntityTotal.jan}</td><td>{ytdEntityTotal.feb}</td>
+                {hasMar && <td>{(ytdEntityTotal as any).mar}</td>}
+                <td>{ytdEntityTotal.ytd}</td><td>{ytdEntityTotal.pct}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Réserves par Entité (merged from Reserves tab) */}
+      {/* Réserves par Entité */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <div>
@@ -226,14 +231,24 @@ export function PCGroupYTDTab({ data }: Props) {
             <div>
               <table className="pcg-comparison-table">
                 <thead>
-                  <tr><th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th><th>Cumul YTD</th></tr>
+                  <tr>
+                    <th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th>
+                    {hasMar && <th>Réserve Mars</th>}
+                    <th>Cumul YTD</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {reservesEntityTable.map((row, i) => (
-                    <tr key={i}><td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td><td>{row.ytd}</td></tr>
+                  {reservesEntityTable.map((row: any, i) => (
+                    <tr key={i}>
+                      <td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td>
+                      {hasMar && <td>{row.mar}</td>}
+                      <td>{row.ytd}</td>
+                    </tr>
                   ))}
                   <tr className="pcg-comparison-total">
-                    <td>{reservesEntityTotal.entity}</td><td>{reservesEntityTotal.jan}</td><td>{reservesEntityTotal.feb}</td><td>{reservesEntityTotal.ytd}</td>
+                    <td>{reservesEntityTotal.entity}</td><td>{reservesEntityTotal.jan}</td><td>{reservesEntityTotal.feb}</td>
+                    {hasMar && <td>{(reservesEntityTotal as any).mar}</td>}
+                    <td>{reservesEntityTotal.ytd}</td>
                   </tr>
                 </tbody>
               </table>
