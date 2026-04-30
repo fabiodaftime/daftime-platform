@@ -28,6 +28,7 @@ export function PCGroupHoldingTab({ data }: Props) {
         return (
           <PCGroupComparisonTable
             title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars Holding' : 'M-1 Holding'}`}
+            mappingContext={`Onglet Holding · ${monthLabel}`}
             headers={headers}
             rows={rows.map((r) => {
               const cells = [r.indicator, cell(r.jan), cell(r.feb), ...(hasMar ? [cell(r.mar)] : []), cell(r.variation), ...(hasYtd ? [cell(r.ytd)] : [])];
