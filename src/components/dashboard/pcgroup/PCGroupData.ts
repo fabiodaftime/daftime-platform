@@ -707,7 +707,7 @@ const MAR_2026 = {
     { entity: 'SPY', jan: '$3,262', feb: '$3,559', mar: '$3,470', variation: '-2.5%', varType: 'negative', ytd: '$10,291' },
     { entity: 'Comment/Trustpilot', jan: '$2,531', feb: '$140', mar: '$703', variation: '+402.1%', varType: 'positive', ytd: '$3,374' },
   ] as PCGOverviewComparisonRow[] | null,
-  overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$89,607', feb: '$80,221', mar: '$106,183', variation: '+32.4%', varType: 'positive', ytd: '$276,010' },
+  overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$89,607', feb: '$80,221', mar: '$106,183', variation: '+32.4%', varType: 'positive', ytd: '$276,010' } as PCGOverviewComparisonRow | null,
   entityCards: [
     { id: 'agency', name: 'Agency', badge: 'Media', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
       metrics: [{ label: 'CA Brut', value: '$46,402' }, { label: 'Part PCA', value: '$14,946', colorClass: 'success' }], margin: 64.4, marginLevel: 'high' as const },
