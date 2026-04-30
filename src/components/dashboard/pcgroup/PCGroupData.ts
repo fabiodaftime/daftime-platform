@@ -121,8 +121,8 @@ const JAN_2026 = {
     { label: "Résultat Net Holding", value: "$73,586", detail: "Après frais holding", color: "gold", variance: null, varType: null },
     { label: "Réserves Filiales", value: "$8,961", detail: "10% marge brute", color: "primary", variance: null, varType: null },
   ],
-  overviewComparison: null as any[] | null,
-  overviewComparisonTotal: null as any,
+  overviewComparison: null as PCGComparisonRow[] | null,
+  overviewComparisonTotal: null as PCGOverviewComparisonRow | null,
   entityCards: [
     { id: 'agency', name: 'Agency', badge: 'Media', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
       metrics: [{ label: 'CA', value: '$10,726' }, { label: 'Marge Nette', value: '$2,245', colorClass: 'success' }], margin: 20.9, marginLevel: 'medium' as const },
@@ -174,7 +174,7 @@ const JAN_2026 = {
     { label: 'Part PCA (50%)', value: '$2,245', detail: 'Après split Blink', color: 'gold' },
     { label: 'Total Charges', value: '$6,237', detail: '58.2% du CA', color: 'pink' },
   ],
-  agencyComparison: null as any[] | null,
+  agencyComparison: null as PCGComparisonRow[] | null,
   agencyWaterfall: [
     { label: 'CA Brut', value: '$10,726', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -202,7 +202,7 @@ const JAN_2026 = {
     { label: 'Clients', value: '39', detail: 'Handled by Nathan', color: 'gold' },
     { label: 'Total Charges', value: '$12,591', detail: '23.3% du CA', color: 'pink' },
   ],
-  structuringComparison: null as any[] | null,
+  structuringComparison: null as PCGComparisonRow[] | null,
   structuringWaterfall: [
     { label: 'CA', value: '$53,962', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -230,7 +230,7 @@ const JAN_2026 = {
     { label: 'Deals', value: '267', detail: '233 Setup + 34 Ad Account', color: 'gold' },
     { label: 'Total Charges', value: '$74,451', detail: '64.9% du CA', color: 'pink' },
   ],
-  digitComparison: null as any[] | null,
+  digitComparison: null as PCGComparisonRow[] | null,
   digitWaterfall: [
     { label: 'CA', value: '$114,649', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -291,7 +291,7 @@ const JAN_2026 = {
     { label: 'Réserves Filiales (10%)', value: '$8,961', detail: 'Trésorerie entités', color: 'green' },
     { label: 'Frais Holding', value: '$7,060', detail: 'Compta + Assist. + Sales', color: 'pink' },
   ],
-  holdingComparison: null as any[] | null,
+  holdingComparison: null as PCGComparisonRow[] | null,
   holdingManagementFees: [
     { label: 'Prime Circle Agency', value: '$2,245', type: 'positive' },
     { label: 'Prime Circle Structuring', value: '$41,371', type: 'positive' },
