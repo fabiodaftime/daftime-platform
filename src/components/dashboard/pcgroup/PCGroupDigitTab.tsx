@@ -40,6 +40,7 @@ export function PCGroupDigitTab({ data, entityRoutes }: Props) {
         return (
           <PCGroupComparisonTable
             title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars' : 'M-1'}`}
+            mappingContext={`Onglet Digit Solution · ${data.monthLabel}`}
             headers={headers}
             rows={rows.map((r) => {
               const cells = [r.indicator, cell(r.jan), cell(r.feb), ...(hasMar ? [cell(r.mar)] : []), cell(r.variation), ...(hasYtd ? [cell(r.ytd)] : [])];
