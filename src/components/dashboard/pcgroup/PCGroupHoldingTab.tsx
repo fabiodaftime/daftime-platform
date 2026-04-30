@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { type PCGroupMonthData } from './PCGroupData';
+import { type PCGroupMonthData, type PCGComparisonRow, cell } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 
@@ -21,15 +21,16 @@ export function PCGroupHoldingTab({ data }: Props) {
       </div>
 
       {holdingComparison && (() => {
-        const hasMar = holdingComparison.some((r: any) => r.mar);
-        const hasYtd = holdingComparison.some((r: any) => r.ytd);
+        const rows = holdingComparison as PCGComparisonRow[];
+        const hasMar = rows.some((r) => Boolean(r.mar));
+        const hasYtd = rows.some((r) => Boolean(r.ytd));
         const headers = ['Indicateur', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
         return (
           <PCGroupComparisonTable
             title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars Holding' : 'M-1 Holding'}`}
             headers={headers}
-            rows={holdingComparison.map((r: any) => {
-              const cells = [r.indicator, r.jan, r.feb, ...(hasMar ? [r.mar || '—'] : []), r.variation, ...(hasYtd ? [r.ytd || '—'] : [])];
+            rows={rows.map((r) => {
+              const cells = [r.indicator, cell(r.jan), cell(r.feb), ...(hasMar ? [cell(r.mar)] : []), cell(r.variation), ...(hasYtd ? [cell(r.ytd)] : [])];
               return { cells, varIndex: 3 + (hasMar ? 1 : 0), varType: r.varType };
             })}
           />
