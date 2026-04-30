@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { type PCGroupEntityRoutes, type PCGroupMonthData } from './PCGroupData';
+import { type PCGroupEntityRoutes, type PCGroupMonthData, type PCGComparisonRow, cell } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 import { PCGroupComparisonTable } from './PCGroupComparisonTable';
 import { ExternalLink } from 'lucide-react';
@@ -33,15 +33,16 @@ export function PCGroupAgencyTab({ data, entityRoutes }: Props) {
       </div>
 
       {agencyComparison && (() => {
-        const hasMar = agencyComparison.some((r: any) => r.mar);
-        const hasYtd = agencyComparison.some((r: any) => r.ytd);
+        const rows = agencyComparison as PCGComparisonRow[];
+        const hasMar = rows.some((r) => Boolean(r.mar));
+        const hasYtd = rows.some((r) => Boolean(r.ytd));
         const headers = ['Indicateur', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
         return (
           <PCGroupComparisonTable
             title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars' : 'M-1'}`}
             headers={headers}
-            rows={agencyComparison.map((r: any) => {
-              const cells = [r.indicator, r.jan, r.feb, ...(hasMar ? [r.mar || '—'] : []), r.variation, ...(hasYtd ? [r.ytd || '—'] : [])];
+            rows={rows.map((r) => {
+              const cells = [r.indicator, cell(r.jan), cell(r.feb), ...(hasMar ? [cell(r.mar)] : []), cell(r.variation), ...(hasYtd ? [cell(r.ytd)] : [])];
               return { cells, varIndex: 3 + (hasMar ? 1 : 0), varType: r.varType };
             })}
           />
