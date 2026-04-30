@@ -18,6 +18,33 @@ export const EMPTY_ENTITY_ROUTES: PCGroupEntityRoutes = {
   digit: null,
 };
 
+// ============ COMPARISON ROW TYPES (normalized) ============
+// All period fields are optional. Renderers must fall back to '—' when missing.
+export type PCGVarType = 'positive' | 'negative' | 'neutral';
+
+export interface PCGComparisonRow {
+  indicator: string;
+  jan?: string;
+  feb?: string;
+  mar?: string;
+  ytd?: string;
+  variation?: string;
+  varType?: PCGVarType;
+}
+
+export interface PCGOverviewComparisonRow {
+  entity: string;
+  jan?: string;
+  feb?: string;
+  mar?: string;
+  ytd?: string;
+  variation?: string;
+  varType?: PCGVarType;
+}
+
+// Helper used by tab components to safely read a period cell.
+export const cell = (v?: string): string => (v && v.trim() !== '' ? v : '—');
+
 // ============ INTERCOS DATA (shared YTD - cumulative situation) ============
 const INTERCOS_DATA = {
   kpis: [
