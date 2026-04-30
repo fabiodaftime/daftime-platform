@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { type PCGroupEntityRoutes, type PCGroupMonthData } from './PCGroupData';
+import { type PCGroupEntityRoutes, type PCGroupMonthData, type PCGOverviewComparisonRow, cell } from './PCGroupData';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
 interface Props {
@@ -33,7 +33,10 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
       </div>
 
       {overviewComparison && overviewComparisonTotal && (() => {
-        const hasMar = Boolean((overviewComparisonTotal as any).mar);
+        const rows = overviewComparison as PCGOverviewComparisonRow[];
+        const total = overviewComparisonTotal as PCGOverviewComparisonRow;
+        const hasMar = Boolean(total.mar) || rows.some((r) => Boolean(r.mar));
+        const hasYtd = Boolean(total.ytd) || rows.some((r) => Boolean(r.ytd));
         const title = hasMar
           ? '📊 Comparatif Janvier / Février / Mars 2026'
           : '📊 Comparatif Janvier vs Février 2026';
@@ -48,21 +51,28 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
                   <tr>
                     <th>Entité</th><th>Janvier</th><th>Février</th>
                     {hasMar && <th>Mars</th>}
-                    <th>Variation{hasMar ? ' (Fév→Mars)' : ''}</th><th>YTD</th>
+                    <th>Variation{hasMar ? ' (Fév→Mars)' : ''}</th>
+                    {hasYtd && <th>YTD</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {overviewComparison.map((row: any, i: number) => (
+                  {rows.map((row, i) => (
                     <tr key={i}>
-                      <td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td>
-                      {hasMar && <td>{row.mar}</td>}
-                      <td className={`pcg-var-${row.varType}`}>{row.variation}</td><td>{row.ytd}</td>
+                      <td>{row.entity}</td>
+                      <td>{cell(row.jan)}</td>
+                      <td>{cell(row.feb)}</td>
+                      {hasMar && <td>{cell(row.mar)}</td>}
+                      <td className={`pcg-var-${row.varType}`}>{cell(row.variation)}</td>
+                      {hasYtd && <td>{cell(row.ytd)}</td>}
                     </tr>
                   ))}
                   <tr className="pcg-comparison-total">
-                    <td>{overviewComparisonTotal.entity}</td><td>{overviewComparisonTotal.jan}</td><td>{overviewComparisonTotal.feb}</td>
-                    {hasMar && <td>{(overviewComparisonTotal as any).mar}</td>}
-                    <td className={`pcg-var-${overviewComparisonTotal.varType}`}>{overviewComparisonTotal.variation}</td><td>{overviewComparisonTotal.ytd}</td>
+                    <td>{total.entity}</td>
+                    <td>{cell(total.jan)}</td>
+                    <td>{cell(total.feb)}</td>
+                    {hasMar && <td>{cell(total.mar)}</td>}
+                    <td className={`pcg-var-${total.varType}`}>{cell(total.variation)}</td>
+                    {hasYtd && <td>{cell(total.ytd)}</td>}
                   </tr>
                 </tbody>
               </table>
