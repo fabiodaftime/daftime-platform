@@ -395,7 +395,7 @@ const FEB_2026 = {
     { entity: 'Digit Solution', jan: '$40,198', feb: '$43,249', variation: '+7.6%', varType: 'positive', ytd: '$83,447' },
     { entity: 'SPY', jan: '$3,262', feb: '$3,559', variation: '+9.1%', varType: 'positive', ytd: '$6,821' },
     { entity: 'Comment/Trustpilot', jan: '$2,531', feb: '$140', variation: '-94.5%', varType: 'negative', ytd: '$2,671' },
-  ] as any[] | null,
+  ] as PCGOverviewComparisonRow[] | null,
   overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$89,607', feb: '$80,221', variation: '-10.5%', varType: 'negative', ytd: '$169,828' },
   entityCards: [
     { id: 'agency', name: 'Agency', badge: 'Media', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
@@ -456,7 +456,7 @@ const FEB_2026 = {
     { indicator: 'Part PCA (50%)', jan: '$2,244', feb: '$12,237', variation: '+445.4%', varType: 'positive' },
     { indicator: 'Media Géré', jan: '$279,691', feb: '$515,952', variation: '+84.5%', varType: 'positive' },
     { indicator: 'Transactions', jan: '62', feb: '148', variation: '+138.7%', varType: 'positive' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   agencyWaterfall: [
     { label: 'CA Brut', value: '$35,080', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -489,7 +489,7 @@ const FEB_2026 = {
     { indicator: 'Taux de Marge', jan: '76.3%', feb: '28.6%', variation: '-47.7pts', varType: 'negative' },
     { indicator: 'Clients', jan: '39', feb: '53', variation: '+35.9%', varType: 'positive' },
     { indicator: 'Ticket Moyen', jan: '$1,384', feb: '$1,387', variation: '+0.2%', varType: 'positive' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   structuringWaterfall: [
     { label: 'CA', value: '$73,500', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -525,7 +525,7 @@ const FEB_2026 = {
     { indicator: 'Taux de Marge', jan: '35.1%', feb: '35.4%', variation: '+0.3pts', varType: 'positive' },
     { indicator: 'Deals', jan: '225', feb: '213', variation: '-5.3%', varType: 'negative' },
     { indicator: 'Ticket Moyen', jan: '$509', feb: '$574', variation: '+12.7%', varType: 'positive' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   digitWaterfall: [
     { label: 'CA', value: '$122,330', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -586,7 +586,7 @@ const FEB_2026 = {
     { indicator: 'Remontée Holding (90%)', jan: '$80,646', feb: '$72,199', variation: '-10.5%', varType: 'negative' },
     { indicator: 'Frais Holding', jan: '$7,060', feb: '$10,890', variation: '+54.3%', varType: 'negative' },
     { indicator: 'Résultat Net Holding', jan: '$73,586', feb: '$61,309', variation: '-16.7%', varType: 'negative' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   holdingManagementFees: [
     { label: 'Prime Circle Agency', value: '$12,237', type: 'positive' },
     { label: 'Prime Circle Structuring', value: '$21,036', type: 'positive' },
@@ -706,7 +706,7 @@ const MAR_2026 = {
     { entity: 'Digit Solution', jan: '$40,198', feb: '$43,249', mar: '$57,458', variation: '+32.9%', varType: 'positive', ytd: '$140,905' },
     { entity: 'SPY', jan: '$3,262', feb: '$3,559', mar: '$3,470', variation: '-2.5%', varType: 'negative', ytd: '$10,291' },
     { entity: 'Comment/Trustpilot', jan: '$2,531', feb: '$140', mar: '$703', variation: '+402.1%', varType: 'positive', ytd: '$3,374' },
-  ] as any[] | null,
+  ] as PCGOverviewComparisonRow[] | null,
   overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$89,607', feb: '$80,221', mar: '$106,183', variation: '+32.4%', varType: 'positive', ytd: '$276,010' },
   entityCards: [
     { id: 'agency', name: 'Agency', badge: 'Media', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
@@ -767,7 +767,7 @@ const MAR_2026 = {
     { indicator: 'Charges', jan: '$6,237', feb: '$10,606', mar: '$16,555', variation: '+56.1%', varType: 'negative', ytd: '$33,398' },
     { indicator: 'Marge Nette', jan: '$4,489', feb: '$24,473', mar: '$29,892', variation: '+22.1%', varType: 'positive', ytd: '$58,854' },
     { indicator: 'Part PCA (50%)', jan: '$2,245', feb: '$12,237', mar: '$14,946', variation: '+22.1%', varType: 'positive', ytd: '$29,428' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   agencyWaterfall: [
     { label: 'CA Brut', value: '$46,402', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -801,7 +801,7 @@ const MAR_2026 = {
     { indicator: 'Taux Marge Nette', jan: '76.7%', feb: '28.6%', mar: '53.8%', variation: '+25.2pts', varType: 'positive', ytd: '50.4%' },
     { indicator: 'Clients', jan: '39', feb: '53', mar: '51', variation: '-3.8%', varType: 'negative', ytd: '143' },
     { indicator: 'Ticket Moyen', jan: '$1,384', feb: '$1,387', mar: '$1,078', variation: '-22.3%', varType: 'negative', ytd: '$1,276' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   structuringWaterfall: [
     { label: 'CA (Turnover)', value: '$55,000', type: 'positive' },
     { label: 'COGS (Coût produit)', value: '-$10,019', type: 'negative' },
@@ -831,7 +831,7 @@ const MAR_2026 = {
     { indicator: 'Taux de Marge', jan: '35.1%', feb: '35.4%', mar: '47.7%', variation: '+12.3pts', varType: 'positive', ytd: '39.4%' },
     { indicator: 'Deals', jan: '267', feb: '213', mar: '288', variation: '+35.2%', varType: 'positive', ytd: '768' },
     { indicator: 'Ticket Moyen', jan: '$429', feb: '$574', mar: '$418', variation: '-27.2%', varType: 'negative', ytd: '$465' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   digitWaterfall: [
     { label: 'CA', value: '$120,458', type: 'positive' },
     { label: '', value: '', type: 'spacer' },
@@ -902,7 +902,7 @@ const MAR_2026 = {
     { indicator: 'Remontée Holding (90%)', jan: '$80,646', feb: '$72,199', mar: '$95,565', variation: '+32.4%', varType: 'positive', ytd: '$248,410' },
     { indicator: 'Frais Holding', jan: '$7,060', feb: '$10,890', mar: '$8,378', variation: '-23.1%', varType: 'positive', ytd: '$26,328' },
     { indicator: 'Résultat Net Holding', jan: '$73,586', feb: '$61,309', mar: '$87,187', variation: '+42.2%', varType: 'positive', ytd: '$222,082' },
-  ] as any[] | null,
+  ] as PCGComparisonRow[] | null,
   holdingManagementFees: [
     { label: 'Prime Circle Agency', value: '$14,946', type: 'positive' },
     { label: 'Prime Circle Structuring', value: '$29,606', type: 'positive' },
