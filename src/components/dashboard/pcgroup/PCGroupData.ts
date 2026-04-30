@@ -396,7 +396,7 @@ const FEB_2026 = {
     { entity: 'SPY', jan: '$3,262', feb: '$3,559', variation: '+9.1%', varType: 'positive', ytd: '$6,821' },
     { entity: 'Comment/Trustpilot', jan: '$2,531', feb: '$140', variation: '-94.5%', varType: 'negative', ytd: '$2,671' },
   ] as PCGOverviewComparisonRow[] | null,
-  overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$89,607', feb: '$80,221', variation: '-10.5%', varType: 'negative', ytd: '$169,828' },
+  overviewComparisonTotal: { entity: 'MARGE BRUTE GROUPE', jan: '$89,607', feb: '$80,221', variation: '-10.5%', varType: 'negative', ytd: '$169,828' } as PCGOverviewComparisonRow | null,
   entityCards: [
     { id: 'agency', name: 'Agency', badge: 'Media', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
       metrics: [{ label: 'CA', value: '$35,080' }, { label: 'Marge Nette', value: '$12,237', colorClass: 'success' }], margin: 34.9, marginLevel: 'medium' as const },
