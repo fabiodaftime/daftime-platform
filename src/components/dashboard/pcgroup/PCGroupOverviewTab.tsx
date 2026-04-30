@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { type PCGroupEntityRoutes, type PCGroupMonthData, type PCGOverviewComparisonRow, cell } from './PCGroupData';
+import { PCGroupColumnMappingTrigger, buildDefaultColumnMapping } from './PCGroupColumnMapping';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
 
 interface Props {
@@ -40,10 +41,15 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
         const title = hasMar
           ? '📊 Comparatif Janvier / Février / Mars 2026'
           : '📊 Comparatif Janvier vs Février 2026';
+        const mappingHeaders = ['Entité', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
         return (
           <div className="pcg-section">
-            <div className="pcg-section-header">
+            <div className="pcg-section-header pcg-section-header-row">
               <h3 className="pcg-section-title">{title}</h3>
+              <PCGroupColumnMappingTrigger
+                context={`Vue Groupe · ${monthLabel}`}
+                entries={buildDefaultColumnMapping(mappingHeaders)}
+              />
             </div>
             <div className="pcg-section-body">
               <table className="pcg-comparison-table">
