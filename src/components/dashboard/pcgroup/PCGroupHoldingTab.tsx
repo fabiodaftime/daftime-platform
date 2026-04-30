@@ -20,17 +20,21 @@ export function PCGroupHoldingTab({ data }: Props) {
         ))}
       </div>
 
-      {holdingComparison && (
-        <PCGroupComparisonTable
-          title="📊 Comparatif M-1 Holding"
-          headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
-          rows={holdingComparison.map((r: any) => ({
-            cells: [r.indicator, r.jan, r.feb, r.variation],
-            varIndex: 3,
-            varType: r.varType,
-          }))}
-        />
-      )}
+      {holdingComparison && (() => {
+        const hasMar = holdingComparison.some((r: any) => r.mar);
+        const hasYtd = holdingComparison.some((r: any) => r.ytd);
+        const headers = ['Indicateur', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
+        return (
+          <PCGroupComparisonTable
+            title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars Holding' : 'M-1 Holding'}`}
+            headers={headers}
+            rows={holdingComparison.map((r: any) => {
+              const cells = [r.indicator, r.jan, r.feb, ...(hasMar ? [r.mar || '—'] : []), r.variation, ...(hasYtd ? [r.ytd || '—'] : [])];
+              return { cells, varIndex: 3 + (hasMar ? 1 : 0), varType: r.varType };
+            })}
+          />
+        );
+      })()}
 
       <div className="pcg-section">
         <div className="pcg-section-header">
