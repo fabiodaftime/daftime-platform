@@ -121,7 +121,7 @@ const JAN_2026 = {
     { label: "Résultat Net Holding", value: "$73,586", detail: "Après frais holding", color: "gold", variance: null, varType: null },
     { label: "Réserves Filiales", value: "$8,961", detail: "10% marge brute", color: "primary", variance: null, varType: null },
   ],
-  overviewComparison: null as PCGComparisonRow[] | null,
+  overviewComparison: null as PCGOverviewComparisonRow[] | null,
   overviewComparisonTotal: null as PCGOverviewComparisonRow | null,
   entityCards: [
     { id: 'agency', name: 'Agency', badge: 'Media', gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
