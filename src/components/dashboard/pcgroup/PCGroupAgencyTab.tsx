@@ -32,17 +32,21 @@ export function PCGroupAgencyTab({ data, entityRoutes }: Props) {
         ))}
       </div>
 
-      {agencyComparison && (
-        <PCGroupComparisonTable
-          title="📊 Comparatif M-1"
-          headers={['Indicateur', 'Janvier', 'Février', 'Variation']}
-          rows={agencyComparison.map((r: any) => ({
-            cells: [r.indicator, r.jan, r.feb, r.variation],
-            varIndex: 3,
-            varType: r.varType,
-          }))}
-        />
-      )}
+      {agencyComparison && (() => {
+        const hasMar = agencyComparison.some((r: any) => r.mar);
+        const hasYtd = agencyComparison.some((r: any) => r.ytd);
+        const headers = ['Indicateur', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
+        return (
+          <PCGroupComparisonTable
+            title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars' : 'M-1'}`}
+            headers={headers}
+            rows={agencyComparison.map((r: any) => {
+              const cells = [r.indicator, r.jan, r.feb, ...(hasMar ? [r.mar || '—'] : []), r.variation, ...(hasYtd ? [r.ytd || '—'] : [])];
+              return { cells, varIndex: 3 + (hasMar ? 1 : 0), varType: r.varType };
+            })}
+          />
+        );
+      })()}
 
       <div className="pcg-section">
         <div className="pcg-section-header">
