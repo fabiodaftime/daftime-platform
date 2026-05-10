@@ -120,6 +120,57 @@ export type Database = {
           },
         ]
       }
+      entity_data_mappings: {
+        Row: {
+          auto_sync: boolean
+          created_at: string
+          created_by: string | null
+          entity_layout: string
+          field_map: Json
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          last_sync_status: string | null
+          month_map: Json
+          sheet_tab: string | null
+          source_ref: string
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          auto_sync?: boolean
+          created_at?: string
+          created_by?: string | null
+          entity_layout: string
+          field_map?: Json
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          month_map?: Json
+          sheet_tab?: string | null
+          source_ref: string
+          source_type?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_sync?: boolean
+          created_at?: string
+          created_by?: string | null
+          entity_layout?: string
+          field_map?: Json
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          month_map?: Json
+          sheet_tab?: string | null
+          source_ref?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       entity_input_edits_log: {
         Row: {
           actor_id: string
