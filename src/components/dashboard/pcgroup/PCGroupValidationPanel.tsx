@@ -296,6 +296,16 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
           </p>
         </div>
       )}
+
+      <MetricBreakdownDrawer
+        metric={drillState?.metric ?? null}
+        monthId={drillState?.monthId ?? null}
+        monthLabel={drillState?.monthLabel ?? ''}
+        expected={drillState?.expected}
+        actual={drillState?.actual}
+        open={drillState !== null}
+        onClose={() => setDrillState(null)}
+      />
     </section>
   );
 }
