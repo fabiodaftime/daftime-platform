@@ -48,7 +48,12 @@ function PresenceDot({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-function MonthRow({ m }: { m: MonthValidation }) {
+interface MonthRowProps {
+  m: MonthValidation;
+  onInspect: (metric: BreakdownMetric, monthId: PCGSourceMonthId, expected: number, actual: number) => void;
+}
+
+function MonthRow({ m, onInspect }: MonthRowProps) {
   const [open, setOpen] = useState(m.status !== 'ok');
   const meta = STATUS_META[m.status];
   const Icon = meta.Icon;
@@ -126,28 +131,61 @@ function MonthRow({ m }: { m: MonthValidation }) {
                 </tr>
               </thead>
               <tbody>
-                {m.deltas.map((d) => (
-                  <tr key={d.metric} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '4px 6px', color: '#0F1B3D', fontWeight: 600 }}>{d.metric}</td>
-                    <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
-                      ${Math.round(d.expected).toLocaleString('en-US')}
-                    </td>
-                    <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
-                      ${Math.round(d.actual).toLocaleString('en-US')}
-                    </td>
-                    <td
+                {m.deltas.map((d) => {
+                  const inspectable = KNOWN_METRICS.has(d.metric);
+                  return (
+                    <tr
+                      key={d.metric}
+                      onClick={
+                        inspectable
+                          ? () =>
+                              onInspect(
+                                d.metric as BreakdownMetric,
+                                m.monthId,
+                                d.expected,
+                                d.actual,
+                              )
+                          : undefined
+                      }
                       style={{
-                        padding: '4px 6px',
-                        textAlign: 'right',
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontWeight: 700,
-                        color: Math.abs(d.delta) > 0 ? '#EF4444' : '#10B981',
+                        borderBottom: '1px solid #F1F5F9',
+                        cursor: inspectable ? 'pointer' : 'default',
+                        transition: 'background 120ms',
                       }}
+                      onMouseEnter={(e) => {
+                        if (inspectable) (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(212,168,85,0.08)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (inspectable) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent';
+                      }}
+                      title={inspectable ? 'Voir les lignes brutes qui composent ce total' : undefined}
                     >
-                      {d.delta >= 0 ? '+' : ''}${Math.round(d.delta).toLocaleString('en-US')}
-                    </td>
-                  </tr>
-                ))}
+                      <td style={{ padding: '4px 6px', color: '#0F1B3D', fontWeight: 600 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          {d.metric}
+                          {inspectable && <Search size={11} color="#D4A855" />}
+                        </span>
+                      </td>
+                      <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
+                        ${Math.round(d.expected).toLocaleString('en-US')}
+                      </td>
+                      <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
+                        ${Math.round(d.actual).toLocaleString('en-US')}
+                      </td>
+                      <td
+                        style={{
+                          padding: '4px 6px',
+                          textAlign: 'right',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontWeight: 700,
+                          color: Math.abs(d.delta) > 0 ? '#EF4444' : '#10B981',
+                        }}
+                      >
+                        {d.delta >= 0 ? '+' : ''}${Math.round(d.delta).toLocaleString('en-US')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
