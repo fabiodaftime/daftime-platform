@@ -1,17 +1,18 @@
 export interface Transaction {
   name: string;
   service: string;
-  status: 'Closed' | 'In progress' | 'Cancelled';
+  status: 'Closed' | 'In progress' | 'Cancelled' | 'To start';
   turnover: number;
   margin: number;
 }
 
-export type PCMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026';
+export type PCMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
 
 export const PC_AVAILABLE_MONTHS = [
   { id: 'jan-2026', label: 'January 2026' },
   { id: 'feb-2026', label: 'February 2026' },
   { id: 'mar-2026', label: 'March 2026' },
+  { id: 'apr-2026', label: 'April 2026' },
 ];
 
 export interface PCMonthData {
@@ -405,10 +406,125 @@ const marData: PCMonthData = {
   },
 };
 
+// ===== APR 2026 =====
+const aprTransactions: Transaction[] = [
+  { name: "REF-23834 well - Ads", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "pedrospx", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "liukaimkt", service: "llc", status: "Closed", turnover: 1000, margin: 650 },
+  { name: "212604645231 bryan", service: "llc + llc + revolut + slash (cancel)", status: "Closed", turnover: 2500, margin: 2000 },
+  { name: "hyppolite", service: "itin", status: "Closed", turnover: 500, margin: 300 },
+  { name: "33602787182 ibrahim", service: "slash", status: "Closed", turnover: 500, margin: 500 },
+  { name: "tren guy", service: "llc + revolut", status: "Closed", turnover: 1400, margin: 1150 },
+  { name: "joefromslash", service: "llc", status: "Closed", turnover: 1000, margin: 650 },
+  { name: "Sam Planet", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "971504559450 peter", service: "tax filling", status: "Closed", turnover: 700, margin: 450 },
+  { name: "5562993119556 marco", service: "amex", status: "To start", turnover: 2000, margin: 2000 },
+  { name: "kassim", service: "physical adress", status: "Closed", turnover: 2000, margin: 1000 },
+  { name: "353871246033 eclarit", service: "2 llc + tax filling", status: "Closed", turnover: 1400, margin: 560 },
+  { name: "citroman", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "keyciemaq", service: "slash + llc", status: "Closed", turnover: 1750, margin: 1500 },
+  { name: "joefromslash", service: "llc", status: "Closed", turnover: 1000, margin: 650 },
+  { name: "Snjitkrrr", service: "adress physique + amex", status: "In progress", turnover: 4000, margin: 3200 },
+  { name: "Daniel Kolmakov", service: "ocean payment", status: "Closed", turnover: 1500, margin: 750 },
+  { name: "33760839370 tal stanislas", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "carfarah", service: "itin", status: "In progress", turnover: 500, margin: 350 },
+  { name: "anthony suissa", service: "llc", status: "Closed", turnover: 575, margin: 290 },
+  { name: "joefromslash", service: "llc", status: "Closed", turnover: 1000, margin: 650 },
+  { name: "joefromslash", service: "llc", status: "Closed", turnover: 1000, margin: 650 },
+  { name: "dslkmflott", service: "llc", status: "Closed", turnover: 1000, margin: 725 },
+  { name: "remielyn", service: "slash + llc", status: "Closed", turnover: 1750, margin: 1500 },
+  { name: "34653408194 Xavi", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "law bulk", service: "4 llc", status: "Closed", turnover: 4000, margin: 2750 },
+  { name: "uasurfer", service: "slash + llc", status: "Closed", turnover: 2000, margin: 1750 },
+  { name: "212604645231", service: "llc", status: "Closed", turnover: 600, margin: 350 },
+  { name: "david dincklestien", service: "slash + llc", status: "Closed", turnover: 1750, margin: 1500 },
+  { name: "ybtkx", service: "tax filling x3", status: "Closed", turnover: 2400, margin: 1500 },
+  { name: "Max sch", service: "tax filling", status: "Closed", turnover: 750, margin: 500 },
+  { name: "REF-20707W nikita - Ads", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "sultan09999", service: "3 slash", status: "Closed", turnover: 2100, margin: 2100 },
+  { name: "egpking", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "fruktik_kiwi", service: "itin", status: "In progress", turnover: 500, margin: 300 },
+  { name: "918617093328 arijit paul biswas", service: "itin", status: "Closed", turnover: 500, margin: 325 },
+  { name: "REF-71229T kim barrett", service: "tax filling", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "James Harington", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "abrudolf", service: "slash + llc", status: "Closed", turnover: 1750, margin: 1500 },
+  { name: "svetskiReal", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "Flavien 33624004566", service: "physical adress", status: "Closed", turnover: 1600, margin: 800 },
+  { name: "yassiine007", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "33658448446 liam", service: "airwallex us", status: "In progress", turnover: 1000, margin: 1000 },
+  { name: "anthony suissa", service: "itin", status: "In progress", turnover: 450, margin: 250 },
+  { name: "Yash +919958235268", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "facondoprofitads", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "33635386786 arthur", service: "itin", status: "In progress", turnover: 900, margin: 550 },
+  { name: "yassiine007", service: "3 slash", status: "In progress", turnover: 2500, margin: 2500 },
+  { name: "sophiedxb", service: "hk company + airwallex hk", status: "In progress", turnover: 2000, margin: 1200 },
+];
+
+const aprData: PCMonthData = {
+  monthId: 'apr-2026',
+  monthLabel: 'April 2026',
+  transactions: aprTransactions,
+  kpis: {
+    totalCustomers: 50,
+    totalTurnover: 70875,
+    netProfit: 38536,
+    netMarginRate: 54.4,
+    completedServices: 41,
+    inProgressServices: 8,
+    cancelledServices: 0,
+    avgPerCustomer: 1418,
+  },
+  m1Comparison: {
+    prevMonthLabel: 'Mar',
+    customers: { prev: 51, cur: 50, diff: -1, pct: -2.0 },
+    turnover: { prev: 55000, cur: 70875, diff: 15875, pct: 28.9 },
+    netProfit: { prev: 29606, cur: 38536, diff: 8930, pct: 30.2, direction: 'positive' },
+    completed: { prev: 43, cur: 41, diff: -2, pct: -4.7 },
+  },
+  ytdData: {
+    customers: 193,
+    turnover: 252487,
+    netProfit: 129699,
+    netMarginRate: 51.4,
+    costs: 122788,
+    costsPct: 48.6,
+    avgPerMonth: 63122,
+  },
+  monthlyComparison: [
+    { month: 'January 2026', customers: 39, turnover: 53112, totalCosts: 12591, netProfit: 40521, netMarginRate: 76.3, varProfit: null },
+    { month: 'February 2026', customers: 53, turnover: 73500, totalCosts: 52464, netProfit: 21036, netMarginRate: 28.6, varProfit: -48.1, varProfitDirection: 'negative' },
+    { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
+    { month: 'March 2026', customers: 51, turnover: 55000, totalCosts: 25394, netProfit: 29606, netMarginRate: 53.8, varProfit: 40.7, varProfitDirection: 'positive' },
+    { month: 'April 2026', customers: 50, turnover: 70875, totalCosts: 32339, netProfit: 38536, netMarginRate: 54.4, varProfit: 30.2, varProfitDirection: 'positive' },
+  ],
+  costs: {
+    productProviderCosts: 18725,
+    productProviderDetail: 'COGS (Fiverr)',
+    advertising: 7889,
+    advertisingDetail: 'Facebook Ads',
+    salesCommission: 5367,
+    bankFees: 358,
+    total: 32339,
+  },
+  serviceCategories: [
+    { name: 'Physical Addr.', value: 17600 },
+    { name: 'LLC Services', value: 12175 },
+    { name: 'Slash', value: 11100 },
+    { name: 'Slash + LLC', value: 10400 },
+    { name: 'ITIN / Tax', value: 9600 },
+    { name: 'Other', value: 10000 },
+  ],
+  statusData: {
+    completed: { count: 41, amount: 57025 },
+    inProgress: { count: 8, amount: 11850 },
+  },
+};
+
 const monthDataMap: Record<PCMonthId, PCMonthData> = {
   'jan-2026': janData,
   'feb-2026': febData,
   'mar-2026': marData,
+  'apr-2026': aprData,
 };
 
 export function getPCMonthData(monthId: PCMonthId): PCMonthData {

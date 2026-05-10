@@ -10,7 +10,7 @@ import { getPCMonthData, type PCMonthId } from '@/components/dashboard/primecirc
 import './DashboardPrimeCircle.css';
 
 export default function DashboardPrimeCircle() {
-  const [selectedMonth, setSelectedMonth] = useState<PCMonthId>('mar-2026');
+  const [selectedMonth, setSelectedMonth] = useState<PCMonthId>('apr-2026');
   const data = getPCMonthData(selectedMonth);
 
   return (
