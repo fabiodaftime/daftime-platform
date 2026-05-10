@@ -41,7 +41,14 @@ const EXPECTED: Partial<Record<PCGSourceMonthId, Expected>> = {
   'mar-2026': { ca: 260071, margeBrute: 106183, resultatNet: 87187, reserves: 10618 },
 };
 
-const TOLERANCE_USD = 5;
+export const DEFAULT_TOLERANCE_USD = 5;
+
+export interface ValidationOptions {
+  /** Tolérance en USD sur les écarts vs valeurs figées (défaut $5). */
+  toleranceUsd?: number;
+  /** Si false, on saute la comparaison aux totaux de référence (présence uniquement). */
+  checkMetrics?: boolean;
+}
 
 export type ValidationStatus = 'ok' | 'warning' | 'missing';
 
@@ -77,7 +84,10 @@ export interface ValidationReport {
   };
 }
 
-export function validateAllMonths(): ValidationReport {
+export function validateAllMonths(opts: ValidationOptions = {}): ValidationReport {
+  const tolerance = Math.max(0, opts.toleranceUsd ?? DEFAULT_TOLERANCE_USD);
+  const checkMetrics = opts.checkMetrics !== false;
+
   const months: MonthValidation[] = MONTH_ORDER.map((monthId) => {
     const presence = {
       agency: !!agencyFacts(monthId),
@@ -101,7 +111,7 @@ export function validateAllMonths(): ValidationReport {
     const deltas: DeltaRow[] = [];
     const expected = EXPECTED[monthId];
     const facts = computeConsolidatedFacts(monthId);
-    if (expected && facts) {
+    if (checkMetrics && expected && facts) {
       const checks: { metric: string; expected: number; actual: number }[] = [
         { metric: 'CA Groupe', expected: expected.ca, actual: facts.caGroupe },
         { metric: 'Marge Brute Groupe', expected: expected.margeBrute, actual: facts.margeBruteGroupe },
@@ -110,7 +120,7 @@ export function validateAllMonths(): ValidationReport {
       ];
       for (const c of checks) {
         const delta = c.actual - c.expected;
-        if (Math.abs(delta) > TOLERANCE_USD) {
+        if (Math.abs(delta) > tolerance) {
           deltas.push({ metric: c.metric, expected: c.expected, actual: c.actual, delta });
           issues.push(
             `Écart ${c.metric} : attendu $${Math.round(c.expected).toLocaleString('en-US')} · calculé $${Math.round(c.actual).toLocaleString('en-US')} (${delta >= 0 ? '+' : ''}$${Math.round(delta).toLocaleString('en-US')})`,

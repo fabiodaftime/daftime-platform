@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
-import { validateAllMonths, type MonthValidation } from './pcGroupValidator';
+import { validateAllMonths, type MonthValidation, type ValidationOptions, DEFAULT_TOLERANCE_USD } from './pcGroupValidator';
 
 const STATUS_META = {
   ok: { color: '#10B981', bg: 'rgba(16,185,129,0.10)', label: 'OK', Icon: CheckCircle2 },
@@ -147,9 +147,19 @@ function MonthRow({ m }: { m: MonthValidation }) {
   );
 }
 
-export function PCGroupValidationPanel({ defaultOpen = false }: { defaultOpen?: boolean } = {}) {
+interface PCGroupValidationPanelProps {
+  defaultOpen?: boolean;
+  options?: ValidationOptions;
+}
+
+export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroupValidationPanelProps = {}) {
   const [collapsed, setCollapsed] = useState(!defaultOpen);
-  const report = useMemo(() => validateAllMonths(), []);
+  const tolerance = options?.toleranceUsd ?? DEFAULT_TOLERANCE_USD;
+  const checkMetrics = options?.checkMetrics !== false;
+  const report = useMemo(
+    () => validateAllMonths({ toleranceUsd: tolerance, checkMetrics }),
+    [tolerance, checkMetrics],
+  );
   const { summary } = report;
   const hasIssues = summary.warnings + summary.missing > 0;
   const headerColor = summary.missing > 0 ? '#EF4444' : summary.warnings > 0 ? '#F59E0B' : '#10B981';
@@ -212,7 +222,10 @@ export function PCGroupValidationPanel({ defaultOpen = false }: { defaultOpen?: 
           ))}
           <p style={{ fontSize: 11, color: '#94A3B8', margin: '6px 2px 0', lineHeight: 1.5 }}>
             La validation compare les totaux calculés en direct (Agency + Structuring + Digit + bloc manuel SPY/Comment/Holding)
-            aux totaux figés historiquement dans <code>PCGroupData</code>. Tolérance : $5 d'arrondi.
+            aux totaux figés historiquement dans <code>PCGroupData</code>.
+            {checkMetrics
+              ? ` Tolérance : ±$${tolerance} d'arrondi.`
+              : ' Vérification des métriques désactivée (présence des sources uniquement).'}
           </p>
         </div>
       )}
