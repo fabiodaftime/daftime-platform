@@ -1,90 +1,111 @@
 ## Objectif
 
-Transformer `PCGroupData.ts` (1018 lignes de données figées par mois) en un **agrégateur calculé** : dès qu'un mois est ajouté dans Agency, Structuring ou Digit, le consolidé se met à jour automatiquement. Seules la **Holding**, **SPY** et **Comment** (qui n'ont pas de dashboard standalone) restent en saisie manuelle.
+Déplacer la configuration PCGroup actuellement hardcodée en TypeScript vers Supabase, avec une interface d'administration complète. Le dashboard et son en-tête se mettront à jour automatiquement à chaque modification, sans redéploiement.
 
-## Architecture cible
+## Périmètre confirmé
+
+1. **ENTITY_META** : entités consolidées (nom, badge, gradient, ordre, actif)
+2. **Mois disponibles** : libellés et activation par mois
+3. **Règles intercos** : % réserves (10%), % remontée (90%), distribution dirigeants (37.5/37.5/25)
+4. **Données manuelles** : blocs SPY, Comment, Holding, intercos cash par mois (`manual/2026-XX.ts`)
+
+Comportement par défaut : si la BDD est vide → état vide avec CTA "Configurer les entités". Pas de fallback hardcodé.
+
+## Schéma Supabase (5 tables)
+
+```text
+pcgroup_entities
+  id, code (agency|structuring|digit|spy|comment), name, badge,
+  gradient, css_class, display_order, is_active, source_type
+  (dashboard|manual), created_at, updated_at
+
+pcgroup_months
+  id, month_id (jan-2026...), label, year, month_num,
+  is_active, display_order
+
+pcgroup_rules
+  id, month_id (FK ou NULL=défaut global),
+  reserves_pct, remontee_pct,
+  maxence_pct, thibault_pct, florian_pct, will_amount
+
+pcgroup_manual_facts (1 ligne par entité × mois pour SPY/Comment)
+  id, month_id, entity_code, ca, charges, contribution,
+  margin_pct, deals, ticket_moyen, raw_breakdown jsonb
+
+pcgroup_holding_facts (1 ligne par mois)
+  id, month_id, frais_compta_cfo, frais_assistante,
+  frais_sales, frais_total, apport_maxence
+
+pcgroup_intercos_cash (1 ligne par entité × mois)
+  id, month_id, entity_code, amount_received
+```
+
+RLS : `is_super_admin` = ALL ; `has_company_access(company_id PCGroup)` = SELECT.
+
+## Architecture front
 
 ```text
 src/components/dashboard/pcgroup/
-├── sources/
-│   ├── agencyAdapter.ts      ← lit PrimeCircleAgencyData → forme normalisée
-│   ├── structuringAdapter.ts ← lit PrimeCircleData       → forme normalisée
-│   └── digitAdapter.ts       ← lit DigitData             → forme normalisée
-├── manual/
-│   ├── holdingManual.ts      ← frais holding + dirigeants par mois
-│   ├── spyManual.ts          ← KPIs SPY par mois
-│   ├── commentManual.ts      ← KPIs Comment par mois
-│   └── intercosManual.ts     ← règles & encaissements réels
-├── pcGroupAggregator.ts      ← assemble tout → PCGroupMonthData
-├── pcGroupFormatters.ts      ← helpers $X,XXX / +X.X% / variations
-└── PCGroupData.ts            ← API publique : getMonthData(monthId), AVAILABLE_MONTHS
+  config/
+    pcgroupConfigClient.ts   ← fetch + cache React Query
+    types.ts                 ← types miroirs des tables
+    usePCGroupConfig.ts      ← hook unique (entities, months, rules, manual)
+    EmptyConfigState.tsx     ← écran vide avec CTA
+  sources/
+    normalizedAdapters.ts    ← lit depuis usePCGroupConfig au lieu de manual/
+  pcGroupAggregator.ts       ← prend la config en argument (pure)
+  
+src/pages/admin/
+  PCGroupConfigPage.tsx      ← /admin/pcgroup-config
+  
+src/components/dashboard/pcgroup/admin/
+  EntitiesEditor.tsx         ← CRUD ENTITY_META
+  MonthsEditor.tsx           ← CRUD mois
+  RulesEditor.tsx            ← CRUD règles intercos
+  ManualFactsEditor.tsx      ← CRUD SPY/Comment/Holding/cash par mois
+  PCGroupConfigTab.tsx       ← onglet 'Configuration' visible super_admin
 ```
 
-## Source de vérité par champ
+## Refactoring clé
 
-| Champ PCGroupData | Source |
-|---|---|
-| `agencyKPIs`, `agencyComparison`, `agencyWaterfall`, `agencyRisks` | Agency (calculé) |
-| `structuringKPIs`, `structuringComparison`, `structuringWaterfall`, `structuringServices` | Structuring (calculé) |
-| `digitKPIs`, `digitComparison`, `digitWaterfall`, `digitRevenueBreakdown` | Digit (calculé) |
-| `entityCards`, `pieData`, `consolidatedPL` (lignes marges) | Σ adapters (calculé) |
-| `overviewHero`, `overviewComparison*` | Σ adapters + variation MoM (calculé) |
-| `ytdHero`, `ytdMonthlyTable`, `ytdEntityTable`, `ytdTrendData`, `reservesHero`, `reservesEntityTable`, `reservesCards` | Cumul des mois disponibles (calculé) |
-| `spyKPIs`, `spyWaterfall` | spyManual.ts |
-| `commentKPIs`, `commentWaterfall`, `commentWarning` | commentManual.ts |
-| `holdingKPIs`, `holdingComparison`, `holdingSynthese`, `holdingPieData`, `directors`, `holdingNetResult`, `holdingManagementFees` | holdingManual.ts (frais + répartition %) + calcul dérivé |
-| `consolidatedPL` (frais holding + management) | holdingManual.ts |
-| `intercos` | intercosManual.ts (rules de remontée 90% + encaissements réels saisis) |
-| `AVAILABLE_MONTHS` | intersection des mois Agency ∩ Structuring ∩ Digit |
+- `pcGroupAggregator.computeConsolidatedFacts()` devient **pur** : prend `(month, config)` au lieu de lire les modules statiques
+- `DashboardPCGroup.tsx` enveloppe l'arbre dans `<PCGroupConfigProvider>` (React Query)
+- `PCG_AVAILABLE_MONTHS` = intersection calculée depuis les données BDD
+- Tous les fichiers `manual/2026-XX.ts` et `manualEntities.ts` sont **supprimés** (Supabase = unique source de vérité)
 
-## Étapes d'implémentation
+## Plan d'exécution (4 étapes incrémentales)
 
-1. **Adapter Agency** (`agencyAdapter.ts`)
-   - Fonction `getAgencyForMonth(monthId)` → retourne `{ caBrut, margeNette, partPCA, charges[], waterfall[], comparison[], risks[], kpis[] }` formatés.
-   - Calcule la variation Mois N vs N-1 automatiquement.
+### Étape 1 — Schéma + seed
+- Migration : créer les 6 tables + RLS
+- Seeder Jan/Fév/Mars/Avril 2026 depuis les valeurs actuelles de `manual/*.ts` pour ne rien perdre
+- Vérification : `pcGroupRegression.test.ts` doit passer après bascule
 
-2. **Adapter Structuring** (idem depuis `PrimeCircleData.ts`).
+### Étape 2 — Couche config + adapters
+- `pcgroupConfigClient.ts` + `usePCGroupConfig` (React Query, staleTime 30s)
+- `normalizedAdapters.ts` lit depuis la config (les sources Agency/Structuring/Digit restent hardcodées — hors périmètre)
+- `aggregatePCGroup()` accepte la config en paramètre
 
-3. **Adapter Digit** (idem depuis `DigitData.ts`, en réutilisant éventuellement `digitYTDValidation`).
+### Étape 3 — Dashboard réactif
+- `DashboardPCGroup.tsx` : remplacer imports statiques par hook
+- État vide si `entities.length === 0` ou `months.length === 0`
+- Header dynamique déjà en place (calculé depuis `entities.length` et `months.length`)
 
-4. **Manual files** : extraire les valeurs actuelles (holding, spy, comment, intercos) de `PCGroupData.ts` vers les fichiers `manual/*.ts`. Format minimal : un objet par mois.
+### Étape 4 — UI admin
+- Page `/admin/pcgroup-config` (route protégée super_admin)
+- Onglet `Configuration` dans `DashboardPCGroup` (visible uniquement super_admin)
+- 4 éditeurs : EntitiesEditor, MonthsEditor, RulesEditor, ManualFactsEditor
+- Invalidation React Query après chaque mutation → dashboard se met à jour en live
 
-5. **Aggregator** (`pcGroupAggregator.ts`)
-   - `aggregateMonth(monthId)` : appelle les 3 adapters + lit les manuals → assemble `PCGroupMonthData`.
-   - Calcule : `margeBruteGroupe = Σ marges nettes`, `reserves = 10% margeBrute`, `remonteeHolding = 90%`, `resultatNet = remontee - fraisHolding`, répartition dirigeants.
-   - YTD : itère sur tous les mois ≤ monthId.
+## Hors périmètre (à confirmer plus tard)
 
-6. **Formatters** (`pcGroupFormatters.ts`) : `fmtUSD(n)`, `fmtPct(n)`, `fmtVar(curr, prev)`, `cell(v)`.
+- Données Agency/Structuring/Digit (restent dans leurs dashboards source)
+- Audit log des modifications de config
+- Versioning / historique
+- Multi-utilisateurs concurrents (verrou optimiste)
+- Tests E2E de l'UI admin (les tests de régression existants couvrent la cohérence des calculs)
 
-7. **Refactor `PCGroupData.ts`**
-   - Ne contient plus que les types + `export const AVAILABLE_MONTHS = computeAvailableMonths()` + `export const getMonthData = aggregateMonth`.
-   - Garde la signature `PCGroupMonthData` actuelle pour ne casser aucun composant `PCGroup*Tab.tsx`.
+## Risques
 
-8. **Tests de régression**
-   - Ajouter `pcGroupAggregator.test.ts` : pour Jan/Fév/Mars 2026, snapshot des KPIs principaux et vérifier qu'ils correspondent aux valeurs actuellement affichées.
-   - Étendre le CI gate (`scripts/validate-digit-ytd.ts` style) avec `validate-pcgroup-consistency.ts` qui vérifie : Σ marges entités = margeBruteGroupe.
-
-9. **Vérification visuelle**
-   - Lancer le dashboard `/dashboard-pc-group/...` sur Jan, Fév, Mars : tous les onglets doivent afficher exactement les mêmes valeurs qu'aujourd'hui.
-
-## Hors scope (volontaire)
-
-- Pas de changement UI (`PCGroup*Tab.tsx` non touchés).
-- Pas de migration DB.
-- Pas de refactor des dashboards source (Agency/Structuring/Digit restent inchangés).
-- Pas de gestion d'Avril 2026 dans ce refactor : sera ajouté ensuite (Avril manque dans Structuring/Agency/Digit mois courant — voir note ci-dessous).
-
-## Note sur Avril 2026
-
-Aujourd'hui : Agency, Structuring, Digit ont Avril ; PCGroup n'a que Jan/Fév/Mars. Après ce refactor, ajouter Avril = remplir `holdingManual['apr-2026']`, `spyManual['apr-2026']`, `commentManual['apr-2026']`, `intercosManual['apr-2026']` → Avril apparaît automatiquement dans le consolidé. Je peux enchaîner avec ça après validation du refactor si tu veux.
-
-## Détails techniques
-
-- Tous les composants `PCGroup*Tab.tsx` consomment `PCGroupMonthData` : on **conserve l'interface exacte** pour zéro régression UI.
-- Les valeurs numériques manipulées en `number` dans les adapters/aggregator, formatées en `string` (`$X,XXX`) seulement à la sortie via `pcGroupFormatters.ts`.
-- L'aggregator est **pur** (pas d'effet de bord) → memoization triviale + testable unitairement.
-- Volume estimé : ~600 lignes nouvelles (adapters + aggregator + manuals) pour ~1000 lignes supprimées dans `PCGroupData.ts`.
-
-## Estimation effort
-
-Gros refactor cohérent : ~1 itération de build. Les snapshots actuels Jan/Fév/Mars servent d'oracle pour valider que le résultat est strictement identique avant/après.
+- **Suppression du fallback hardcodé** : si la migration de seed échoue, le dashboard est vide. Mitigation : seed inclus dans la migration SQL (transactionnel).
+- **Refactor `aggregatePCGroup`** : casse temporairement les tests. Mitigation : adapter les tests pour passer un mock config.
+- **Volumétrie** : ~50 lignes en BDD au total → négligeable.
