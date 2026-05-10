@@ -147,8 +147,8 @@ function MonthRow({ m }: { m: MonthValidation }) {
   );
 }
 
-export function PCGroupValidationPanel() {
-  const [collapsed, setCollapsed] = useState(true);
+export function PCGroupValidationPanel({ defaultOpen = false }: { defaultOpen?: boolean } = {}) {
+  const [collapsed, setCollapsed] = useState(!defaultOpen);
   const report = useMemo(() => validateAllMonths(), []);
   const { summary } = report;
   const hasIssues = summary.warnings + summary.missing > 0;
