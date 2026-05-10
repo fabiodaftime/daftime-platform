@@ -82,4 +82,22 @@ export const MANUAL_ENTITIES: Partial<Record<PCGSourceMonthId, ManualMonthExtras
       distribution: { maxencePct: 37.5, thibaultPct: 37.5, florianPct: 25, willInThibault: 10000 },
     },
   },
+  'apr-2026': {
+    // Source DigitData APR overviewProducts: SPY $38,450 / Marge $3,098 ; Comment $438 / Marge $264
+    spy: { ca: 38450, margeNette: 3098, charges: 35352, marginPct: 8.1, deals: 5 },
+    comment: { ca: 438, margeNette: 264, charges: 174, marginPct: 60.3, deals: 20 },
+    commentWarning: 'Activité résiduelle. CA quasi nul vs Mars.',
+    holding: {
+      // Frais holding par défaut = base récurrente Mars (à ajuster manuellement quand le détail réel sera connu).
+      fraisTotal: 8298,
+      fraisDetail: [
+        { label: 'CFO + Compta Groupe', amount: 3430 },
+        { label: 'AI Agent', amount: 2000 },
+        { label: 'Salaire Fixe Sales', amount: 2000 },
+        { label: 'Tools', amount: 780 },
+        { label: 'Frais Bancaires', amount: 88 },
+      ],
+      distribution: { maxencePct: 37.5, thibaultPct: 37.5, florianPct: 25, willInThibault: 10000 },
+    },
+  },
 };
