@@ -407,9 +407,63 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
 
       {!collapsed && (
         <div style={{ padding: '4px 18px 16px' }}>
-          {report.months.map((m) => (
-            <MonthRow key={m.monthId} m={m} onInspect={handleInspect} />
-          ))}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              margin: '4px 0 10px',
+              fontFamily: 'DM Sans, sans-serif',
+            }}
+          >
+            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600, marginRight: 4 }}>
+              Filtre :
+            </span>
+            {([
+              { key: 'all', label: `Tous (${summary.total})` },
+              { key: 'issues', label: `Écarts + manquants (${summary.warnings + summary.missing})` },
+              { key: 'missing', label: `Manquants seuls (${summary.missing})` },
+            ] as const).map((opt) => {
+              const active = filter === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setFilter(opt.key)}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    border: `1px solid ${active ? '#0F1B3D' : '#E2E8F0'}`,
+                    background: active ? '#0F1B3D' : '#fff',
+                    color: active ? '#fff' : '#0F1B3D',
+                    cursor: 'pointer',
+                    fontFamily: 'DM Sans, sans-serif',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          {filteredMonths.length === 0 ? (
+            <div
+              style={{
+                padding: '20px 12px',
+                fontSize: 12,
+                color: '#64748B',
+                textAlign: 'center',
+                background: '#F8FAFC',
+                borderRadius: 8,
+                border: '1px dashed #E2E8F0',
+              }}
+            >
+              Aucun mois ne correspond à ce filtre.
+            </div>
+          ) : (
+            filteredMonths.map((m) => <MonthRow key={m.monthId} m={m} onInspect={handleInspect} />)
+          )}
           <p style={{ fontSize: 11, color: '#94A3B8', margin: '6px 2px 0', lineHeight: 1.5 }}>
             La validation compare les totaux calculés en direct (Agency + Structuring + Digit + bloc manuel SPY/Comment/Holding)
             aux totaux figés historiquement dans <code>PCGroupData</code>.
