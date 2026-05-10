@@ -95,7 +95,11 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
               )}
               <div className="pcg-hero-label">{kpi.label}</div>
               <div className="pcg-hero-value">{kpi.value}</div>
-              <div className="pcg-hero-detail">{kpi.detail}</div>
+              <div className="pcg-hero-detail">
+                {typeof entitiesCount === 'number' && metricForKpiLabel(kpi.label) === 'CA Groupe'
+                  ? `${entitiesCount} entité${entitiesCount > 1 ? 's' : ''} consolidée${entitiesCount > 1 ? 's' : ''}`
+                  : kpi.detail}
+              </div>
               {kpi.variance && (
                 <div className={`pcg-hero-var ${kpi.varType}`}>{kpi.variance}</div>
               )}
