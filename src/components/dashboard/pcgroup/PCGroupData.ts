@@ -2,12 +2,21 @@
 
 export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
 
-export const AVAILABLE_MONTHS = [
-  { id: 'jan-2026' as MonthId, label: 'Janvier 2026' },
-  { id: 'feb-2026' as MonthId, label: 'Février 2026' },
-  { id: 'mar-2026' as MonthId, label: 'Mars 2026' },
-  { id: 'apr-2026' as MonthId, label: 'Avril 2026' },
-];
+// Canonical labels per month id.
+const PCG_MONTH_LABELS: Record<MonthId, string> = {
+  'jan-2026': 'Janvier 2026',
+  'feb-2026': 'Février 2026',
+  'mar-2026': 'Mars 2026',
+  'apr-2026': 'Avril 2026',
+};
+
+// PC_GROUP_AVAILABLE_MONTHS is computed dynamically as the INTERSECTION of
+// months for which Agency, Structuring, Digit AND the manual SPY/Comment/
+// Holding block all have data. As soon as a new source month is filled in
+// every entity, it appears here automatically — and therefore in the month
+// selector and consolidated views.
+//
+// Implementation lives below the `MonthId` declarations to allow forward use.
 
 export type PCGroupEntityKey = 'agency' | 'structuring' | 'digit';
 
@@ -1427,3 +1436,24 @@ export function getMonthData(month: MonthId): PCGroupMonthData {
 // Re-exports for callers that want direct access to the new layered API.
 export { computeConsolidatedFacts, computeYTD } from './pcGroupAggregator';
 export { agencyFacts, structuringFacts, digitFacts, getAvailableSourceMonths } from './sources/entityAdapters';
+
+// ---- Dynamic month list = intersection across all entities + manual block ----
+import { getAvailableSourceMonths as _getAvailable } from './sources/entityAdapters';
+
+export interface PCGroupAvailableMonth {
+  id: MonthId;
+  label: string;
+}
+
+export function getPCGroupAvailableMonths(): PCGroupAvailableMonth[] {
+  return _getAvailable()
+    .filter((m): m is MonthId => (MONTH_KEYS as string[]).includes(m))
+    .filter((m) => MANUAL_ENTITIES[m as keyof typeof MANUAL_ENTITIES])
+    .map((m) => ({ id: m as MonthId, label: PCG_MONTH_LABELS[m as MonthId] }));
+}
+
+/** Intersection of months across all sources + manual. Recomputed live. */
+export const PC_GROUP_AVAILABLE_MONTHS: PCGroupAvailableMonth[] = getPCGroupAvailableMonths();
+
+/** Backward-compat alias (existing imports keep working). */
+export const AVAILABLE_MONTHS = PC_GROUP_AVAILABLE_MONTHS;
