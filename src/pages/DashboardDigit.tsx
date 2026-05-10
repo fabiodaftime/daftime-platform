@@ -76,7 +76,7 @@ export default function DashboardDigit() {
 
       <div className="digit-tab-content">
         {tab === "overview" && <DigitOverviewTab data={monthData} />}
-        {tab === "ytd" && <DigitYTDTab data={monthData} />}
+        {tab === "ytd" && <DigitYTDTab data={monthData} month={selectedMonth} />}
         {tab === "revenue" && <DigitRevenueTab data={monthData} />}
         {tab === "costs" && <DigitCostsTab data={monthData} />}
         {tab === "products" && <DigitProductsTab data={monthData} />}
