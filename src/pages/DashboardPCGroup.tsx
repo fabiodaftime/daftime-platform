@@ -131,6 +131,8 @@ export default function DashboardPCGroup() {
         </nav>
       </header>
 
+      <PCGroupValidationPanel />
+
       <main className="pcg-main">
         {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
