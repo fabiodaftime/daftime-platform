@@ -34,7 +34,7 @@ function metricForKpiLabel(label: string): string | null {
   return null;
 }
 
-export function PCGroupOverviewTab({ data, entityRoutes, monthId }: Props) {
+export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount }: Props) {
   const navigate = useNavigate();
   const { overviewHero, entityCards, consolidatedPL, pieData, overviewComparison, overviewComparisonTotal, monthLabel } = data;
 
