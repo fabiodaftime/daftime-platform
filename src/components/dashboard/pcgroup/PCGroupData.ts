@@ -1014,40 +1014,401 @@ const MAR_2026 = {
 
 export type PCGroupMonthData = typeof FEB_2026;
 
-import { computeConsolidatedFacts, computeYTD } from './pcGroupAggregator';
-import { fmtUSD, fmtPct } from './pcGroupFormatters';
+import {
+  computeConsolidatedFacts,
+  computeYTD,
+  type ConsolidatedFacts,
+} from './pcGroupAggregator';
+import { fmtUSD, fmtUSDk, fmtPct, fmtPctSigned, pctChange } from './pcGroupFormatters';
+import { MANUAL_ENTITIES } from './manualEntities';
 
 // ----------------------------------------------------------------------------
-// Auto-overlay: replace the cross-entity totals & sums in the legacy per-month
+// Auto-overlay: replace cross-entity totals & sums in the legacy per-month
 // objects with values computed from the source dashboards (Agency, Structuring,
-// Digit) + manual entities (SPY, Comment, Holding). This guarantees that if a
-// number changes in any source dashboard, the consolidated totals stay in sync.
-//
-// The bespoke per-month fields (waterfalls, intercos, holding fees breakdown
-// labels) remain authored manually in this file.
+// Digit) + manual entities (SPY, Comment, Holding).
+// Phase 2 — also auto-generates: entityCards, pieData, holdingPieData,
+// directors, reservesEntityTable/Total, reservesCards, ytdEntityTable/Total,
+// ytdMonthlyTable/Total, ytdTrendData, reservesHero, holdingKPIs,
+// overviewComparison/Total, holdingComparison.
 // ----------------------------------------------------------------------------
+
+const MONTH_KEYS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const MONTH_SHORT: Record<MonthId, string> = {
+  'jan-2026': 'Janvier',
+  'feb-2026': 'Février',
+  'mar-2026': 'Mars',
+  'apr-2026': 'Avril',
+};
+const MONTH_KEY: Record<MonthId, 'jan' | 'feb' | 'mar' | 'avr'> = {
+  'jan-2026': 'jan',
+  'feb-2026': 'feb',
+  'mar-2026': 'mar',
+  'apr-2026': 'avr',
+};
+
+const ENTITY_META = [
+  { id: 'agency', name: 'Agency', badge: 'Media',
+    gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', cssClass: 'agency',
+    pieColor: '#F59E0B' },
+  { id: 'structuring', name: 'Structuring', badge: 'Banking',
+    gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', cssClass: 'structuring',
+    pieColor: '#1E3A5F' },
+  { id: 'digit', name: 'Digit Solution', badge: 'Ad Accounts',
+    gradient: 'linear-gradient(135deg, #D946A8 0%, #EC4899 100%)', cssClass: 'digit',
+    pieColor: '#4F5BD5' },
+  { id: 'spy', name: 'SPY', badge: 'Tools',
+    gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', cssClass: 'spy',
+    pieColor: '#10B981' },
+  { id: 'comment', name: 'Comment', badge: 'Trust',
+    gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', cssClass: 'comment',
+    pieColor: '#D946A8' },
+] as const;
+
+type EntityKey = 'agency' | 'structuring' | 'digit' | 'spy' | 'comment';
+
+function entityCA(f: ConsolidatedFacts, k: EntityKey): number {
+  switch (k) {
+    case 'agency': return f.agencyCA;
+    case 'structuring': return f.structuringCA;
+    case 'digit': return f.digitCA;
+    case 'spy': return f.spyCA;
+    case 'comment': return f.commentCA;
+  }
+}
+function entityMarge(f: ConsolidatedFacts, k: EntityKey): number {
+  switch (k) {
+    case 'agency': return f.agencyPartPCA;
+    case 'structuring': return f.structuringMargeNette;
+    case 'digit': return f.digitMargeNette;
+    case 'spy': return f.spyMargeNette;
+    case 'comment': return f.commentMargeNette;
+  }
+}
+
+const usd = (n: number) => fmtUSD(Math.round(n));
+const marginLevel = (m: number): 'high' | 'medium' | 'low' =>
+  m >= 50 ? 'high' : m >= 25 ? 'medium' : 'low';
+
 function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMonthData {
   const facts = computeConsolidatedFacts(month);
-  if (!facts) return base; // graceful fallback if a source month is missing
+  if (!facts) return base;
   const ytd = computeYTD(month);
+  const idx = MONTH_KEYS.indexOf(month);
+  const prevId = idx > 0 ? MONTH_KEYS[idx - 1] : null;
+  const prevFacts = prevId ? computeConsolidatedFacts(prevId) : null;
+  const prevLabel = prevId ? MONTH_SHORT[prevId] : '';
+  const monthsForCols = ytd.months; // chronological list of months up to current
 
-  const usd = (n: number) => fmtUSD(Math.round(n));
-  const overlaid: PCGroupMonthData = {
-    ...base,
-    // Consolidated KPIs
-    overviewHero: base.overviewHero.map((k, i) => {
-      const v = [facts.caGroupe, facts.margeBruteGroupe, facts.resultatNetHolding, facts.reservesFiliales][i];
-      return v != null ? { ...k, value: usd(v) } : k;
-    }),
-    holdingNetResult: usd(facts.resultatNetHolding),
-    // YTD totals
-    ytdHero: base.ytdHero.map((k, i) => {
-      const v = [ytd.caYTD, ytd.margeBruteYTD, ytd.resultatNetYTD, ytd.reservesYTD][i];
-      return v != null ? { ...k, value: usd(v) } : k;
-    }),
+  // ----- ENTITY CARDS (5)
+  const entityCards = ENTITY_META.map((meta) => {
+    const k = meta.id as EntityKey;
+    const ca = entityCA(facts, k);
+    const marge = entityMarge(facts, k);
+    const margin = ca > 0 ? (marge / ca) * 100 : 0;
+    return {
+      id: meta.id,
+      name: meta.name,
+      badge: meta.badge,
+      gradient: meta.gradient,
+      cssClass: meta.cssClass,
+      metrics: [
+        { label: k === 'agency' ? 'CA Brut' : 'CA', value: usd(ca) },
+        {
+          label: k === 'agency' ? 'Part PCA' : 'Marge Nette',
+          value: usd(marge),
+          colorClass: 'success',
+        },
+      ],
+      margin: Math.round(margin * 10) / 10,
+      marginLevel: marginLevel(margin),
+    };
+  });
+
+  // ----- PIE DATA (margins by entity)
+  const pieData = ENTITY_META.map((meta) => {
+    const m = entityMarge(facts, meta.id as EntityKey);
+    return { name: `${meta.name} (${fmtUSDk(m)})`, value: Math.round(m), color: meta.pieColor };
+  });
+
+  // ----- HOLDING PIE
+  const holdingPieData = [
+    { name: `Maxence (${fmtUSDk(facts.maxenceAmount)})`, value: Math.round(facts.maxenceAmount), color: '#1E3A5F' },
+    { name: `Thibault (${fmtUSDk(facts.thibaultAmount)})`, value: Math.round(facts.thibaultAmount), color: '#2D4A6F' },
+    { name: `Florian (${fmtUSDk(facts.florianAmount)})`, value: Math.round(facts.florianAmount), color: '#4F5BD5' },
+    { name: `Réserves Fil. (${fmtUSDk(facts.reservesFiliales)})`, value: Math.round(facts.reservesFiliales), color: '#C9A227' },
+  ];
+
+  // ----- DIRECTORS
+  const manual = MANUAL_ENTITIES[month]!;
+  const dist = manual.holding.distribution;
+  const prevPart = (sel: (f: ConsolidatedFacts) => number, cur: number) =>
+    prevFacts ? `${fmtPctSigned(pctChange(cur, sel(prevFacts)))} vs ${prevLabel}` : '';
+  const directors = [
+    {
+      name: 'Maxence', pct: `${dist.maxencePct}%`, amount: usd(facts.maxenceAmount),
+      gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)',
+      subtitle: prevPart((f) => f.maxenceAmount, facts.maxenceAmount),
+    },
+    {
+      name: 'Thibault', pct: `${dist.thibaultPct}%`, amount: usd(facts.thibaultAmount),
+      gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)',
+      subtitle: dist.willInThibault ? `dont $${dist.willInThibault.toLocaleString('en-US')} Will` : '',
+    },
+    {
+      name: 'Florian', pct: `${dist.florianPct}%`, amount: usd(facts.florianAmount),
+      gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)',
+      subtitle: prevPart((f) => f.florianAmount, facts.florianAmount),
+    },
+  ];
+
+  // ----- HOLDING KPIs
+  const fraisDelta = prevFacts ? pctChange(facts.fraisHolding, prevFacts.fraisHolding) : null;
+  const holdingKPIs = [
+    { label: 'Remontée Holding (90%)', value: usd(facts.remonteeHolding), detail: 'Bénéfices filiales', color: 'navy' },
+    { label: 'Résultat Net Holding', value: usd(facts.resultatNetHolding),
+      detail: prevFacts ? `${fmtPctSigned(pctChange(facts.resultatNetHolding, prevFacts.resultatNetHolding))} vs ${prevLabel}` : '100% distribué',
+      color: 'gold' },
+    { label: 'Réserves Filiales (10%)', value: usd(facts.reservesFiliales), detail: 'Trésorerie entités', color: 'green' },
+    { label: 'Frais Holding', value: usd(facts.fraisHolding),
+      detail: fraisDelta != null ? `${fmtPctSigned(fraisDelta)} vs ${prevLabel}` : 'Frais récurrents',
+      color: 'pink' },
+  ];
+
+  // ----- HOLDING COMPARISON (multi-month)
+  const buildComparisonRow = (
+    indicator: string,
+    sel: (f: ConsolidatedFacts) => number,
+    inverse = false,
+  ): PCGComparisonRow => {
+    const row: PCGComparisonRow = { indicator };
+    monthsForCols.forEach((m) => { row[MONTH_KEY[m.id as MonthId]] = usd(sel(m.facts)); });
+    const ytdSum = monthsForCols.reduce((acc, m) => acc + sel(m.facts), 0);
+    row.ytd = usd(ytdSum);
+    if (prevFacts) {
+      const variation = pctChange(sel(facts), sel(prevFacts));
+      row.variation = fmtPctSigned(variation);
+      row.varType = variation === 0 ? 'neutral' : (inverse ? variation < 0 : variation > 0) ? 'positive' : 'negative';
+    }
+    return row;
   };
-  return overlaid;
+  const holdingComparison: PCGComparisonRow[] = [
+    buildComparisonRow('Marge Brute Groupe', (f) => f.margeBruteGroupe),
+    buildComparisonRow('Réserves Filiales (10%)', (f) => f.reservesFiliales),
+    buildComparisonRow('Remontée Holding (90%)', (f) => f.remonteeHolding),
+    buildComparisonRow('Frais Holding', (f) => f.fraisHolding, true),
+    buildComparisonRow('Résultat Net Holding', (f) => f.resultatNetHolding),
+  ];
+
+  // ----- OVERVIEW COMPARISON (per entity)
+  const buildEntityRow = (entity: string, k: EntityKey): PCGOverviewComparisonRow => {
+    const row: PCGOverviewComparisonRow = { entity };
+    monthsForCols.forEach((m) => { row[MONTH_KEY[m.id as MonthId]] = usd(entityMarge(m.facts, k)); });
+    const ytdSum = monthsForCols.reduce((acc, m) => acc + entityMarge(m.facts, k), 0);
+    row.ytd = usd(ytdSum);
+    if (prevFacts) {
+      const variation = pctChange(entityMarge(facts, k), entityMarge(prevFacts, k));
+      row.variation = fmtPctSigned(variation);
+      row.varType = variation === 0 ? 'neutral' : variation > 0 ? 'positive' : 'negative';
+    }
+    return row;
+  };
+  const overviewComparison: PCGOverviewComparisonRow[] = [
+    buildEntityRow('Agency (Part PCA 50%)', 'agency'),
+    buildEntityRow('Structuring', 'structuring'),
+    buildEntityRow('Digit Solution', 'digit'),
+    buildEntityRow('SPY', 'spy'),
+    buildEntityRow('Comment/Trustpilot', 'comment'),
+  ];
+  const overviewComparisonTotal: PCGOverviewComparisonRow = (() => {
+    const row: PCGOverviewComparisonRow = { entity: 'MARGE BRUTE GROUPE' };
+    monthsForCols.forEach((m) => { row[MONTH_KEY[m.id as MonthId]] = usd(m.facts.margeBruteGroupe); });
+    row.ytd = usd(ytd.margeBruteYTD);
+    if (prevFacts) {
+      const variation = pctChange(facts.margeBruteGroupe, prevFacts.margeBruteGroupe);
+      row.variation = fmtPctSigned(variation);
+      row.varType = variation === 0 ? 'neutral' : variation > 0 ? 'positive' : 'negative';
+    }
+    return row;
+  })();
+
+  // ----- YTD MONTHLY TABLE
+  const ytdMonthlyTable = monthsForCols.map((m) => {
+    const taux = m.facts.caGroupe > 0 ? (m.facts.margeBruteGroupe / m.facts.caGroupe) * 100 : 0;
+    return {
+      month: m.label,
+      ca: usd(m.facts.caGroupe),
+      margin: usd(m.facts.margeBruteGroupe),
+      taux: fmtPct(taux),
+      net: usd(m.facts.resultatNetHolding),
+    };
+  });
+  const ytdTaux = ytd.caYTD > 0 ? (ytd.margeBruteYTD / ytd.caYTD) * 100 : 0;
+  const ytdMonthlyTotal = {
+    month: monthsForCols.length === 4 ? 'YTD TOTAL' : `YTD TOTAL ${monthsForCols.length === 3 ? 'Q1' : ''}`.trim(),
+    ca: usd(ytd.caYTD),
+    margin: usd(ytd.margeBruteYTD),
+    taux: fmtPct(ytdTaux),
+    net: usd(ytd.resultatNetYTD),
+  };
+
+  // ----- YTD ENTITY TABLE
+  const buildYtdEntity = (entity: string, k: EntityKey) => {
+    const row: any = { entity };
+    monthsForCols.forEach((m) => { row[MONTH_KEY[m.id as MonthId]] = usd(entityMarge(m.facts, k)); });
+    const total = monthsForCols.reduce((a, m) => a + entityMarge(m.facts, k), 0);
+    row.ytd = usd(total);
+    row.pct = ytd.margeBruteYTD > 0 ? fmtPct((total / ytd.margeBruteYTD) * 100) : '0.0%';
+    return row;
+  };
+  const ytdEntityTable = [
+    buildYtdEntity('Agency (Part PCA)', 'agency'),
+    buildYtdEntity('Structuring', 'structuring'),
+    buildYtdEntity('Digit Solution', 'digit'),
+    buildYtdEntity('SPY', 'spy'),
+    buildYtdEntity('Comment/Trustpilot', 'comment'),
+  ];
+  const ytdEntityTotal: any = { entity: 'TOTAL GROUPE' };
+  monthsForCols.forEach((m) => { ytdEntityTotal[MONTH_KEY[m.id as MonthId]] = usd(m.facts.margeBruteGroupe); });
+  ytdEntityTotal.ytd = usd(ytd.margeBruteYTD);
+  ytdEntityTotal.pct = '100%';
+
+  // ----- YTD TREND
+  const ytdTrendData = monthsForCols.map((m) => ({
+    month: MONTH_SHORT[m.id as MonthId],
+    ca: Math.round(m.facts.caGroupe),
+    margin: Math.round(m.facts.margeBruteGroupe),
+    net: Math.round(m.facts.resultatNetHolding),
+  }));
+
+  // ----- RESERVES TABLES
+  const buildReservesRow = (entity: string, k: EntityKey) => {
+    const row: any = { entity };
+    monthsForCols.forEach((m) => { row[MONTH_KEY[m.id as MonthId]] = usd(entityMarge(m.facts, k) * 0.10); });
+    const total = monthsForCols.reduce((a, m) => a + entityMarge(m.facts, k) * 0.10, 0);
+    row.ytd = usd(total);
+    return row;
+  };
+  const reservesEntityTable = [
+    buildReservesRow('Agency (Part PCA)', 'agency'),
+    buildReservesRow('Structuring', 'structuring'),
+    buildReservesRow('Digit Solution', 'digit'),
+    buildReservesRow('SPY', 'spy'),
+    buildReservesRow('Comment/Trustpilot', 'comment'),
+  ];
+  const reservesEntityTotal: any = { entity: 'TOTAL RÉSERVES' };
+  monthsForCols.forEach((m) => { reservesEntityTotal[MONTH_KEY[m.id as MonthId]] = usd(m.facts.reservesFiliales); });
+  reservesEntityTotal.ytd = usd(ytd.reservesYTD);
+
+  // Reserves cards: top 3 + grouped tail
+  const reservesEntries: { name: string; total: number }[] = [
+    { name: 'Agency (Part PCA)', total: ytd.perEntityYTD.agency * 0.10 },
+    { name: 'Structuring', total: ytd.perEntityYTD.structuring * 0.10 },
+    { name: 'Digit Solution', total: ytd.perEntityYTD.digit * 0.10 },
+    { name: 'SPY', total: ytd.perEntityYTD.spy * 0.10 },
+    { name: 'Comment/Trustpilot', total: ytd.perEntityYTD.comment * 0.10 },
+  ].sort((a, b) => b.total - a.total);
+  const top3 = reservesEntries.slice(0, 3);
+  const tail = reservesEntries.slice(3);
+  const reservesCards = [
+    ...top3.map((e) => ({
+      name: e.name,
+      amount: usd(e.total),
+      pct: ytd.reservesYTD > 0 ? fmtPct((e.total / ytd.reservesYTD) * 100) : '0.0%',
+    })),
+    ...(tail.length > 0
+      ? [{
+          name: tail.map((t) => t.name.split(' ')[0]).join(' + '),
+          amount: usd(tail.reduce((a, t) => a + t.total, 0)),
+          pct: ytd.reservesYTD > 0
+            ? fmtPct((tail.reduce((a, t) => a + t.total, 0) / ytd.reservesYTD) * 100)
+            : '0.0%',
+        }]
+      : []),
+  ];
+
+  // ----- RESERVES HERO (per-month + YTD card)
+  const reservesHero = [
+    ...monthsForCols.map((m, i) => ({
+      label: `Réserves ${MONTH_SHORT[m.id as MonthId]}`,
+      value: usd(m.facts.reservesFiliales),
+      detail: `10% marge brute ${MONTH_SHORT[m.id as MonthId]}`,
+      color: (['navy', 'success', 'primary', 'gold'] as const)[i % 4],
+    })),
+    {
+      label: `Réserves YTD${monthsForCols.length === 3 ? ' Q1' : ''}`,
+      value: usd(ytd.reservesYTD),
+      detail: 'Cumul 2026',
+      color: 'gold' as const,
+    },
+  ].slice(0, 4); // hero grid is 4 cards max
+
+  // ----- OVERVIEW HERO (with variance vs prev)
+  const overviewHero = [
+    {
+      label: 'CA Groupe', value: usd(facts.caGroupe), detail: '5 entités consolidées', color: 'navy',
+      variance: prevFacts ? `${fmtPctSigned(pctChange(facts.caGroupe, prevFacts.caGroupe))} vs ${prevLabel}` : null,
+      varType: prevFacts ? (facts.caGroupe >= prevFacts.caGroupe ? 'positive' : 'negative') : null,
+    },
+    {
+      label: 'Marge Brute Groupe', value: usd(facts.margeBruteGroupe),
+      detail: `${fmtPct(facts.caGroupe > 0 ? (facts.margeBruteGroupe / facts.caGroupe) * 100 : 0)} du CA`,
+      color: 'success',
+      variance: prevFacts ? `${fmtPctSigned(pctChange(facts.margeBruteGroupe, prevFacts.margeBruteGroupe))} vs ${prevLabel}` : null,
+      varType: prevFacts ? (facts.margeBruteGroupe >= prevFacts.margeBruteGroupe ? 'positive' : 'negative') : null,
+    },
+    {
+      label: 'Résultat Net Holding', value: usd(facts.resultatNetHolding), detail: 'Après frais holding', color: 'gold',
+      variance: prevFacts ? `${fmtPctSigned(pctChange(facts.resultatNetHolding, prevFacts.resultatNetHolding))} vs ${prevLabel}` : null,
+      varType: prevFacts ? (facts.resultatNetHolding >= prevFacts.resultatNetHolding ? 'positive' : 'negative') : null,
+    },
+    {
+      label: 'Réserves Filiales', value: usd(facts.reservesFiliales), detail: '10% marge brute', color: 'primary',
+      variance: prevFacts ? `${fmtPctSigned(pctChange(facts.reservesFiliales, prevFacts.reservesFiliales))} vs ${prevLabel}` : null,
+      varType: prevFacts ? (facts.reservesFiliales >= prevFacts.reservesFiliales ? 'positive' : 'negative') : null,
+    },
+  ];
+
+  // ----- YTD HERO
+  const ytdHero = [
+    { label: 'CA YTD', value: usd(ytd.caYTD), detail: monthsForCols.map((m) => MONTH_SHORT[m.id as MonthId]).join(' + '), color: 'navy' },
+    { label: 'Marge Brute YTD', value: usd(ytd.margeBruteYTD), detail: `${fmtPct(ytdTaux)} du CA`, color: 'success' },
+    { label: 'Résultat Net YTD', value: usd(ytd.resultatNetYTD), detail: 'Holding cumulé', color: 'gold' },
+    { label: 'Réserves Cumulées', value: usd(ytd.reservesYTD), detail: 'Toutes filiales', color: 'primary' },
+  ];
+
+  return {
+    ...base,
+    overviewHero: overviewHero as any,
+    overviewComparison: overviewComparison as any,
+    overviewComparisonTotal: overviewComparisonTotal as any,
+    entityCards: entityCards as any,
+    pieData: pieData as any,
+    holdingKPIs: holdingKPIs as any,
+    holdingComparison: holdingComparison as any,
+    holdingPieData: holdingPieData as any,
+    holdingNetResult: usd(facts.resultatNetHolding),
+    directors: directors as any,
+    ytdHero: ytdHero as any,
+    ytdMonthlyTable: ytdMonthlyTable as any,
+    ytdMonthlyTotal: ytdMonthlyTotal as any,
+    ytdEntityTable: ytdEntityTable as any,
+    ytdEntityTotal: ytdEntityTotal as any,
+    ytdTrendData: ytdTrendData as any,
+    reservesHero: reservesHero as any,
+    reservesEntityTable: reservesEntityTable as any,
+    reservesEntityTotal: reservesEntityTotal as any,
+    reservesCards: reservesCards as any,
+  };
 }
+
+// ============ APRIL 2026 (scaffold — bespoke per-entity tabs cloned from Mars
+// for waterfall/risks layout. Consolidated KPIs/YTD/Holding/Reserves are
+// auto-overlaid from sources). =================================================
+const APR_2026 = {
+  ...MAR_2026,
+  monthLabel: 'Avril 2026',
+  footerLabel: 'Avril 2026',
+};
 
 export function getMonthData(month: MonthId): PCGroupMonthData {
   const base =
@@ -1055,7 +1416,9 @@ export function getMonthData(month: MonthId): PCGroupMonthData {
       ? (JAN_2026 as PCGroupMonthData)
       : month === 'mar-2026'
         ? (MAR_2026 as PCGroupMonthData)
-        : FEB_2026;
+        : month === 'apr-2026'
+          ? (APR_2026 as PCGroupMonthData)
+          : FEB_2026;
   return applyComputedOverlay(month, base);
 }
 
