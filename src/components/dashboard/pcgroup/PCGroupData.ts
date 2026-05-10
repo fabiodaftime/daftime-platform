@@ -1352,10 +1352,12 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     },
   ].slice(0, 4); // hero grid is 4 cards max
 
+  const entitiesCount = ENTITY_META.length;
+  const entitiesDetail = `${entitiesCount} entités consolidées`;
   // ----- OVERVIEW HERO (with variance vs prev)
   const overviewHero = [
     {
-      label: 'CA Groupe', value: usd(facts.caGroupe), detail: '5 entités consolidées', color: 'navy',
+      label: 'CA Groupe', value: usd(facts.caGroupe), detail: entitiesDetail, color: 'navy',
       variance: prevFacts ? `${fmtPctSigned(pctChange(facts.caGroupe, prevFacts.caGroupe))} vs ${prevLabel}` : null,
       varType: prevFacts ? (facts.caGroupe >= prevFacts.caGroupe ? 'positive' : 'negative') : null,
     },
@@ -1386,8 +1388,11 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     { label: 'Réserves Cumulées', value: usd(ytd.reservesYTD), detail: 'Toutes filiales', color: 'primary' },
   ];
 
-  return {
+  const out: any = {
     ...base,
+    monthLabel: PCG_MONTH_LABELS[month],
+    footerLabel: PCG_MONTH_LABELS[month],
+    entitiesCount,
     overviewHero: overviewHero as any,
     overviewComparison: overviewComparison as any,
     overviewComparisonTotal: overviewComparisonTotal as any,
@@ -1410,6 +1415,7 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     reservesCards: reservesCards as any,
     intercos: computeIntercos(month) as any,
   };
+  return out as PCGroupMonthData;
 }
 
 // ============ APRIL 2026 (scaffold — bespoke per-entity tabs cloned from Mars
