@@ -189,7 +189,7 @@ export default function DashboardPCGroup() {
 
 
       <main className="pcg-main">
-        {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} />}
+        {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} monthId={selectedMonth} />}
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
         {tab === 'agency' && <PCGroupAgencyTab data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'structuring' && <PCGroupStructuringTab data={monthData} entityRoutes={entityRoutes} />}
