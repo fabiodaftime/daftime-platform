@@ -1012,7 +1012,38 @@ const MAR_2026 = {
 export type PCGroupMonthData = typeof FEB_2026;
 
 export function getMonthData(month: MonthId): PCGroupMonthData {
-  if (month === 'jan-2026') return JAN_2026 as PCGroupMonthData;
-  if (month === 'mar-2026') return MAR_2026 as PCGroupMonthData;
-  return FEB_2026;
+  const data =
+    month === 'jan-2026' ? (JAN_2026 as PCGroupMonthData) :
+    month === 'mar-2026' ? (MAR_2026 as PCGroupMonthData) :
+    FEB_2026;
+  // Continuous YTD validation (dev-only console output).
+  validatePCGroupMonth(data, month);
+  return data;
 }
+
+// ============ CONTINUOUS YTD VALIDATION ============
+import { validateComparisonRows, reportYTDIssues, type YTDIssue } from '@/lib/ytdValidation';
+
+const _validatedKeys = new Set<string>();
+
+/** Validate every comparison block of a PCGroup month against jan+feb+mar invariants. */
+export function validatePCGroupMonth(data: PCGroupMonthData, monthLabel: string): YTDIssue[] {
+  // Memoize: only run once per (month) to avoid spamming on every re-render.
+  if (_validatedKeys.has(monthLabel)) return [];
+  _validatedKeys.add(monthLabel);
+
+  const blocks: Array<[string, PCGComparisonRow[] | null | undefined]> = [
+    [`Agency · ${monthLabel}`, data.agencyComparison as PCGComparisonRow[] | null],
+    [`Structuring · ${monthLabel}`, data.structuringComparison as PCGComparisonRow[] | null],
+    [`Digit · ${monthLabel}`, data.digitComparison as PCGComparisonRow[] | null],
+    [`Holding · ${monthLabel}`, data.holdingComparison as PCGComparisonRow[] | null],
+  ];
+
+  const all: YTDIssue[] = [];
+  for (const [ctx, rows] of blocks) {
+    all.push(...validateComparisonRows(rows ?? null, ctx));
+  }
+  reportYTDIssues(all);
+  return all;
+}
+
