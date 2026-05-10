@@ -118,9 +118,12 @@ export default function AdminEntityInputs() {
           <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Retour
           </Button>
-          <h1 style={{ margin: 0, fontFamily: 'serif', fontSize: 28, color: '#0A1628' }}>
+          <h1 style={{ margin: 0, fontFamily: 'serif', fontSize: 28, color: '#0A1628', flex: 1 }}>
             Saisie mensuelle — {meta.label}
           </h1>
+          <Button variant="outline" size="sm" onClick={() => navigate('/admin/data-sources')}>
+            Sources de données →
+          </Button>
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
