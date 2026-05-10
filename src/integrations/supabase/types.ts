@@ -120,6 +120,81 @@ export type Database = {
           },
         ]
       }
+      entity_input_edits_log: {
+        Row: {
+          actor_id: string
+          actor_name: string | null
+          company_id: string | null
+          created_at: string
+          entity_layout: string
+          field_path: string
+          id: string
+          month_id: string
+          new_value: Json | null
+          old_value: Json | null
+        }
+        Insert: {
+          actor_id: string
+          actor_name?: string | null
+          company_id?: string | null
+          created_at?: string
+          entity_layout: string
+          field_path: string
+          id?: string
+          month_id: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Update: {
+          actor_id?: string
+          actor_name?: string | null
+          company_id?: string | null
+          created_at?: string
+          entity_layout?: string
+          field_path?: string
+          id?: string
+          month_id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Relationships: []
+      }
+      entity_monthly_inputs: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          entity_layout: string
+          id: string
+          inputs: Json
+          month_id: string
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          entity_layout: string
+          id?: string
+          inputs?: Json
+          month_id: string
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          entity_layout?: string
+          id?: string
+          inputs?: Json
+          month_id?: string
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       expense_categories: {
         Row: {
           created_at: string
