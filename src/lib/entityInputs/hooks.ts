@@ -38,6 +38,15 @@ export function useEntityInputs(layout: EntityLayoutKey) {
     staleTime: 30_000,
   });
 
+  // Mirror to the sync singleton so non-React consumers (e.g. consolidated
+  // aggregator) can read the live values without async plumbing.
+  useEffect(() => {
+    if (!query.data) return;
+    const byMonth: Record<string, Record<string, number>> = {};
+    for (const r of query.data) byMonth[r.month_id] = r.inputs ?? {};
+    setEntityInputsLayout(layout, byMonth);
+  }, [layout, query.data]);
+
   // Realtime: any change → invalidate so all dashboards reflect it instantly.
   useEffect(() => {
     const channel = supabase
