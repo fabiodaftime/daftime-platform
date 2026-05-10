@@ -274,6 +274,7 @@ interface PCGroupValidationPanelProps {
 
 export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroupValidationPanelProps = {}) {
   const [collapsed, setCollapsed] = useState(!defaultOpen);
+  const [filter, setFilter] = useState<'all' | 'issues' | 'missing'>('all');
   const tolerance = options?.toleranceUsd ?? DEFAULT_TOLERANCE_USD;
   const checkMetrics = options?.checkMetrics !== false;
   const report = useMemo(
@@ -283,6 +284,12 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
   const { summary } = report;
   const hasIssues = summary.warnings + summary.missing > 0;
   const headerColor = summary.missing > 0 ? '#EF4444' : summary.warnings > 0 ? '#F59E0B' : '#10B981';
+
+  const filteredMonths = useMemo(() => {
+    if (filter === 'issues') return report.months.filter((m) => m.status === 'warning' || m.status === 'missing');
+    if (filter === 'missing') return report.months.filter((m) => m.status === 'missing');
+    return report.months;
+  }, [report.months, filter]);
 
   // Drawer drill-down
   const [drillState, setDrillState] = useState<{
