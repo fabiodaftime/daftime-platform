@@ -151,35 +151,13 @@ export default function AdminEntityInputs() {
             </thead>
             <tbody>
               {groups.map((g) => (
-                <>
-                  <tr key={`g-${g}`}>
-                    <td colSpan={1 + SUPPORTED_MONTHS.length} style={{
-                      padding: '12px 8px 4px', fontWeight: 600,
-                      color: '#D4A855', textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5,
-                    }}>{g}</td>
-                  </tr>
-                  {meta.fields.filter((f) => f.group === g).map((f) => (
-                    <tr key={f.key}>
-                      <td style={{ ...td, fontWeight: 500 }}>
-                        {f.label}
-                        <span style={{ color: '#94a3b8', marginLeft: 6, fontSize: 11 }}>
-                          {f.unit === 'usd' ? '$' : f.unit === 'pct' ? '%' : '#'}
-                        </span>
-                      </td>
-                      {SUPPORTED_MONTHS.map((m) => (
-                        <td key={m.id} style={td}>
-                          <Input
-                            type="number"
-                            inputMode="decimal"
-                            value={draft[m.id]?.[f.key] ?? ''}
-                            onChange={(e) => handleChange(m.id, f.key, e.target.value)}
-                            style={{ height: 32, fontSize: 13 }}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </>
+                <FragmentRows
+                  key={`g-${g}`}
+                  group={g}
+                  fields={meta.fields.filter((f) => f.group === g)}
+                  draft={draft}
+                  onChange={handleChange}
+                />
               ))}
               <tr>
                 <td style={td} />
