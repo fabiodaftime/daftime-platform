@@ -1390,6 +1390,8 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
 
   return {
     ...base,
+    monthLabel: PCG_MONTH_LABELS[month],
+    footerLabel: PCG_MONTH_LABELS[month],
     overviewHero: overviewHero as any,
     overviewComparison: overviewComparison as any,
     overviewComparisonTotal: overviewComparisonTotal as any,
