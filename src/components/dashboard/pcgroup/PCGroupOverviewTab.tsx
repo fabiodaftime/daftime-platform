@@ -37,11 +37,21 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
         const rows = overviewComparison as PCGOverviewComparisonRow[];
         const total = overviewComparisonTotal as PCGOverviewComparisonRow;
         const hasMar = Boolean(total.mar) || rows.some((r) => Boolean(r.mar));
+        const hasAvr = Boolean(total.avr) || rows.some((r) => Boolean(r.avr));
         const hasYtd = Boolean(total.ytd) || rows.some((r) => Boolean(r.ytd));
-        const title = hasMar
-          ? '📊 Comparatif Janvier / Février / Mars 2026'
-          : '📊 Comparatif Janvier vs Février 2026';
-        const mappingHeaders = ['Entité', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
+        const variationLabel = hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
+        const title = hasAvr
+          ? '📊 Comparatif Janvier / Février / Mars / Avril 2026'
+          : hasMar
+            ? '📊 Comparatif Janvier / Février / Mars 2026'
+            : '📊 Comparatif Janvier vs Février 2026';
+        const mappingHeaders = [
+          'Entité', 'Janvier', 'Février',
+          ...(hasMar ? ['Mars'] : []),
+          ...(hasAvr ? ['Avril'] : []),
+          `Variation${variationLabel}`,
+          ...(hasYtd ? ['YTD'] : []),
+        ];
         return (
           <div className="pcg-section">
             <div className="pcg-section-header pcg-section-header-row">
@@ -57,7 +67,8 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
                   <tr>
                     <th>Entité</th><th>Janvier</th><th>Février</th>
                     {hasMar && <th>Mars</th>}
-                    <th>Variation{hasMar ? ' (Fév→Mars)' : ''}</th>
+                    {hasAvr && <th>Avril</th>}
+                    <th>Variation{variationLabel}</th>
                     {hasYtd && <th>YTD</th>}
                   </tr>
                 </thead>
@@ -68,6 +79,7 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
                       <td>{cell(row.jan)}</td>
                       <td>{cell(row.feb)}</td>
                       {hasMar && <td>{cell(row.mar)}</td>}
+                      {hasAvr && <td>{cell(row.avr)}</td>}
                       <td className={`pcg-var-${row.varType}`}>{cell(row.variation)}</td>
                       {hasYtd && <td>{cell(row.ytd)}</td>}
                     </tr>
@@ -77,6 +89,7 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
                     <td>{cell(total.jan)}</td>
                     <td>{cell(total.feb)}</td>
                     {hasMar && <td>{cell(total.mar)}</td>}
+                    {hasAvr && <td>{cell(total.avr)}</td>}
                     <td className={`pcg-var-${total.varType}`}>{cell(total.variation)}</td>
                     {hasYtd && <td>{cell(total.ytd)}</td>}
                   </tr>
