@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, Search } from 'lucide-react';
 import { validateAllMonths, type MonthValidation, type ValidationOptions, DEFAULT_TOLERANCE_USD } from './pcGroupValidator';
+import { MetricBreakdownDrawer } from './MetricBreakdownDrawer';
+import type { BreakdownMetric } from './pcGroupBreakdown';
+import type { PCGSourceMonthId } from './sources/entityAdapters';
+
+const KNOWN_METRICS: ReadonlySet<string> = new Set([
+  'CA Groupe',
+  'Marge Brute Groupe',
+  'Résultat Net Holding',
+  'Réserves Filiales',
+]);
 
 const STATUS_META = {
   ok: { color: '#10B981', bg: 'rgba(16,185,129,0.10)', label: 'OK', Icon: CheckCircle2 },
