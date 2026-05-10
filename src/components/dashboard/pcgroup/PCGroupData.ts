@@ -1436,3 +1436,24 @@ export function getMonthData(month: MonthId): PCGroupMonthData {
 // Re-exports for callers that want direct access to the new layered API.
 export { computeConsolidatedFacts, computeYTD } from './pcGroupAggregator';
 export { agencyFacts, structuringFacts, digitFacts, getAvailableSourceMonths } from './sources/entityAdapters';
+
+// ---- Dynamic month list = intersection across all entities + manual block ----
+import { getAvailableSourceMonths as _getAvailable } from './sources/entityAdapters';
+
+export interface PCGroupAvailableMonth {
+  id: MonthId;
+  label: string;
+}
+
+export function getPCGroupAvailableMonths(): PCGroupAvailableMonth[] {
+  return _getAvailable()
+    .filter((m): m is MonthId => (MONTH_KEYS as string[]).includes(m))
+    .filter((m) => MANUAL_ENTITIES[m as keyof typeof MANUAL_ENTITIES])
+    .map((m) => ({ id: m as MonthId, label: PCG_MONTH_LABELS[m as MonthId] }));
+}
+
+/** Intersection of months across all sources + manual. Recomputed live. */
+export const PC_GROUP_AVAILABLE_MONTHS: PCGroupAvailableMonth[] = getPCGroupAvailableMonths();
+
+/** Backward-compat alias (existing imports keep working). */
+export const AVAILABLE_MONTHS = PC_GROUP_AVAILABLE_MONTHS;
