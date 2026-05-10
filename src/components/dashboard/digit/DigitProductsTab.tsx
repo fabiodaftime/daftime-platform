@@ -41,13 +41,14 @@ export function DigitProductsTab({ data }: Props) {
 
       {(spyDetail.feb || (spyDetail as any).mar) && (
         <div className="digit-card">
-          <h3 className="digit-card-title">🚀 Forte Croissance SPY</h3>
+          <h3 className="digit-card-title">🚀 Évolution SPY</h3>
           <div style={{ fontSize: '0.875rem', lineHeight: 1.8 }}>
             <div><strong>Janvier :</strong> CA {spyDetail.jan} | Marge {spyDetail.janMarge}</div>
             {spyDetail.feb && <div><strong>Février :</strong> CA {spyDetail.feb} | Marge {spyDetail.febMarge}</div>}
             {(spyDetail as any).mar && <div><strong>Mars :</strong> CA {(spyDetail as any).mar} | Marge {(spyDetail as any).marMarge}</div>}
+            {(spyDetail as any).apr && <div><strong>Avril :</strong> CA {(spyDetail as any).apr} | Marge {(spyDetail as any).aprMarge}</div>}
             <div style={{ color: D.green, fontWeight: 600, marginTop: '0.5rem' }}>
-              <strong>Évolution :</strong> {(spyDetail as any).mar ? 'CA +123% vs Janvier (+$20,600) 🚀 | Marge +6.3%' : 'CA +63.0% (+$10,550) | Marge +9.1%'}
+              <strong>Évolution :</strong> {(spyDetail as any).apr ? 'CA +129% vs Janvier (+$21,700) 🚀 | Avril +2.9% vs Mars' : (spyDetail as any).mar ? 'CA +123% vs Janvier (+$20,600) 🚀 | Marge +6.3%' : 'CA +63.0% (+$10,550) | Marge +9.1%'}
             </div>
           </div>
         </div>
