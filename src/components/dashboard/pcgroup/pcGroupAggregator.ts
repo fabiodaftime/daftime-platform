@@ -331,7 +331,7 @@ export function aggregatePCGroup(monthId: PCGSourceMonthId): PCGroupAggregate | 
     facts,
     prevFacts,
     kpis: {
-      caGroupe: buildKpi('CA Groupe', facts.caGroupe, '5 entités consolidées', mom?.caGroupe ?? null),
+      caGroupe: buildKpi('CA Groupe', facts.caGroupe, `${entitySpecs.length} entités consolidées`, mom?.caGroupe ?? null),
       margeBrute: buildKpi('Marge Brute Groupe', facts.margeBruteGroupe, `${fmtPct(ratio(facts.margeBruteGroupe, facts.caGroupe))} du CA`, mom?.margeBrute ?? null),
       resultatNet: buildKpi('Résultat Net Holding', facts.resultatNetHolding, 'Après frais holding', mom?.resultatNet ?? null),
       reserves: buildKpi('Réserves Filiales', facts.reservesFiliales, '10% marge brute', mom?.reserves ?? null),
