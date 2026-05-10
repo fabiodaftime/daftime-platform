@@ -186,6 +186,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/pcgroup-entities"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminPCGroupEntities />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
