@@ -1,6 +1,78 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, Search, Download } from 'lucide-react';
 import { validateAllMonths, type MonthValidation, type ValidationOptions, DEFAULT_TOLERANCE_USD } from './pcGroupValidator';
+
+function csvEscape(val: string | number): string {
+  const s = String(val ?? '');
+  if (/[",\n;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function buildValidationCSV(months: MonthValidation[]): string {
+  const rows: string[] = [];
+  rows.push(
+    [
+      'Mois',
+      'MonthId',
+      'Statut',
+      'Référence figée',
+      'Présence Agency',
+      'Présence Structuring',
+      'Présence Digit',
+      'Présence Manuel (SPY/Cmt/Holding)',
+      'Type',
+      'Métrique',
+      'Attendu (USD)',
+      'Calculé (USD)',
+      'Delta (USD)',
+      'Issue',
+    ].join(','),
+  );
+  for (const m of months) {
+    const base = [
+      csvEscape(m.label),
+      csvEscape(m.monthId),
+      csvEscape(m.status),
+      csvEscape(m.hasExpected ? 'oui' : 'non'),
+      csvEscape(m.presence.agency ? 'oui' : 'non'),
+      csvEscape(m.presence.structuring ? 'oui' : 'non'),
+      csvEscape(m.presence.digit ? 'oui' : 'non'),
+      csvEscape(m.presence.manual ? 'oui' : 'non'),
+    ];
+    if (m.deltas.length === 0 && m.issues.length === 0) {
+      rows.push([...base, 'summary', '', '', '', '', ''].join(','));
+    }
+    for (const d of m.deltas) {
+      rows.push(
+        [
+          ...base,
+          'delta',
+          csvEscape(d.metric),
+          csvEscape(Math.round(d.expected)),
+          csvEscape(Math.round(d.actual)),
+          csvEscape(Math.round(d.delta)),
+          '',
+        ].join(','),
+      );
+    }
+    for (const i of m.issues) {
+      rows.push([...base, 'issue', '', '', '', '', csvEscape(i)].join(','));
+    }
+  }
+  return rows.join('\n');
+}
+
+function downloadCSV(filename: string, content: string) {
+  const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 import { MetricBreakdownDrawer } from './MetricBreakdownDrawer';
 import type { BreakdownMetric } from './pcGroupBreakdown';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
@@ -242,22 +314,31 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
         overflow: 'hidden',
       }}
     >
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
+      <div
         style={{
-          width: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 18px',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
           fontFamily: 'DM Sans, sans-serif',
+          gap: 12,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            flex: 1,
+            textAlign: 'left',
+          }}
+        >
           <span
             style={{
               width: 10,
@@ -278,9 +359,44 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
               Toutes les entités cohérentes ✓
             </span>
           )}
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const ts = new Date().toISOString().slice(0, 10);
+              downloadCSV(`pcgroup-validation-${ts}.csv`, buildValidationCSV(report.months));
+            }}
+            title="Exporter le rapport en CSV"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#0F1B3D',
+              background: '#fff',
+              border: '1px solid #D4A85555',
+              padding: '6px 10px',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif',
+            }}
+          >
+            <Download size={13} color="#D4A855" />
+            Exporter CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+            aria-label={collapsed ? 'Déplier' : 'Replier'}
+          >
+            {collapsed ? <ChevronDown size={18} color="#64748B" /> : <ChevronUp size={18} color="#64748B" />}
+          </button>
         </div>
-        {collapsed ? <ChevronDown size={18} color="#64748B" /> : <ChevronUp size={18} color="#64748B" />}
-      </button>
+      </div>
 
       {!collapsed && (
         <div style={{ padding: '4px 18px 16px' }}>
