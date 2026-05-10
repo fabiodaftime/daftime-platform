@@ -1,8 +1,40 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { PCGroupValidationPanel } from '@/components/dashboard/pcgroup/PCGroupValidationPanel';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
+import { DEFAULT_TOLERANCE_USD } from '@/components/dashboard/pcgroup/pcGroupValidator';
+
+const STORAGE_KEY = 'pcgroup-diagnostics-settings';
+
+interface DiagSettings {
+  toleranceUsd: number;
+  checkMetrics: boolean;
+}
+
+const DEFAULTS: DiagSettings = {
+  toleranceUsd: DEFAULT_TOLERANCE_USD,
+  checkMetrics: true,
+};
+
+function loadSettings(): DiagSettings {
+  if (typeof window === 'undefined') return DEFAULTS;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULTS;
+    const parsed = JSON.parse(raw) as Partial<DiagSettings>;
+    return {
+      toleranceUsd: Math.max(0, Number(parsed.toleranceUsd ?? DEFAULTS.toleranceUsd)),
+      checkMetrics: parsed.checkMetrics !== false,
+    };
+  } catch {
+    return DEFAULTS;
+  }
+}
 
 /**
  * Page admin dédiée aux checks de cohérence du dashboard PCGroup consolidé.
@@ -15,6 +47,15 @@ export default function AdminPCGroupDiagnostics() {
   // la config en base (entités actives, mois disponibles, règles intercos).
   usePCGroupConfig();
   const navigate = useNavigate();
+  const [settings, setSettings] = useState<DiagSettings>(loadSettings);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+      /* ignore */
+    }
+  }, [settings]);
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'DM Sans, sans-serif' }}>
