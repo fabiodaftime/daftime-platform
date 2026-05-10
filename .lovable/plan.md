@@ -1,69 +1,103 @@
-## Constat : pourquoi aujourd'hui rien ne cascade
+# Automatisation des données : Google Sheets → Dashboards
 
-Les dashboards entités (Digit, Prime Circle Structuring, Prime Circle Agency, Bocuse, Hotel X, Skalis…) sont aujourd'hui des **pages statiques** : les chiffres affichés sont des **chaînes pré-formatées écrites à la main** dans des fichiers TS (`DigitData.ts`, `PrimeCircleData.ts`, `PrimeCircleAgencyData.ts`…). Exemple : `value: "$134,212"`, `value: "34.3%"`. Il n'existe **aucun moteur de calcul** : la marge n'est pas dérivée du CA, c'est juste une autre chaîne.
+## Pourquoi c'est faisable maintenant
 
-Conséquences directes :
-- Modifier le CA ne peut **rien** propager (rien n'est lié).
-- Les chiffres et les % peuvent **diverger** silencieusement (déjà arrivé : `digitNumericFacts.ts` est un fichier doublon maintenu en parallèle pour le consolidé).
-- Le flux actuel (Excel compta → import Cloud → HTML → copier-coller) est **non fiabilisable**, exactement ce que tu décris.
+On vient de poser la table `entity_monthly_inputs` (Phase 1 Digit) qui sert de **source de vérité unique**. Tout dashboard lit depuis cette table → il suffit donc d'**alimenter cette table automatiquement** depuis une source externe pour que tous les dashboards se mettent à jour en cascade (KPIs entité + consolidé PCGroup).
 
-Seul le **consolidé PCGroup** est aujourd'hui dérivé (adapters → facts normalisés → agrégateur qui calcule marges, réserves 10 %, remontée 90 %, frais holding) et déjà éditable pour les blocs manuels (SPY, Comment, Holding, règles) via les tables `pcgroup_manual_facts`, `pcgroup_holding_facts`, `pcgroup_rules`. C'est exactement le pattern à généraliser.
+C'est le bon moment : on n'a qu'**une seule porte d'entrée à automatiser**, pas 10 dashboards à refactorer.
 
-## Proposition : « Inputs canoniques en base + tout est dérivé »
+## Architecture proposée
 
-Pour chaque entité, on définit un **petit modèle d'inputs canoniques** (10 à 20 champs numériques par mois) qui devient la **seule source de vérité**. Tout le reste (KPI, %, sous-totaux par produit, YTD, comparatifs M-1, parts dans le pie, et le consolidé) est **recalculé** à partir de ces inputs.
-
-Exemple pour Digit (mois) :
+```text
+┌──────────────────┐      ┌──────────────────┐      ┌────────────────────┐
+│  Google Sheet    │─────▶│  Edge Function   │─────▶│ entity_monthly_    │
+│  (source live)   │ pull │  sync-gsheet     │ write│ inputs (DB)        │
+└──────────────────┘      └──────────────────┘      └────────────────────┘
+        │                          ▲                          │
+        │ webhook (Apps Script)    │ cron pg_cron             │ Realtime
+        │ ou trigger onEdit        │ (toutes les 15 min)      ▼
+        └──────────────────────────┘                  Dashboards refresh
+                                                      automatique
 ```
-ca_core, marge_core, ca_spy, marge_spy, ca_comment, marge_comment,
-provider_cost, salary_cost, tools, fees, refunds, sales_commissions,
-deals_setup, deals_ad_account, ...
+
+Trois mécanismes de déclenchement, cumulables :
+1. **Push instantané** : Apps Script dans le Sheet → POST vers une edge function dès qu'une cellule change (latence ~2 sec)
+2. **Pull périodique** : `pg_cron` toutes les 15 min appelle l'edge function (filet de sécurité)
+3. **Bouton "Synchroniser maintenant"** dans l'écran Super Admin
+
+## Sources supportées
+
+| Source | Statut | Mécanisme |
+|---|---|---|
+| **Google Sheets** | Phase 1 (priorité) | Connector Google Sheets déjà disponible dans Lovable Cloud |
+| **Excel** (OneDrive/SharePoint) | Phase 2 | Connector Microsoft Excel |
+| **Zoho Books / CRM** | Phase 3 | API Zoho directe (pas de connector natif → secret OAuth) |
+| **CSV upload manuel** | déjà existant | Garde le fallback actuel |
+
+## Mapping configurable (clé du système)
+
+Une nouvelle table `entity_data_mappings` qui décrit, **par entité**, comment lire le fichier source :
+
 ```
-→ Tout le reste se calcule : CA total = somme, marge % = marge/CA, ticket moyen = CA/deals, YTD = somme des mois, comparatif Fév-Jan = (fév-jan)/jan, etc.
+entity_layout: 'digit'
+source_type: 'google_sheets'
+source_ref: 'sheet_id_xxx' / 'tab=Janvier 2026'
+field_map: {
+  "ca_total":   { cell: "B5",  type: "number" },
+  "marge":      { cell: "B12", type: "number" },
+  "deals":      { cell: "B20", type: "integer" },
+  "produits":   { range: "A30:D40", type: "table", schema: [...] }
+}
+month_detection: { column: "A", format: "YYYY-MM" }
+```
 
-### Bénéfices
-- **Saisie unique** d'une donnée → cascade automatique partout (entité + consolidé) via React Query invalidate, exactement comme déjà fait pour SPY/Comment/Holding.
-- **Audit** : chaque modification tracée (utilisateur, date, valeur avant/après) dans `data_edits_audit`.
-- **Validation Zod** côté client + contraintes en base + RLS Super Admin pour les écritures.
-- **Fin du fichier doublon** `digitNumericFacts.ts` (le fact devient la table).
-- **Inline edit (crayon)** possible sur les cartes mappées 1:1 à un input.
+L'écran Super Admin permet de :
+- Coller l'URL du Google Sheet
+- Voir un aperçu des cellules
+- Mapper visuellement chaque champ (clic sur la cellule du preview → assignation au champ Digit)
+- Tester le mapping (mode dry-run qui montre ce qui serait écrit)
+- Activer la synchro
 
-### Trade-off honnête
-- Refactor borné mais réel : il faut faire **une entité à la fois**, définir son modèle d'inputs, et réécrire le fichier `*Data.ts` correspondant en fonction pure `compute(inputs) → displayData`. Compter ~½ journée par entité une fois le pattern établi.
-- Les KPI vraiment qualitatifs (commentaires, libellés textuels, logos clients) restent en config statique — seuls les **chiffres** passent en DB.
+## Phase 1 — Pilote Google Sheets sur Digit (~1 jour)
 
-## Plan d'exécution proposé (par phases)
+1. Connecter le **connector Google Sheets** (OAuth via Lovable)
+2. Créer la table `entity_data_mappings` + RLS Super Admin
+3. Edge function `sync-gsheet-to-inputs` :
+   - Lit le mapping pour `digit`
+   - Appelle gateway Google Sheets API
+   - Valide via le schéma Zod existant (`entityInputs/schema.ts`)
+   - Upsert dans `entity_monthly_inputs`
+   - Log dans `entity_input_edits_log` (actor = "auto-sync")
+4. Écran Super Admin **`/admin/data-sources`** :
+   - Liste des entités, colonne "Source" (manuel / Google Sheets / dernière synchro)
+   - Modal de mapping avec preview du Sheet
+   - Bouton "Synchroniser maintenant"
+   - Toggle "Auto-sync activé"
+5. Apps Script template (collable dans le Sheet par l'utilisateur) qui POST vers l'edge function sur `onEdit`
+6. Optionnel : `pg_cron` 15 min comme filet
 
-### Phase 1 — Pilote sur Digit (entité la plus simple, déjà à moitié normalisée)
-1. Créer la table `entity_monthly_inputs` (clé `(company_id, entity_layout, month_id)`, payload `jsonb` validé par schéma Zod côté client).
-2. Migrer les 4 mois de Digit (jan/fév/mars/avr 2026) depuis `DigitData.ts` + `digitNumericFacts.ts` → DB.
-3. Réécrire `DigitData.ts` : il devient un **calculateur pur** `computeDigitMonthData(inputs)` qui génère tout (overviewKPIs, costsKPIs, products, YTD, comparatifs).
-4. Ajouter un hook `useEntityInputs('digit', monthId)` (React Query) lu par `DashboardDigit`.
-5. Brancher le consolidé : `digitFacts()` lit la même DB au lieu de `DIGIT_NUMERIC_FACTS`.
-6. UI Super Admin : page « Saisie mensuelle Digit » (formulaire grille mois × champs), bouton « Enregistrer », toast + invalidation, audit log automatique.
-7. Phase 1.b : ajouter le **petit crayon inline** sur les cartes CA / Marge / Charges → drawer d'édition rapide du champ source (mêmes endpoints).
+## Phase 2 — Étendre
 
-### Phase 2 — Étendre à Structuring + Agency
-- Même recette, modèles d'inputs spécifiques.
-- Une fois les 3 sources dynamiques, le consolidé devient **100 % live** (plus aucun fact figé).
+- Ajouter Excel (même pattern, autre connector)
+- Étendre le mapping aux autres entités (Structuring, Agency, Bocuse...)
+- Tableau de bord "Santé des syncs" : dernière exécution, erreurs, écarts détectés
 
-### Phase 3 — Généralisation aux autres entités (Bocuse, Hotel X, Skalis, Nowmade, Labarile, Richissime, CW Partners…)
-- Au cas par cas selon les besoins client. Pattern identique.
+## Phase 3 — Zoho
 
-### Garde-fous transverses
-- **RLS** : seul Super Admin peut écrire ; tous les rôles avec accès à la company peuvent lire.
-- **Validation Zod** sur chaque champ (bornes min/max, NaN interdit, signes).
-- **Audit complet** : table `entity_input_edits_log` avec acteur, champ, ancienne/nouvelle valeur, mois, entité.
-- **Fallback** : si la DB ne renvoie rien pour un mois, on garde un seed initial (snapshot de l'existant) pour ne pas casser l'affichage.
-- **Realtime** : `supabase_realtime` sur la table → tous les clients ouverts voient la modif en quelques secondes (déjà la norme PCGroup).
+- OAuth Zoho (secret à ajouter, pas de connector natif)
+- Mapping orienté "compte comptable" plutôt que "cellule"
+- Reprise du même pipeline d'écriture
 
-## Choix à valider avant que je détaille la migration / le code
+## Garde-fous
 
-1. **Quelle entité pilote ?** Digit est techniquement le plus simple (numerics déjà extraits). Mais tu peux préférer Structuring (plus utilisé) ou Agency (la plus complexe — bon stress test).
-2. **UI d'édition** :
-   - **A.** Page dédiée « Saisie mensuelle » par entité (formulaire grille) — rapide à shipper, un seul écran à maîtriser.
-   - **B.** Crayon inline sur chaque carte du dashboard — UX plus fluide mais N points d'édition à gérer.
-   - **C.** Les deux (A pour saisie initiale, B pour corrections express). C'est ce que je recommande.
-3. **Périmètre** : on garde la possibilité d'**importer un Excel** (drop CSV → mapping AI → pré-remplissage du formulaire), ou on enterre l'import et on saisit toujours à la main ?
+- **Validation Zod stricte** avant écriture (un mauvais format Sheet ne corrompt pas la DB)
+- **Audit trail** complet : qui a sync, quand, quelles valeurs ont changé
+- **Mode "draft"** : la sync écrit dans une zone de staging, un Super Admin valide avant publication (optionnel, à activer par entité)
+- **Verrouillage manuel** : si un Super Admin a édité une cellule manuellement, la sync ne l'écrase pas sans confirmation
+- **Alertes** : si la sync échoue 3x ou si un écart > X% est détecté → toast + entrée dans le journal
 
-Réponds-moi sur ces 3 points et je te livre le plan technique détaillé (schéma de table exact, migration SQL, modules à créer/modifier, ordre des PR).
+## Questions avant de partir
+
+1. **Source prioritaire** : on commence par Google Sheets (le plus simple, OAuth déjà géré) ou tu veux directement Zoho ?
+2. **Granularité du Sheet** : un Sheet par entité (plus simple à mapper) ou un Sheet maître consolidé (un seul mapping mais plus complexe) ?
+3. **Mode strict ou tolérant** : la sync écrase toujours les valeurs manuelles, ou demande confirmation quand il y a conflit ?
