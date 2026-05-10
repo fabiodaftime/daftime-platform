@@ -24,6 +24,7 @@ import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupInterc
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
+import { buildHeaderSubtitle } from '@/components/dashboard/pcgroup/pcGroupHeaderLabels';
 import './DashboardPCGroup.css';
 
 const tabs = [
