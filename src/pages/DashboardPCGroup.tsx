@@ -25,6 +25,7 @@ import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGro
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
 import { buildHeaderSubtitle } from '@/components/dashboard/pcgroup/pcGroupHeaderLabels';
+import { useEntityInputs } from '@/lib/entityInputs/hooks';
 import './DashboardPCGroup.css';
 
 const tabs = [
@@ -45,6 +46,9 @@ export default function DashboardPCGroup() {
   const cfgQuery = usePCGroupConfig();
   const liveConfig = useLivePCGroupConfig();
   const { isSuperAdmin } = useAuth();
+  // Hydrate canonical entity inputs (Digit pilot) → propagated into the
+  // consolidated aggregator via the sync store.
+  useEntityInputs('digit');
 
   // Mois disponibles = intersection (sources + bloc manuel) ∩ mois actifs en BDD.
   const activeMonthIds = new Set(

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
 import { DIGIT_AVAILABLE_MONTHS, getDigitMonthData, type DigitMonthId } from '@/components/dashboard/digit/DigitData';
@@ -13,6 +13,9 @@ import { DigitEvolutionTab } from '@/components/dashboard/digit/DigitEvolutionTa
 import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
 import { DigitValidationTab } from '@/components/dashboard/digit/DigitValidationTab';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
+import { useEntityInputsByMonth } from '@/lib/entityInputs/hooks';
+import { applyDigitInputsToMonthData } from '@/lib/entityInputs/applyDigitInputs';
+import { useAuth } from '@/hooks/useAuth';
 import './DashboardDigit.css';
 
 const tabs = [
@@ -30,8 +33,14 @@ export default function DashboardDigit() {
   const [tab, setTab] = useState("overview");
   const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('apr-2026');
   const navigate = useNavigate();
+  const { isSuperAdmin } = useAuth();
+  const { byMonth } = useEntityInputsByMonth('digit');
 
-  const monthData = getDigitMonthData(selectedMonth);
+  const monthData = useMemo(() => {
+    const base = getDigitMonthData(selectedMonth);
+    const row = byMonth[selectedMonth];
+    return applyDigitInputsToMonthData(base, (row?.inputs as any) ?? null);
+  }, [selectedMonth, byMonth]);
 
   return (
     <div className="digit-dashboard">
@@ -44,7 +53,20 @@ export default function DashboardDigit() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
-            <ConsolidatedAccessButton />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {isSuperAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/entity-inputs?layout=digit')}
+                  title="Modifier les chiffres mensuels (Super Admin)"
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  Saisie
+                </Button>
+              )}
+              <ConsolidatedAccessButton />
+            </div>
           </div>
           <div className="digit-header-main">
             <div>

@@ -27,6 +27,7 @@ import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPCGroupDiagnostics from "./pages/AdminPCGroupDiagnostics";
 import AdminPCGroupEntities from "./pages/AdminPCGroupEntities";
+import AdminEntityInputs from "./pages/AdminEntityInputs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -191,6 +192,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminPCGroupEntities />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/entity-inputs"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminEntityInputs />
                 </ProtectedRoute>
               }
             />
