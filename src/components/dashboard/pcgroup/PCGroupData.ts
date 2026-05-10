@@ -1352,10 +1352,12 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     },
   ].slice(0, 4); // hero grid is 4 cards max
 
+  const entitiesCount = ENTITY_META.length;
+  const entitiesDetail = `${entitiesCount} entités consolidées`;
   // ----- OVERVIEW HERO (with variance vs prev)
   const overviewHero = [
     {
-      label: 'CA Groupe', value: usd(facts.caGroupe), detail: '5 entités consolidées', color: 'navy',
+      label: 'CA Groupe', value: usd(facts.caGroupe), detail: entitiesDetail, color: 'navy',
       variance: prevFacts ? `${fmtPctSigned(pctChange(facts.caGroupe, prevFacts.caGroupe))} vs ${prevLabel}` : null,
       varType: prevFacts ? (facts.caGroupe >= prevFacts.caGroupe ? 'positive' : 'negative') : null,
     },
