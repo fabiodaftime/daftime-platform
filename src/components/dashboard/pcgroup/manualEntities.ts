@@ -34,6 +34,27 @@ export interface ManualMonthExtras {
   holding: ManualHoldingBlock;
 }
 
+// ---------- INTERCOS CASH (actuals reçus + apports) ----------
+// Montants RÉELLEMENT encaissés par la Holding pour chaque période-source.
+// Les remontées attendues sont calculées par les règles (intercosRules.ts) ;
+// seuls les encaissements réels (et les apports ponctuels) restent saisis.
+export interface IntercoCashBlock {
+  /** Encaissements reçus par entité pour la marge générée durant ce mois. */
+  received: Partial<Record<'agency' | 'structuring' | 'digit' | 'spy' | 'comment', number>>;
+  /** Apport exceptionnel d'un dirigeant pour combler un retard de remontée. */
+  apportMaxence?: number;
+}
+
+export const INTERCOS_CASH: Partial<Record<PCGSourceMonthId, IntercoCashBlock>> = {
+  // Encaissements partiels Q1 : à date, seuls $38,173 ont été remontés sur les
+  // $152,845 exigibles (Jan + Fév). Affectation forfaitaire jusqu'à réconciliation
+  // bancaire détaillée.
+  'jan-2026': { received: { structuring: 20000, digit: 12000, agency: 1500, spy: 2000, comment: 500 } },
+  'feb-2026': { received: { structuring: 1500, digit: 500, agency: 173 }, apportMaxence: 54458 },
+  'mar-2026': { received: {} },
+  'apr-2026': { received: {} },
+};
+
 export const MANUAL_ENTITIES: Partial<Record<PCGSourceMonthId, ManualMonthExtras>> = {
   'jan-2026': {
     spy: { ca: 16750, margeNette: 3262, charges: 13488, marginPct: 19.5, deals: 5 },

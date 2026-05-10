@@ -1021,6 +1021,7 @@ import {
 } from './pcGroupAggregator';
 import { fmtUSD, fmtUSDk, fmtPct, fmtPctSigned, pctChange } from './pcGroupFormatters';
 import { MANUAL_ENTITIES } from './manualEntities';
+import { computeIntercos } from './pcGroupIntercosCompute';
 
 // ----------------------------------------------------------------------------
 // Auto-overlay: replace cross-entity totals & sums in the legacy per-month
@@ -1398,6 +1399,7 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     reservesEntityTable: reservesEntityTable as any,
     reservesEntityTotal: reservesEntityTotal as any,
     reservesCards: reservesCards as any,
+    intercos: computeIntercos(month) as any,
   };
 }
 
