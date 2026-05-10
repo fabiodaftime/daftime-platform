@@ -26,7 +26,7 @@ const tabs = [
 
 export default function DashboardDigit() {
   const [tab, setTab] = useState("overview");
-  const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('mar-2026');
+  const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('apr-2026');
   const navigate = useNavigate();
 
   const monthData = getDigitMonthData(selectedMonth);
