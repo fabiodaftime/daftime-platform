@@ -1,17 +1,19 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { D, YTD_PRODUCT_COLORS, fmt, type DigitMonthData } from './DigitData';
+import { D, YTD_PRODUCT_COLORS, fmt, type DigitMonthData, type DigitMonthId } from './DigitData';
+import { DigitYTDValidationPanel } from './DigitYTDValidationPanel';
 
-interface Props { data: DigitMonthData; }
+interface Props { data: DigitMonthData; month?: DigitMonthId; }
 
 const typeColor: Record<string, string> = {
   primary: D.primary, success: D.green, accent: D.primary, warning: D.orange,
 };
 
-export function DigitYTDTab({ data }: Props) {
+export function DigitYTDTab({ data, month }: Props) {
   const { ytdMainKPIs, ytdMonthlyKPIs, ytdProductKPIs, ytdEvolutionData, ytdProductDistribution } = data;
 
   return (
     <div>
+      {month && <DigitYTDValidationPanel month={month} />}
       <h2 className="digit-section-title">Year-To-Date 2026 ({ytdMainKPIs[0]?.sub || ''})</h2>
       <div className="digit-kpi-grid">
         {ytdMainKPIs.map((kpi, i) => (

@@ -8,6 +8,27 @@
 
 import { DIGIT_AVAILABLE_MONTHS, getDigitMonthData, type DigitMonthId, type DigitMonthData } from "./DigitData";
 
+export type BaseField =
+  | "ca"
+  | "marge"
+  | "deals"
+  | "digitCA"
+  | "digitMarge"
+  | "spyCA"
+  | "spyMarge"
+  | "ctCA"
+  | "ctMarge";
+
+export interface BreakdownRow {
+  month: DigitMonthId;
+  monthLabel: string;
+  value: number;
+  /** Path inside DigitMonthData where this value comes from (mapping reference). */
+  sourcePath: string;
+  /** Raw textual value as authored in DigitData (for traceability). */
+  rawValue: string;
+}
+
 export interface YTDValidationIssue {
   month: DigitMonthId;
   indicator: string;
@@ -15,6 +36,12 @@ export interface YTDValidationIssue {
   actual: number;
   delta: number;
   kind: "additive" | "average";
+  /** Mapping of the *displayed* YTD value (where the dashboard reads it). */
+  ytdSourcePath: string;
+  /** Source rows that should sum to `expected` (one per month from Jan→current). */
+  breakdown: BreakdownRow[];
+  /** Human-readable formula for average issues, e.g. "Marge YTD / CA YTD * 100". */
+  formula?: string;
 }
 
 const TOLERANCE_ABS = 1; // $1 rounding tolerance for additive sums
@@ -46,7 +73,6 @@ const findKPI = (kpis: any[] | null | undefined, labelPattern: RegExp): any | un
 const findProduct = (products: any[] | null | undefined, labelPattern: RegExp): any | undefined =>
   products?.find((p) => labelPattern.test(p.label));
 
-/** Extract per-month base figures used as the source of truth for sums. */
 interface MonthlyBase {
   ca: number;
   marge: number;
@@ -59,7 +85,19 @@ interface MonthlyBase {
   ctMarge: number;
 }
 
-const extractMonthlyBase = (data: DigitMonthData): MonthlyBase => {
+interface MonthlyBaseWithSource {
+  base: MonthlyBase;
+  raw: Record<BaseField, string>;
+  paths: Record<BaseField, string>;
+}
+
+const extractMargeFromSub = (sub: string | null | undefined): number => {
+  if (!sub) return 0;
+  const m = sub.match(/Marge\s+\$?([\d,.\-]+)/i);
+  return m ? parseMoney(m[1]) : 0;
+};
+
+const extractMonthlyBaseWithSource = (data: DigitMonthData): MonthlyBaseWithSource => {
   const caKPI = findKPI(data.overviewKPIs, /CA Total/i);
   const margeKPI = findKPI(data.overviewKPIs, /Marge Totale/i);
   const dealsKPI = findKPI(data.overviewKPIs, /^Deals\b/i);
@@ -68,14 +106,7 @@ const extractMonthlyBase = (data: DigitMonthData): MonthlyBase => {
   const spy = findProduct(data.overviewProducts, /^SPY/i);
   const ct = findProduct(data.overviewProducts, /Comment\/Trust/i);
 
-  // Marge sub format: "Marge $40,198 (35.1%)" or "Marge $2,531"
-  const extractMargeFromSub = (sub: string | null | undefined): number => {
-    if (!sub) return 0;
-    const m = sub.match(/Marge\s+\$?([\d,.\-]+)/i);
-    return m ? parseMoney(m[1]) : 0;
-  };
-
-  return {
+  const base: MonthlyBase = {
     ca: parseMoney(caKPI?.value),
     marge: parseMoney(margeKPI?.value),
     deals: parseInteger(dealsKPI?.value),
@@ -86,13 +117,38 @@ const extractMonthlyBase = (data: DigitMonthData): MonthlyBase => {
     ctCA: parseMoney(ct?.value),
     ctMarge: extractMargeFromSub(ct?.sub),
   };
+
+  const raw: Record<BaseField, string> = {
+    ca: caKPI?.value ?? "—",
+    marge: margeKPI?.value ?? "—",
+    deals: dealsKPI?.value ?? "—",
+    digitCA: digit?.value ?? "—",
+    digitMarge: digit?.sub ?? "—",
+    spyCA: spy?.value ?? "—",
+    spyMarge: spy?.sub ?? "—",
+    ctCA: ct?.value ?? "—",
+    ctMarge: ct?.sub ?? "—",
+  };
+
+  const paths: Record<BaseField, string> = {
+    ca: 'overviewKPIs[label="CA Total"].value',
+    marge: 'overviewKPIs[label="Marge Totale"].value',
+    deals: 'overviewKPIs[label="Deals"].value',
+    digitCA: 'overviewProducts[label="Digit Solution"].value',
+    digitMarge: 'overviewProducts[label="Digit Solution"].sub (Marge $X)',
+    spyCA: 'overviewProducts[label="SPY"].value',
+    spyMarge: 'overviewProducts[label="SPY"].sub (Marge $X)',
+    ctCA: 'overviewProducts[label="Comment/Trust"].value',
+    ctMarge: 'overviewProducts[label="Comment/Trust"].sub (Marge $X)',
+  };
+
+  return { base, raw, paths };
 };
 
 const sumThrough = (untilMonth: DigitMonthId): MonthlyBase => {
   const idx = DIGIT_AVAILABLE_MONTHS.findIndex((m) => m.id === untilMonth);
-  const months = DIGIT_AVAILABLE_MONTHS.slice(0, idx + 1);
-  return months
-    .map((m) => extractMonthlyBase(getDigitMonthData(m.id)))
+  return DIGIT_AVAILABLE_MONTHS.slice(0, idx + 1)
+    .map((m) => extractMonthlyBaseWithSource(getDigitMonthData(m.id)).base)
     .reduce<MonthlyBase>(
       (acc, x) => ({
         ca: acc.ca + x.ca,
@@ -109,28 +165,68 @@ const sumThrough = (untilMonth: DigitMonthId): MonthlyBase => {
     );
 };
 
-const checkAdditive = (
+/** Build the source breakdown rows used for an additive YTD indicator. */
+export function buildBreakdown(untilMonth: DigitMonthId, field: BaseField): BreakdownRow[] {
+  const idx = DIGIT_AVAILABLE_MONTHS.findIndex((m) => m.id === untilMonth);
+  return DIGIT_AVAILABLE_MONTHS.slice(0, idx + 1).map((m) => {
+    const src = extractMonthlyBaseWithSource(getDigitMonthData(m.id));
+    return {
+      month: m.id,
+      monthLabel: m.label,
+      value: src.base[field],
+      sourcePath: src.paths[field],
+      rawValue: src.raw[field],
+    };
+  });
+}
+
+const additiveCheck = (
   month: DigitMonthId,
   indicator: string,
   expected: number,
   actual: number,
+  ytdSourcePath: string,
+  field: BaseField,
   tolerance = TOLERANCE_ABS,
 ): YTDValidationIssue | null => {
   const delta = actual - expected;
   if (Math.abs(delta) <= tolerance) return null;
-  return { month, indicator, expected, actual, delta, kind: "additive" };
+  return {
+    month,
+    indicator,
+    expected,
+    actual,
+    delta,
+    kind: "additive",
+    ytdSourcePath,
+    breakdown: buildBreakdown(month, field),
+  };
 };
 
-const checkAverage = (
+const averageCheck = (
   month: DigitMonthId,
   indicator: string,
   expected: number,
   actual: number,
   tolerance: number,
+  ytdSourcePath: string,
+  formula: string,
+  contributingFields: BaseField[],
 ): YTDValidationIssue | null => {
   const delta = actual - expected;
   if (Math.abs(delta) <= tolerance) return null;
-  return { month, indicator, expected, actual, delta, kind: "average" };
+  const breakdown = contributingFields.flatMap((f) => buildBreakdown(month, f));
+  return {
+    month,
+    indicator,
+    expected,
+    actual,
+    delta,
+    kind: "average",
+    ytdSourcePath,
+    breakdown,
+    formula,
+  };
 };
 
 /** Validate a single month's YTD block. Returns the list of issues (empty = OK). */
@@ -147,57 +243,63 @@ export function validateDigitYTDForMonth(month: DigitMonthId): YTDValidationIssu
   const tauxYTD = parsePercent(findKPI(main, /Taux de Marge/i)?.value);
   const ticketYTD = parseMoney(findKPI(main, /Ticket Moyen YTD/i)?.value);
 
-  // Deals from sub of Ticket Moyen YTD: "Sur 1,039 deals"
   const ticketSub = findKPI(main, /Ticket Moyen YTD/i)?.sub ?? "";
   const dealsYTDDeclared = parseInteger(ticketSub.match(/Sur\s+([\d,]+)/i)?.[1] ?? "");
 
-  // === Additive checks ===
   const additive = [
-    checkAdditive(month, "CA Total YTD", sum.ca, caYTD),
-    checkAdditive(month, "Marge Totale YTD", sum.marge, margeYTD),
-    checkAdditive(month, "Total Deals YTD (sub Ticket Moyen)", sum.deals, dealsYTDDeclared),
+    additiveCheck(month, "CA Total YTD", sum.ca, caYTD, 'ytdMainKPIs[label="CA Total YTD"].value', "ca"),
+    additiveCheck(month, "Marge Totale YTD", sum.marge, margeYTD, 'ytdMainKPIs[label="Marge Totale YTD"].value', "marge"),
+    additiveCheck(month, "Total Deals YTD", sum.deals, dealsYTDDeclared, 'ytdMainKPIs[label="Ticket Moyen YTD"].sub ("Sur N deals")', "deals"),
   ];
 
   const digitProd = findProduct(productKPIs, /Digit Solution/i);
   const spyProd = findProduct(productKPIs, /^SPY/i);
   const ctProd = findProduct(productKPIs, /Comment\/Trust/i);
 
-  const extractProdMarge = (sub: string | null | undefined): number => {
-    if (!sub) return 0;
-    const m = sub.match(/Marge\s+\$?([\d,.\-]+)/i);
-    return m ? parseMoney(m[1]) : 0;
-  };
-
   additive.push(
-    checkAdditive(month, "YTD Digit Solution CA", sum.digitCA, parseMoney(digitProd?.value)),
-    checkAdditive(month, "YTD Digit Solution Marge", sum.digitMarge, extractProdMarge(digitProd?.sub)),
-    checkAdditive(month, "YTD SPY CA", sum.spyCA, parseMoney(spyProd?.value)),
-    checkAdditive(month, "YTD SPY Marge", sum.spyMarge, extractProdMarge(spyProd?.sub)),
-    checkAdditive(month, "YTD Comment/Trust CA", sum.ctCA, parseMoney(ctProd?.value)),
-    checkAdditive(month, "YTD Comment/Trust Marge", sum.ctMarge, extractProdMarge(ctProd?.sub)),
+    additiveCheck(month, "YTD Digit Solution CA", sum.digitCA, parseMoney(digitProd?.value), 'ytdProductKPIs[label="Digit Solution"].value', "digitCA"),
+    additiveCheck(month, "YTD Digit Solution Marge", sum.digitMarge, extractMargeFromSub(digitProd?.sub), 'ytdProductKPIs[label="Digit Solution"].sub (Marge $X)', "digitMarge"),
+    additiveCheck(month, "YTD SPY CA", sum.spyCA, parseMoney(spyProd?.value), 'ytdProductKPIs[label="SPY"].value', "spyCA"),
+    additiveCheck(month, "YTD SPY Marge", sum.spyMarge, extractMargeFromSub(spyProd?.sub), 'ytdProductKPIs[label="SPY"].sub (Marge $X)', "spyMarge"),
+    additiveCheck(month, "YTD Comment/Trust CA", sum.ctCA, parseMoney(ctProd?.value), 'ytdProductKPIs[label="Comment/Trust"].value', "ctCA"),
+    additiveCheck(month, "YTD Comment/Trust Marge", sum.ctMarge, extractMargeFromSub(ctProd?.sub), 'ytdProductKPIs[label="Comment/Trust"].sub (Marge $X)', "ctMarge"),
   );
 
   for (const i of additive) if (i) issues.push(i);
 
-  // === Average checks ===
-  // Taux de Marge Moyen YTD = Marge YTD / CA YTD * 100 (weighted by definition).
   if (caYTD > 0) {
     const expectedTaux = (margeYTD / caYTD) * 100;
-    const issue = checkAverage(month, "Taux de Marge Moyen YTD", expectedTaux, tauxYTD, TOLERANCE_RATE);
+    const issue = averageCheck(
+      month,
+      "Taux de Marge Moyen YTD",
+      expectedTaux,
+      tauxYTD,
+      TOLERANCE_RATE,
+      'ytdMainKPIs[label="Taux de Marge Moyen YTD"].value',
+      "Marge Totale YTD / CA Total YTD × 100",
+      ["ca", "marge"],
+    );
     if (issue) issues.push(issue);
   }
 
-  // Ticket Moyen YTD = CA YTD / Total Deals YTD
   if (sum.deals > 0) {
     const expectedTicket = caYTD / sum.deals;
-    const issue = checkAverage(month, "Ticket Moyen YTD", expectedTicket, ticketYTD, TOLERANCE_TICKET);
+    const issue = averageCheck(
+      month,
+      "Ticket Moyen YTD",
+      expectedTicket,
+      ticketYTD,
+      TOLERANCE_TICKET,
+      'ytdMainKPIs[label="Ticket Moyen YTD"].value',
+      "CA Total YTD / Total Deals YTD",
+      ["ca", "deals"],
+    );
     if (issue) issues.push(issue);
   }
 
   return issues;
 }
 
-/** Validate every available month. Returns the merged list of issues. */
 export function validateAllDigitYTD(): YTDValidationIssue[] {
   return DIGIT_AVAILABLE_MONTHS.flatMap((m) => validateDigitYTDForMonth(m.id));
 }
