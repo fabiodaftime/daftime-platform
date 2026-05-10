@@ -1,6 +1,78 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, Search, Download } from 'lucide-react';
 import { validateAllMonths, type MonthValidation, type ValidationOptions, DEFAULT_TOLERANCE_USD } from './pcGroupValidator';
+
+function csvEscape(val: string | number): string {
+  const s = String(val ?? '');
+  if (/[",\n;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function buildValidationCSV(months: MonthValidation[]): string {
+  const rows: string[] = [];
+  rows.push(
+    [
+      'Mois',
+      'MonthId',
+      'Statut',
+      'Référence figée',
+      'Présence Agency',
+      'Présence Structuring',
+      'Présence Digit',
+      'Présence Manuel (SPY/Cmt/Holding)',
+      'Type',
+      'Métrique',
+      'Attendu (USD)',
+      'Calculé (USD)',
+      'Delta (USD)',
+      'Issue',
+    ].join(','),
+  );
+  for (const m of months) {
+    const base = [
+      csvEscape(m.label),
+      csvEscape(m.monthId),
+      csvEscape(m.status),
+      csvEscape(m.hasExpected ? 'oui' : 'non'),
+      csvEscape(m.presence.agency ? 'oui' : 'non'),
+      csvEscape(m.presence.structuring ? 'oui' : 'non'),
+      csvEscape(m.presence.digit ? 'oui' : 'non'),
+      csvEscape(m.presence.manual ? 'oui' : 'non'),
+    ];
+    if (m.deltas.length === 0 && m.issues.length === 0) {
+      rows.push([...base, 'summary', '', '', '', '', ''].join(','));
+    }
+    for (const d of m.deltas) {
+      rows.push(
+        [
+          ...base,
+          'delta',
+          csvEscape(d.metric),
+          csvEscape(Math.round(d.expected)),
+          csvEscape(Math.round(d.actual)),
+          csvEscape(Math.round(d.delta)),
+          '',
+        ].join(','),
+      );
+    }
+    for (const i of m.issues) {
+      rows.push([...base, 'issue', '', '', '', '', csvEscape(i)].join(','));
+    }
+  }
+  return rows.join('\n');
+}
+
+function downloadCSV(filename: string, content: string) {
+  const blob = new Blob(['\ufeff' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 import { MetricBreakdownDrawer } from './MetricBreakdownDrawer';
 import type { BreakdownMetric } from './pcGroupBreakdown';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
