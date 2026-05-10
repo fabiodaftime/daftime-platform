@@ -24,6 +24,7 @@ import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupInterc
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
+import { buildHeaderSubtitle } from '@/components/dashboard/pcgroup/pcGroupHeaderLabels';
 import './DashboardPCGroup.css';
 
 const tabs = [
@@ -52,8 +53,6 @@ export default function DashboardPCGroup() {
   const availableMonths = getPCGroupAvailableMonths().filter((m) => activeMonthIds.has(m.id));
   const activeEntities = liveConfig.entities.filter((e) => e.is_active);
   const entitiesCount = activeEntities.length;
-  const filialesCount = activeEntities.filter((e) => (e as any).base_role !== 'holding').length;
-  const holdingCount = activeEntities.filter((e) => (e as any).base_role === 'holding').length;
 
   const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
@@ -144,10 +143,7 @@ export default function DashboardPCGroup() {
             <div className="pcg-header-title">
               <h1>Dashboard Consolidé</h1>
               <p className="subtitle">
-                {holdingCount > 0
-                  ? `${filialesCount} Filiale${filialesCount > 1 ? 's' : ''} + ${holdingCount} Holding`
-                  : `${entitiesCount} ${entitiesCount > 1 ? 'Entités' : 'Entité'}`}
-                {' '}• {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
+                {buildHeaderSubtitle(liveConfig.entities, availableMonths.length)}
               </p>
             </div>
           </div>
