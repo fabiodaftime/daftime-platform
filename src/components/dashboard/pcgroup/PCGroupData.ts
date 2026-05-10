@@ -2,12 +2,16 @@
 
 export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
 
-export const AVAILABLE_MONTHS = [
-  { id: 'jan-2026' as MonthId, label: 'Janvier 2026' },
-  { id: 'feb-2026' as MonthId, label: 'Février 2026' },
-  { id: 'mar-2026' as MonthId, label: 'Mars 2026' },
-  { id: 'apr-2026' as MonthId, label: 'Avril 2026' },
-];
+// AVAILABLE_MONTHS is now derived dynamically: it's the intersection of months
+// for which Agency, Structuring, Digit AND the manual SPY/Comment/Holding block
+// all have data. See PC_GROUP_AVAILABLE_MONTHS below.
+const MONTH_LABELS_ALL: Record<MonthId, string> = {
+  'jan-2026': 'Janvier 2026',
+  'feb-2026': 'Février 2026',
+  'mar-2026': 'Mars 2026',
+  'avr-2026': 'Avril 2026' as never, // placeholder kept off; canonical key is apr-2026
+  'apr-2026': 'Avril 2026',
+} as Record<MonthId, string>;
 
 export type PCGroupEntityKey = 'agency' | 'structuring' | 'digit';
 
