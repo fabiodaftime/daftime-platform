@@ -78,9 +78,26 @@ export function structuringFacts(month: PCGSourceMonthId): EntityFacts | null {
 // Digit source data is formatted strings; we maintain numeric facts in a
 // dedicated companion file for use by the consolidated aggregator.
 export function digitFacts(month: PCGSourceMonthId): EntityFacts | null {
+  // Live override from the canonical inputs DB (super-admin editable).
+  const live = getEntityInput('digit', month);
+  if (live && typeof live.ca_total === 'number' && typeof live.marge_total === 'number') {
+    const ca = live.ca_total;
+    const marge = live.marge_total;
+    return {
+      ca,
+      margeNette: marge,
+      charges: ca - marge,
+      marginPct: ca > 0 ? (marge / ca) * 100 : 0,
+      deals: typeof live.deals_total === 'number' ? live.deals_total : undefined,
+      ticketMoyen:
+        typeof live.deals_total === 'number' && live.deals_total > 0
+          ? ca / live.deals_total
+          : undefined,
+    };
+  }
+  // Fallback to the static seed (kept for resilience).
   const f = DIGIT_NUMERIC_FACTS[month];
   if (!f) return null;
-  // Verify the source dashboard still has this month (consistency check)
   try {
     getDigitMonthData(month as DigitMonthId);
   } catch {
