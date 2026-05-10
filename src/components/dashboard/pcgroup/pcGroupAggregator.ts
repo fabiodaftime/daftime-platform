@@ -22,6 +22,11 @@ import {
   digitFacts,
   type PCGSourceMonthId,
 } from './sources/entityAdapters';
+import {
+  collectEntityMonths,
+  getEntityMonth,
+  type EntityKey,
+} from './sources/normalizedAdapters';
 import { fmtUSD, fmtPct, pctChange, fmtPctSigned } from './pcGroupFormatters';
 import { MANUAL_ENTITIES, type ManualMonthExtras } from './manualEntities';
 
