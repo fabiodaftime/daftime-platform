@@ -142,10 +142,7 @@ export default function DashboardPCGroup() {
             <div className="pcg-header-title">
               <h1>Dashboard Consolidé</h1>
               <p className="subtitle">
-                {holdingCount > 0
-                  ? `${filialesCount} Filiale${filialesCount > 1 ? 's' : ''} + ${holdingCount} Holding`
-                  : `${entitiesCount} ${entitiesCount > 1 ? 'Entités' : 'Entité'}`}
-                {' '}• {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
+                {buildHeaderSubtitle(liveConfig.entities, availableMonths.length)}
               </p>
             </div>
           </div>
