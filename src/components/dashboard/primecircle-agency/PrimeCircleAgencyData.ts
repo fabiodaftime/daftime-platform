@@ -476,10 +476,165 @@ const marData: PCAMonthData = {
   ],
 };
 
+// ===== APR 2026 DATA =====
+// Source : prime_circle_apr_2026.html (Avril 2026)
+// ⚠️ Le HTML source restate certains historiques (Jan gross $14,885, Feb gross $36,184, Feb expenses $9,406, Feb net $26,778)
+// vs nos valeurs existantes (Jan $10,726 / Feb $35,080 / Feb exp $10,606 / Feb net $24,473).
+// On préserve les valeurs historiques existantes et on additionne pour le YTD :
+//   YTD Gross   = 10726 + 35080 + 46402 + 58853 = $151,061
+//   YTD Exp     =  6237 + 10606 + 16555 + 13313 =  $46,711
+//   YTD Net     =  4489 + 24473 + 29892 + 45541 = $104,395
+//   YTD PCA     =  2245 + 12237 + 14946 + 22770 =  $52,198
+const aprData: PCAMonthData = {
+  monthId: 'apr-2026',
+  monthLabel: 'Avril 2026',
+  monthShort: 'AVR 2026',
+  gross: 58853, expenses: 13313, net: 45541, pcaShare: 22770,
+  transactions: 184, mediaSpend: 1629485, clientsActifs: 82, totalEncaisse: 0, adAccounts: 89,
+  marginPct: 77.4,
+  prevGross: 46402, prevExpenses: 16555, prevNet: 29892, prevPcaShare: 14946,
+  prevTransactions: 149, prevMediaSpend: 1244096,
+  ytdNet: 104395, ytdPcaShare: 52198, ytdGross: 151061, ytdExpenses: 46711,
+  expenseRatio: 22.6,
+  expenseBreakdown: [
+    { name: "Ads", value: 5719 },
+    { name: "Setup Cost", value: 4100 },
+    { name: "Salary", value: 1200 },
+    { name: "Transaction Fees", value: 1209 },
+    { name: "Master Referral", value: 428 },
+    { name: "Chris Referral", value: 399 },
+    { name: "Mathias Referral", value: 213 },
+    { name: "No Limit Referral", value: 45 },
+  ],
+  clientLifecycle: [
+    { status: "New", count: 87, color: C.green },
+    { status: "Renewed", count: 63, color: C.primary },
+    { status: "Replacement", count: 15, color: C.cyan },
+    { status: "Upgraded", count: 9, color: C.purple },
+    { status: "Trials", count: 9, color: C.orange },
+    { status: "Stopped", count: 3, color: C.red },
+  ],
+  waterfallRows: [
+    { l: "GROSS REVENUE", v: 58853, prev: 46402, bg: "greenSoft", b: true },
+    { l: "Setup Cost (41 setups)", v: -4100, prev: -3500, bg: null, b: false },
+    { l: "Salary", v: -1200, prev: -1400, bg: null, b: false },
+    { l: "Ads (Facebook)", v: -5719, prev: -11163, bg: null, b: false },
+    { l: "Chris Referral", v: -399, prev: 0, bg: null, b: false },
+    { l: "Master Referral", v: -428, prev: -307, bg: null, b: false },
+    { l: "No Limit Referral", v: -45, prev: -140, bg: null, b: false },
+    { l: "Mathias Referral", v: -213, prev: 0, bg: null, b: false },
+    { l: "Transaction Fees", v: -1209, prev: -45, bg: null, b: false },
+    { l: "TOTAL EXPENSES", v: -13313, prev: -16555, bg: "redSoft", b: true },
+    { l: "NET REVENUE", v: 45541, prev: 29892, bg: "primarySoft", b: true },
+    { l: "PCA Share (50%)", v: 22770, prev: 14946, bg: "purpleSoft", b: true },
+    { l: "PC Retained (50%)", v: 22770, prev: 14946, bg: "accentSoft", b: true },
+  ],
+  clientKPIs: [
+    { label: "Nouveaux", value: "87", icon: "🆕", sub: "vs 104 en Mar" },
+    { label: "Renouveles", value: "63", icon: "🔄", sub: "vs 27 en Mar (+133%)" },
+    { label: "Upgraded", value: "9", icon: "⬆️", sub: "vs 6 en Mar" },
+    { label: "Trials", value: "9", icon: "🧪", sub: "vs 12 en Mar" },
+    { label: "Replacement", value: "15", icon: "♻️", sub: "Nouveau statut" },
+    { label: "Stopped", value: "3", icon: "🛑", sub: "vs 6 en Mar" },
+  ],
+  topClientsRev: [
+    { name: "Carl Grichaud (76)", received: 8129, type: "CC", status: "New", detail: "Tier 6" },
+    { name: "Franco (108)", received: 6139, type: "CL", status: "New", detail: "Tier 5" },
+    { name: "AY (130)", received: 5770, type: "CL", status: "Renewed", detail: "Tier 6" },
+    { name: "Alessandro Pendola (145)", received: 5319, type: "CL", status: "Renewed", detail: "Tier 2" },
+    { name: "Philippe Heave (167)", received: 4879, type: "CC", status: "Renewed", detail: "Tier 3" },
+    { name: "Celementa (100)", received: 2765, type: "CL", status: "Renewed", detail: "Tier 1" },
+    { name: "Mikhail Tabunov (193)", received: 2699, type: "CL", status: "New", detail: "Tier 1" },
+    { name: "Adam Rotard (166)", received: 2628, type: "CL", status: "New", detail: "Tier 2" },
+    { name: "Syed (78)", received: 2031, type: "CC", status: "Renewed", detail: "Tier 6" },
+    { name: "Thomas (99)", received: 1742, type: "CC", status: "New", detail: "Tier 1" },
+  ],
+  newClientsDetail: [
+    { name: "Carl Grichaud (76)", sub: 8129, tier: "T6", type: "CC", note: "Top client Avril" },
+    { name: "Franco (108)", sub: 6139, tier: "T5", type: "CL", note: "Nouveau CL" },
+    { name: "Mikhail Tabunov (193)", sub: 2699, tier: "T1", type: "CL", note: "" },
+    { name: "Adam Rotard (166)", sub: 2628, tier: "T2", type: "CL", note: "" },
+    { name: "Thomas (99)", sub: 1742, tier: "T1", type: "CC", note: "" },
+  ],
+  tierBreakdown: [
+    { tier: "Tier 1", count: 63 },
+    { tier: "Tier 2", count: 28 },
+    { tier: "Tier 3", count: 26 },
+    { tier: "Tier 6", count: 17 },
+    { tier: "Premium", count: 11 },
+    { tier: "Invincible", count: 10 },
+    { tier: "Tier 5", count: 8 },
+    { tier: "Tier 4", count: 7 },
+  ],
+  ccCount: 113, clCount: 38, ccPct: "61.4", clPct: "20.7",
+  mediaKPIs: [
+    { label: "Total Media Spend", value: "$1.63M", icon: "📡", sub: "+31% vs Mar ($1.24M)" },
+    { label: "CC Spend", value: "$1.59M", icon: "💳", sub: "97.4% du total" },
+    { label: "CL Spend", value: "$43.1K", icon: "📊", sub: "2.6% du total (vs 11.2% Mar)" },
+    { label: "Ad Accounts", value: "89", icon: "📂", sub: "stable vs Mar" },
+  ],
+  topSpenders: [
+    { name: "Carl (76) T6", spend: 694670, pct: 42.6 },
+    { name: "LE (77) T3", spend: 141253, pct: 8.7 },
+    { name: "Thomas (99) T1", spend: 124735, pct: 7.7 },
+    { name: "Maxime (66) T3", spend: 102068, pct: 6.3 },
+    { name: "Benjamin (141) T6", spend: 92296, pct: 5.7 },
+    { name: "PH (167) T2", spend: 78757, pct: 4.8 },
+    { name: "AR (161) T6", spend: 41207, pct: 2.5 },
+    { name: "Elveria (98) T1", spend: 39849, pct: 2.4 },
+    { name: "PH (167) T3", spend: 35072, pct: 2.2 },
+    { name: "LC (192) T6", spend: 26888, pct: 1.7 },
+  ],
+  currencyMix: [
+    { name: "USD", value: 1405920 },
+    { name: "CHF", value: 92296 },
+    { name: "EUR", value: 72286 },
+    { name: "GBP", value: 45404 },
+    { name: "NOK", value: 6967 },
+    { name: "AED", value: 4712 },
+    { name: "Others", value: 1960 },
+  ],
+  ccSpend: "$1.59M", clSpend: "$43.1K", ccSpendPct: "97.4", clSpendPct: "2.6",
+  ccSpendPctPrev: "vs 88.8% en Mar", clSpendPctPrev: "vs 11.2% en Mar",
+  // ⚠️ Suivi Blink : valeurs restated du HTML Avril (paiements rattrapés sur Jan→Mar, Avril non payé).
+  blinkHeaders: ["", "Jan-26", "Feb-26", "Mar-26", "Apr-26", "Cumule"],
+  blinkRows: [
+    { l: "Revenu Net", v: [4489, 24473, 29892, 45541, 104395], bg: null, b: true, sep: false },
+    { l: "PCA Share (50%)", v: [2245, 12237, 14946, 22770, 52198], bg: null, b: false, sep: true },
+    { l: "Benefit a payer", v: [2245, 12237, 14946, 22770, 0], bg: null, b: true, sep: false },
+    { l: "Paye par PCA sur Benefit", v: [2245, 12237, 14946, 0, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Solde Benefit mensuel", v: [0, 0, 0, 22770, 0], bg: null, b: false, sep: false },
+    { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 0, 22770], bg: "redSoft", b: true, sep: true },
+    { l: "Media CL a payer", v: [21009, 210984, 161343, 43125, 0], bg: null, b: false, sep: false },
+    { l: "Paye par PCA sur Media", v: [21009, 210984, 161343, 24827, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Solde Media mensuel", v: [0, 0, 0, 18298, 0], bg: null, b: false, sep: false },
+    { l: "Solde Media du (cumule)", v: [0, 0, 0, 0, 18298], bg: "redSoft", b: true, sep: true },
+    { l: "Total Cumule du a Blink", v: [0, 0, 0, 0, 41068], bg: "primarySoft", b: true, sep: false },
+  ],
+  riskKPIs: [
+    { l: "Concentration Carl", v: "42.6%", s: "$694K du media spend Avril", c: C.redText },
+    { l: "CL Exposure", v: "$43.1K", s: "vs $139.9K en Mar (-69%)", c: C.greenText },
+    { l: "Marge Nette", v: "77.4%", s: "vs 64.4% en Mar (+13.0 pts)", c: C.greenText },
+    { l: "Solde Blink du", v: "$41.1K", s: "Benefit ($22.8K) + Media ($18.3K)", c: C.orangeText },
+  ],
+  risks: [
+    { label: "Concentration Carl 42.6%", desc: "Un seul client genere $694K de media spend (vs 11.5% Carl en Mar).", severity: "high", icon: "🎯" },
+    { label: "Solde Blink Avril non paye", desc: "$41.1K du a Blink (Benefit $22.8K + Media $18.3K) — Jan a Mar regularises.", severity: "medium", icon: "💰" },
+    { label: "Marge Nette record 77.4%", desc: "+13 pts vs Mars grace a la baisse Ads (-49%) et hausse du CA (+27%).", severity: "low", icon: "📈" },
+  ],
+  monthlyTrend: [
+    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Feb-26", gross: 35080, net: 24473, expenses: 10606, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
+    { month: "Mar-26", gross: 46402, net: 29892, expenses: 16555, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
+    { month: "Apr-26", gross: 58853, net: 45541, expenses: 13313, media: 1629485, ccMedia: 1586420, clMedia: 43125, newClients: 87, renewed: 63, upgraded: 9, trial: 9 },
+  ],
+};
+
 const monthDataMap: Record<PCAMonthId, PCAMonthData> = {
   'jan-2026': janData,
   'feb-2026': febData,
   'mar-2026': marData,
+  'apr-2026': aprData,
 };
 
 export function getPCAMonthData(monthId: PCAMonthId): PCAMonthData {
