@@ -107,7 +107,9 @@ export default function DashboardPCGroup() {
             <div className="pcg-header-divider" />
             <div className="pcg-header-title">
               <h1>Dashboard Consolidé</h1>
-              <p className="subtitle">6 Entités • Holding Model</p>
+              <p className="subtitle">
+                {(monthData as any).entitiesCount ?? 5} Filiales + Holding • {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
+              </p>
             </div>
           </div>
           <MonthSelector
