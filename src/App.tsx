@@ -195,6 +195,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/entity-inputs"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminEntityInputs />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
