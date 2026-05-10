@@ -1398,6 +1398,7 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     reservesEntityTable: reservesEntityTable as any,
     reservesEntityTotal: reservesEntityTotal as any,
     reservesCards: reservesCards as any,
+    intercos: computeIntercos(month) as any,
   };
 }
 
