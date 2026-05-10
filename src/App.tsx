@@ -177,6 +177,14 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route
+              path="/admin/pcgroup-diagnostics"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminPCGroupDiagnostics />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
