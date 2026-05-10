@@ -58,15 +58,18 @@ export interface ConsolidatedFacts {
 }
 
 export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedFacts | null {
-  const a = agencyFacts(month);
-  const s = structuringFacts(month);
-  const d = digitFacts(month);
+  // Use the normalized layer: one homogeneous list, one loop, no branching.
+  const blocks = collectEntityMonths(month);
+  const byKey = (k: EntityKey) => blocks.find((b) => b.key === k)?.data ?? null;
+  const a = byKey('agency');
+  const s = byKey('structuring');
+  const d = byKey('digit');
+  const spy = byKey('spy');
+  const cmt = byKey('comment');
   const m: ManualMonthExtras | undefined = MANUAL_ENTITIES[month];
-  if (!a || !s || !d || !m) return null;
+  if (!a || !s || !d || !spy || !cmt || !m) return null;
 
-  const agencyPartPCA = a.partPCA ?? a.margeNette / 2;
-  const margeBrute =
-    agencyPartPCA + s.margeNette + d.margeNette + m.spy.margeNette + m.comment.margeNette;
+  const margeBrute = a.contribution + s.contribution + d.contribution + spy.contribution + cmt.contribution;
   const reserves = margeBrute * 0.10;
   const remontee = margeBrute - reserves;
   const fraisHolding = m.holding.fraisTotal;
@@ -74,17 +77,17 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
 
   return {
     monthId: month,
-    agencyPartPCA,
-    structuringMargeNette: s.margeNette,
-    digitMargeNette: d.margeNette,
-    spyMargeNette: m.spy.margeNette,
-    commentMargeNette: m.comment.margeNette,
+    agencyPartPCA: a.contribution,
+    structuringMargeNette: s.contribution,
+    digitMargeNette: d.contribution,
+    spyMargeNette: spy.contribution,
+    commentMargeNette: cmt.contribution,
     agencyCA: a.ca,
     structuringCA: s.ca,
     digitCA: d.ca,
-    spyCA: m.spy.ca,
-    commentCA: m.comment.ca,
-    caGroupe: a.ca + s.ca + d.ca + m.spy.ca + m.comment.ca,
+    spyCA: spy.ca,
+    commentCA: cmt.ca,
+    caGroupe: a.ca + s.ca + d.ca + spy.ca + cmt.ca,
     margeBruteGroupe: margeBrute,
     reservesFiliales: reserves,
     remonteeHolding: remontee,
