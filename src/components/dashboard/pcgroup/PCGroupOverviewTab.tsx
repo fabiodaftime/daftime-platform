@@ -11,6 +11,8 @@ interface Props {
   data: PCGroupMonthData;
   entityRoutes: PCGroupEntityRoutes;
   monthId?: MonthId;
+  /** Nombre d'entités actives (live config) pour rafraîchir dynamiquement le détail "X entités consolidées". */
+  entitiesCount?: number;
 }
 
 type KPIStatus = 'ok' | 'warning' | 'missing' | 'unknown';
@@ -32,7 +34,7 @@ function metricForKpiLabel(label: string): string | null {
   return null;
 }
 
-export function PCGroupOverviewTab({ data, entityRoutes, monthId }: Props) {
+export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount }: Props) {
   const navigate = useNavigate();
   const { overviewHero, entityCards, consolidatedPL, pieData, overviewComparison, overviewComparisonTotal, monthLabel } = data;
 
@@ -93,7 +95,11 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId }: Props) {
               )}
               <div className="pcg-hero-label">{kpi.label}</div>
               <div className="pcg-hero-value">{kpi.value}</div>
-              <div className="pcg-hero-detail">{kpi.detail}</div>
+              <div className="pcg-hero-detail">
+                {typeof entitiesCount === 'number' && metricForKpiLabel(kpi.label) === 'CA Groupe'
+                  ? `${entitiesCount} entité${entitiesCount > 1 ? 's' : ''} consolidée${entitiesCount > 1 ? 's' : ''}`
+                  : kpi.detail}
+              </div>
               {kpi.variance && (
                 <div className={`pcg-hero-var ${kpi.varType}`}>{kpi.variance}</div>
               )}
