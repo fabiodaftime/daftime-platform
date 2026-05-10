@@ -1415,6 +1415,7 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     reservesCards: reservesCards as any,
     intercos: computeIntercos(month) as any,
   };
+  return out as PCGroupMonthData;
 }
 
 // ============ APRIL 2026 (scaffold — bespoke per-entity tabs cloned from Mars
