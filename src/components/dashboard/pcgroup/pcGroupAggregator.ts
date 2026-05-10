@@ -185,5 +185,179 @@ export function diagnoseMonth(month: PCGSourceMonthId): ConsolidatedDiagnostic {
   return { monthId: month, ok: issues.length === 0, issues };
 }
 
+// ============================================================================
+// aggregatePCGroup(monthId)
+// ----------------------------------------------------------------------------
+// Single high-level entry point that returns ALL consolidated KPIs and YTD
+// figures for the consolidated PCGroup view, computed live from the source
+// dashboards (Agency, Structuring, Digit) + manual entities (SPY, Comment,
+// Holding). Both raw numbers and pre-formatted display strings are exposed.
+// ============================================================================
+
+export interface PCGroupKPI {
+  label: string;
+  value: string;
+  raw: number;
+  detail: string;
+  variance: string | null;
+  variancePct: number | null;
+  varType: 'positive' | 'negative' | 'neutral' | null;
+}
+
+export interface PCGroupAggregate {
+  monthId: PCGSourceMonthId;
+  monthLabel: string;
+  facts: ConsolidatedFacts;
+  prevFacts: ConsolidatedFacts | null;
+  kpis: {
+    caGroupe: PCGroupKPI;
+    margeBrute: PCGroupKPI;
+    resultatNet: PCGroupKPI;
+    reserves: PCGroupKPI;
+  };
+  entityBreakdown: {
+    key: 'agency' | 'structuring' | 'digit' | 'spy' | 'comment';
+    name: string;
+    ca: number;
+    margeNette: number;
+    pctOfMargeBrute: number;
+  }[];
+  ytd: {
+    facts: YTDFacts;
+    kpis: {
+      caYTD: PCGroupKPI;
+      margeBruteYTD: PCGroupKPI;
+      resultatNetYTD: PCGroupKPI;
+      reservesYTD: PCGroupKPI;
+    };
+    monthlyTrend: { month: string; ca: number; margin: number; net: number }[];
+    perEntityRows: {
+      entity: string;
+      months: { id: PCGSourceMonthId; value: number }[];
+      total: number;
+      pct: number;
+    }[];
+    perEntityTotal: { entity: string; total: number; months: { id: PCGSourceMonthId; value: number }[] };
+  };
+  diagnostic: ConsolidatedDiagnostic;
+}
+
+/**
+ * Aggregate ALL consolidated KPIs and YTD for a given month from the source
+ * dashboards. Returns null when the month cannot be aggregated (missing
+ * source data or manual block).
+ */
+export function aggregatePCGroup(monthId: PCGSourceMonthId): PCGroupAggregate | null {
+  const facts = computeConsolidatedFacts(monthId);
+  if (!facts) return null;
+
+  const idx = MONTH_ORDER.indexOf(monthId);
+  const prevId = idx > 0 ? MONTH_ORDER[idx - 1] : null;
+  const prevFacts = prevId ? computeConsolidatedFacts(prevId) : null;
+  const mom = monthOverMonth(facts, prevFacts);
+
+  const usd = (n: number) => fmtUSD(Math.round(n));
+  const prevLabel = prevId ? MONTH_LABELS[prevId].split(' ')[0] : '';
+
+  const buildKpi = (
+    label: string,
+    raw: number,
+    detail: string,
+    variancePct: number | null,
+    inverse = false,
+  ): PCGroupKPI => {
+    const variance =
+      variancePct == null ? null : `${fmtPctSigned(variancePct)} vs ${prevLabel}`;
+    const varType: 'positive' | 'negative' | 'neutral' | null =
+      variancePct == null
+        ? null
+        : variancePct === 0
+          ? 'neutral'
+          : (inverse ? variancePct < 0 : variancePct > 0)
+            ? 'positive'
+            : 'negative';
+    return { label, value: usd(raw), raw, detail, variance, variancePct, varType };
+  };
+
+  const entitySpecs = [
+    { key: 'agency' as const, name: 'Agency (Part PCA)', ca: facts.agencyCA, marge: facts.agencyPartPCA },
+    { key: 'structuring' as const, name: 'Structuring', ca: facts.structuringCA, marge: facts.structuringMargeNette },
+    { key: 'digit' as const, name: 'Digit Solution', ca: facts.digitCA, marge: facts.digitMargeNette },
+    { key: 'spy' as const, name: 'SPY', ca: facts.spyCA, marge: facts.spyMargeNette },
+    { key: 'comment' as const, name: 'Comment/Trustpilot', ca: facts.commentCA, marge: facts.commentMargeNette },
+  ];
+
+  const ytd = computeYTD(monthId);
+  const monthlyTrend = ytd.months.map((m) => ({
+    month: m.label.split(' ')[0],
+    ca: Math.round(m.facts.caGroupe),
+    margin: Math.round(m.facts.margeBruteGroupe),
+    net: Math.round(m.facts.resultatNetHolding),
+  }));
+
+  const perEntitySelectors: {
+    entity: string;
+    sel: (f: ConsolidatedFacts) => number;
+    totalKey: keyof YTDFacts['perEntityYTD'];
+  }[] = [
+    { entity: 'Agency (Part PCA)', sel: (f) => f.agencyPartPCA, totalKey: 'agency' },
+    { entity: 'Structuring', sel: (f) => f.structuringMargeNette, totalKey: 'structuring' },
+    { entity: 'Digit Solution', sel: (f) => f.digitMargeNette, totalKey: 'digit' },
+    { entity: 'SPY', sel: (f) => f.spyMargeNette, totalKey: 'spy' },
+    { entity: 'Comment/Trustpilot', sel: (f) => f.commentMargeNette, totalKey: 'comment' },
+  ];
+
+  const perEntityRows = perEntitySelectors.map(({ entity, sel, totalKey }) => {
+    const total = ytd.perEntityYTD[totalKey];
+    return {
+      entity,
+      months: ytd.months.map((m) => ({ id: m.id, value: Math.round(sel(m.facts)) })),
+      total: Math.round(total),
+      pct: ytd.margeBruteYTD > 0 ? (total / ytd.margeBruteYTD) * 100 : 0,
+    };
+  });
+
+  const perEntityTotal = {
+    entity: 'TOTAL GROUPE',
+    total: Math.round(ytd.margeBruteYTD),
+    months: ytd.months.map((m) => ({ id: m.id, value: Math.round(m.facts.margeBruteGroupe) })),
+  };
+
+  const ratio = (num: number, den: number) => (den > 0 ? (num / den) * 100 : 0);
+
+  return {
+    monthId,
+    monthLabel: MONTH_LABELS[monthId],
+    facts,
+    prevFacts,
+    kpis: {
+      caGroupe: buildKpi('CA Groupe', facts.caGroupe, '5 entités consolidées', mom?.caGroupe ?? null),
+      margeBrute: buildKpi('Marge Brute Groupe', facts.margeBruteGroupe, `${fmtPct(ratio(facts.margeBruteGroupe, facts.caGroupe))} du CA`, mom?.margeBrute ?? null),
+      resultatNet: buildKpi('Résultat Net Holding', facts.resultatNetHolding, 'Après frais holding', mom?.resultatNet ?? null),
+      reserves: buildKpi('Réserves Filiales', facts.reservesFiliales, '10% marge brute', mom?.reserves ?? null),
+    },
+    entityBreakdown: entitySpecs.map((e) => ({
+      key: e.key,
+      name: e.name,
+      ca: Math.round(e.ca),
+      margeNette: Math.round(e.marge),
+      pctOfMargeBrute: ratio(e.marge, facts.margeBruteGroupe),
+    })),
+    ytd: {
+      facts: ytd,
+      kpis: {
+        caYTD: buildKpi('CA YTD', ytd.caYTD, `${ytd.months.length} mois cumulés`, null),
+        margeBruteYTD: buildKpi('Marge Brute YTD', ytd.margeBruteYTD, `${fmtPct(ratio(ytd.margeBruteYTD, ytd.caYTD))} du CA`, null),
+        resultatNetYTD: buildKpi('Résultat Net YTD', ytd.resultatNetYTD, 'Holding cumulé', null),
+        reservesYTD: buildKpi('Réserves Cumulées', ytd.reservesYTD, 'Toutes filiales', null),
+      },
+      monthlyTrend,
+      perEntityRows,
+      perEntityTotal,
+    },
+    diagnostic: diagnoseMonth(monthId),
+  };
+}
+
 // Re-export for convenience
 export { fmtUSD, fmtPct, fmtPctSigned };
