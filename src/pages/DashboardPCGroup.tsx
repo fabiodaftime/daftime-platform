@@ -21,6 +21,7 @@ import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupComment
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
 import { PCGroupValidationPanel } from '@/components/dashboard/pcgroup/PCGroupValidationPanel';
+import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import './DashboardPCGroup.css';
 
 const tabs = [
