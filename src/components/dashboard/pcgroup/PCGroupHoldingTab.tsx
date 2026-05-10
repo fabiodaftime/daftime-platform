@@ -23,16 +23,35 @@ export function PCGroupHoldingTab({ data }: Props) {
       {holdingComparison && (() => {
         const rows = holdingComparison as PCGComparisonRow[];
         const hasMar = rows.some((r) => Boolean(r.mar));
+        const hasAvr = rows.some((r) => Boolean(r.avr));
         const hasYtd = rows.some((r) => Boolean(r.ytd));
-        const headers = ['Indicateur', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
+        const variationLabel = hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
+        const headers = [
+          'Indicateur', 'Janvier', 'Février',
+          ...(hasMar ? ['Mars'] : []),
+          ...(hasAvr ? ['Avril'] : []),
+          `Variation${variationLabel}`,
+          ...(hasYtd ? ['YTD'] : []),
+        ];
+        const titleSuffix = hasAvr
+          ? 'Janvier → Avril Holding'
+          : hasMar
+            ? 'Janvier / Février / Mars Holding'
+            : 'M-1 Holding';
         return (
           <PCGroupComparisonTable
-            title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars Holding' : 'M-1 Holding'}`}
+            title={`📊 Comparatif ${titleSuffix}`}
             mappingContext={`Onglet Holding · ${monthLabel}`}
             headers={headers}
             rows={rows.map((r) => {
-              const cells = [r.indicator, cell(r.jan), cell(r.feb), ...(hasMar ? [cell(r.mar)] : []), cell(r.variation), ...(hasYtd ? [cell(r.ytd)] : [])];
-              return { cells, varIndex: 3 + (hasMar ? 1 : 0), varType: r.varType };
+              const cells = [
+                r.indicator, cell(r.jan), cell(r.feb),
+                ...(hasMar ? [cell(r.mar)] : []),
+                ...(hasAvr ? [cell(r.avr)] : []),
+                cell(r.variation),
+                ...(hasYtd ? [cell(r.ytd)] : []),
+              ];
+              return { cells, varIndex: 3 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0), varType: r.varType };
             })}
           />
         );

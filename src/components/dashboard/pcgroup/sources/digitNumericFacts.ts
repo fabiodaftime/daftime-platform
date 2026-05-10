@@ -34,10 +34,13 @@ export const DIGIT_NUMERIC_FACTS: Record<Month, EntityFacts> = {
     ticketMoyen: 418,
   },
   'apr-2026': {
-    // Will be filled when Avril is added to the consolidated view
-    ca: 0,
-    margeNette: 0,
-    charges: 0,
-    marginPct: 0,
+    // Digit "Core" only — SPY/Comment isolés dans MANUAL_ENTITIES.
+    // Source: DigitData APR overviewProducts → "Digit Solution (Core)" $113,001 / Marge $42,347 (37.5%)
+    ca: 113001,
+    margeNette: 42347,
+    charges: 70654,
+    marginPct: 37.5,
+    deals: 313,
+    ticketMoyen: 485,
   },
 };
