@@ -25,6 +25,7 @@ import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGro
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
 import { buildHeaderSubtitle } from '@/components/dashboard/pcgroup/pcGroupHeaderLabels';
+import { useEntityInputs } from '@/lib/entityInputs/hooks';
 import './DashboardPCGroup.css';
 
 const tabs = [
