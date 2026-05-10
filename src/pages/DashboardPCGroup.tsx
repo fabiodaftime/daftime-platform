@@ -117,12 +117,30 @@ export default function DashboardPCGroup() {
               </p>
             </div>
           </div>
-          <MonthSelector
-            months={AVAILABLE_MONTHS}
-            selectedMonth={selectedMonth}
-            onMonthChange={(id) => setSelectedMonth(id as MonthId)}
-            variant="gold"
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/pcgroup-diagnostics')}
+                title="Checks de cohérence (super admin)"
+                style={{
+                  borderColor: '#D4A85555',
+                  color: '#D4A855',
+                  background: 'transparent',
+                }}
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                Diagnostics
+              </Button>
+            )}
+            <MonthSelector
+              months={AVAILABLE_MONTHS}
+              selectedMonth={selectedMonth}
+              onMonthChange={(id) => setSelectedMonth(id as MonthId)}
+              variant="gold"
+            />
+          </div>
         </div>
 
         <nav className="pcg-nav-tabs">
@@ -140,7 +158,6 @@ export default function DashboardPCGroup() {
         </nav>
       </header>
 
-      <PCGroupValidationPanel />
 
       <main className="pcg-main">
         {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} />}
