@@ -239,6 +239,228 @@ export type Database = {
           },
         ]
       }
+      pcgroup_entities: {
+        Row: {
+          badge: string
+          code: string
+          created_at: string
+          css_class: string
+          display_order: number
+          gradient: string
+          id: string
+          is_active: boolean
+          name: string
+          pie_color: string
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          badge?: string
+          code: string
+          created_at?: string
+          css_class?: string
+          display_order?: number
+          gradient?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          pie_color?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Update: {
+          badge?: string
+          code?: string
+          created_at?: string
+          css_class?: string
+          display_order?: number
+          gradient?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          pie_color?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pcgroup_holding_facts: {
+        Row: {
+          apport_maxence: number
+          created_at: string
+          frais_detail: Json
+          frais_total: number
+          id: string
+          month_id: string
+          updated_at: string
+        }
+        Insert: {
+          apport_maxence?: number
+          created_at?: string
+          frais_detail?: Json
+          frais_total?: number
+          id?: string
+          month_id: string
+          updated_at?: string
+        }
+        Update: {
+          apport_maxence?: number
+          created_at?: string
+          frais_detail?: Json
+          frais_total?: number
+          id?: string
+          month_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pcgroup_intercos_cash: {
+        Row: {
+          amount_received: number
+          created_at: string
+          entity_code: string
+          id: string
+          month_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_received?: number
+          created_at?: string
+          entity_code: string
+          id?: string
+          month_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_received?: number
+          created_at?: string
+          entity_code?: string
+          id?: string
+          month_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pcgroup_manual_facts: {
+        Row: {
+          ca: number
+          charges: number
+          contribution: number
+          created_at: string
+          deals: number | null
+          entity_code: string
+          id: string
+          margin_pct: number
+          month_id: string
+          updated_at: string
+          warning: string | null
+        }
+        Insert: {
+          ca?: number
+          charges?: number
+          contribution?: number
+          created_at?: string
+          deals?: number | null
+          entity_code: string
+          id?: string
+          margin_pct?: number
+          month_id: string
+          updated_at?: string
+          warning?: string | null
+        }
+        Update: {
+          ca?: number
+          charges?: number
+          contribution?: number
+          created_at?: string
+          deals?: number | null
+          entity_code?: string
+          id?: string
+          margin_pct?: number
+          month_id?: string
+          updated_at?: string
+          warning?: string | null
+        }
+        Relationships: []
+      }
+      pcgroup_months: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          label: string
+          month_id: string
+          month_num: number
+          short_label: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          month_id: string
+          month_num: number
+          short_label?: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          month_id?: string
+          month_num?: number
+          short_label?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      pcgroup_rules: {
+        Row: {
+          created_at: string
+          florian_pct: number
+          id: string
+          maxence_pct: number
+          month_id: string | null
+          remontee_pct: number
+          reserves_pct: number
+          thibault_pct: number
+          updated_at: string
+          will_in_thibault: number
+        }
+        Insert: {
+          created_at?: string
+          florian_pct?: number
+          id?: string
+          maxence_pct?: number
+          month_id?: string | null
+          remontee_pct?: number
+          reserves_pct?: number
+          thibault_pct?: number
+          updated_at?: string
+          will_in_thibault?: number
+        }
+        Update: {
+          created_at?: string
+          florian_pct?: number
+          id?: string
+          maxence_pct?: number
+          month_id?: string | null
+          remontee_pct?: number
+          reserves_pct?: number
+          thibault_pct?: number
+          updated_at?: string
+          will_in_thibault?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
