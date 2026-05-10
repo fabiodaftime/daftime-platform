@@ -11,6 +11,7 @@ import { DigitCostsTab } from '@/components/dashboard/digit/DigitCostsTab';
 import { DigitProductsTab } from '@/components/dashboard/digit/DigitProductsTab';
 import { DigitEvolutionTab } from '@/components/dashboard/digit/DigitEvolutionTab';
 import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
+import { DigitValidationTab } from '@/components/dashboard/digit/DigitValidationTab';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import './DashboardDigit.css';
 
@@ -21,6 +22,7 @@ const tabs = [
   { id: "costs", label: "📉 Analyse Charges" },
   { id: "products", label: "🌐 Produits" },
   { id: "evolution", label: "📊 Évolution MoM" },
+  { id: "validation", label: "🧪 Validation YTD" },
   { id: "comments", label: "💬 Commentaires" },
 ];
 
@@ -81,6 +83,7 @@ export default function DashboardDigit() {
         {tab === "costs" && <DigitCostsTab data={monthData} />}
         {tab === "products" && <DigitProductsTab data={monthData} />}
         {tab === "evolution" && <DigitEvolutionTab data={monthData} />}
+        {tab === "validation" && <DigitValidationTab />}
         {tab === "comments" && <DigitCommentsTab monthLabel={monthData.monthLabel} />}
       </div>
 
