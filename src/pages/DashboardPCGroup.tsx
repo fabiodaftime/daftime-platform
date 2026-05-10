@@ -153,20 +153,28 @@ export default function DashboardPCGroup() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {isSuperAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin/pcgroup-diagnostics')}
-                title="Checks de cohérence (super admin)"
-                style={{
-                  borderColor: '#D4A85555',
-                  color: '#D4A855',
-                  background: 'transparent',
-                }}
-              >
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                Diagnostics
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/pcgroup-entities')}
+                  title="Gérer les filiales (super admin)"
+                  style={{ borderColor: '#D4A85555', color: '#D4A855', background: 'transparent' }}
+                >
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Filiales
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/pcgroup-diagnostics')}
+                  title="Checks de cohérence (super admin)"
+                  style={{ borderColor: '#D4A85555', color: '#D4A855', background: 'transparent' }}
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Diagnostics
+                </Button>
+              </>
             )}
             <MonthSelector
               months={availableMonths}
