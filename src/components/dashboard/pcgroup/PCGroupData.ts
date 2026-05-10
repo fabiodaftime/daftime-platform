@@ -1011,8 +1011,51 @@ const MAR_2026 = {
 
 export type PCGroupMonthData = typeof FEB_2026;
 
-export function getMonthData(month: MonthId): PCGroupMonthData {
-  if (month === 'jan-2026') return JAN_2026 as PCGroupMonthData;
-  if (month === 'mar-2026') return MAR_2026 as PCGroupMonthData;
-  return FEB_2026;
+import { computeConsolidatedFacts, computeYTD } from './pcGroupAggregator';
+import { fmtUSD, fmtPct } from './pcGroupFormatters';
+
+// ----------------------------------------------------------------------------
+// Auto-overlay: replace the cross-entity totals & sums in the legacy per-month
+// objects with values computed from the source dashboards (Agency, Structuring,
+// Digit) + manual entities (SPY, Comment, Holding). This guarantees that if a
+// number changes in any source dashboard, the consolidated totals stay in sync.
+//
+// The bespoke per-month fields (waterfalls, intercos, holding fees breakdown
+// labels) remain authored manually in this file.
+// ----------------------------------------------------------------------------
+function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMonthData {
+  const facts = computeConsolidatedFacts(month);
+  if (!facts) return base; // graceful fallback if a source month is missing
+  const ytd = computeYTD(month);
+
+  const usd = (n: number) => fmtUSD(Math.round(n));
+  const overlaid: PCGroupMonthData = {
+    ...base,
+    // Consolidated KPIs
+    overviewHero: base.overviewHero.map((k, i) => {
+      const v = [facts.caGroupe, facts.margeBruteGroupe, facts.resultatNetHolding, facts.reservesFiliales][i];
+      return v != null ? { ...k, value: usd(v) } : k;
+    }),
+    holdingNetResult: usd(facts.resultatNetHolding),
+    // YTD totals
+    ytdHero: base.ytdHero.map((k, i) => {
+      const v = [ytd.caYTD, ytd.margeBruteYTD, ytd.resultatNetYTD, ytd.reservesYTD][i];
+      return v != null ? { ...k, value: usd(v) } : k;
+    }),
+  };
+  return overlaid;
 }
+
+export function getMonthData(month: MonthId): PCGroupMonthData {
+  const base =
+    month === 'jan-2026'
+      ? (JAN_2026 as PCGroupMonthData)
+      : month === 'mar-2026'
+        ? (MAR_2026 as PCGroupMonthData)
+        : FEB_2026;
+  return applyComputedOverlay(month, base);
+}
+
+// Re-exports for callers that want direct access to the new layered API.
+export { computeConsolidatedFacts, computeYTD } from './pcGroupAggregator';
+export { agencyFacts, structuringFacts, digitFacts, getAvailableSourceMonths } from './sources/entityAdapters';
