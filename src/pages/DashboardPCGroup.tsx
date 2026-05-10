@@ -37,6 +37,9 @@ const tabs = [
 ];
 
 export default function DashboardPCGroup() {
+  // Hydrate le store PCGroup depuis Supabase (entités, mois, règles, manuel).
+  // Tout edit admin → invalidate → re-render automatique du dashboard.
+  usePCGroupConfig();
   const availableMonths = AVAILABLE_MONTHS;
   const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
