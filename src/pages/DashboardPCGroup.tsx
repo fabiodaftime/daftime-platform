@@ -6,9 +6,9 @@ import { MonthSelector } from '@/components/dashboard/MonthSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  AVAILABLE_MONTHS,
   EMPTY_ENTITY_ROUTES,
   getMonthData,
+  getPCGroupAvailableMonths,
   type MonthId,
   type PCGroupEntityRoutes,
 } from '@/components/dashboard/pcgroup/PCGroupData';
@@ -22,6 +22,8 @@ import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupComment
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
+import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
+import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
 import './DashboardPCGroup.css';
 
 const tabs = [
@@ -39,12 +41,28 @@ const tabs = [
 export default function DashboardPCGroup() {
   // Hydrate le store PCGroup depuis Supabase (entités, mois, règles, manuel).
   // Tout edit admin → invalidate → re-render automatique du dashboard.
-  usePCGroupConfig();
+  const cfgQuery = usePCGroupConfig();
+  const liveConfig = useLivePCGroupConfig();
   const { isSuperAdmin } = useAuth();
-  const availableMonths = AVAILABLE_MONTHS;
+
+  // Mois disponibles = intersection (sources + bloc manuel) ∩ mois actifs en BDD.
+  const activeMonthIds = new Set(
+    liveConfig.months.filter((m) => m.is_active).map((m) => m.month_id),
+  );
+  const availableMonths = getPCGroupAvailableMonths().filter((m) => activeMonthIds.has(m.id));
+  const activeEntities = liveConfig.entities.filter((e) => e.is_active);
+  const entitiesCount = activeEntities.length;
+
   const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
   const [selectedMonth, setSelectedMonth] = useState<MonthId>(defaultMonth);
+
+  // Si le mois sélectionné disparaît (admin l’a désactivé), bascule sur le dernier dispo.
+  useEffect(() => {
+    if (availableMonths.length > 0 && !availableMonths.some((m) => m.id === selectedMonth)) {
+      setSelectedMonth(availableMonths[availableMonths.length - 1].id as MonthId);
+    }
+  }, [availableMonths, selectedMonth]);
   const [entityRoutes, setEntityRoutes] = useState<PCGroupEntityRoutes>(EMPTY_ENTITY_ROUTES);
   const navigate = useNavigate();
 
@@ -80,6 +98,17 @@ export default function DashboardPCGroup() {
     loadEntityRoutes();
   }, []);
 
+  // État vide : config pas encore configurée (entités ou mois disponibles).
+  if (cfgQuery.isLoading && !cfgQuery.data) {
+    return <EmptyConfigState reason="loading" isSuperAdmin={isSuperAdmin} />;
+  }
+  if (entitiesCount === 0) {
+    return <EmptyConfigState reason="no-entities" isSuperAdmin={isSuperAdmin} />;
+  }
+  if (availableMonths.length === 0) {
+    return <EmptyConfigState reason="no-months" isSuperAdmin={isSuperAdmin} />;
+  }
+
   const monthData = getMonthData(selectedMonth);
 
   // Dynamic tab amounts from selected month data
@@ -113,7 +142,7 @@ export default function DashboardPCGroup() {
             <div className="pcg-header-title">
               <h1>Dashboard Consolidé</h1>
               <p className="subtitle">
-                {(monthData as any).entitiesCount ?? 5} Filiales + Holding • {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
+                {entitiesCount} {entitiesCount > 1 ? 'Entités' : 'Entité'} • {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
               </p>
             </div>
           </div>
@@ -135,7 +164,7 @@ export default function DashboardPCGroup() {
               </Button>
             )}
             <MonthSelector
-              months={AVAILABLE_MONTHS}
+              months={availableMonths}
               selectedMonth={selectedMonth}
               onMonthChange={(id) => setSelectedMonth(id as MonthId)}
               variant="gold"
