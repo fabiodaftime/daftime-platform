@@ -242,6 +242,7 @@ export type Database = {
       pcgroup_entities: {
         Row: {
           badge: string
+          base_role: string
           code: string
           created_at: string
           css_class: string
@@ -256,6 +257,7 @@ export type Database = {
         }
         Insert: {
           badge?: string
+          base_role?: string
           code: string
           created_at?: string
           css_class?: string
@@ -270,6 +272,7 @@ export type Database = {
         }
         Update: {
           badge?: string
+          base_role?: string
           code?: string
           created_at?: string
           css_class?: string
