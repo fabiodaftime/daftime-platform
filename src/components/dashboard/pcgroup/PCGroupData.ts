@@ -1,11 +1,12 @@
 // Prime Circle Group - Consolidated Dashboard Data - Multi-Month
 
-export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026';
+export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
 
 export const AVAILABLE_MONTHS = [
   { id: 'jan-2026' as MonthId, label: 'Janvier 2026' },
   { id: 'feb-2026' as MonthId, label: 'Février 2026' },
   { id: 'mar-2026' as MonthId, label: 'Mars 2026' },
+  { id: 'apr-2026' as MonthId, label: 'Avril 2026' },
 ];
 
 export type PCGroupEntityKey = 'agency' | 'structuring' | 'digit';
@@ -27,6 +28,7 @@ export interface PCGComparisonRow {
   jan?: string;
   feb?: string;
   mar?: string;
+  avr?: string;
   ytd?: string;
   variation?: string;
   varType?: PCGVarType;
@@ -37,6 +39,7 @@ export interface PCGOverviewComparisonRow {
   jan?: string;
   feb?: string;
   mar?: string;
+  avr?: string;
   ytd?: string;
   variation?: string;
   varType?: PCGVarType;
