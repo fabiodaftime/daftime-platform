@@ -52,8 +52,6 @@ export default function DashboardPCGroup() {
   const availableMonths = getPCGroupAvailableMonths().filter((m) => activeMonthIds.has(m.id));
   const activeEntities = liveConfig.entities.filter((e) => e.is_active);
   const entitiesCount = activeEntities.length;
-  const filialesCount = activeEntities.filter((e) => (e as any).base_role !== 'holding').length;
-  const holdingCount = activeEntities.filter((e) => (e as any).base_role === 'holding').length;
 
   const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
