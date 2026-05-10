@@ -2,16 +2,21 @@
 
 export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
 
-// AVAILABLE_MONTHS is now derived dynamically: it's the intersection of months
-// for which Agency, Structuring, Digit AND the manual SPY/Comment/Holding block
-// all have data. See PC_GROUP_AVAILABLE_MONTHS below.
-const MONTH_LABELS_ALL: Record<MonthId, string> = {
+// Canonical labels per month id.
+const PCG_MONTH_LABELS: Record<MonthId, string> = {
   'jan-2026': 'Janvier 2026',
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
-  'avr-2026': 'Avril 2026' as never, // placeholder kept off; canonical key is apr-2026
   'apr-2026': 'Avril 2026',
-} as Record<MonthId, string>;
+};
+
+// PC_GROUP_AVAILABLE_MONTHS is computed dynamically as the INTERSECTION of
+// months for which Agency, Structuring, Digit AND the manual SPY/Comment/
+// Holding block all have data. As soon as a new source month is filled in
+// every entity, it appears here automatically — and therefore in the month
+// selector and consolidated views.
+//
+// Implementation lives below the `MonthId` declarations to allow forward use.
 
 export type PCGroupEntityKey = 'agency' | 'structuring' | 'digit';
 
