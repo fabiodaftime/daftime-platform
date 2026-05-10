@@ -20,6 +20,7 @@ import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
 import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
+import { PCGroupValidationPanel } from '@/components/dashboard/pcgroup/PCGroupValidationPanel';
 import './DashboardPCGroup.css';
 
 const tabs = [
