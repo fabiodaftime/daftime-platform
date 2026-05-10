@@ -11,6 +11,8 @@ interface Props {
   data: PCGroupMonthData;
   entityRoutes: PCGroupEntityRoutes;
   monthId?: MonthId;
+  /** Nombre d'entités actives (live config) pour rafraîchir dynamiquement le détail "X entités consolidées". */
+  entitiesCount?: number;
 }
 
 type KPIStatus = 'ok' | 'warning' | 'missing' | 'unknown';
