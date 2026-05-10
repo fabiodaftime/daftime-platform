@@ -1,17 +1,57 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { type PCGroupEntityRoutes, type PCGroupMonthData, type PCGOverviewComparisonRow, cell } from './PCGroupData';
+import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { type PCGroupEntityRoutes, type PCGroupMonthData, type PCGOverviewComparisonRow, cell, type MonthId } from './PCGroupData';
 import { PCGroupColumnMappingTrigger, buildDefaultColumnMapping } from './PCGroupColumnMapping';
 import { PCGroupWaterfall } from './PCGroupWaterfall';
+import { validateAllMonths } from './pcGroupValidator';
 
 interface Props {
   data: PCGroupMonthData;
   entityRoutes: PCGroupEntityRoutes;
+  monthId?: MonthId;
 }
 
-export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
+type KPIStatus = 'ok' | 'warning' | 'missing' | 'unknown';
+
+const STATUS_BADGE: Record<KPIStatus, { color: string; bg: string; label: string; Icon: typeof CheckCircle2 } | null> = {
+  ok: { color: '#10B981', bg: 'rgba(16,185,129,0.12)', label: 'OK', Icon: CheckCircle2 },
+  warning: { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', label: 'Écarts', Icon: AlertTriangle },
+  missing: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)', label: 'Manquant', Icon: XCircle },
+  unknown: null,
+};
+
+// Mapping label de KPI → métrique tracée par le validateur.
+function metricForKpiLabel(label: string): string | null {
+  const l = label.toLowerCase();
+  if (l.includes('ca groupe') || (l.includes('ca') && l.includes('groupe'))) return 'CA Groupe';
+  if (l.includes('marge brute')) return 'Marge Brute Groupe';
+  if (l.includes('résultat net') || l.includes('resultat net')) return 'Résultat Net Holding';
+  if (l.includes('réserves') || l.includes('reserves')) return 'Réserves Filiales';
+  return null;
+}
+
+export function PCGroupOverviewTab({ data, entityRoutes, monthId }: Props) {
   const navigate = useNavigate();
   const { overviewHero, entityCards, consolidatedPL, pieData, overviewComparison, overviewComparisonTotal, monthLabel } = data;
+
+  // Statut de validation pour le mois sélectionné (présence sources + écarts vs référence figée).
+  const monthValidation = useMemo(() => {
+    if (!monthId) return null;
+    const report = validateAllMonths();
+    return report.months.find((m) => m.monthId === monthId) ?? null;
+  }, [monthId]);
+
+  const statusForKpi = (label: string): KPIStatus => {
+    if (!monthValidation) return 'unknown';
+    if (monthValidation.status === 'missing') return 'missing';
+    const metric = metricForKpiLabel(label);
+    if (!metric) return monthValidation.status === 'ok' ? 'ok' : 'unknown';
+    const hasDelta = monthValidation.deltas.some((d) => d.metric === metric);
+    if (hasDelta) return 'warning';
+    return monthValidation.status === 'ok' ? 'ok' : 'ok';
+  };
 
   const handleEntityClick = (entityId: string) => {
     const route = entityRoutes[entityId as keyof PCGroupEntityRoutes];
@@ -21,16 +61,45 @@ export function PCGroupOverviewTab({ data, entityRoutes }: Props) {
   return (
     <div>
       <div className="pcg-hero-grid">
-        {overviewHero.map((kpi, i) => (
-          <div key={i} className={`pcg-hero-card ${kpi.color}`}>
-            <div className="pcg-hero-label">{kpi.label}</div>
-            <div className="pcg-hero-value">{kpi.value}</div>
-            <div className="pcg-hero-detail">{kpi.detail}</div>
-            {kpi.variance && (
-              <div className={`pcg-hero-var ${kpi.varType}`}>{kpi.variance}</div>
-            )}
-          </div>
-        ))}
+        {overviewHero.map((kpi, i) => {
+          const status = statusForKpi(kpi.label);
+          const badge = STATUS_BADGE[status];
+          return (
+            <div key={i} className={`pcg-hero-card ${kpi.color}`} style={{ position: 'relative' }}>
+              {badge && (
+                <span
+                  title={`Validation : ${badge.label}`}
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    background: badge.bg,
+                    color: badge.color,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: 0.4,
+                    textTransform: 'uppercase',
+                    border: `1px solid ${badge.color}55`,
+                  }}
+                >
+                  <badge.Icon size={11} />
+                  {badge.label}
+                </span>
+              )}
+              <div className="pcg-hero-label">{kpi.label}</div>
+              <div className="pcg-hero-value">{kpi.value}</div>
+              <div className="pcg-hero-detail">{kpi.detail}</div>
+              {kpi.variance && (
+                <div className={`pcg-hero-var ${kpi.varType}`}>{kpi.variance}</div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {overviewComparison && overviewComparisonTotal && (() => {
