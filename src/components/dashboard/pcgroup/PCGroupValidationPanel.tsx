@@ -314,22 +314,31 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
         overflow: 'hidden',
       }}
     >
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
+      <div
         style={{
-          width: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 18px',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
           fontFamily: 'DM Sans, sans-serif',
+          gap: 12,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            flex: 1,
+            textAlign: 'left',
+          }}
+        >
           <span
             style={{
               width: 10,
@@ -350,9 +359,44 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
               Toutes les entités cohérentes ✓
             </span>
           )}
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const ts = new Date().toISOString().slice(0, 10);
+              downloadCSV(`pcgroup-validation-${ts}.csv`, buildValidationCSV(report.months));
+            }}
+            title="Exporter le rapport en CSV"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#0F1B3D',
+              background: '#fff',
+              border: '1px solid #D4A85555',
+              padding: '6px 10px',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif',
+            }}
+          >
+            <Download size={13} color="#D4A855" />
+            Exporter CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4 }}
+            aria-label={collapsed ? 'Déplier' : 'Replier'}
+          >
+            {collapsed ? <ChevronDown size={18} color="#64748B" /> : <ChevronUp size={18} color="#64748B" />}
+          </button>
         </div>
-        {collapsed ? <ChevronDown size={18} color="#64748B" /> : <ChevronUp size={18} color="#64748B" />}
-      </button>
+      </div>
 
       {!collapsed && (
         <div style={{ padding: '4px 18px 16px' }}>
