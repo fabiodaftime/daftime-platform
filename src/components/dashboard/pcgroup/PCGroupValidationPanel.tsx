@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle, Search } from 'lucide-react';
 import { validateAllMonths, type MonthValidation, type ValidationOptions, DEFAULT_TOLERANCE_USD } from './pcGroupValidator';
+import { MetricBreakdownDrawer } from './MetricBreakdownDrawer';
+import type { BreakdownMetric } from './pcGroupBreakdown';
+import type { PCGSourceMonthId } from './sources/entityAdapters';
+
+const KNOWN_METRICS: ReadonlySet<string> = new Set([
+  'CA Groupe',
+  'Marge Brute Groupe',
+  'Résultat Net Holding',
+  'Réserves Filiales',
+]);
 
 const STATUS_META = {
   ok: { color: '#10B981', bg: 'rgba(16,185,129,0.10)', label: 'OK', Icon: CheckCircle2 },
@@ -38,7 +48,12 @@ function PresenceDot({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-function MonthRow({ m }: { m: MonthValidation }) {
+interface MonthRowProps {
+  m: MonthValidation;
+  onInspect: (metric: BreakdownMetric, monthId: PCGSourceMonthId, expected: number, actual: number) => void;
+}
+
+function MonthRow({ m, onInspect }: MonthRowProps) {
   const [open, setOpen] = useState(m.status !== 'ok');
   const meta = STATUS_META[m.status];
   const Icon = meta.Icon;
@@ -116,28 +131,61 @@ function MonthRow({ m }: { m: MonthValidation }) {
                 </tr>
               </thead>
               <tbody>
-                {m.deltas.map((d) => (
-                  <tr key={d.metric} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '4px 6px', color: '#0F1B3D', fontWeight: 600 }}>{d.metric}</td>
-                    <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
-                      ${Math.round(d.expected).toLocaleString('en-US')}
-                    </td>
-                    <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
-                      ${Math.round(d.actual).toLocaleString('en-US')}
-                    </td>
-                    <td
+                {m.deltas.map((d) => {
+                  const inspectable = KNOWN_METRICS.has(d.metric);
+                  return (
+                    <tr
+                      key={d.metric}
+                      onClick={
+                        inspectable
+                          ? () =>
+                              onInspect(
+                                d.metric as BreakdownMetric,
+                                m.monthId,
+                                d.expected,
+                                d.actual,
+                              )
+                          : undefined
+                      }
                       style={{
-                        padding: '4px 6px',
-                        textAlign: 'right',
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontWeight: 700,
-                        color: Math.abs(d.delta) > 0 ? '#EF4444' : '#10B981',
+                        borderBottom: '1px solid #F1F5F9',
+                        cursor: inspectable ? 'pointer' : 'default',
+                        transition: 'background 120ms',
                       }}
+                      onMouseEnter={(e) => {
+                        if (inspectable) (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(212,168,85,0.08)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (inspectable) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent';
+                      }}
+                      title={inspectable ? 'Voir les lignes brutes qui composent ce total' : undefined}
                     >
-                      {d.delta >= 0 ? '+' : ''}${Math.round(d.delta).toLocaleString('en-US')}
-                    </td>
-                  </tr>
-                ))}
+                      <td style={{ padding: '4px 6px', color: '#0F1B3D', fontWeight: 600 }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          {d.metric}
+                          {inspectable && <Search size={11} color="#D4A855" />}
+                        </span>
+                      </td>
+                      <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
+                        ${Math.round(d.expected).toLocaleString('en-US')}
+                      </td>
+                      <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace' }}>
+                        ${Math.round(d.actual).toLocaleString('en-US')}
+                      </td>
+                      <td
+                        style={{
+                          padding: '4px 6px',
+                          textAlign: 'right',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontWeight: 700,
+                          color: Math.abs(d.delta) > 0 ? '#EF4444' : '#10B981',
+                        }}
+                      >
+                        {d.delta >= 0 ? '+' : ''}${Math.round(d.delta).toLocaleString('en-US')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -163,6 +211,25 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
   const { summary } = report;
   const hasIssues = summary.warnings + summary.missing > 0;
   const headerColor = summary.missing > 0 ? '#EF4444' : summary.warnings > 0 ? '#F59E0B' : '#10B981';
+
+  // Drawer drill-down
+  const [drillState, setDrillState] = useState<{
+    metric: BreakdownMetric;
+    monthId: PCGSourceMonthId;
+    monthLabel: string;
+    expected: number;
+    actual: number;
+  } | null>(null);
+
+  const handleInspect = (
+    metric: BreakdownMetric,
+    monthId: PCGSourceMonthId,
+    expected: number,
+    actual: number,
+  ) => {
+    const monthLabel = report.months.find((mm) => mm.monthId === monthId)?.label ?? '';
+    setDrillState({ metric, monthId, monthLabel, expected, actual });
+  };
 
   return (
     <section
@@ -218,7 +285,7 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
       {!collapsed && (
         <div style={{ padding: '4px 18px 16px' }}>
           {report.months.map((m) => (
-            <MonthRow key={m.monthId} m={m} />
+            <MonthRow key={m.monthId} m={m} onInspect={handleInspect} />
           ))}
           <p style={{ fontSize: 11, color: '#94A3B8', margin: '6px 2px 0', lineHeight: 1.5 }}>
             La validation compare les totaux calculés en direct (Agency + Structuring + Digit + bloc manuel SPY/Comment/Holding)
@@ -229,6 +296,16 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
           </p>
         </div>
       )}
+
+      <MetricBreakdownDrawer
+        metric={drillState?.metric ?? null}
+        monthId={drillState?.monthId ?? null}
+        monthLabel={drillState?.monthLabel ?? ''}
+        expected={drillState?.expected}
+        actual={drillState?.actual}
+        open={drillState !== null}
+        onClose={() => setDrillState(null)}
+      />
     </section>
   );
 }
