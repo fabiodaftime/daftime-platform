@@ -1064,6 +1064,9 @@ export { agencyFacts, structuringFacts, digitFacts, getAvailableSourceMonths } f
 
 // ---- Dynamic month list = intersection across all entities + manual block ----
 import { getAvailableSourceMonths as _getAvailable } from './sources/entityAdapters';
+import { MANUAL_ENTITIES } from './manualEntities';
+
+const ALL_MONTH_KEYS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
 
 export interface PCGroupAvailableMonth {
   id: MonthId;
@@ -1072,7 +1075,7 @@ export interface PCGroupAvailableMonth {
 
 export function getPCGroupAvailableMonths(): PCGroupAvailableMonth[] {
   return _getAvailable()
-    .filter((m): m is MonthId => (MONTH_KEYS as string[]).includes(m))
+    .filter((m): m is MonthId => (ALL_MONTH_KEYS as string[]).includes(m))
     .filter((m) => MANUAL_ENTITIES[m as keyof typeof MANUAL_ENTITIES])
     .map((m) => ({ id: m as MonthId, label: PCG_MONTH_LABELS[m as MonthId] }));
 }
