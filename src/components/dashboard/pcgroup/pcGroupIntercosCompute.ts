@@ -1,0 +1,268 @@
+// Computes the Intercos tab data structure from the source dashboards
+// + INTERCO_RULES + INTERCOS_CASH actuals. Replaces the static
+// INTERCOS_DATA block in PCGroupData.ts via applyComputedOverlay.
+
+import type { PCGSourceMonthId } from './sources/entityAdapters';
+import { INTERCO_RULES, computeExpectedTransfer } from './intercosRules';
+import { INTERCOS_CASH } from './manualEntities';
+import { fmtUSD, fmtPct } from './pcGroupFormatters';
+
+const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const MONTH_SHORT: Record<PCGSourceMonthId, string> = {
+  'jan-2026': 'Jan',
+  'feb-2026': 'Fév',
+  'mar-2026': 'Mars',
+  'apr-2026': 'Avril',
+};
+const MONTH_LONG: Record<PCGSourceMonthId, string> = {
+  'jan-2026': 'Janvier 2026',
+  'feb-2026': 'Février 2026',
+  'mar-2026': 'Mars 2026',
+  'apr-2026': 'Avril 2026',
+};
+
+const usd = (n: number) => fmtUSD(Math.round(n));
+const usdSigned = (n: number) => `${n < 0 ? '-' : ''}${fmtUSD(Math.abs(Math.round(n)))}`;
+
+/**
+ * Build a computed INTERCOS_DATA payload, valid up to (and including) `viewMonth`.
+ * - Expected transfers per (sourceMonth, entity) come from INTERCO_RULES.
+ * - "Exigible" = sum of expected transfers whose due-date ≤ viewMonth.
+ * - "Reçu" = INTERCOS_CASH actuals over the same period.
+ * - "Solde" = exigible - reçu (with apport scenario).
+ */
+export function computeIntercos(viewMonth: PCGSourceMonthId) {
+  const viewIdx = MONTH_ORDER.indexOf(viewMonth);
+  const sourceMonths = MONTH_ORDER.slice(0, viewIdx + 1);
+
+  // For each entity, expected transfer per source month.
+  const perEntity = INTERCO_RULES.map((rule) => {
+    const monthly = sourceMonths.map((sm) => ({
+      sourceMonth: sm,
+      dueIdx: MONTH_ORDER.indexOf(sm) + rule.settlementLagMonths,
+      amount: computeExpectedTransfer(rule, sm),
+    }));
+    const exigible = monthly
+      .filter((x) => x.dueIdx <= viewIdx) // due-date already passed
+      .reduce((acc, x) => acc + x.amount, 0);
+    const notYetDue = monthly
+      .filter((x) => x.dueIdx > viewIdx)
+      .reduce((acc, x) => acc + x.amount, 0);
+    const ytd = monthly.reduce((acc, x) => acc + x.amount, 0);
+    return { rule, monthly, exigible, notYetDue, ytd };
+  });
+
+  // Aggregate received cash for source months whose due-date already passed.
+  const receivedTotal = sourceMonths.reduce((acc, sm) => {
+    const dueIdx = MONTH_ORDER.indexOf(sm) + 1; // default lag
+    if (dueIdx > viewIdx) return acc;
+    const block = INTERCOS_CASH[sm];
+    if (!block) return acc;
+    return (
+      acc +
+      Object.values(block.received).reduce<number>((s, v) => s + (v ?? 0), 0)
+    );
+  }, 0);
+
+  const apportMaxence = sourceMonths.reduce(
+    (acc, sm) => acc + (INTERCOS_CASH[sm]?.apportMaxence ?? 0),
+    0,
+  );
+
+  const totals = {
+    exigible: perEntity.reduce((a, e) => a + e.exigible, 0),
+    notYetDue: perEntity.reduce((a, e) => a + e.notYetDue, 0),
+    ytd: perEntity.reduce((a, e) => a + e.ytd, 0),
+  };
+  const solde = totals.exigible - receivedTotal;
+  const soldeAvecApport = solde - apportMaxence;
+  const recoveryRate = totals.exigible > 0 ? (receivedTotal / totals.exigible) * 100 : 0;
+  const recoveryRateApport =
+    totals.exigible > 0 ? ((receivedTotal + apportMaxence) / totals.exigible) * 100 : 0;
+
+  // -------- KPI hero (4 cards) --------
+  const lastDueMonth = sourceMonths[Math.max(0, viewIdx - 1)];
+  const notYetLabel = sourceMonths
+    .filter((sm) => MONTH_ORDER.indexOf(sm) + 1 > viewIdx)
+    .map((sm) => MONTH_SHORT[sm])
+    .join(' + ') || '—';
+
+  const kpis = [
+    {
+      label: 'Remontées Attendues',
+      value: usd(totals.exigible),
+      detail: `Exigibles jusqu'à ${MONTH_SHORT[lastDueMonth]}`,
+      color: 'navy' as const,
+    },
+    {
+      label: 'Réellement Reçu',
+      value: usd(receivedTotal),
+      detail: 'Encaissé à date',
+      color: receivedTotal < totals.exigible * 0.7 ? ('danger' as const) : ('success' as const),
+    },
+    {
+      label: 'Solde Dû',
+      value: usd(Math.max(0, solde)),
+      detail: 'Écart à régulariser',
+      color: solde > 0 ? ('warning' as const) : ('success' as const),
+    },
+    {
+      label: `${notYetLabel} (Non exigible)`,
+      value: usd(totals.notYetDue),
+      detail: 'Sera exigible plus tard',
+      color: 'success' as const,
+    },
+  ];
+
+  // -------- Alert banner --------
+  const alert = {
+    title:
+      solde > totals.exigible * 0.3
+        ? 'Retard de remontée significatif'
+        : 'Remontées en bonne voie',
+    body: `Sur les ${usd(totals.exigible)} exigibles, ${usd(receivedTotal)} ont été remontés à la Holding, soit ${fmtPct(recoveryRate)} du montant attendu.`,
+    rate: fmtPct(recoveryRate),
+    balance: usd(Math.max(0, solde)),
+  };
+
+  // -------- Détail par entité --------
+  // Columns = each source month + Total Exigible + Non-exigible(s) + YTD
+  const exigibleMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 <= viewIdx);
+  const notDueMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 > viewIdx);
+
+  const tableRows = perEntity.map((e) => {
+    const cells: Record<string, string> = { entity: e.rule.label };
+    e.monthly.forEach((m) => {
+      cells[m.sourceMonth] = usd(m.amount);
+    });
+    cells.exigible = usd(e.exigible);
+    cells.notYetDue = usd(e.notYetDue);
+    cells.ytd = usd(e.ytd);
+    return cells;
+  });
+
+  const totalRow: Record<string, string> = { entity: 'TOTAL ATTENDU' };
+  sourceMonths.forEach((sm) => {
+    totalRow[sm] = usd(perEntity.reduce((a, e) => {
+      const cell = e.monthly.find((x) => x.sourceMonth === sm);
+      return a + (cell?.amount ?? 0);
+    }, 0));
+  });
+  totalRow.exigible = usd(totals.exigible);
+  totalRow.notYetDue = usd(totals.notYetDue);
+  totalRow.ytd = usd(totals.ytd);
+
+  // Backwards-compatible flat shape (jan/feb/exigible/mars/ytd) for existing tab UI.
+  const legacyTable = {
+    rows: tableRows.map((r) => ({
+      entity: r.entity,
+      jan: r['jan-2026'] ?? '—',
+      feb: r['feb-2026'] ?? '—',
+      exigible: r.exigible,
+      mars: r['mar-2026'] ?? r.notYetDue,
+      ytd: r.ytd,
+    })),
+    total: {
+      entity: totalRow.entity,
+      jan: totalRow['jan-2026'] ?? '—',
+      feb: totalRow['feb-2026'] ?? '—',
+      exigible: totalRow.exigible,
+      mars: totalRow['mar-2026'] ?? totalRow.notYetDue,
+      ytd: totalRow.ytd,
+    },
+  };
+
+  // -------- Scénarios --------
+  const scenarios = {
+    base: {
+      title: 'Scénario Base',
+      lines: [
+        { label: `Remontées exigibles (${exigibleMonths.map((m) => MONTH_SHORT[m]).join('+') || '—'})`, value: usd(totals.exigible), type: 'neutral' as const },
+        { label: 'Montants reçus à date', value: usdSigned(-receivedTotal), type: 'negative' as const },
+      ],
+      total: { label: 'SOLDE DÛ À LA HOLDING', value: usd(Math.max(0, solde)) },
+      rateLabel: 'Taux de recouvrement',
+      rate: fmtPct(recoveryRate),
+    },
+    apport: {
+      title: 'Scénario avec Apport Max',
+      lines: [
+        { label: `Remontées exigibles (${exigibleMonths.map((m) => MONTH_SHORT[m]).join('+') || '—'})`, value: usd(totals.exigible), type: 'neutral' as const },
+        { label: 'Montants reçus à date', value: usdSigned(-receivedTotal), type: 'negative' as const },
+        { label: '+ Apport Maxence', value: usdSigned(-apportMaxence), type: 'positive' as const },
+      ],
+      total: { label: 'SOLDE DÛ RÉVISÉ', value: usd(Math.max(0, soldeAvecApport)) },
+      rateLabel: 'Taux de recouvrement ajusté',
+      rate: fmtPct(recoveryRateApport),
+    },
+  };
+
+  // -------- Calendrier --------
+  const calendar = sourceMonths.map((sm) => {
+    const dueIdx = MONTH_ORDER.indexOf(sm) + 1;
+    const dueLabel = MONTH_ORDER[dueIdx] ? MONTH_SHORT[MONTH_ORDER[dueIdx]] : '—';
+    const amount = perEntity.reduce((a, e) => {
+      const cell = e.monthly.find((x) => x.sourceMonth === sm);
+      return a + (cell?.amount ?? 0);
+    }, 0);
+    const isDue = dueIdx <= viewIdx;
+    return {
+      month: MONTH_LONG[sm],
+      amount: usd(amount),
+      status: `${isDue ? '⚠️' : '🕐'} Exigible ${dueLabel}`,
+      tag: isDue ? 'EN RETARD' : 'NON EXIGIBLE',
+      level: (isDue ? 'danger' : 'warning') as 'danger' | 'warning',
+    };
+  });
+  calendar.push({
+    month: 'Total YTD',
+    amount: usd(totals.ytd),
+    status: 'Remontées attendues',
+    tag: 'Q1 2026',
+    level: 'navy' as any,
+  });
+
+  // -------- Récap comparatif scénarios --------
+  const recap = [
+    { label: 'Total exigible', s1: usd(totals.exigible), s2: usd(totals.exigible) },
+    { label: 'Encaissements reçus', s1: usd(receivedTotal), s2: usd(receivedTotal) },
+    { label: 'Apport Maxence', s1: '—', s2: usdSigned(apportMaxence ? -apportMaxence : 0).replace('-', '+'), s2Color: 'success' as const },
+    { label: 'Total fonds disponibles', s1: usd(receivedTotal), s2: usd(receivedTotal + apportMaxence) },
+    {
+      label: 'Solde dû',
+      s1: usd(Math.max(0, solde)),
+      s2: usd(Math.max(0, soldeAvecApport)),
+      s1Color: 'danger' as const,
+      s2Color: 'warning' as const,
+      bold: true,
+      highlight: true,
+    },
+    {
+      label: 'Taux de recouvrement',
+      s1: fmtPct(recoveryRate),
+      s2: fmtPct(recoveryRateApport),
+      s1Color: 'danger' as const,
+      s2Color: 'success' as const,
+    },
+  ];
+
+  const marsNote = notDueMonths.length > 0
+    ? `${usd(totals.notYetDue)} → exigible(s) ${notDueMonths.map((m) => MONTH_SHORT[m]).join(', ')}`
+    : 'Aucune remontée en attente d\'exigibilité';
+
+  return {
+    kpis,
+    alert,
+    table: legacyTable,
+    scenarios,
+    calendar,
+    recap,
+    marsNote,
+    // Bonus: structured rule explanations for a future "rules" sub-block.
+    rulesApplied: INTERCO_RULES.map((r) => ({
+      entity: r.label,
+      rate: `${(r.transferRate * 100).toFixed(0)}%`,
+      lag: `M+${r.settlementLagMonths}`,
+    })),
+  };
+}
