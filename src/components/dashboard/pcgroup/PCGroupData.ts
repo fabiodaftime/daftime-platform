@@ -1392,6 +1392,7 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     ...base,
     monthLabel: PCG_MONTH_LABELS[month],
     footerLabel: PCG_MONTH_LABELS[month],
+    entitiesCount,
     overviewHero: overviewHero as any,
     overviewComparison: overviewComparison as any,
     overviewComparisonTotal: overviewComparisonTotal as any,
