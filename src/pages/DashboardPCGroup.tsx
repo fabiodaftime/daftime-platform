@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
 import { useAuth } from '@/hooks/useAuth';
@@ -52,6 +52,8 @@ export default function DashboardPCGroup() {
   const availableMonths = getPCGroupAvailableMonths().filter((m) => activeMonthIds.has(m.id));
   const activeEntities = liveConfig.entities.filter((e) => e.is_active);
   const entitiesCount = activeEntities.length;
+  const filialesCount = activeEntities.filter((e) => (e as any).base_role !== 'holding').length;
+  const holdingCount = activeEntities.filter((e) => (e as any).base_role === 'holding').length;
 
   const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
@@ -142,26 +144,37 @@ export default function DashboardPCGroup() {
             <div className="pcg-header-title">
               <h1>Dashboard Consolidé</h1>
               <p className="subtitle">
-                {entitiesCount} {entitiesCount > 1 ? 'Entités' : 'Entité'} • {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
+                {holdingCount > 0
+                  ? `${filialesCount} Filiale${filialesCount > 1 ? 's' : ''} + ${holdingCount} Holding`
+                  : `${entitiesCount} ${entitiesCount > 1 ? 'Entités' : 'Entité'}`}
+                {' '}• {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
               </p>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {isSuperAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/admin/pcgroup-diagnostics')}
-                title="Checks de cohérence (super admin)"
-                style={{
-                  borderColor: '#D4A85555',
-                  color: '#D4A855',
-                  background: 'transparent',
-                }}
-              >
-                <ShieldCheck className="w-4 h-4 mr-2" />
-                Diagnostics
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/pcgroup-entities')}
+                  title="Gérer les filiales (super admin)"
+                  style={{ borderColor: '#D4A85555', color: '#D4A855', background: 'transparent' }}
+                >
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Filiales
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/pcgroup-diagnostics')}
+                  title="Checks de cohérence (super admin)"
+                  style={{ borderColor: '#D4A85555', color: '#D4A855', background: 'transparent' }}
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Diagnostics
+                </Button>
+              </>
             )}
             <MonthSelector
               months={availableMonths}

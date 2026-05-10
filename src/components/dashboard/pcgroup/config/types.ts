@@ -2,6 +2,21 @@
 
 export type EntityCode = 'agency' | 'structuring' | 'digit' | 'spy' | 'comment' | string;
 
+export type EntityBaseRole =
+  | 'agency'
+  | 'structuring'
+  | 'digit'
+  | 'holding'
+  | 'subsidiary';
+
+export const ENTITY_BASE_ROLES: { value: EntityBaseRole; label: string }[] = [
+  { value: 'agency', label: 'Agency' },
+  { value: 'structuring', label: 'Structuring' },
+  { value: 'digit', label: 'Digit' },
+  { value: 'holding', label: 'Holding' },
+  { value: 'subsidiary', label: 'Filiale (autre)' },
+];
+
 export interface PCGEntityRow {
   id: string;
   code: EntityCode;
@@ -11,6 +26,7 @@ export interface PCGEntityRow {
   css_class: string;
   pie_color: string;
   source_type: 'dashboard' | 'manual';
+  base_role: EntityBaseRole;
   display_order: number;
   is_active: boolean;
 }

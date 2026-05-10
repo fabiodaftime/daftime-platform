@@ -26,6 +26,7 @@ import DashboardSkalis from "./pages/DashboardSkalis";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPCGroupDiagnostics from "./pages/AdminPCGroupDiagnostics";
+import AdminPCGroupEntities from "./pages/AdminPCGroupEntities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -182,6 +183,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminPCGroupDiagnostics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/pcgroup-entities"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminPCGroupEntities />
                 </ProtectedRoute>
               }
             />

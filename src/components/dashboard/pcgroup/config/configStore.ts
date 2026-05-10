@@ -15,11 +15,11 @@ import { EMPTY_CONFIG } from './types';
 
 const DEFAULT_CONFIG: PCGroupConfig = {
   entities: [
-    { id: 'd-agency',      code: 'agency',      name: 'Agency',         badge: 'Media',       gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', css_class: 'agency',      pie_color: '#F59E0B', source_type: 'dashboard', display_order: 1, is_active: true },
-    { id: 'd-structuring', code: 'structuring', name: 'Structuring',    badge: 'Banking',     gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', css_class: 'structuring', pie_color: '#1E3A5F', source_type: 'dashboard', display_order: 2, is_active: true },
-    { id: 'd-digit',       code: 'digit',       name: 'Digit Solution', badge: 'Ad Accounts', gradient: 'linear-gradient(135deg, #D946A8 0%, #EC4899 100%)', css_class: 'digit',       pie_color: '#4F5BD5', source_type: 'dashboard', display_order: 3, is_active: true },
-    { id: 'd-spy',         code: 'spy',         name: 'SPY',            badge: 'Tools',       gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', css_class: 'spy',         pie_color: '#10B981', source_type: 'manual',    display_order: 4, is_active: true },
-    { id: 'd-comment',     code: 'comment',     name: 'Comment',        badge: 'Trust',       gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', css_class: 'comment',     pie_color: '#D946A8', source_type: 'manual',    display_order: 5, is_active: true },
+    { id: 'd-agency',      code: 'agency',      name: 'Agency',         badge: 'Media',       gradient: 'linear-gradient(135deg, #4F5BD5 0%, #6366F1 100%)', css_class: 'agency',      pie_color: '#F59E0B', source_type: 'dashboard', base_role: 'agency',      display_order: 1, is_active: true },
+    { id: 'd-structuring', code: 'structuring', name: 'Structuring',    badge: 'Banking',     gradient: 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)', css_class: 'structuring', pie_color: '#1E3A5F', source_type: 'dashboard', base_role: 'structuring', display_order: 2, is_active: true },
+    { id: 'd-digit',       code: 'digit',       name: 'Digit Solution', badge: 'Ad Accounts', gradient: 'linear-gradient(135deg, #D946A8 0%, #EC4899 100%)', css_class: 'digit',       pie_color: '#4F5BD5', source_type: 'dashboard', base_role: 'digit',       display_order: 3, is_active: true },
+    { id: 'd-spy',         code: 'spy',         name: 'SPY',            badge: 'Tools',       gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', css_class: 'spy',         pie_color: '#10B981', source_type: 'manual',    base_role: 'subsidiary',  display_order: 4, is_active: true },
+    { id: 'd-comment',     code: 'comment',     name: 'Comment',        badge: 'Trust',       gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', css_class: 'comment',     pie_color: '#D946A8', source_type: 'manual',    base_role: 'subsidiary',  display_order: 5, is_active: true },
   ],
   months: [
     { id: 'd-jan', month_id: 'jan-2026', label: 'Janvier 2026', short_label: 'jan', year: 2026, month_num: 1, is_active: true, display_order: 1 },
