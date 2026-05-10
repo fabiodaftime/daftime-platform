@@ -1,7 +1,8 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { D, YTD_PRODUCT_COLORS, fmt, type DigitMonthData } from './DigitData';
+import { D, YTD_PRODUCT_COLORS, fmt, type DigitMonthData, type DigitMonthId } from './DigitData';
+import { DigitYTDValidationPanel } from './DigitYTDValidationPanel';
 
-interface Props { data: DigitMonthData; }
+interface Props { data: DigitMonthData; month?: DigitMonthId; }
 
 const typeColor: Record<string, string> = {
   primary: D.primary, success: D.green, accent: D.primary, warning: D.orange,
