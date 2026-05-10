@@ -53,7 +53,20 @@ export default function DashboardDigit() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
-            <ConsolidatedAccessButton />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {isSuperAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/entity-inputs?layout=digit')}
+                  title="Modifier les chiffres mensuels (Super Admin)"
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  Saisie
+                </Button>
+              )}
+              <ConsolidatedAccessButton />
+            </div>
           </div>
           <div className="digit-header-main">
             <div>
