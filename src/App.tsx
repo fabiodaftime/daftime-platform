@@ -25,6 +25,7 @@ import DashboardHotelX from "./pages/DashboardHotelX";
 import DashboardSkalis from "./pages/DashboardSkalis";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
+import AdminPCGroupDiagnostics from "./pages/AdminPCGroupDiagnostics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -175,6 +176,14 @@ const App = () => (
                   <AdminUsers />
                 </ProtectedRoute>
               } 
+            />
+            <Route
+              path="/admin/pcgroup-diagnostics"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminPCGroupDiagnostics />
+                </ProtectedRoute>
+              }
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

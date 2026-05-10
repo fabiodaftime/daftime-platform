@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AVAILABLE_MONTHS,
@@ -20,7 +21,6 @@ import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
 import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
-import { PCGroupValidationPanel } from '@/components/dashboard/pcgroup/PCGroupValidationPanel';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import './DashboardPCGroup.css';
 
@@ -40,6 +40,7 @@ export default function DashboardPCGroup() {
   // Hydrate le store PCGroup depuis Supabase (entités, mois, règles, manuel).
   // Tout edit admin → invalidate → re-render automatique du dashboard.
   usePCGroupConfig();
+  const { isSuperAdmin } = useAuth();
   const availableMonths = AVAILABLE_MONTHS;
   const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
@@ -116,12 +117,30 @@ export default function DashboardPCGroup() {
               </p>
             </div>
           </div>
-          <MonthSelector
-            months={AVAILABLE_MONTHS}
-            selectedMonth={selectedMonth}
-            onMonthChange={(id) => setSelectedMonth(id as MonthId)}
-            variant="gold"
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/pcgroup-diagnostics')}
+                title="Checks de cohérence (super admin)"
+                style={{
+                  borderColor: '#D4A85555',
+                  color: '#D4A855',
+                  background: 'transparent',
+                }}
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                Diagnostics
+              </Button>
+            )}
+            <MonthSelector
+              months={AVAILABLE_MONTHS}
+              selectedMonth={selectedMonth}
+              onMonthChange={(id) => setSelectedMonth(id as MonthId)}
+              variant="gold"
+            />
+          </div>
         </div>
 
         <nav className="pcg-nav-tabs">
@@ -139,7 +158,6 @@ export default function DashboardPCGroup() {
         </nav>
       </header>
 
-      <PCGroupValidationPanel />
 
       <main className="pcg-main">
         {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} />}
