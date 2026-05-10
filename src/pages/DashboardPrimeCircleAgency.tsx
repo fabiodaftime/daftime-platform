@@ -24,7 +24,7 @@ const tabs = [
 
 export default function DashboardPrimeCircleAgency() {
   const [tab, setTab] = useState("overview");
-  const [selectedMonth, setSelectedMonth] = useState<PCAMonthId>('mar-2026');
+  const [selectedMonth, setSelectedMonth] = useState<PCAMonthId>('apr-2026');
   const navigate = useNavigate();
 
   const data = getPCAMonthData(selectedMonth);
