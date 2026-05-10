@@ -58,20 +58,22 @@ export function parseAmount(raw?: string): number | null {
 /** Heuristic: is this indicator an average / rate / ticket (NOT additive)? */
 export function isAverageIndicator(label?: string, ytd?: string): boolean {
   const l = (label || '').toLowerCase();
+  // Keywords that always denote a rate / mean.
   if (
     l.includes('taux') ||
     l.includes('ratio') ||
-    l.includes('%') ||
     l.includes('moyen') ||
     l.includes('ticket') ||
     l.includes('adr') ||
     l.includes('revpar') ||
+    l.includes('marge %') ||
     l.includes('marge brute %') ||
     l.includes('marge nette %')
   ) {
     return true;
   }
-  // Value ends with % or pts → rate
+  // Value ends with % or pts → rate.
+  // (We do NOT treat a "(50%)" suffix in the LABEL as a rate — those are share labels for additive amounts.)
   const v = (ytd || '').trim();
   return v.endsWith('%') || /pts?$/i.test(v);
 }

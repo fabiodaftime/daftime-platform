@@ -4,7 +4,7 @@ import {
   isAverageIndicator,
   validateComparisonRows,
 } from "@/lib/ytdValidation";
-import { getMonthData } from "../PCGroupData";
+import { getMonthData } from "@/components/dashboard/pcgroup/PCGroupData";
 
 describe("ytdValidation — parseAmount", () => {
   it("parses currency strings", () => {
