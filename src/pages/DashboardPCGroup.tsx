@@ -98,6 +98,17 @@ export default function DashboardPCGroup() {
     loadEntityRoutes();
   }, []);
 
+  // État vide : config pas encore configurée (entités ou mois disponibles).
+  if (cfgQuery.isLoading && !cfgQuery.data) {
+    return <EmptyConfigState reason="loading" isSuperAdmin={isSuperAdmin} />;
+  }
+  if (entitiesCount === 0) {
+    return <EmptyConfigState reason="no-entities" isSuperAdmin={isSuperAdmin} />;
+  }
+  if (availableMonths.length === 0) {
+    return <EmptyConfigState reason="no-months" isSuperAdmin={isSuperAdmin} />;
+  }
+
   const monthData = getMonthData(selectedMonth);
 
   // Dynamic tab amounts from selected month data
@@ -131,7 +142,7 @@ export default function DashboardPCGroup() {
             <div className="pcg-header-title">
               <h1>Dashboard Consolidé</h1>
               <p className="subtitle">
-                {(monthData as any).entitiesCount ?? 5} Filiales + Holding • {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
+                {entitiesCount} {entitiesCount > 1 ? 'Entités' : 'Entité'} • {availableMonths.length} mois disponible{availableMonths.length > 1 ? 's' : ''}
               </p>
             </div>
           </div>
@@ -153,7 +164,7 @@ export default function DashboardPCGroup() {
               </Button>
             )}
             <MonthSelector
-              months={AVAILABLE_MONTHS}
+              months={availableMonths}
               selectedMonth={selectedMonth}
               onMonthChange={(id) => setSelectedMonth(id as MonthId)}
               variant="gold"
