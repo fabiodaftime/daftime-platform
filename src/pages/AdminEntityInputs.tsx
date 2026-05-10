@@ -188,6 +188,47 @@ export default function AdminEntityInputs() {
   );
 }
 
+function FragmentRows({
+  group, fields, draft, onChange,
+}: {
+  group: string;
+  fields: { key: string; label: string; unit: string }[];
+  draft: Draft;
+  onChange: (monthId: string, key: string, value: string) => void;
+}) {
+  return (
+    <>
+      <tr>
+        <td colSpan={1 + SUPPORTED_MONTHS.length} style={{
+          padding: '12px 8px 4px', fontWeight: 600,
+          color: '#D4A855', textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5,
+        }}>{group}</td>
+      </tr>
+      {fields.map((f) => (
+        <tr key={f.key}>
+          <td style={{ ...td, fontWeight: 500 }}>
+            {f.label}
+            <span style={{ color: '#94a3b8', marginLeft: 6, fontSize: 11 }}>
+              {f.unit === 'usd' ? '$' : f.unit === 'pct' ? '%' : '#'}
+            </span>
+          </td>
+          {SUPPORTED_MONTHS.map((m) => (
+            <td key={m.id} style={td}>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={draft[m.id]?.[f.key] ?? ''}
+                onChange={(e) => onChange(m.id, f.key, e.target.value)}
+                style={{ height: 32, fontSize: 13 }}
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 const th: React.CSSProperties = {
   textAlign: 'left', padding: '10px 8px', borderBottom: '1px solid #E5E1D8',
   fontWeight: 600, color: '#0A1628', fontSize: 12,
