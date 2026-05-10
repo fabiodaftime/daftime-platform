@@ -36,8 +36,10 @@ const tabs = [
 ];
 
 export default function DashboardPCGroup() {
+  const availableMonths = AVAILABLE_MONTHS;
+  const defaultMonth = (availableMonths[availableMonths.length - 1]?.id ?? 'mar-2026') as MonthId;
   const [tab, setTab] = useState('overview');
-  const [selectedMonth, setSelectedMonth] = useState<MonthId>('mar-2026');
+  const [selectedMonth, setSelectedMonth] = useState<MonthId>(defaultMonth);
   const [entityRoutes, setEntityRoutes] = useState<PCGroupEntityRoutes>(EMPTY_ENTITY_ROUTES);
   const navigate = useNavigate();
 
