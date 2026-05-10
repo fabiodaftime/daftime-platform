@@ -212,6 +212,25 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
   const hasIssues = summary.warnings + summary.missing > 0;
   const headerColor = summary.missing > 0 ? '#EF4444' : summary.warnings > 0 ? '#F59E0B' : '#10B981';
 
+  // Drawer drill-down
+  const [drillState, setDrillState] = useState<{
+    metric: BreakdownMetric;
+    monthId: PCGSourceMonthId;
+    monthLabel: string;
+    expected: number;
+    actual: number;
+  } | null>(null);
+
+  const handleInspect = (
+    metric: BreakdownMetric,
+    monthId: PCGSourceMonthId,
+    expected: number,
+    actual: number,
+  ) => {
+    const monthLabel = report.months.find((mm) => mm.monthId === monthId)?.label ?? '';
+    setDrillState({ metric, monthId, monthLabel, expected, actual });
+  };
+
   return (
     <section
       style={{
@@ -266,7 +285,7 @@ export function PCGroupValidationPanel({ defaultOpen = false, options }: PCGroup
       {!collapsed && (
         <div style={{ padding: '4px 18px 16px' }}>
           {report.months.map((m) => (
-            <MonthRow key={m.monthId} m={m} />
+            <MonthRow key={m.monthId} m={m} onInspect={handleInspect} />
           ))}
           <p style={{ fontSize: 11, color: '#94A3B8', margin: '6px 2px 0', lineHeight: 1.5 }}>
             La validation compare les totaux calculés en direct (Agency + Structuring + Digit + bloc manuel SPY/Comment/Holding)
