@@ -1388,11 +1388,11 @@ function applyComputedOverlay(month: MonthId, base: PCGroupMonthData): PCGroupMo
     { label: 'Réserves Cumulées', value: usd(ytd.reservesYTD), detail: 'Toutes filiales', color: 'primary' },
   ];
 
-  return {
+  const out: any = {
     ...base,
     monthLabel: PCG_MONTH_LABELS[month],
     footerLabel: PCG_MONTH_LABELS[month],
-    entitiesCount: entitiesCount as any,
+    entitiesCount,
     overviewHero: overviewHero as any,
     overviewComparison: overviewComparison as any,
     overviewComparisonTotal: overviewComparisonTotal as any,
