@@ -19,6 +19,7 @@ interface CompanyWithKPIs {
   revenueYTD: number;
   budgetYTD: number;
   expensesYTD: number;
+  hasRealData: boolean;
 }
 
 export default function AdminHome() {
