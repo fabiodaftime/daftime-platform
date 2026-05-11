@@ -20,7 +20,7 @@ import {
   resetPCGroupConfig,
 } from '../config/configStore';
 import { computeConsolidatedFacts, buildPCGroupMonthData } from '../pcGroupAggregator';
-import { getPCGroupAvailableMonths, type MonthId } from '../PCGroupData';
+import { getPCGroupAvailableMonths, getMonthData, type MonthId } from '../PCGroupData';
 import type { PCGroupConfig } from '../config/types';
 
 const EPS = 0.5;
