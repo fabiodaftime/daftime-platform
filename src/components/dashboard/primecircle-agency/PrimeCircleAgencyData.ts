@@ -480,7 +480,7 @@ const marData: PCAMonthData = {
 // ⚠️ Feb 2026 restated (gross $36,184, expenses $9,406, net $26,778, pcaShare $13,389).
 // ⚠️ Jan 2026 restated (gross $14,885, net $8,648, pcaShare $4,324). YTD :
 //   YTD Gross   = 14885 + 36184 + 46402 + 58853 = $156,324
-//   YTD Exp     =  6237 +  9406 + 16555 + 13313 =  $45,511
+//   YTD Exp     =  6237 +  9406 + 16510 + 13313 =  $45,466
 //   YTD Net     =  8648 + 26778 + 29892 + 45541 = $110,859
 //   YTD PCA     =  4324 + 13389 + 14946 + 22770 =  $55,429
 const aprData: PCAMonthData = {
