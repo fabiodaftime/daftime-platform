@@ -782,7 +782,26 @@ export function buildPCGroupMonthData(
     { label: 'SOLDE HOLDING', value: usdR(0), type: 'highlight' },
   ];
 
-  // ===== AGENCY overlay (KPIs / Comparison / Waterfall) auto-derived from
+  // ----- Synthèse Flux Holding (waterfall) — version condensée du P&L
+  // côté holding uniquement, dérivée des mêmes facts pour rester cohérente.
+  const holdingSynthese: { label: string; value: string; type: string; indent?: boolean }[] = [
+    { label: 'MARGE BRUTE GROUPE', value: usdR(facts.margeBruteGroupe), type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Réserves Filiales (10%)', value: neg(facts.reservesFiliales), type: 'negative', indent: true },
+    { label: 'REMONTÉE HOLDING (90%)', value: usdR(facts.remonteeHolding), type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    ...(manual.holding.fraisDetail.length > 0
+      ? manual.holding.fraisDetail.map((f) => ({ label: f.label, value: neg(f.amount), type: 'negative', indent: true }))
+      : [{ label: 'Frais Holding', value: neg(facts.fraisHolding), type: 'negative', indent: true }]),
+    { label: 'RÉSULTAT NET HOLDING', value: usdR(facts.resultatNetHolding), type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Salaires management (100%)', value: neg(facts.resultatNetHolding), type: 'negative', indent: true },
+    ...(dist.willInThibault
+      ? [{ label: '↳ dont Will (via Thibault)', value: usdR(dist.willInThibault), type: 'indent-muted', indent: true }]
+      : []),
+    { label: '', value: '', type: 'spacer' },
+    { label: 'SOLDE HOLDING', value: usdR(0), type: 'highlight' },
+  ];
   // the source dashboard so the consolidated tab stays in sync. =====
   const agencyByMonth = monthsForCols.map((m) => {
     try {
