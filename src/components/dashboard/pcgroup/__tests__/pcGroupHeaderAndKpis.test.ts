@@ -129,13 +129,12 @@ describe('PCGroup — header/footer & KPIs réactifs aux changements de config',
       const facts = computeConsolidatedFacts('mar-2026');
       expect(facts).not.toBeNull();
       expect(facts!.caGroupe).toBeGreaterThan(0);
-      // Invariants : marge brute = somme des contributions par entité
+      // Invariants : SPY/Comment sont inclus dans Digit (produits internes),
+      // donc la marge brute = Agency + Structuring + Digit (consolidé).
       const sum =
         facts!.agencyPartPCA +
         facts!.structuringMargeNette +
-        facts!.digitMargeNette +
-        facts!.spyMargeNette +
-        facts!.commentMargeNette;
+        facts!.digitMargeNette;
       expect(Math.abs(sum - facts!.margeBruteGroupe)).toBeLessThan(0.5);
       // Réserves = 10 % marge brute, remontée = 90 %
       expect(Math.abs(facts!.reservesFiliales - facts!.margeBruteGroupe * 0.1)).toBeLessThan(0.5);
