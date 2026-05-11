@@ -28,6 +28,11 @@ export default function DashboardPrimeCircleAgency() {
   const [tab, setTab] = useState("overview");
   const [selectedMonth, setSelectedMonth] = useState<PCAMonthId>('apr-2026');
   const navigate = useNavigate();
+  const { isSuperAdmin } = useAuth();
+
+  const tabs = isSuperAdmin
+    ? [...baseTabs, { id: "integrity", label: "Intégrité", icon: "🛡️" }]
+    : baseTabs;
 
   const data = getPCAMonthData(selectedMonth);
 
