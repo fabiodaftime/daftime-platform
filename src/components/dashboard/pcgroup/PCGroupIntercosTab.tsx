@@ -254,8 +254,20 @@ export function PCGroupIntercosTab({ data }: Props) {
                     <td key={c.key}>{r[c.key] ?? '—'}</td>
                   ))}
                   <td style={{ background: 'rgba(30, 58, 95, 0.05)', fontWeight: 600 }}>{r.ytd}</td>
-                  <td style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669' }}>{r.received ?? '$0'}</td>
-                  <td style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706' }}>{r.remaining ?? '—'}</td>
+                  <td
+                    onClick={() => openDrawer(r, 'received')}
+                    title="Voir les lignes sources de remontées"
+                    style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669', ...clickableCellStyle }}
+                  >
+                    {r.received ?? '$0'}
+                  </td>
+                  <td
+                    onClick={() => openDrawer(r, 'remaining')}
+                    title="Voir le détail du solde restant"
+                    style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706', ...clickableCellStyle }}
+                  >
+                    {r.remaining ?? '—'}
+                  </td>
                 </tr>
               ))}
               <tr className="pcg-comparison-total">
