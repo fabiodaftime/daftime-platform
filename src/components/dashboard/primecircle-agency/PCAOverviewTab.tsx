@@ -224,8 +224,8 @@ export function PCAOverviewTab({ data }: Props) {
 
         {hasPrev && (
           <div className="pca-section">
-            <h3 className="pca-section-title">Marge Brute — Jan vs Feb</h3>
-            <p className="pca-section-subtitle">En montant et en pourcentage</p>
+            <h3 className="pca-section-title">Marge Brute — YTD mensualisé</h3>
+            <p className="pca-section-subtitle">Évolution mois par mois (montants & %)</p>
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={marginData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
