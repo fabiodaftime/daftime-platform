@@ -28,12 +28,12 @@ export function PCGroupIntercosTab({ data }: Props) {
   const intercos = (data as any).intercos;
   if (!intercos) return null;
 
-  const { kpis, table, calendar, recap, marsNote } = intercos;
+  const { kpis, table, calendar, recap } = intercos;
 
   return (
     <div>
       {/* KPI Hero */}
-      <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {kpis.map((k: any, i: number) => (
           <div
             key={i}
@@ -50,8 +50,8 @@ export function PCGroupIntercosTab({ data }: Props) {
       {/* Tableau Détail Remontées — colonnes dynamiques (1 par mois source) */}
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📊 Détail des Remontées Attendues vs Reçues</h3>
-          <span className="pcg-section-subtitle">Remontées = 90% de la marge nette filiale · M+1</span>
+          <h3 className="pcg-section-title">📊 Détail des Remontées par Filiale</h3>
+          <span className="pcg-section-subtitle">Remontées = 90% de la marge nette filiale</span>
         </div>
         <div className="pcg-section-body">
           <table className="pcg-comparison-table">
@@ -59,13 +59,9 @@ export function PCGroupIntercosTab({ data }: Props) {
               <tr>
                 <th>Entité</th>
                 {table.columns.map((c: any) => (
-                  <th key={c.key} style={{ background: c.isExigible ? undefined : 'rgba(245, 158, 11, 0.15)' }}>
-                    {c.label}{c.isExigible ? '' : ' (à venir)'}
-                  </th>
+                  <th key={c.key}>{c.label}</th>
                 ))}
-                <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Total Exigible</th>
-                <th style={{ background: 'rgba(245, 158, 11, 0.15)' }}>Non Exigible</th>
-                <th>Cumul YTD</th>
+                <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Total à Remonter</th>
               </tr>
             </thead>
             <tbody>
@@ -73,13 +69,9 @@ export function PCGroupIntercosTab({ data }: Props) {
                 <tr key={i}>
                   <td>{r.entity}</td>
                   {table.columns.map((c: any) => (
-                    <td key={c.key} style={c.isExigible ? undefined : { background: 'rgba(245, 158, 11, 0.05)' }}>
-                      {r[c.key] ?? '—'}
-                    </td>
+                    <td key={c.key}>{r[c.key] ?? '—'}</td>
                   ))}
-                  <td style={{ background: 'rgba(16, 185, 129, 0.1)', fontWeight: 600 }}>{r.exigible}</td>
-                  <td style={{ background: 'rgba(245, 158, 11, 0.1)' }}>{r.notYetDue}</td>
-                  <td>{r.ytd}</td>
+                  <td style={{ background: 'rgba(16, 185, 129, 0.1)', fontWeight: 600 }}>{r.ytd}</td>
                 </tr>
               ))}
               <tr className="pcg-comparison-total">
@@ -87,15 +79,10 @@ export function PCGroupIntercosTab({ data }: Props) {
                 {table.columns.map((c: any) => (
                   <td key={c.key}>{table.total[c.key] ?? '—'}</td>
                 ))}
-                <td style={{ background: '#1E3A5F', color: '#fff' }}>{table.total.exigible}</td>
-                <td style={{ background: 'rgba(245, 158, 11, 0.3)' }}>{table.total.notYetDue}</td>
-                <td style={{ fontWeight: 700 }}>{table.total.ytd}</td>
+                <td style={{ background: '#1E3A5F', color: '#fff', fontWeight: 700 }}>{table.total.ytd}</td>
               </tr>
             </tbody>
           </table>
-          <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '1rem', fontStyle: 'italic' }}>
-            Note : les remontées se font en M+1 (marge d'un mois → exigible le mois suivant).
-          </p>
         </div>
       </div>
 
@@ -154,10 +141,7 @@ export function PCGroupIntercosTab({ data }: Props) {
                   <td style={{ color: r.s2Color ? COLOR[r.s2Color] : undefined, fontWeight: r.bold ? 700 : 400 }}>{r.s2}</td>
                 </tr>
               ))}
-              <tr style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-                <td>Non exigible</td>
-                <td colSpan={2} style={{ textAlign: 'center', color: '#F59E0B' }}>{marsNote}</td>
-              </tr>
+              {/* Ligne "Non exigible" retirée — vue simplifiée */}
             </tbody>
           </table>
         </div>
