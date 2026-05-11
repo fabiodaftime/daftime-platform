@@ -420,10 +420,12 @@ export default function AdminCsvImport() {
             </Button>
             <h1 className="text-2xl font-semibold mt-2">Import CSV</h1>
             <p className="text-sm text-muted-foreground">
-              Téléchargez le template, remplissez-le, puis envoyez-le. Toute erreur de format ou clé inconnue est listée avant l'import (aucun upload silencieux).
+              Téléchargez le template, remplissez-le, puis envoyez-le. Toute erreur de format ou clé inconnue est listée avant l'import (aucun upload silencieux). Le contrôle d'alignement et le recalcul YTD sont déclenchés automatiquement après chaque import.
             </p>
           </div>
         </div>
+
+        <PostImportValidationStatus />
 
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">
