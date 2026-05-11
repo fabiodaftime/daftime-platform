@@ -16,7 +16,6 @@ import { PCGroupOverviewTab } from '@/components/dashboard/pcgroup/PCGroupOvervi
 import { PCGroupYTDTab } from '@/components/dashboard/pcgroup/PCGroupYTDTab';
 import { PCGroupEntitiesAccordion } from '@/components/dashboard/pcgroup/PCGroupEntitiesAccordion';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
-import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
@@ -29,7 +28,6 @@ const tabs = [
   { id: 'ytd', icon: '📈', label: 'YTD 2026' },
   { id: 'entities', icon: '🏢', label: 'Détail entités' },
   { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
-  { id: 'history', icon: '📋', label: 'Historique' },
 ];
 
 export default function DashboardPCGroup() {
@@ -198,7 +196,7 @@ export default function DashboardPCGroup() {
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
         {tab === 'entities' && <PCGroupEntitiesAccordion data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
-        {tab === 'history' && <RestatementHistoryTab accent="gold" />}
+        
       </main>
 
       <footer className="pcg-footer">
