@@ -174,7 +174,9 @@ export function PCGroupIntercosTab({ data }: Props) {
                 {table.columns.map((c: any) => (
                   <th key={c.key}>{c.label}</th>
                 ))}
-                <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Total à Remonter</th>
+                <th style={{ background: 'rgba(30, 58, 95, 0.1)' }}>Total à Remonter</th>
+                <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Déjà Remonté</th>
+                <th style={{ background: 'rgba(245, 158, 11, 0.15)' }}>Solde Restant</th>
               </tr>
             </thead>
             <tbody>
@@ -184,7 +186,9 @@ export function PCGroupIntercosTab({ data }: Props) {
                   {table.columns.map((c: any) => (
                     <td key={c.key}>{r[c.key] ?? '—'}</td>
                   ))}
-                  <td style={{ background: 'rgba(16, 185, 129, 0.1)', fontWeight: 600 }}>{r.ytd}</td>
+                  <td style={{ background: 'rgba(30, 58, 95, 0.05)', fontWeight: 600 }}>{r.ytd}</td>
+                  <td style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669' }}>{r.received ?? '$0'}</td>
+                  <td style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706' }}>{r.remaining ?? '—'}</td>
                 </tr>
               ))}
               <tr className="pcg-comparison-total">
@@ -193,40 +197,53 @@ export function PCGroupIntercosTab({ data }: Props) {
                   <td key={c.key}>{table.total[c.key] ?? '—'}</td>
                 ))}
                 <td style={{ background: '#1E3A5F', color: '#fff', fontWeight: 700 }}>{table.total.ytd}</td>
+                <td style={{ background: '#059669', color: '#fff', fontWeight: 700 }}>{table.total.received}</td>
+                <td style={{ background: '#D97706', color: '#fff', fontWeight: 700 }}>{table.total.remaining}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Section "Analyse de la Situation Financière" retirée à la demande client */}
-      {/* Récapitulatif */}
-      <div className="pcg-section">
-        <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📋 Récapitulatif Situation Intercos</h3>
-        </div>
-        <div className="pcg-section-body">
-          <table className="pcg-comparison-table">
-            <thead>
-              <tr>
-                <th>Indicateur</th>
-                <th>Scénario 1 (Base)</th>
-                <th>Scénario 2 (+ Apport Max)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recap.map((r: any, i: number) => (
-                <tr key={i} style={r.highlight ? { background: 'rgba(239, 68, 68, 0.05)' } : undefined}>
-                  <td style={{ fontWeight: r.bold ? 700 : 400 }}>{r.label}</td>
-                  <td style={{ color: r.s1Color ? COLOR[r.s1Color] : undefined, fontWeight: r.bold ? 700 : 400 }}>{r.s1}</td>
-                  <td style={{ color: r.s2Color ? COLOR[r.s2Color] : undefined, fontWeight: r.bold ? 700 : 400 }}>{r.s2}</td>
-                </tr>
+      {/* Cards visuelles : ce que chaque entité doit encore remonter */}
+      {Array.isArray((intercos as any).entityCards) && (
+        <div className="pcg-section">
+          <div className="pcg-section-header">
+            <h3 className="pcg-section-title">💼 Solde à Remonter par Entité</h3>
+            <span className="pcg-section-subtitle">Hors apport Maxence — uniquement remontées effectives</span>
+          </div>
+          <div className="pcg-section-body">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              {(intercos as any).entityCards.map((c: any) => (
+                <div
+                  key={c.key}
+                  style={{
+                    border: `1px solid ${LEVEL_BORDER[c.level] ?? '#1E3A5F'}`,
+                    borderLeft: `4px solid ${COLOR[c.level] ?? '#1E3A5F'}`,
+                    borderRadius: 8,
+                    padding: 16,
+                    background: '#fff',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1E3A5F', marginBottom: 8 }}>{c.entity}</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: COLOR[c.level] ?? '#1E3A5F', marginBottom: 4 }}>
+                    {c.remaining}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 12 }}>Reste à remonter</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#374151', borderTop: '1px solid #E5E7EB', paddingTop: 8 }}>
+                    <span>Attendu : <strong>{c.expected}</strong></span>
+                    <span>Reçu : <strong style={{ color: '#059669' }}>{c.received}</strong></span>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: COLOR[c.level], fontWeight: 600 }}>
+                    Recouvrement : {c.rate}
+                  </div>
+                </div>
               ))}
-              {/* Ligne "Non exigible" retirée — vue simplifiée */}
-            </tbody>
-          </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
