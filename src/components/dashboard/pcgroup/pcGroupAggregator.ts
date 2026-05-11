@@ -1031,7 +1031,6 @@ export function buildPCGroupMonthData(
     return [
       { label: 'CA', value: usdR(cur.ca), type: 'positive' },
       { label: '', value: '', type: 'spacer' },
-      { label: 'Total Charges', value: negStr(cur.charges), type: 'negative' },
       { label: 'TOTAL CHARGES', value: negStr(cur.charges), type: 'total-negative' },
       { label: '', value: '', type: 'spacer' },
       { label: 'MARGE NETTE', value: usdR(cur.contribution), type: 'highlight' },
