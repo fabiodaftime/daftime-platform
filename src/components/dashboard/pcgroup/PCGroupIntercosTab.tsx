@@ -176,7 +176,7 @@ export function PCGroupIntercosTab({ data }: Props) {
                 </tr>
               ))}
               <tr style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-                <td>Mars (non exigible)</td>
+                <td>Non exigible</td>
                 <td colSpan={2} style={{ textAlign: 'center', color: '#F59E0B' }}>{marsNote}</td>
               </tr>
             </tbody>
