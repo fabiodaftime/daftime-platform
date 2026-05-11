@@ -780,6 +780,87 @@ export function buildPCGroupMonthData(
     { label: 'SOLDE HOLDING', value: usdR(0), type: 'highlight' },
   ];
 
+  // ===== AGENCY overlay (KPIs / Comparison / Waterfall) auto-derived from
+  // the source dashboard so the consolidated tab stays in sync. =====
+  const agencyByMonth = monthsForCols.map((m) => {
+    try {
+      return { id: m.id, data: getPCAMonthData(m.id as PCAMonthId), label: BUILD_MONTH_SHORT[m.id as MonthId] };
+    } catch {
+      return null;
+    }
+  }).filter((x): x is { id: PCGSourceMonthId; data: ReturnType<typeof getPCAMonthData>; label: string } => x !== null && Boolean(x.data));
+  const agencyCurrent = agencyByMonth.find((x) => x.id === month) ?? null;
+  const agencyPrev = prevId ? agencyByMonth.find((x) => x.id === prevId) ?? null : null;
+
+  let agencyKPIsOverlay: any = base.agencyKPIs;
+  let agencyComparisonOverlay: any = base.agencyComparison;
+  let agencyWaterfallOverlay: any = base.agencyWaterfall;
+
+  if (agencyCurrent) {
+    const a = agencyCurrent.data;
+    const caPct = a.gross > 0 ? (a.net / a.gross) * 100 : 0;
+    const chargesPct = a.gross > 0 ? (a.expenses / a.gross) * 100 : 0;
+    const caDelta = agencyPrev ? pctChange(a.gross, agencyPrev.data.gross) : null;
+    const chargesDelta = agencyPrev ? pctChange(a.expenses, agencyPrev.data.expenses) : null;
+    agencyKPIsOverlay = [
+      { label: 'CA Brut', value: usdR(a.gross),
+        detail: caDelta != null ? `${fmtPctSigned(caDelta)} vs ${agencyPrev!.label} (${usdR(agencyPrev!.data.gross)})` : 'Premier mois',
+        color: 'navy' },
+      { label: 'Marge Nette', value: usdR(a.net), detail: `${fmtPct(caPct)} du CA`, color: 'green' },
+      { label: 'Part PCA (50%)', value: usdR(a.pcaShare), detail: 'Après split Blink', color: 'gold' },
+      { label: 'Total Charges', value: usdR(a.expenses),
+        detail: chargesDelta != null ? `${fmtPctSigned(chargesDelta)} vs ${agencyPrev!.label}` : `${fmtPct(chargesPct)} du CA`,
+        color: 'pink' },
+    ];
+
+    const buildAgencyRow = (
+      indicator: string,
+      sel: (d: ReturnType<typeof getPCAMonthData>) => number,
+      inverse = false,
+    ) => {
+      const row: any = { indicator };
+      agencyByMonth.forEach((x) => { row[BUILD_MONTH_KEY[x.id as MonthId]] = usdR(sel(x.data)); });
+      const ytdSum = agencyByMonth.reduce((acc, x) => acc + sel(x.data), 0);
+      row.ytd = usdR(ytdSum);
+      if (agencyPrev) {
+        const variation = pctChange(sel(a), sel(agencyPrev.data));
+        row.variation = fmtPctSigned(variation);
+        row.varType = variation === 0 ? 'neutral' : (inverse ? variation < 0 : variation > 0) ? 'positive' : 'negative';
+      }
+      return row;
+    };
+    agencyComparisonOverlay = [
+      buildAgencyRow('CA Brut', (d) => d.gross),
+      buildAgencyRow('Charges', (d) => d.expenses, true),
+      buildAgencyRow('Marge Nette', (d) => d.net),
+      buildAgencyRow('Part PCA (50%)', (d) => d.pcaShare),
+    ];
+
+    // Waterfall depuis waterfallRows source
+    const fmtSigned = (n: number) => (n < 0 ? `-$${Math.abs(Math.round(n)).toLocaleString('en-US')}` : `$${Math.round(n).toLocaleString('en-US')}`);
+    const mapWaterfallType = (l: string, v: number, isBold: boolean): string => {
+      const up = l.toUpperCase();
+      if (up.includes('NET REVENUE')) return 'highlight';
+      if (up.includes('PCA SHARE')) return 'total-positive';
+      if (up.includes('PC RETAINED')) return 'indent-muted';
+      if (up.includes('TOTAL EXPENSES')) return 'total-negative';
+      if (up.includes('GROSS')) return 'positive';
+      if (isBold) return v >= 0 ? 'total-positive' : 'total-negative';
+      return v >= 0 ? 'positive' : 'negative';
+    };
+    const wf: { label: string; value: string; type: string }[] = [];
+    a.waterfallRows.forEach((r, i) => {
+      // Insert visual spacers around totals to mimic the legacy layout.
+      const prev = a.waterfallRows[i - 1];
+      if (r.b && prev && !prev.b) wf.push({ label: '', value: '', type: 'spacer' });
+      wf.push({ label: r.l, value: fmtSigned(r.v), type: mapWaterfallType(r.l, r.v, r.b) });
+      if (r.b && i < a.waterfallRows.length - 1 && a.waterfallRows[i + 1].b === false) {
+        wf.push({ label: '', value: '', type: 'spacer' });
+      }
+    });
+    agencyWaterfallOverlay = wf;
+  }
+
   const out: any = {
     ...base,
     monthLabel,
