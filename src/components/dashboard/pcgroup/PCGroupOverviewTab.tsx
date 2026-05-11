@@ -239,31 +239,211 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
         })}
       </div>
 
-      <div className="pcg-section">
-        <div className="pcg-section-header">
+      <div className="pcg-section pcg-pl-section">
+        <div
+          className="pcg-section-header"
+          style={{
+            background: 'linear-gradient(90deg, rgba(30,58,95,0.06) 0%, rgba(212,168,85,0.05) 60%, transparent 100%)',
+            borderLeft: '4px solid var(--pcg-gold)',
+          }}
+        >
           <div>
-            <h3 className="pcg-section-title">📈 P&L Consolidé - {monthLabel}</h3>
-            <p className="pcg-section-subtitle">Synthèse financière groupe (Agency, Structuring, Digit Solution — SPY & Comment inclus dans Digit)</p>
+            <h3 className="pcg-section-title" style={{ fontSize: '1.05rem' }}>
+              <span style={{ fontSize: '1.1rem' }}>📈</span> P&L Consolidé · {monthLabel}
+            </h3>
+            <p className="pcg-section-subtitle">
+              Synthèse financière groupe — Agency, Structuring, Digit Solution (SPY & Comment inclus dans Digit)
+            </p>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              padding: '6px 12px',
+              borderRadius: 999,
+              background: 'rgba(30,58,95,0.08)',
+              border: '1px solid rgba(30,58,95,0.18)',
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--pcg-navy)',
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+            }}
+          >
+            <CheckCircle2 size={13} /> Anti double-comptage
           </div>
         </div>
         <div className="pcg-section-body">
           <div className="pcg-charts-row">
             <PCGroupWaterfall data={consolidatedPL} title="" />
-            <div>
-              <div style={{ height: 280 }}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100}>
-                      {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(30,58,95,0.04) 0%, rgba(212,168,85,0.06) 100%)',
+                  border: '1px solid var(--pcg-border)',
+                  borderRadius: 14,
+                  padding: '14px 16px 6px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 4,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: 1,
+                      textTransform: 'uppercase',
+                      color: 'var(--pcg-text-muted)',
+                    }}
+                  >
+                    Contribution à la Marge Groupe
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--pcg-text-secondary)' }}>
+                    {monthLabel}
+                  </span>
+                </div>
+                <div style={{ height: 260 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={62}
+                        outerRadius={100}
+                        paddingAngle={2}
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                      >
+                        {pieData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(v: number) => `$${v.toLocaleString()}`}
+                        contentStyle={{
+                          borderRadius: 10,
+                          border: '1px solid var(--pcg-border)',
+                          fontSize: 12,
+                        }}
+                      />
+                      <Legend
+                        verticalAlign="bottom"
+                        iconType="circle"
+                        wrapperStyle={{ fontSize: 11, paddingTop: 6 }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <p style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginTop: 8 }}>
-                Contribution à la Marge Groupe
-              </p>
+
+              {(() => {
+                const totalMarge = pieData.reduce((s, p) => s + (p.value || 0), 0);
+                const top = [...pieData].sort((a, b) => (b.value || 0) - (a.value || 0))[0];
+                const topPct = totalMarge > 0 && top ? Math.round((top.value / totalMarge) * 100) : 0;
+                const heroByLabel = (key: string) =>
+                  overviewHero.find((h: any) => h.label.toLowerCase().includes(key.toLowerCase()));
+                const ca = heroByLabel('CA Groupe');
+                const margeBrute = heroByLabel('Marge Brute');
+                const resultatNet = heroByLabel('Résultat Net');
+                const reserves = heroByLabel('Réserves');
+                const tauxMarge =
+                  ca && margeBrute
+                    ? (() => {
+                        const caN = parseFloat(String(ca.value).replace(/[^0-9.-]/g, '')) || 0;
+                        const mbN = parseFloat(String(margeBrute.value).replace(/[^0-9.-]/g, '')) || 0;
+                        return caN > 0 ? Math.round((mbN / caN) * 100) : 0;
+                      })()
+                    : 0;
+
+                const stat = (
+                  label: string,
+                  value: string,
+                  detail: string,
+                  accent: string,
+                ) => (
+                  <div
+                    style={{
+                      background: 'var(--pcg-surface)',
+                      border: '1px solid var(--pcg-border)',
+                      borderRadius: 12,
+                      padding: '12px 14px',
+                      borderLeft: `3px solid ${accent}`,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: 0.8,
+                        textTransform: 'uppercase',
+                        color: 'var(--pcg-text-muted)',
+                      }}
+                    >
+                      {label}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        color: 'var(--pcg-text)',
+                      }}
+                    >
+                      {value}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--pcg-text-secondary)' }}>{detail}</div>
+                  </div>
+                );
+
+                return (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, 1fr)',
+                      gap: 10,
+                    }}
+                  >
+                    {stat(
+                      'Top Contributeur',
+                      top?.name ?? '—',
+                      `${topPct}% de la marge groupe`,
+                      'var(--pcg-gold)',
+                    )}
+                    {stat(
+                      'Taux de Marge',
+                      `${tauxMarge}%`,
+                      'Marge brute / CA',
+                      'var(--pcg-success)',
+                    )}
+                    {resultatNet &&
+                      stat(
+                        'Résultat Net Holding',
+                        String(resultatNet.value),
+                        'Après frais & remontée 90%',
+                        'var(--pcg-navy)',
+                      )}
+                    {reserves &&
+                      stat(
+                        'Réserves Filiales',
+                        String(reserves.value),
+                        '10% marge brute conservée',
+                        'var(--pcg-primary)',
+                      )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
