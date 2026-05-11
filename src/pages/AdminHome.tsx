@@ -35,7 +35,6 @@ export default function AdminHome() {
 
   const fetchCompaniesWithKPIs = async () => {
     try {
-      // Fetch companies
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
@@ -43,7 +42,19 @@ export default function AdminHome() {
 
       if (companiesError) throw companiesError;
 
-      // Fetch financial data for each company
+      // For client_viewer, skip the KPI fetch entirely (cards are minimalist).
+      if (!isSuperAdmin) {
+        setCompanies(
+          (companiesData || []).map((company) => ({
+            ...company,
+            revenueYTD: 0,
+            budgetYTD: 0,
+            expensesYTD: 0,
+          }))
+        );
+        return;
+      }
+
       const currentYear = new Date().getFullYear();
       const companiesWithKPIs: CompanyWithKPIs[] = await Promise.all(
         (companiesData || []).map(async (company, index) => {
@@ -55,14 +66,10 @@ export default function AdminHome() {
 
           const revenueYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_actual), 0) || 0;
           const budgetYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_budget), 0) || 0;
-
-          // For now, use demo data per company type if no financials exist
           const hasData = financials && financials.length > 0;
-          
-          // Different demo data based on layout type
+
           const demoDataByLayout: Record<string, { revenue: number; budget: number; expenses: number }> = {
             'cw_partners': { revenue: 895000, budget: 855000, expenses: 710000 },
-            // Dedicated P&L package: show representative totals in the admin hub if no monthly_financials exist
             'cwp_pl_2025': { revenue: 1760000, budget: 0, expenses: 1650000 },
             'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
             'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
@@ -70,9 +77,8 @@ export default function AdminHome() {
             'nowmade': { revenue: 1183137, budget: 0, expenses: 788978 },
             'default': { revenue: 750000 + index * 100000, budget: 720000 + index * 95000, expenses: 600000 + index * 80000 },
           };
-          
           const demoData = demoDataByLayout[company.layout_type] || demoDataByLayout['default'];
-          
+
           return {
             ...company,
             revenueYTD: hasData ? revenueYTD : demoData.revenue,
@@ -141,29 +147,37 @@ export default function AdminHome() {
         {/* Title and actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <img 
-              src={daftimeLogo} 
-              alt="Daftime Advisory" 
-              className="h-10 w-auto"
-            />
+            {isSuperAdmin && (
+              <img 
+                src={daftimeLogo} 
+                alt="Daftime Advisory" 
+                className="h-10 w-auto"
+              />
+            )}
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Mes Clients</h2>
-              <p className="text-muted-foreground">
-                {companies.length} entreprise{companies.length > 1 ? 's' : ''} gérée{companies.length > 1 ? 's' : ''}
-              </p>
+              <h2 className="text-2xl font-bold text-foreground">
+                {isSuperAdmin ? 'Mes Clients' : 'Mes Dashboards'}
+              </h2>
+              {isSuperAdmin && (
+                <p className="text-muted-foreground">
+                  {companies.length} entreprise{companies.length > 1 ? 's' : ''} gérée{companies.length > 1 ? 's' : ''}
+                </p>
+              )}
             </div>
           </div>
           
           <div className="flex gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un client..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64"
-              />
-            </div>
+            {(isSuperAdmin || companies.length > 6) && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher un client..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-64"
+                />
+              </div>
+            )}
             {isSuperAdmin && (
               <>
                 <Button variant="outline" onClick={() => navigate('/admin/users')}>
@@ -237,6 +251,7 @@ export default function AdminHome() {
                   revenueYTD={company.revenueYTD}
                   revenueVariance={revenueVariance}
                   margin={margin}
+                  showSettings={isSuperAdmin}
                 />
               );
             })}

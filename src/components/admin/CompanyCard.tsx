@@ -12,12 +12,14 @@ interface CompanyCardProps {
   revenueYTD?: number;
   revenueVariance?: number;
   margin?: number;
+  showSettings?: boolean;
 }
 
 export function CompanyCard({
   id,
   name,
   layoutType,
+  showSettings = true,
 }: CompanyCardProps) {
   const navigate = useNavigate();
 
@@ -53,13 +55,15 @@ export function CompanyCard({
               <Eye className="w-4 h-4 mr-2" />
               Voir Dashboard
             </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => navigate(`/admin/company/${id}`)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            {showSettings && (
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => navigate(`/admin/company/${id}`)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
