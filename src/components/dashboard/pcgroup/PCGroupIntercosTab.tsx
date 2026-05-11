@@ -50,30 +50,36 @@ export function PCGroupIntercosTab({ data }: Props) {
   const sourceMonths = table.columns.map((c: any) => c.label).join(', ');
   const safeLabel = String(monthLabel).replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'ytd';
 
+  const entityCards = (intercos as any).entityCards ?? [];
+
   const buildTableRows = () => {
-    const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter'];
+    const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
     const rows = table.rows.map((r: any) => [
       r.entity,
       ...table.columns.map((c: any) => r[c.key] ?? '—'),
       r.ytd,
+      r.received ?? '—',
+      r.remaining ?? '—',
     ]);
     const total = [
       table.total.entity,
       ...table.columns.map((c: any) => table.total[c.key] ?? '—'),
       table.total.ytd,
+      table.total.received ?? '—',
+      table.total.remaining ?? '—',
     ];
     return { header, rows, total };
   };
 
-  const buildRecapRows = () => {
-    const header = ['Indicateur', 'Scénario 1 (Base)', 'Scénario 2 (+ Apport Max)'];
-    const rows = recap.map((r: any) => [r.label, r.s1, r.s2]);
+  const buildCardsRows = () => {
+    const header = ['Entité', 'Attendu', 'Déjà Remonté', 'Reste à Remonter', 'Recouvrement'];
+    const rows = entityCards.map((c: any) => [c.entity, c.expected, c.received, c.remaining, c.rate]);
     return { header, rows };
   };
 
   const exportCSV = () => {
     const t = buildTableRows();
-    const rc = buildRecapRows();
+    const cards = buildCardsRows();
     const lines: any[][] = [];
     lines.push([`Récapitulatif Intercos — YTD ${monthLabel}`]);
     lines.push([`Mois sources: ${sourceMonths}`]);
@@ -83,23 +89,22 @@ export function PCGroupIntercosTab({ data }: Props) {
     t.rows.forEach((r) => lines.push(r));
     lines.push(t.total);
     lines.push([]);
-    lines.push(['== Récapitulatif Situation Intercos ==']);
-    lines.push(rc.header);
-    rc.rows.forEach((r) => lines.push(r));
+    lines.push(['== Solde à Remonter par Entité ==']);
+    lines.push(cards.header);
+    cards.rows.forEach((r: any) => lines.push(r));
     const csv = Papa.unparse(lines);
     downloadBlob('\uFEFF' + csv, `intercos_${safeLabel}.csv`, 'text/csv;charset=utf-8;');
   };
 
   const exportPDF = () => {
     const t = buildTableRows();
-    const rc = buildRecapRows();
+    const cards = buildCardsRows();
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     doc.setFontSize(14);
     doc.text(`Récapitulatif Intercos — YTD ${monthLabel}`, 40, 40);
     doc.setFontSize(9);
     doc.text(`Mois sources: ${sourceMonths}`, 40, 58);
 
-    // KPIs
     autoTable(doc, {
       startY: 72,
       head: [['Indicateur', 'Valeur', 'Détail']],
@@ -125,8 +130,8 @@ export function PCGroupIntercosTab({ data }: Props) {
 
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 16,
-      head: [rc.header],
-      body: rc.rows,
+      head: [cards.header],
+      body: cards.rows,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [30, 58, 95] },
     });
