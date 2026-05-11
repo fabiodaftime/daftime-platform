@@ -156,8 +156,11 @@ describe('PCGroup — invariants de cohérence', () => {
       expect(agg).not.toBeNull();
       expect(agg.kpis.caGroupe.raw).toBeCloseTo(agg.facts.caGroupe, 5);
       expect(agg.kpis.margeBrute.raw).toBeCloseTo(agg.facts.margeBruteGroupe, 5);
-      // somme entityBreakdown.margeNette ≈ margeBruteGroupe
-      const sumBreakdown = agg.entityBreakdown.reduce((a, e) => a + e.margeNette, 0);
+      // somme entityBreakdown agency+structuring+digit ≈ margeBruteGroupe
+      // (spy/comment sont des sous-composantes informatives de digit)
+      const sumBreakdown = agg.entityBreakdown
+        .filter((e) => e.key === 'agency' || e.key === 'structuring' || e.key === 'digit')
+        .reduce((a, e) => a + e.margeNette, 0);
       expect(Math.abs(sumBreakdown - Math.round(agg.facts.margeBruteGroupe))).toBeLessThanOrEqual(3);
     }
   });
