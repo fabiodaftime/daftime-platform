@@ -7,7 +7,7 @@ import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
 import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
 import { IntercosCashAuditLog } from './IntercosCashAuditLog';
-import { IntercoCashSourceDrawer } from './IntercoCashSourceDrawer';
+
 import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 
@@ -63,27 +63,7 @@ export function PCGroupIntercosTab({ data }: Props) {
 
   const parseUSDNum = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
   const fmtUSDStr = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-  const [drawer, setDrawer] = useState<
-    | { entityCodes: string[]; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
-    | null
-  >(null);
   const [issueDrawer, setIssueDrawer] = useState<ValidationIssue | null>(null);
-  const openDrawer = (row: any, mode: 'received' | 'remaining') => {
-    const codes: string[] = Array.isArray(row._codes) ? row._codes : [row._key ?? row.key];
-    if (codes.length === 0) return;
-    setDrawer({
-      entityCodes: codes,
-      entityLabel: row.entity,
-      mode,
-      expected: parseUSDNum(row.ytd),
-    });
-  };
-  const clickableCellStyle = {
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    textDecorationStyle: 'dotted' as const,
-    textUnderlineOffset: 3,
-  };
 
   // Fusionne les lignes digit + spy + comment en une seule ligne "Digit Solution"
   // dans le tableau "Détail des Remontées par Filiale".
@@ -305,18 +285,10 @@ export function PCGroupIntercosTab({ data }: Props) {
                     <td key={c.key}>{r[c.key] ?? '—'}</td>
                   ))}
                   <td style={{ background: 'rgba(30, 58, 95, 0.05)', fontWeight: 600 }}>{r.ytd}</td>
-                  <td
-                    onClick={() => openDrawer(r, 'received')}
-                    title="Voir les lignes sources de remontées"
-                    style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669', ...clickableCellStyle }}
-                  >
+                  <td style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669' }}>
                     {r.received ?? '$0'}
                   </td>
-                  <td
-                    onClick={() => openDrawer(r, 'remaining')}
-                    title="Voir le détail du solde restant"
-                    style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706', ...clickableCellStyle }}
-                  >
+                  <td style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706' }}>
                     {r.remaining ?? '—'}
                   </td>
                 </tr>
@@ -457,14 +429,6 @@ export function PCGroupIntercosTab({ data }: Props) {
 
       <IntercosCashAuditLog />
 
-      <IntercoCashSourceDrawer
-        open={drawer != null}
-        onClose={() => setDrawer(null)}
-        entityCode={drawer?.entityCodes ?? ''}
-        entityLabel={drawer?.entityLabel ?? ''}
-        mode={drawer?.mode ?? 'received'}
-        expectedTotal={drawer?.expected ?? 0}
-      />
     </div>
   );
 }
