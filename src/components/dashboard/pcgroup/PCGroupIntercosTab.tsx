@@ -2,8 +2,10 @@ import Papa from 'papaparse';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
+import { validateDigitConsistency } from './digitConsistencyValidator';
+import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
   data: PCGroupMonthData;
@@ -51,6 +53,9 @@ export function PCGroupIntercosTab({ data }: Props) {
   const safeLabel = String(monthLabel).replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'ytd';
 
   const entityCards = (intercos as any).entityCards ?? [];
+  const sourceMonthIds: PCGSourceMonthId[] = table.columns.map((c: any) => c.key);
+  const validationIssues = validateDigitConsistency(sourceMonthIds);
+  const hasErrors = validationIssues.some((i) => i.severity === 'error');
 
   const buildTableRows = () => {
     const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
@@ -149,6 +154,38 @@ export function PCGroupIntercosTab({ data }: Props) {
           <FileText className="h-4 w-4 mr-2" /> Export PDF
         </Button>
       </div>
+
+      {/* Validation cohérence Digit / SPY / Comment */}
+      {validationIssues.length > 0 && (
+        <div
+          style={{
+            border: `1px solid ${hasErrors ? '#EF4444' : '#F59E0B'}`,
+            borderLeft: `4px solid ${hasErrors ? '#EF4444' : '#F59E0B'}`,
+            background: hasErrors ? 'rgba(239, 68, 68, 0.05)' : 'rgba(245, 158, 11, 0.05)',
+            borderRadius: 8,
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: hasErrors ? '#B91C1C' : '#B45309', fontWeight: 700 }}>
+            <AlertTriangle className="h-5 w-5" />
+            <span>
+              {hasErrors ? 'Erreur de cohérence détectée' : 'Avertissement de cohérence'} —
+              Digit Solution / SPY / Comment-Trust ({validationIssues.length} {validationIssues.length > 1 ? 'alertes' : 'alerte'})
+            </span>
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151' }}>
+            {validationIssues.map((iss, i) => (
+              <li key={i} style={{ marginBottom: 4 }}>
+                <strong style={{ color: iss.severity === 'error' ? '#B91C1C' : '#B45309' }}>
+                  [{iss.monthLabel} · {iss.entity.toUpperCase()}]
+                </strong>{' '}
+                {iss.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* KPI Hero */}
       <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
