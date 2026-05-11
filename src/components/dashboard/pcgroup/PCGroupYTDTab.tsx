@@ -16,12 +16,33 @@ export function PCGroupYTDTab({ data }: Props) {
       ? 'Janvier / Février / Mars / YTD 2026'
       : 'Janvier / Février / YTD 2026';
 
+  // Mois courant = dernier mois renseigné
+  const currentKey: 'jan' | 'feb' | 'mar' | 'avr' = hasAvr ? 'avr' : hasMar ? 'mar' : 'feb';
+  const currentLabel = { jan: 'Janvier', feb: 'Février', mar: 'Mars', avr: 'Avril' }[currentKey];
+  const HL_BG = 'rgba(212, 168, 85, 0.12)';
+  const HL_BORDER = '2px solid var(--pcg-gold)';
+  const hlCell = (key: 'jan' | 'feb' | 'mar' | 'avr', extra: React.CSSProperties = {}): React.CSSProperties =>
+    key === currentKey
+      ? { background: HL_BG, borderLeft: HL_BORDER, borderRight: HL_BORDER, ...extra }
+      : extra;
+  const hlHeader = (key: 'jan' | 'feb' | 'mar' | 'avr'): React.CSSProperties =>
+    key === currentKey
+      ? {
+          textAlign: 'right',
+          background: 'var(--pcg-gold)',
+          color: 'var(--pcg-navy)',
+          borderTopLeftRadius: 8,
+          borderTopRightRadius: 8,
+          fontWeight: 700,
+        }
+      : { textAlign: 'right' };
+
   const monthCells = (row: any, color?: string) => (
     <>
-      <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.jan ?? '—'}</td>
-      <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.feb ?? '—'}</td>
-      {hasMar && <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.mar ?? '—'}</td>}
-      {hasAvr && <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.avr ?? '—'}</td>}
+      <td style={hlCell('jan', { textAlign: 'right', color: color ?? undefined })}>{row.jan ?? '—'}</td>
+      <td style={hlCell('feb', { textAlign: 'right', color: color ?? undefined })}>{row.feb ?? '—'}</td>
+      {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: color ?? undefined })}>{row.mar ?? '—'}</td>}
+      {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: color ?? undefined })}>{row.avr ?? '—'}</td>}
     </>
   );
 
@@ -79,18 +100,36 @@ export function PCGroupYTDTab({ data }: Props) {
       {/* Full P&L Consolidé Table */}
       {ytdMonthlyTable.length > 1 && (
         <div className="pcg-section">
-          <div className="pcg-section-header">
+          <div className="pcg-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 className="pcg-section-title">📊 P&L Consolidé — {titleSuffix}</h3>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                borderRadius: 999,
+                background: 'var(--pcg-gold)',
+                color: 'var(--pcg-navy)',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: 0.5,
+                textTransform: 'uppercase',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pcg-navy)' }} />
+              Mois en cours · {currentLabel}
+            </span>
           </div>
           <div className="pcg-section-body">
             <table className="pcg-comparison-table" style={{ fontSize: '0.9rem' }}>
               <thead>
                 <tr>
                   <th style={{ textAlign: 'left' }}>Ligne</th>
-                  <th style={{ textAlign: 'right' }}>Janvier</th>
-                  <th style={{ textAlign: 'right' }}>Février</th>
-                  {hasMar && <th style={{ textAlign: 'right' }}>Mars</th>}
-                  {hasAvr && <th style={{ textAlign: 'right' }}>Avril</th>}
+                  <th style={hlHeader('jan')}>Janvier</th>
+                  <th style={hlHeader('feb')}>Février</th>
+                  {hasMar && <th style={hlHeader('mar')}>Mars</th>}
+                  {hasAvr && <th style={hlHeader('avr')}>Avril</th>}
                   <th style={{ textAlign: 'right' }}>YTD 2026</th>
                 </tr>
               </thead>
@@ -118,18 +157,18 @@ export function PCGroupYTDTab({ data }: Props) {
                 </tr>
                 <tr>
                   <td style={{ paddingLeft: '1.5rem' }}>Réserves Filiales (10%)</td>
-                  <td style={{ textAlign: 'right', color: '#EF4444' }}>{reservesEntityTotal.jan ? `-${reservesEntityTotal.jan}` : '—'}</td>
-                  <td style={{ textAlign: 'right', color: '#EF4444' }}>{reservesEntityTotal.feb ? `-${reservesEntityTotal.feb}` : '—'}</td>
-                  {hasMar && <td style={{ textAlign: 'right', color: '#EF4444' }}>{(reservesEntityTotal as any).mar ? `-${(reservesEntityTotal as any).mar}` : '—'}</td>}
-                  {hasAvr && <td style={{ textAlign: 'right', color: '#EF4444' }}>{(reservesEntityTotal as any).avr ? `-${(reservesEntityTotal as any).avr}` : '—'}</td>}
+                  <td style={hlCell('jan', { textAlign: 'right', color: '#EF4444' })}>{reservesEntityTotal.jan ? `-${reservesEntityTotal.jan}` : '—'}</td>
+                  <td style={hlCell('feb', { textAlign: 'right', color: '#EF4444' })}>{reservesEntityTotal.feb ? `-${reservesEntityTotal.feb}` : '—'}</td>
+                  {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).mar ? `-${(reservesEntityTotal as any).mar}` : '—'}</td>}
+                  {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).avr ? `-${(reservesEntityTotal as any).avr}` : '—'}</td>}
                   <td style={{ textAlign: 'right', color: '#EF4444' }}>-{reservesEntityTotal.ytd}</td>
                 </tr>
                 <tr style={{ fontWeight: 600 }}>
                   <td style={{ paddingLeft: '1.5rem' }}>Remontée Holding (90%)</td>
-                  <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.jan, reservesEntityTotal.jan)}</td>
-                  <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.feb || '', reservesEntityTotal.feb || '')}</td>
-                  {hasMar && <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee((ytdEntityTotal as any).mar || '', (reservesEntityTotal as any).mar || '')}</td>}
-                  {hasAvr && <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee((ytdEntityTotal as any).avr || '', (reservesEntityTotal as any).avr || '')}</td>}
+                  <td style={hlCell('jan', { textAlign: 'right', color: '#10B981' })}>{calcRemontee(ytdEntityTotal.jan, reservesEntityTotal.jan)}</td>
+                  <td style={hlCell('feb', { textAlign: 'right', color: '#10B981' })}>{calcRemontee(ytdEntityTotal.feb || '', reservesEntityTotal.feb || '')}</td>
+                  {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).mar || '', (reservesEntityTotal as any).mar || '')}</td>}
+                  {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).avr || '', (reservesEntityTotal as any).avr || '')}</td>}
                   <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.ytd, reservesEntityTotal.ytd)}</td>
                 </tr>
               </tbody>
