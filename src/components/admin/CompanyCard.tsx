@@ -12,12 +12,14 @@ interface CompanyCardProps {
   revenueYTD?: number;
   revenueVariance?: number;
   margin?: number;
+  showSettings?: boolean;
 }
 
 export function CompanyCard({
   id,
   name,
   layoutType,
+  showSettings = true,
 }: CompanyCardProps) {
   const navigate = useNavigate();
 
