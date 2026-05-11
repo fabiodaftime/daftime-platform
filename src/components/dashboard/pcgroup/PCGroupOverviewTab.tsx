@@ -187,6 +187,31 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
                 <span className="pcg-entity-badge">{entity.badge}</span>
               </div>
               <div className="pcg-entity-body">
+                {entity.id === 'digit' && (
+                  <div
+                    title="Les chiffres affichés intègrent déjà SPY et Comment/Trustpilot. Ne pas additionner ces entités au total Digit pour éviter le double comptage."
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '4px 10px',
+                      marginBottom: 8,
+                      borderRadius: 999,
+                      background: 'rgba(217,70,168,0.10)',
+                      color: '#B83A8E',
+                      border: '1px solid rgba(217,70,168,0.35)',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: 0.4,
+                      textTransform: 'uppercase',
+                      cursor: 'help',
+                      width: 'fit-content',
+                    }}
+                  >
+                    <CheckCircle2 size={11} />
+                    Consolidé · inclut SPY & Comment
+                  </div>
+                )}
                 <div className="pcg-entity-metrics pcg-entity-metrics-single" style={{ gridTemplateColumns: '1fr' }}>
                   {entity.metrics.map((m, j) => (
                     <div key={j} className="pcg-entity-metric">
