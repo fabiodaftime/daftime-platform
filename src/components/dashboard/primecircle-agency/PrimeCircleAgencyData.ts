@@ -359,7 +359,7 @@ const marData: PCAMonthData = {
   prevGross: 36184, prevExpenses: 9406, prevNet: 26778, prevPcaShare: 13389,
   prevTransactions: 148, prevMediaSpend: 515952,
   // YTD 2026 (Jan + Feb + Mar + restatement adjustments)
-  ytdNet: 61159, ytdPcaShare: 30579, ytdGross: 93312, ytdExpenses: 32198,
+  ytdNet: 65318, ytdPcaShare: 32659, ytdGross: 97471, ytdExpenses: 32198,
   expenseRatio: 35.7,
   expenseBreakdown: [
     { name: "Ads", value: 11163 }, { name: "Setup Cost", value: 3500 },
