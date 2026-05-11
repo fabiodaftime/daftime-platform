@@ -674,8 +674,8 @@ export function buildPCGroupMonthData(
   monthsForCols.forEach((m) => { reservesEntityTotal[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(m.facts.reservesFiliales); });
   reservesEntityTotal.ytd = usdR(ytd.reservesYTD);
 
-  const digitConsolidatedYTD =
-    ytd.perEntityYTD.digit + ytd.perEntityYTD.spy + ytd.perEntityYTD.comment;
+  // Digit YTD est déjà consolidé (perEntityYTD.digit inclut SPY + Comment)
+  const digitConsolidatedYTD = ytd.perEntityYTD.digit;
   const reservesEntries: { name: string; total: number }[] = [
     { name: 'Agency (Part PCA)', total: ytd.perEntityYTD.agency * 0.10 },
     { name: 'Structuring', total: ytd.perEntityYTD.structuring * 0.10 },
