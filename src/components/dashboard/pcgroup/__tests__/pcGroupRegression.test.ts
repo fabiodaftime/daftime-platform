@@ -22,27 +22,30 @@ interface Expected {
   resultatNetHolding: number;
 }
 
+// NB: depuis la consolidation SPY+Comment dans Digit (produits internes,
+// déjà inclus dans digitFacts), les totaux Groupe ne les ajoutent plus —
+// d'où la révision des valeurs attendues.
 const EXPECTED: Record<'jan-2026' | 'feb-2026' | 'mar-2026', Expected> = {
   'jan-2026': {
-    caGroupe: 198_900,
-    margeBruteGroupe: 89_607,
-    reservesFiliales: 8_961,
-    remonteeHolding: 80_646,
-    resultatNetHolding: 73_586,
+    caGroupe: 179_337,
+    margeBruteGroupe: 83_814,
+    reservesFiliales: 8_381,
+    remonteeHolding: 75_433,
+    resultatNetHolding: 68_373,
   },
   'feb-2026': {
-    caGroupe: 258_543,
-    margeBruteGroupe: 80_221,
-    reservesFiliales: 8_022,
-    remonteeHolding: 72_199,
-    resultatNetHolding: 61_309,
+    caGroupe: 230_910,
+    margeBruteGroupe: 76_522,
+    reservesFiliales: 7_652,
+    remonteeHolding: 68_870,
+    resultatNetHolding: 57_980,
   },
   'mar-2026': {
-    caGroupe: 260_071,
-    margeBruteGroupe: 106_183,
-    reservesFiliales: 10_618,
-    remonteeHolding: 95_565,
-    resultatNetHolding: 87_187,
+    caGroupe: 221_860,
+    margeBruteGroupe: 102_010,
+    reservesFiliales: 10_201,
+    remonteeHolding: 91_809,
+    resultatNetHolding: 83_431,
   },
 };
 
@@ -92,19 +95,21 @@ describe('PCGroup — invariants de cohérence', () => {
     describe(monthId, () => {
       const f = computeConsolidatedFacts(monthId as PCGSourceMonthId)!;
 
-      it('somme des marges entités = Marge Brute Groupe', () => {
-        const sum =
-          f.agencyPartPCA +
-          f.structuringMargeNette +
-          f.digitMargeNette +
-          f.spyMargeNette +
-          f.commentMargeNette;
+      it('somme Agency + Structuring + Digit (consolidé) = Marge Brute Groupe', () => {
+        // SPY et Comment sont des produits inclus dans digitMargeNette.
+        const sum = f.agencyPartPCA + f.structuringMargeNette + f.digitMargeNette;
         expect(Math.abs(sum - f.margeBruteGroupe)).toBeLessThan(0.01);
       });
 
-      it('somme des CA entités = CA Groupe', () => {
-        const sum = f.agencyCA + f.structuringCA + f.digitCA + f.spyCA + f.commentCA;
+      it('somme Agency + Structuring + Digit (consolidé) = CA Groupe', () => {
+        const sum = f.agencyCA + f.structuringCA + f.digitCA;
         expect(Math.abs(sum - f.caGroupe)).toBeLessThan(0.01);
+      });
+
+      it('SPY et Comment sont inclus dans Digit (pas additionnés au groupe)', () => {
+        // Invariant anti-double-comptage : SPY + Comment ≤ marge Digit totale.
+        expect(f.spyMargeNette + f.commentMargeNette).toBeLessThanOrEqual(f.digitMargeNette + 0.01);
+        expect(f.spyCA + f.commentCA).toBeLessThanOrEqual(f.digitCA + 0.01);
       });
 
       it('Réserves = 10% Marge Brute', () => {
@@ -151,8 +156,11 @@ describe('PCGroup — invariants de cohérence', () => {
       expect(agg).not.toBeNull();
       expect(agg.kpis.caGroupe.raw).toBeCloseTo(agg.facts.caGroupe, 5);
       expect(agg.kpis.margeBrute.raw).toBeCloseTo(agg.facts.margeBruteGroupe, 5);
-      // somme entityBreakdown.margeNette ≈ margeBruteGroupe
-      const sumBreakdown = agg.entityBreakdown.reduce((a, e) => a + e.margeNette, 0);
+      // somme entityBreakdown agency+structuring+digit ≈ margeBruteGroupe
+      // (spy/comment sont des sous-composantes informatives de digit)
+      const sumBreakdown = agg.entityBreakdown
+        .filter((e) => e.key === 'agency' || e.key === 'structuring' || e.key === 'digit')
+        .reduce((a, e) => a + e.margeNette, 0);
       expect(Math.abs(sumBreakdown - Math.round(agg.facts.margeBruteGroupe))).toBeLessThanOrEqual(3);
     }
   });

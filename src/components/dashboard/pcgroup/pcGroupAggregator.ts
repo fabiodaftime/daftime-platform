@@ -69,7 +69,11 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
   const m: ManualMonthExtras | undefined = MANUAL_ENTITIES[month];
   if (!a || !s || !d || !spy || !cmt || !m) return null;
 
-  const margeBrute = a.contribution + s.contribution + d.contribution + spy.contribution + cmt.contribution;
+  // IMPORTANT: digitFacts retourne déjà le TOTAL Digit (Core + SPY + Comment).
+  // SPY et Comment sont des produits internes à Digit Solution, pas des entités
+  // sœurs. Les ajouter ici créerait un double comptage. Ils sont conservés
+  // séparément uniquement pour l'affichage "↳ dont ...".
+  const margeBrute = a.contribution + s.contribution + d.contribution;
   const reserves = margeBrute * 0.10;
   const remontee = margeBrute - reserves;
   const fraisHolding = m.holding.fraisTotal;
@@ -87,7 +91,7 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
     digitCA: d.ca,
     spyCA: spy.ca,
     commentCA: cmt.ca,
-    caGroupe: a.ca + s.ca + d.ca + spy.ca + cmt.ca,
+    caGroupe: a.ca + s.ca + d.ca, // d.ca inclut déjà SPY + Comment
     margeBruteGroupe: margeBrute,
     reservesFiliales: reserves,
     remonteeHolding: remontee,
@@ -437,15 +441,19 @@ function entityMarge(f: ConsolidatedFacts, k: BuildEntityKey): number {
   }
 }
 
-// "Digit Solution" entité totale = Digit Core + SPY + Comment/Trustpilot
-// (SPY et Comment sont des produits de Digit, pas des entités sœurs).
-// On les consolide dans la Vue Groupe pour éviter le double comptage et on
-// les expose en "dont" sur la carte/comparatif.
+// "Digit Solution" entité totale = valeur déjà consolidée par digitFacts
+// (qui inclut nativement SPY + Comment/Trustpilot, ce sont des produits Digit).
+// On expose SPY et Comment uniquement en "↳ dont" pour la transparence,
+// SANS les ajouter aux totaux pour éviter le double comptage.
 function digitConsolidatedCA(f: ConsolidatedFacts): number {
-  return f.digitCA + f.spyCA + f.commentCA;
+  return f.digitCA;
 }
 function digitConsolidatedMarge(f: ConsolidatedFacts): number {
-  return f.digitMargeNette + f.spyMargeNette + f.commentMargeNette;
+  return f.digitMargeNette;
+}
+// Digit "Core" hors SPY/Comment, pour l'affichage de la décomposition.
+function digitCoreMarge(f: ConsolidatedFacts): number {
+  return f.digitMargeNette - f.spyMargeNette - f.commentMargeNette;
 }
 
 // Pour la Vue Groupe : 3 entités consolidées (SPY + Comment fusionnés dans Digit).
@@ -483,7 +491,7 @@ export function buildPCGroupMonthData(
     ];
     const digitSub = isDigit
       ? [
-          { label: '↳ dont Digit Core', value: usdR(facts.digitMargeNette), colorClass: 'muted' },
+          { label: '↳ dont Digit Core', value: usdR(digitCoreMarge(facts)), colorClass: 'muted' },
           { label: '↳ dont SPY', value: usdR(facts.spyMargeNette), colorClass: 'muted' },
           { label: '↳ dont Comment/Trust', value: usdR(facts.commentMargeNette), colorClass: 'muted' },
         ]
@@ -584,7 +592,7 @@ export function buildPCGroupMonthData(
     buildEntityRow('Agency (Part PCA 50%)', (f) => f.agencyPartPCA),
     buildEntityRow('Structuring', (f) => f.structuringMargeNette),
     buildEntityRow('Digit Solution (total)', digitConsolidatedMarge),
-    buildEntityRow('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildEntityRow('   ↳ dont Digit Core', digitCoreMarge),
     buildEntityRow('   ↳ dont SPY', (f) => f.spyMargeNette),
     buildEntityRow('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
@@ -631,7 +639,7 @@ export function buildPCGroupMonthData(
     buildYtdEntity('Agency (Part PCA)', (f) => f.agencyPartPCA),
     buildYtdEntity('Structuring', (f) => f.structuringMargeNette),
     buildYtdEntity('Digit Solution (total)', digitConsolidatedMarge),
-    buildYtdEntity('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildYtdEntity('   ↳ dont Digit Core', digitCoreMarge),
     buildYtdEntity('   ↳ dont SPY', (f) => f.spyMargeNette),
     buildYtdEntity('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
@@ -658,7 +666,7 @@ export function buildPCGroupMonthData(
     buildReservesRow('Agency (Part PCA)', (f) => f.agencyPartPCA),
     buildReservesRow('Structuring', (f) => f.structuringMargeNette),
     buildReservesRow('Digit Solution (total)', digitConsolidatedMarge),
-    buildReservesRow('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildReservesRow('   ↳ dont Digit Core', digitCoreMarge),
     buildReservesRow('   ↳ dont SPY', (f) => f.spyMargeNette),
     buildReservesRow('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
@@ -666,8 +674,8 @@ export function buildPCGroupMonthData(
   monthsForCols.forEach((m) => { reservesEntityTotal[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(m.facts.reservesFiliales); });
   reservesEntityTotal.ytd = usdR(ytd.reservesYTD);
 
-  const digitConsolidatedYTD =
-    ytd.perEntityYTD.digit + ytd.perEntityYTD.spy + ytd.perEntityYTD.comment;
+  // Digit YTD est déjà consolidé (perEntityYTD.digit inclut SPY + Comment)
+  const digitConsolidatedYTD = ytd.perEntityYTD.digit;
   const reservesEntries: { name: string; total: number }[] = [
     { name: 'Agency (Part PCA)', total: ytd.perEntityYTD.agency * 0.10 },
     { name: 'Structuring', total: ytd.perEntityYTD.structuring * 0.10 },
