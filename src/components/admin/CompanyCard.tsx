@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye, Settings } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Eye, Settings, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface CompanyCardProps {
@@ -13,6 +14,7 @@ interface CompanyCardProps {
   revenueVariance?: number;
   margin?: number;
   showSettings?: boolean;
+  hasRealData?: boolean;
 }
 
 export function CompanyCard({
@@ -20,14 +22,29 @@ export function CompanyCard({
   name,
   layoutType,
   showSettings = true,
+  hasRealData,
 }: CompanyCardProps) {
   const navigate = useNavigate();
 
   return (
     <Card className="group bg-card hover:shadow-lg transition-all duration-300 border border-border hover:border-accent/50 overflow-hidden">
       <CardContent className="p-6">
-        {/* Title */}
-        <h3 className="font-semibold text-lg text-foreground truncate mb-4">{name}</h3>
+        {/* Title + data status */}
+        <div className="flex items-start justify-between gap-2 mb-4">
+          <h3 className="font-semibold text-lg text-foreground truncate">{name}</h3>
+          {hasRealData === true && (
+            <Badge variant="outline" className="shrink-0 border-emerald-600/40 text-emerald-700 dark:text-emerald-400 gap-1">
+              <CheckCircle2 className="w-3 h-3" />
+              Données réelles
+            </Badge>
+          )}
+          {hasRealData === false && (
+            <Badge variant="outline" className="shrink-0 border-amber-500/50 text-amber-700 dark:text-amber-400 gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Aucune donnée
+            </Badge>
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex flex-col gap-2">
