@@ -53,6 +53,9 @@ export function PCGroupIntercosTab({ data }: Props) {
   const safeLabel = String(monthLabel).replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'ytd';
 
   const entityCards = (intercos as any).entityCards ?? [];
+  const sourceMonthIds: PCGSourceMonthId[] = table.columns.map((c: any) => c.key);
+  const validationIssues = validateDigitConsistency(sourceMonthIds);
+  const hasErrors = validationIssues.some((i) => i.severity === 'error');
 
   const buildTableRows = () => {
     const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
