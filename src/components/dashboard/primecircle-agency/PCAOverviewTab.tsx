@@ -132,13 +132,13 @@ export function PCAOverviewTab({ data }: Props) {
 
       <div className="pca-two-col">
         <div className="pca-section">
-          <h3 className="pca-section-title">Répartition des Charges</h3>
-          <p className="pca-section-subtitle">{fmtF(data.expenses)} total — Ads = {((adsCost?.value || 0) / data.expenses * 100).toFixed(0)}%</p>
+          <h3 className="pca-section-title">Répartition des Charges — YTD</h3>
+          <p className="pca-section-subtitle">{fmtF(ytdExpensesTotal)} cumulés ({ytdMonths.length} mois) — Ads = {ytdExpensesTotal ? ((ytdAdsValue / ytdExpensesTotal) * 100).toFixed(0) : 0}%</p>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie data={data.expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={90} paddingAngle={3}
+              <Pie data={ytdExpenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={90} paddingAngle={3}
                 label={(e) => `${e.name} $${e.value.toLocaleString()}`} labelLine={{ stroke: C.textLight }}>
-                {data.expenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                {ytdExpenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip content={<PCATooltip />} />
             </PieChart>
