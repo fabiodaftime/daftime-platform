@@ -5,9 +5,10 @@ import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
-import { validateDigitConsistency } from './digitConsistencyValidator';
+import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
 import { IntercosCashAuditLog } from './IntercosCashAuditLog';
 import { IntercoCashSourceDrawer } from './IntercoCashSourceDrawer';
+import { ValidationIssueDrawer } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
