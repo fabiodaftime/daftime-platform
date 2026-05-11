@@ -666,7 +666,7 @@ export function buildPCGroupMonthData(
     buildReservesRow('Agency (Part PCA)', (f) => f.agencyPartPCA),
     buildReservesRow('Structuring', (f) => f.structuringMargeNette),
     buildReservesRow('Digit Solution (total)', digitConsolidatedMarge),
-    buildReservesRow('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildReservesRow('   ↳ dont Digit Core', digitCoreMarge),
     buildReservesRow('   ↳ dont SPY', (f) => f.spyMargeNette),
     buildReservesRow('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
