@@ -28,7 +28,7 @@ export function PCGroupIntercosTab({ data }: Props) {
   const intercos = (data as any).intercos;
   if (!intercos) return null;
 
-  const { kpis, alert, table, scenarios, calendar, recap, marsNote } = intercos;
+  const { kpis, alert, table, calendar, recap, marsNote } = intercos;
 
   return (
     <div>
@@ -113,55 +113,7 @@ export function PCGroupIntercosTab({ data }: Props) {
         </div>
       </div>
 
-      {/* Scénarios */}
-      <div className="pcg-section">
-        <div className="pcg-section-header">
-          <h3 className="pcg-section-title">💰 Analyse de la Situation Financière</h3>
-          <span className="pcg-section-subtitle">Deux scénarios de calcul du solde dû</span>
-        </div>
-        <div className="pcg-section-body">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem' }}>
-            {[
-              { s: scenarios.base, num: 1, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.08)', border: 'rgba(239, 68, 68, 0.2)', totalBg: 'rgba(239, 68, 68, 0.15)', rateBg: 'rgba(239, 68, 68, 0.1)' },
-              { s: scenarios.apport, num: 2, color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.2)', totalBg: 'rgba(245, 158, 11, 0.15)', rateBg: 'rgba(16, 185, 129, 0.1)' },
-            ].map(({ s, num, color, bg, border, totalBg, rateBg }, i) => (
-              <div
-                key={i}
-                style={{
-                  background: `linear-gradient(135deg, ${bg} 0%, ${bg.replace('0.08', '0.02')} 100%)`,
-                  border: `2px solid ${border}`,
-                  borderRadius: 16,
-                  padding: '1.5rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                  <div style={{ width: 32, height: 32, background: color, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>{num}</div>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{s.title}</div>
-                </div>
-                <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    {s.lines.map((line: any, j: number) => (
-                      <tr key={j} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                        <td style={{ padding: '0.5rem 0', color: line.type === 'positive' ? '#10B981' : '#475569' }}>{line.label}</td>
-                        <td style={{ padding: '0.5rem 0', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: line.type === 'negative' ? '#EF4444' : line.type === 'positive' ? '#10B981' : '#0F172A' }}>{line.value}</td>
-                      </tr>
-                    ))}
-                    <tr style={{ background: totalBg }}>
-                      <td style={{ padding: '0.75rem 0.5rem', fontWeight: 700 }}>{s.total.label}</td>
-                      <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: num === 1 ? '#EF4444' : '#F59E0B', fontSize: '1.2rem' }}>{s.total.value}</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <div style={{ marginTop: '1rem', padding: '0.75rem', background: rateBg, borderRadius: 8 }}>
-                  <div style={{ fontSize: '0.8rem', color: '#475569' }}>{s.rateLabel}</div>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.5rem', fontWeight: 700, color }}>{s.rate}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
+      {/* Section "Analyse de la Situation Financière" retirée à la demande client */}
       {/* Calendrier d'exigibilité */}
       <div className="pcg-section">
         <div className="pcg-section-header">
