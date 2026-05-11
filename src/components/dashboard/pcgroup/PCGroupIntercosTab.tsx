@@ -8,7 +8,7 @@ import { type PCGroupMonthData } from './PCGroupData';
 import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
 import { IntercosCashAuditLog } from './IntercosCashAuditLog';
 import { IntercoCashSourceDrawer } from './IntercoCashSourceDrawer';
-import { ValidationIssueDrawer } from './ValidationIssueDrawer';
+import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
@@ -232,25 +232,33 @@ export function PCGroupIntercosTab({ data }: Props) {
             </span>
           </div>
           <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151' }}>
-            {validationIssues.map((iss, i) => (
-              <li
-                key={i}
-                onClick={() => setIssueDrawer(iss)}
-                style={{
-                  marginBottom: 4,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  textDecorationStyle: 'dotted',
-                  textUnderlineOffset: 3,
-                }}
-                title="Voir le détail des entités/montants à l'origine de l'écart"
-              >
-                <strong style={{ color: iss.severity === 'error' ? '#B91C1C' : '#B45309' }}>
-                  [{iss.monthLabel} · {iss.entity.toUpperCase()}]
-                </strong>{' '}
-                {iss.message}
-              </li>
-            ))}
+            {validationIssues.map((iss, i) => {
+              const isOpen = issueDrawer === iss;
+              return (
+                <li key={i} style={{ marginBottom: 6 }}>
+                  <span
+                    onClick={() => setIssueDrawer(isOpen ? null : iss)}
+                    style={{
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      textDecorationStyle: 'dotted',
+                      textUnderlineOffset: 3,
+                    }}
+                  >
+                    <strong style={{ color: iss.severity === 'error' ? '#B91C1C' : '#B45309' }}>
+                      [{iss.monthLabel} · {iss.entity.toUpperCase()}]
+                    </strong>{' '}
+                    {iss.message}{' '}
+                    <span style={{ fontSize: 11, color: '#64748B' }}>
+                      {isOpen ? '▲ masquer' : '▼ détail'}
+                    </span>
+                  </span>
+                  {isOpen && (
+                    <ValidationIssueDetail issue={iss} />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -477,8 +485,6 @@ export function PCGroupIntercosTab({ data }: Props) {
         mode={drawer?.mode ?? 'received'}
         expectedTotal={drawer?.expected ?? 0}
       />
-
-      <ValidationIssueDrawer issue={issueDrawer} onClose={() => setIssueDrawer(null)} />
     </div>
   );
 }
