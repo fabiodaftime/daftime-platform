@@ -353,18 +353,18 @@ const marData: PCAMonthData = {
   monthId: 'mar-2026',
   monthLabel: 'Mars 2026',
   monthShort: 'MAR 2026',
-  gross: 46402, expenses: 16555, net: 29892, pcaShare: 14946,
+  gross: 46402, expenses: 16510, net: 29892, pcaShare: 14946,
   transactions: 149, mediaSpend: 1244096, clientsActifs: 0, totalEncaisse: 0, adAccounts: 89,
   marginPct: 64.4,
   prevGross: 36184, prevExpenses: 9406, prevNet: 26778, prevPcaShare: 13389,
   prevTransactions: 148, prevMediaSpend: 515952,
   // YTD 2026 (Jan + Feb + Mar + restatement adjustments)
-  ytdNet: 65318, ytdPcaShare: 32659, ytdGross: 97471, ytdExpenses: 32198,
-  expenseRatio: 35.7,
+  ytdNet: 65318, ytdPcaShare: 32659, ytdGross: 97471, ytdExpenses: 32153,
+  expenseRatio: 35.6,
   expenseBreakdown: [
     { name: "Ads", value: 11163 }, { name: "Setup Cost", value: 3500 },
     { name: "Salary", value: 1400 }, { name: "Master Referral", value: 307 },
-    { name: "No Limit Referral", value: 140 }, { name: "Transaction Fees", value: 45 },
+    { name: "No Limit Referral", value: 140 },
   ],
   clientLifecycle: [
     { status: "New", count: 104, color: C.green },
