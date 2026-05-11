@@ -91,7 +91,7 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
     digitCA: d.ca,
     spyCA: spy.ca,
     commentCA: cmt.ca,
-    caGroupe: a.ca + s.ca + d.ca + spy.ca + cmt.ca,
+    caGroupe: a.ca + s.ca + d.ca, // d.ca inclut déjà SPY + Comment
     margeBruteGroupe: margeBrute,
     reservesFiliales: reserves,
     remonteeHolding: remontee,
