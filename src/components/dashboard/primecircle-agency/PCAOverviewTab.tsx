@@ -28,6 +28,10 @@ export function PCAOverviewTab({ data }: Props) {
   const ytdExpensesTotal = ytdExpenseBreakdown.reduce((s, e) => s + e.value, 0);
   const ytdAdsValue = ytdExpenseBreakdown.find((e) => e.name === 'Ads')?.value || 0;
 
+  // Previous-month short label, derived from the selected month (e.g. "Mar-26" when Apr is selected).
+  const currentMonthIdx = ytdMonths.length - 1;
+  const prevLabel = currentMonthIdx > 0 ? ytdMonths[currentMonthIdx - 1].monthShort.replace(' ', '-') : 'M-1';
+
   const adsCost = data.expenseBreakdown.find(r => r.name === "Ads");
   const setupCost = data.expenseBreakdown.find(r => r.name === "Setup Cost");
 
@@ -69,17 +73,17 @@ export function PCAOverviewTab({ data }: Props) {
         <div className="pca-kpi-card pca-kpi-accent-green">
           <div className="pca-kpi-label">Gross Revenue</div>
           <div className="pca-kpi-value">{fmtF(data.gross)}</div>
-          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.gross, data.prevGross)}</span> : null} {hasPrev ? `vs Jan (${fmtF(data.prevGross)})` : 'Sub + Setup'}</div>
+          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.gross, data.prevGross)}</span> : null} {hasPrev ? `vs ${prevLabel} (${fmtF(data.prevGross)})` : 'Sub + Setup'}</div>
         </div>
         <div className="pca-kpi-card pca-kpi-accent-blue">
           <div className="pca-kpi-label">Transactions</div>
           <div className="pca-kpi-value">{data.transactions}</div>
-          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.transactions, data.prevTransactions)}</span> : null} {hasPrev ? `vs Jan (${data.prevTransactions})` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.transactions, data.prevTransactions)}</span> : null} {hasPrev ? `vs ${prevLabel} (${data.prevTransactions})` : ''}</div>
         </div>
         <div className="pca-kpi-card pca-kpi-accent-orange">
           <div className="pca-kpi-label">Media Géré</div>
           <div className="pca-kpi-value">{fmt(data.mediaSpend)}</div>
-          <div className="pca-kpi-sub">{hasPrev && data.prevMediaSpend > 0 ? <span className="pca-change-badge">{pctChg(data.mediaSpend, data.prevMediaSpend)}</span> : null} {hasPrev && data.prevMediaSpend > 0 ? `vs Jan (${fmt(data.prevMediaSpend)})` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev && data.prevMediaSpend > 0 ? <span className="pca-change-badge">{pctChg(data.mediaSpend, data.prevMediaSpend)}</span> : null} {hasPrev && data.prevMediaSpend > 0 ? `vs ${prevLabel} (${fmt(data.prevMediaSpend)})` : ''}</div>
         </div>
       </div>
 
@@ -111,7 +115,7 @@ export function PCAOverviewTab({ data }: Props) {
         <div className="pca-kpi-card pca-kpi-accent-red">
           <div className="pca-kpi-label">Total Expenses</div>
           <div className="pca-kpi-value">{fmtF(data.expenses)}</div>
-          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.expenses, data.prevExpenses)}</span> : null} {hasPrev ? `vs Jan (${fmtF(data.prevExpenses)})` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.expenses, data.prevExpenses)}</span> : null} {hasPrev ? `vs ${prevLabel} (${fmtF(data.prevExpenses)})` : ''}</div>
         </div>
         <div className="pca-kpi-card pca-kpi-accent-red">
           <div className="pca-kpi-label">Ads</div>
@@ -126,7 +130,7 @@ export function PCAOverviewTab({ data }: Props) {
         <div className="pca-kpi-card pca-kpi-accent-blue">
           <div className="pca-kpi-label">Expense Ratio</div>
           <div className="pca-kpi-value">{data.expenseRatio}%</div>
-          <div className="pca-kpi-sub">{hasPrev ? `vs ${(data.prevExpenses / data.prevGross * 100).toFixed(1)}% en Jan` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev ? `vs ${(data.prevExpenses / data.prevGross * 100).toFixed(1)}% en ${prevLabel}` : ''}</div>
         </div>
       </div>
 
@@ -315,17 +319,17 @@ export function PCAOverviewTab({ data }: Props) {
         <div className="pca-kpi-card pca-kpi-accent-blue">
           <div className="pca-kpi-label">Net Revenue</div>
           <div className="pca-kpi-value">{fmtF(data.net)}</div>
-          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.net, data.prevNet)}</span> : null} {hasPrev ? `vs Jan (${fmtF(data.prevNet)})` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.net, data.prevNet)}</span> : null} {hasPrev ? `vs ${prevLabel} (${fmtF(data.prevNet)})` : ''}</div>
         </div>
         <div className="pca-kpi-card pca-kpi-accent-purple">
           <div className="pca-kpi-label">PCA Share (50%)</div>
           <div className="pca-kpi-value">{fmtF(data.pcaShare)}</div>
-          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.pcaShare, data.prevPcaShare)}</span> : null} {hasPrev ? `vs Jan (${fmtF(data.prevPcaShare)})` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev ? <span className="pca-change-badge">{pctChg(data.pcaShare, data.prevPcaShare)}</span> : null} {hasPrev ? `vs ${prevLabel} (${fmtF(data.prevPcaShare)})` : ''}</div>
         </div>
         <div className="pca-kpi-card pca-kpi-accent-green">
           <div className="pca-kpi-label">Net Margin</div>
           <div className="pca-kpi-value">{data.marginPct}%</div>
-          <div className="pca-kpi-sub">{hasPrev ? `vs ${(data.prevNet / data.prevGross * 100).toFixed(1)}% en Jan (+${(data.marginPct - data.prevNet / data.prevGross * 100).toFixed(1)} pts)` : ''}</div>
+          <div className="pca-kpi-sub">{hasPrev ? `vs ${(data.prevNet / data.prevGross * 100).toFixed(1)}% en ${prevLabel} (+${(data.marginPct - data.prevNet / data.prevGross * 100).toFixed(1)} pts)` : ''}</div>
         </div>
       </div>
 

@@ -1,13 +1,32 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { C, fmtF, fmt, type PCAMonthData } from './PrimeCircleAgencyData';
+import { C, fmtF, fmt, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthData, type PCAMonthId } from './PrimeCircleAgencyData';
 import { PCATooltip } from './PCAShared';
 
 interface Props { data: PCAMonthData; }
 
 export function PCAYTDTab({ data }: Props) {
-  const hasPrev = data.prevGross > 0;
+  // Months from Jan up to (and including) the currently selected one.
+  const ytdMonthIds = (() => {
+    const ids = PCA_AVAILABLE_MONTHS.map((m) => m.id as PCAMonthId);
+    const idx = ids.indexOf(data.monthId);
+    return idx >= 0 ? ids.slice(0, idx + 1) : ids;
+  })();
+  const ytdMonths: PCAMonthData[] = ytdMonthIds.map((id) => getPCAMonthData(id));
+  const currentLabel = data.monthShort.replace(' ', '-');
+  const periodLabel =
+    ytdMonths.length === 1
+      ? ytdMonths[0].monthLabel
+      : `${ytdMonths[0].monthLabel} — ${ytdMonths[ytdMonths.length - 1].monthLabel}`;
 
-  const ytdChartData = data.monthlyTrend.map(m => ({
+  // YTD totals (recomputed from each month's own data).
+  const ytdGross = ytdMonths.reduce((s, m) => s + m.gross, 0);
+  const ytdExpenses = ytdMonths.reduce((s, m) => s + m.expenses, 0);
+  const ytdNet = ytdMonths.reduce((s, m) => s + m.net, 0);
+  const ytdPcaShare = ytdMonths.reduce((s, m) => s + m.pcaShare, 0);
+  const ytdMediaSpend = ytdMonths.reduce((s, m) => s + m.mediaSpend, 0);
+  const ytdTransactions = ytdMonths.reduce((s, m) => s + m.transactions, 0);
+
+  const ytdChartData = data.monthlyTrend.slice(0, ytdMonths.length).map((m) => ({
     month: m.month,
     'Gross Revenue': m.gross,
     Expenses: m.expenses,
@@ -15,95 +34,94 @@ export function PCAYTDTab({ data }: Props) {
     'PCA Share': Math.round(m.net / 2),
   }));
 
+  const buildBreakdown = (sub: string) =>
+    ytdMonths.map((m) => `${m.monthShort} ${sub}`).join(' · ');
+
   return (
     <div>
       <div className="pca-section-header">YTD Performance — 2026</div>
       <div className="pca-ytd-grid">
         <div className="pca-ytd-card">
           <div className="pca-ytd-label">YTD Gross Revenue</div>
-          <div className="pca-ytd-value">{fmtF(data.ytdGross)}</div>
-          {hasPrev && <div className="pca-ytd-detail">Jan {fmtF(data.prevGross)} + Feb {fmtF(data.gross)}</div>}
+          <div className="pca-ytd-value">{fmtF(ytdGross)}</div>
+          <div className="pca-ytd-detail">{ytdMonths.map((m) => `${m.monthShort} ${fmtF(m.gross)}`).join(' + ')}</div>
         </div>
         <div className="pca-ytd-card">
           <div className="pca-ytd-label">YTD Total Expenses</div>
-          <div className="pca-ytd-value">{fmtF(data.ytdExpenses)}</div>
-          {hasPrev && <div className="pca-ytd-detail">Jan {fmtF(data.prevExpenses)} + Feb {fmtF(data.expenses)}</div>}
+          <div className="pca-ytd-value">{fmtF(ytdExpenses)}</div>
+          <div className="pca-ytd-detail">{ytdMonths.map((m) => `${m.monthShort} ${fmtF(m.expenses)}`).join(' + ')}</div>
         </div>
       </div>
       <div className="pca-ytd-grid">
         <div className="pca-ytd-card">
           <div className="pca-ytd-label">YTD Net Revenue</div>
-          <div className="pca-ytd-value">{fmtF(data.ytdNet)}</div>
-          {hasPrev && <div className="pca-ytd-detail">Jan {fmtF(data.prevNet)} + Feb {fmtF(data.net)}</div>}
+          <div className="pca-ytd-value">{fmtF(ytdNet)}</div>
+          <div className="pca-ytd-detail">{ytdMonths.map((m) => `${m.monthShort} ${fmtF(m.net)}`).join(' + ')}</div>
         </div>
         <div className="pca-ytd-card">
           <div className="pca-ytd-label">YTD PCA Share</div>
-          <div className="pca-ytd-value">{fmtF(data.ytdPcaShare)}</div>
-          {hasPrev && <div className="pca-ytd-detail">Jan {fmtF(data.prevPcaShare)} + Feb {fmtF(data.pcaShare)}</div>}
+          <div className="pca-ytd-value">{fmtF(ytdPcaShare)}</div>
+          <div className="pca-ytd-detail">{ytdMonths.map((m) => `${m.monthShort} ${fmtF(m.pcaShare)}`).join(' + ')}</div>
         </div>
       </div>
 
       <div className="pca-section">
         <h3 className="pca-section-title">Synthèse YTD</h3>
-        <p className="pca-section-subtitle">Janvier — Février 2026</p>
+        <p className="pca-section-subtitle">{periodLabel}</p>
         <table className="pca-table" style={{ marginTop: 16 }}>
           <thead>
             <tr>
               <th style={{ textAlign: 'left' }}>Métrique</th>
-              {hasPrev && <th style={{ textAlign: 'right' }}>Jan-26</th>}
-              <th style={{ textAlign: 'right' }}>Feb-26</th>
+              {ytdMonths.map((m) => (
+                <th
+                  key={m.monthId}
+                  style={{
+                    textAlign: 'right',
+                    background: m.monthId === data.monthId ? 'rgba(30, 86, 160, 0.10)' : undefined,
+                  }}
+                >
+                  {m.monthShort.replace(' ', '-')}{m.monthId === data.monthId ? ' ★' : ''}
+                </th>
+              ))}
               <th style={{ textAlign: 'right' }}>YTD 2026</th>
-              {hasPrev && <th style={{ textAlign: 'right' }}>Poids Feb (%)</th>}
+              <th style={{ textAlign: 'right' }}>Poids {currentLabel} (%)</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={{ fontWeight: 700, textAlign: 'left' }}>Gross Revenue</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevGross)}</td>}
-              <td style={{ textAlign: 'right' }}>{fmtF(data.gross)}</td>
-              <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.ytdGross)}</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{(data.gross / data.ytdGross * 100).toFixed(1)}%</td>}
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, textAlign: 'left' }}>Total Expenses</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevExpenses)}</td>}
-              <td style={{ textAlign: 'right' }}>{fmtF(data.expenses)}</td>
-              <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.ytdExpenses)}</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{(data.expenses / data.ytdExpenses * 100).toFixed(1)}%</td>}
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, textAlign: 'left' }}>Net Revenue</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevNet)}</td>}
-              <td style={{ textAlign: 'right' }}>{fmtF(data.net)}</td>
-              <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.ytdNet)}</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{(data.net / data.ytdNet * 100).toFixed(1)}%</td>}
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, textAlign: 'left' }}>PCA Share (50%)</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevPcaShare)}</td>}
-              <td style={{ textAlign: 'right' }}>{fmtF(data.pcaShare)}</td>
-              <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.ytdPcaShare)}</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{(data.pcaShare / data.ytdPcaShare * 100).toFixed(1)}%</td>}
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, textAlign: 'left' }}>Media Spend</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevMediaSpend)}</td>}
-              <td style={{ textAlign: 'right' }}>{fmtF(data.mediaSpend)}</td>
-              <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.prevMediaSpend + data.mediaSpend)}</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{(data.mediaSpend / (data.prevMediaSpend + data.mediaSpend) * 100).toFixed(1)}%</td>}
-            </tr>
-            <tr>
-              <td style={{ fontWeight: 700, textAlign: 'left' }}>Transactions</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{data.prevTransactions}</td>}
-              <td style={{ textAlign: 'right' }}>{data.transactions}</td>
-              <td style={{ textAlign: 'right', fontWeight: 700 }}>{data.prevTransactions + data.transactions}</td>
-              {hasPrev && <td style={{ textAlign: 'right' }}>{(data.transactions / (data.prevTransactions + data.transactions) * 100).toFixed(1)}%</td>}
-            </tr>
+            {[
+              { label: 'Gross Revenue', vals: ytdMonths.map((m) => m.gross), total: ytdGross, current: data.gross },
+              { label: 'Total Expenses', vals: ytdMonths.map((m) => m.expenses), total: ytdExpenses, current: data.expenses },
+              { label: 'Net Revenue', vals: ytdMonths.map((m) => m.net), total: ytdNet, current: data.net },
+              { label: 'PCA Share (50%)', vals: ytdMonths.map((m) => m.pcaShare), total: ytdPcaShare, current: data.pcaShare },
+              { label: 'Media Spend', vals: ytdMonths.map((m) => m.mediaSpend), total: ytdMediaSpend, current: data.mediaSpend, fmtFn: fmt },
+              { label: 'Transactions', vals: ytdMonths.map((m) => m.transactions), total: ytdTransactions, current: data.transactions, raw: true },
+            ].map((row, i) => {
+              const fmtFn = row.raw ? (n: number) => String(n) : (row.fmtFn || fmtF);
+              return (
+                <tr key={i}>
+                  <td style={{ fontWeight: 700, textAlign: 'left' }}>{row.label}</td>
+                  {row.vals.map((v, j) => (
+                    <td
+                      key={j}
+                      style={{
+                        textAlign: 'right',
+                        background: ytdMonths[j].monthId === data.monthId ? 'rgba(30, 86, 160, 0.06)' : undefined,
+                        fontWeight: ytdMonths[j].monthId === data.monthId ? 600 : 400,
+                      }}
+                    >
+                      {fmtFn(v)}
+                    </td>
+                  ))}
+                  <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtFn(row.total)}</td>
+                  <td style={{ textAlign: 'right' }}>{row.total ? ((row.current / row.total) * 100).toFixed(1) : '0.0'}%</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {data.monthlyTrend.length > 1 && (
+      {ytdChartData.length > 1 && (
         <div className="pca-section">
           <h3 className="pca-section-title">YTD — Gross Revenue vs Expenses vs Net</h3>
           <p className="pca-section-subtitle">Répartition par mois</p>
