@@ -181,6 +181,7 @@ describe("PCGroup comparison tables — February view (hasMar = false)", () => {
       "Janvier",
       "Février",
       "Variation",
+      "YTD",
     ]);
   });
 
