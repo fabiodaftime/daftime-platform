@@ -39,6 +39,7 @@ const tabs = [
   { id: 'comment', icon: '💬', label: 'Comment' },
   { id: 'holding', icon: '🏛️', label: 'Holding' },
   { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
+  { id: 'history', icon: '📋', label: 'Historique' },
 ];
 
 export default function DashboardPCGroup() {
