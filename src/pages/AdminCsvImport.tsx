@@ -398,10 +398,18 @@ function toCsv(headers: readonly string[], rows: any[]): string {
   return [headers.join(','), ...rows.map((r) => headers.map((h) => esc(r[h])).join(','))].join('\n');
 }
 
+type PreviewState = {
+  kind: 'pcg' | 'fin';
+  headers: readonly string[];
+  rows: any[];
+  filename: string;
+} | null;
+
 function ExportSection() {
   const [busy, setBusy] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewState>(null);
 
-  const exportPCG = async () => {
+  const loadPCG = async () => {
     setBusy('pcg');
     try {
       const { data, error } = await supabase
@@ -409,16 +417,20 @@ function ExportSection() {
         .select('month_id, entity_code, ca, charges, contribution, margin_pct, deals, warning')
         .order('month_id').order('entity_code');
       if (error) throw error;
-      downloadText(`pcgroup_manual_facts_${new Date().toISOString().slice(0, 10)}.csv`, toCsv(PCG_HEADERS, data ?? []));
-      toast.success(`${data?.length ?? 0} ligne(s) exportée(s)`);
+      setPreview({
+        kind: 'pcg',
+        headers: PCG_HEADERS,
+        rows: data ?? [],
+        filename: `pcgroup_manual_facts_${new Date().toISOString().slice(0, 10)}.csv`,
+      });
     } catch (e: any) {
-      toast.error(`Export échoué : ${e.message ?? e}`);
+      toast.error(`Chargement échoué : ${e.message ?? e}`);
     } finally {
       setBusy(null);
     }
   };
 
-  const exportFin = async () => {
+  const loadFin = async () => {
     setBusy('fin');
     try {
       const { data, error } = await supabase
@@ -426,13 +438,24 @@ function ExportSection() {
         .select('company_id, year, month, revenue_actual, revenue_budget, revenue_prior_year, cash_balance, fx_rate')
         .order('company_id').order('year').order('month');
       if (error) throw error;
-      downloadText(`monthly_financials_${new Date().toISOString().slice(0, 10)}.csv`, toCsv(FIN_HEADERS, data ?? []));
-      toast.success(`${data?.length ?? 0} ligne(s) exportée(s)`);
+      setPreview({
+        kind: 'fin',
+        headers: FIN_HEADERS,
+        rows: data ?? [],
+        filename: `monthly_financials_${new Date().toISOString().slice(0, 10)}.csv`,
+      });
     } catch (e: any) {
-      toast.error(`Export échoué : ${e.message ?? e}`);
+      toast.error(`Chargement échoué : ${e.message ?? e}`);
     } finally {
       setBusy(null);
     }
+  };
+
+  const confirmDownload = () => {
+    if (!preview) return;
+    downloadText(preview.filename, toCsv(preview.headers, preview.rows));
+    toast.success(`${preview.rows.length} ligne(s) exportée(s)`);
+    setPreview(null);
   };
 
   return (
@@ -442,22 +465,61 @@ function ExportSection() {
           <Download className="w-5 h-5" /> Export CSV
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Téléchargez les données existantes au même format que les templates d'import. Round-trip garanti : modifiez en Excel puis réimportez (upsert).
+          Prévisualisez les données avant téléchargement. Format identique aux templates d'import (round-trip via upsert).
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={exportPCG} disabled={busy !== null}>
-          {busy === 'pcg' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-          PCGroup manual facts
+        <Button variant="outline" onClick={loadPCG} disabled={busy !== null}>
+          {busy === 'pcg' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+          Prévisualiser PCGroup manual facts
         </Button>
-        <Button variant="outline" onClick={exportFin} disabled={busy !== null}>
-          {busy === 'fin' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-          Monthly financials
+        <Button variant="outline" onClick={loadFin} disabled={busy !== null}>
+          {busy === 'fin' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+          Prévisualiser Monthly financials
         </Button>
       </div>
+
+      {preview && (
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="default">{preview.rows.length} ligne(s)</Badge>
+            <Badge variant="secondary">{preview.headers.length} colonne(s)</Badge>
+            <Badge variant="outline" className="font-mono">{preview.filename}</Badge>
+          </div>
+          <div className="rounded border overflow-x-auto text-xs max-h-72">
+            <table className="w-full">
+              <thead className="bg-muted sticky top-0">
+                <tr>{preview.headers.map((h) => <th key={h} className="text-left px-2 py-1 whitespace-nowrap">{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {preview.rows.slice(0, 10).map((r, i) => (
+                  <tr key={i} className="border-t">
+                    {preview.headers.map((h) => (
+                      <td key={h} className="px-2 py-1 whitespace-nowrap">{String((r as any)[h] ?? '')}</td>
+                    ))}
+                  </tr>
+                ))}
+                {preview.rows.length === 0 && (
+                  <tr><td colSpan={preview.headers.length} className="px-2 py-3 text-center text-muted-foreground">Aucune donnée</td></tr>
+                )}
+              </tbody>
+            </table>
+            {preview.rows.length > 10 && (
+              <div className="px-2 py-1 text-muted-foreground bg-muted/50">… {preview.rows.length - 10} autre(s) ligne(s)</div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={confirmDownload} disabled={preview.rows.length === 0}>
+              <Download className="w-4 h-4 mr-2" /> Télécharger le CSV
+            </Button>
+            <Button variant="ghost" onClick={() => setPreview(null)}>Annuler</Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
+
 
 
 // ---------------------------------------------------------------------------
