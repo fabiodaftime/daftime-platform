@@ -29,7 +29,7 @@ export const ENTITY_MONTH_FIXTURES: Record<
   agency: {
     'jan-2026': { ca: 14885, charges: 6237, contribution: 4324, marginPct: 58.1 },
     'feb-2026': { ca: 36184, charges: 9406, contribution: 13389, marginPct: 74.0 },
-    'mar-2026': { ca: 46402, charges: 16555, contribution: 14946, marginPct: 64.4 },
+    'mar-2026': { ca: 46402, charges: 16510, contribution: 14946, marginPct: 64.4 },
     'apr-2026': { ca: 58853, charges: 13313, contribution: 22770, marginPct: 77.4 },
   },
   structuring: {
