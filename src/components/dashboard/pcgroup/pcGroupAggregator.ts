@@ -705,7 +705,7 @@ export function buildPCGroupMonthData(
     },
   ].slice(0, 4);
 
-  const entitiesCount = BUILD_ENTITY_META.length;
+  const entitiesCount = OVERVIEW_ENTITY_META.length;
   const entitiesDetail = `${entitiesCount} entités consolidées`;
   const overviewHero = [
     { label: 'CA Groupe', value: usdR(facts.caGroupe), detail: entitiesDetail, color: 'navy',
