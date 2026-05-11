@@ -780,6 +780,7 @@ export function buildPCGroupMonthData(
     overviewComparisonTotal: overviewComparisonTotal as any,
     entityCards: entityCards as any,
     pieData: pieData as any,
+    consolidatedPL: consolidatedPL as any,
     holdingKPIs: holdingKPIs as any,
     holdingComparison: holdingComparison as any,
     holdingPieData: holdingPieData as any,
