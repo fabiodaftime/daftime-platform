@@ -27,12 +27,7 @@ import './DashboardPCGroup.css';
 const tabs = [
   { id: 'overview', icon: '📊', label: 'Vue Groupe' },
   { id: 'ytd', icon: '📈', label: 'YTD 2026' },
-  { id: 'agency', icon: '📢', label: 'Agency' },
-  { id: 'structuring', icon: '🏛️', label: 'Structuring' },
-  { id: 'digit', icon: '💻', label: 'Digit Solution' },
-  { id: 'spy', icon: '🔍', label: 'SPY' },
-  { id: 'comment', icon: '💬', label: 'Comment' },
-  { id: 'holding', icon: '🏛️', label: 'Holding' },
+  { id: 'entities', icon: '🏢', label: 'Détail entités' },
   { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
   { id: 'history', icon: '📋', label: 'Historique' },
 ];
