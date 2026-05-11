@@ -88,7 +88,7 @@ describe('PCGroup — invariants anti double-comptage SPY/Comment', () => {
       const cfg = clone(DEFAULT_CONFIG);
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.month_id === monthId && m.entity_code === 'comment'
-          ? { ...m, marge_nette: (m.marge_nette ?? 0) + 5000 }
+          ? { ...m, contribution: m.contribution + 5000 }
           : m,
       );
       setPCGroupConfig(cfg);
@@ -99,14 +99,14 @@ describe('PCGroup — invariants anti double-comptage SPY/Comment', () => {
 
     it('P&L consolidé : la ligne MARGE BRUTE GROUPE = Agency+Structuring+Digit (parsé depuis l\'affichage)', () => {
       const f = computeConsolidatedFacts(monthId)!;
-      const data = buildPCGroupMonthData(monthId)!;
+      const base = getMonthData(monthId);
+      const data = buildPCGroupMonthData(monthId, base, base.monthLabel);
       const margeRow = data.consolidatedPL.find((r) =>
         /marge brute groupe/i.test(r.label),
       );
       expect(margeRow).toBeDefined();
       const parsed = Number(String(margeRow!.value).replace(/[^0-9.-]/g, ''));
       const expected = f.agencyPartPCA + f.structuringMargeNette + f.digitMargeNette;
-      // Tolérance ~1$ liée aux arrondis d'affichage
       expect(Math.abs(parsed - expected)).toBeLessThan(1.5);
     });
   });
@@ -114,9 +114,9 @@ describe('PCGroup — invariants anti double-comptage SPY/Comment', () => {
   it('Tableau pieData / contributions : SPY & Comment apparaissent comme sous-composants, pas comme entrées du total Marge Brute', () => {
     const monthId = monthIds[monthIds.length - 1];
     const f = computeConsolidatedFacts(monthId)!;
-    const data = buildPCGroupMonthData(monthId)!;
+    const base = getMonthData(monthId);
+    const data = buildPCGroupMonthData(monthId, base, base.monthLabel);
     const pieSum = data.pieData.reduce((acc, p) => acc + (p.value ?? 0), 0);
-    // Le pie représente la marge brute groupe (Agency+Structuring+Digit consolidé)
     expect(Math.abs(pieSum - f.margeBruteGroupe)).toBeLessThan(2);
   });
 });
