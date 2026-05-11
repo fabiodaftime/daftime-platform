@@ -277,7 +277,7 @@ export function PCGroupIntercosTab({ data }: Props) {
               </tr>
             </thead>
             <tbody>
-              {table.rows.map((r: any, i: number) => (
+              {displayRows.map((r: any, i: number) => (
                 <tr key={i}>
                   <td>{r.entity}</td>
                   {table.columns.map((c: any) => (
