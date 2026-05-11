@@ -619,20 +619,21 @@ export function buildPCGroupMonthData(
     net: usdR(ytd.resultatNetYTD),
   };
 
-  const buildYtdEntity = (entity: string, k: BuildEntityKey) => {
+  const buildYtdEntity = (entity: string, sel: (f: ConsolidatedFacts) => number) => {
     const row: any = { entity };
-    monthsForCols.forEach((m) => { row[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(entityMarge(m.facts, k)); });
-    const total = monthsForCols.reduce((a, m) => a + entityMarge(m.facts, k), 0);
+    monthsForCols.forEach((m) => { row[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(sel(m.facts)); });
+    const total = monthsForCols.reduce((a, m) => a + sel(m.facts), 0);
     row.ytd = usdR(total);
     row.pct = ytd.margeBruteYTD > 0 ? fmtPct((total / ytd.margeBruteYTD) * 100) : '0.0%';
     return row;
   };
   const ytdEntityTable = [
-    buildYtdEntity('Agency (Part PCA)', 'agency'),
-    buildYtdEntity('Structuring', 'structuring'),
-    buildYtdEntity('Digit Solution', 'digit'),
-    buildYtdEntity('SPY', 'spy'),
-    buildYtdEntity('Comment/Trustpilot', 'comment'),
+    buildYtdEntity('Agency (Part PCA)', (f) => f.agencyPartPCA),
+    buildYtdEntity('Structuring', (f) => f.structuringMargeNette),
+    buildYtdEntity('Digit Solution (total)', digitConsolidatedMarge),
+    buildYtdEntity('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildYtdEntity('   ↳ dont SPY', (f) => f.spyMargeNette),
+    buildYtdEntity('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
   const ytdEntityTotal: any = { entity: 'TOTAL GROUPE' };
   monthsForCols.forEach((m) => { ytdEntityTotal[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(m.facts.margeBruteGroupe); });
