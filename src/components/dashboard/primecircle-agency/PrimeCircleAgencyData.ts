@@ -479,11 +479,11 @@ const marData: PCAMonthData = {
 // ===== APR 2026 DATA =====
 // Source : prime_circle_apr_2026.html (Avril 2026)
 // ⚠️ Feb 2026 restated (gross $36,184, expenses $9,406, net $26,778, pcaShare $13,389).
-// Jan reste à $10,726 (non restated). YTD :
-//   YTD Gross   = 10726 + 36184 + 46402 + 58853 = $152,165
+// ⚠️ Jan 2026 restated (gross $14,885, net $8,648, pcaShare $4,324). YTD :
+//   YTD Gross   = 14885 + 36184 + 46402 + 58853 = $156,324
 //   YTD Exp     =  6237 +  9406 + 16555 + 13313 =  $45,511
-//   YTD Net     =  4489 + 26778 + 29892 + 45541 = $106,700
-//   YTD PCA     =  2245 + 13389 + 14946 + 22770 =  $53,350
+//   YTD Net     =  8648 + 26778 + 29892 + 45541 = $110,859
+//   YTD PCA     =  4324 + 13389 + 14946 + 22770 =  $55,429
 const aprData: PCAMonthData = {
   monthId: 'apr-2026',
   monthLabel: 'Avril 2026',
@@ -493,7 +493,7 @@ const aprData: PCAMonthData = {
   marginPct: 77.4,
   prevGross: 46402, prevExpenses: 16555, prevNet: 29892, prevPcaShare: 14946,
   prevTransactions: 149, prevMediaSpend: 1244096,
-  ytdNet: 106700, ytdPcaShare: 53350, ytdGross: 152165, ytdExpenses: 45511,
+  ytdNet: 110859, ytdPcaShare: 55429, ytdGross: 156324, ytdExpenses: 45511,
   expenseRatio: 22.6,
   expenseBreakdown: [
     { name: "Ads", value: 5719 },
