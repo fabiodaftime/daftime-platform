@@ -129,7 +129,89 @@ async function logIntercoCashAudit(params: {
   } as any);
 }
 
-export async function upsertIntercoCash(row: Partial<PCGIntercosCashRow> & { month_id: string; entity_code: string }) {
+/**
+ * Validation côté client appliquée AVANT toute écriture en base.
+ * Empêche les remontées incohérentes :
+ *  - montant manquant / non numérique / négatif
+ *  - mois ou entité inconnus
+ *  - dépassement du cumul attendu pour l'entité (toutes lignes confondues)
+ *  - tolérance par rapport à un plafond optionnel passé en paramètre
+ */
+export class IntercoCashValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'IntercoCashValidationError';
+  }
+}
+
+export async function validateIntercoCashInput(row: {
+  month_id: string;
+  entity_code: string;
+  amount_received: number | null | undefined;
+  expected_total?: number; // plafond cumulé (optionnel) calculé par l'UI
+}) {
+  const amount = Number(row.amount_received);
+  if (row.amount_received == null || Number.isNaN(amount)) {
+    throw new IntercoCashValidationError('Montant requis et numérique.');
+  }
+  if (!Number.isFinite(amount)) {
+    throw new IntercoCashValidationError('Montant invalide (non fini).');
+  }
+  if (amount < 0) {
+    throw new IntercoCashValidationError('Le montant remonté ne peut pas être négatif.');
+  }
+
+  const [{ data: month }, { data: entity }, { data: siblings }] = await Promise.all([
+    supabase
+      .from('pcgroup_months')
+      .select('month_id,is_active')
+      .eq('month_id', row.month_id)
+      .maybeSingle(),
+    supabase
+      .from('pcgroup_entities')
+      .select('code,is_active')
+      .eq('code', row.entity_code)
+      .maybeSingle(),
+    supabase
+      .from('pcgroup_intercos_cash')
+      .select('month_id, amount_received')
+      .eq('entity_code', row.entity_code),
+  ]);
+
+  if (!month || !month.is_active) {
+    throw new IntercoCashValidationError(`Mois inconnu ou inactif : ${row.month_id}`);
+  }
+  if (!entity || !entity.is_active) {
+    throw new IntercoCashValidationError(`Entité inconnue ou inactive : ${row.entity_code}`);
+  }
+
+  // Cumul prévisionnel pour l'entité (en remplaçant le mois en cours par la nouvelle valeur)
+  if (row.expected_total != null && row.expected_total > 0) {
+    const others = (siblings ?? [])
+      .filter((s) => s.month_id !== row.month_id)
+      .reduce((acc, s) => acc + Number(s.amount_received ?? 0), 0);
+    const projected = others + amount;
+    const tolerance = Math.max(50, row.expected_total * 0.001); // 0.1 % ou 50 USD
+    if (projected > row.expected_total + tolerance) {
+      throw new IntercoCashValidationError(
+        `Cumul ${projected.toFixed(0)} > attendu ${row.expected_total.toFixed(0)} pour ${row.entity_code}. ` +
+          `Vérifiez qu'aucun montant n'est attribué à plusieurs entités.`,
+      );
+    }
+  }
+}
+
+export async function upsertIntercoCash(
+  row: Partial<PCGIntercosCashRow> & { month_id: string; entity_code: string },
+  options?: { expected_total?: number },
+) {
+  await validateIntercoCashInput({
+    month_id: row.month_id,
+    entity_code: row.entity_code,
+    amount_received: row.amount_received as number | null | undefined,
+    expected_total: options?.expected_total,
+  });
+
   // Lit la valeur précédente pour le journal d'audit
   const { data: existing } = await supabase
     .from('pcgroup_intercos_cash')
