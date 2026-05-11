@@ -739,6 +739,37 @@ export function buildPCGroupMonthData(
     { label: 'Réserves Cumulées', value: usdR(ytd.reservesYTD), detail: 'Toutes filiales', color: 'primary' },
   ];
 
+  // ----- P&L Consolidé (Waterfall) — auto-généré pour rester aligné avec
+  // les facts (évite tout double comptage SPY/Comment déjà inclus dans Digit).
+  const neg = (n: number) => `-${usdR(Math.abs(n))}`;
+  const consolidatedPL: { label: string; value: string; type: string }[] = [
+    { label: 'Marge Nette Agency (après 50% Blink)', value: usdR(facts.agencyPartPCA), type: 'positive' },
+    { label: 'Marge Nette Structuring', value: usdR(facts.structuringMargeNette), type: 'positive' },
+    { label: 'Marge Nette Digit Solution (total)', value: usdR(facts.digitMargeNette), type: 'positive' },
+    { label: '   ↳ dont Digit Core', value: usdR(digitCoreMarge(facts)), type: 'indent-muted' },
+    { label: '   ↳ dont SPY', value: usdR(facts.spyMargeNette), type: 'indent-muted' },
+    { label: '   ↳ dont Comment/Trustpilot', value: usdR(facts.commentMargeNette), type: 'indent-muted' },
+    { label: 'MARGE BRUTE GROUPE', value: usdR(facts.margeBruteGroupe), type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'Réserves Filiales (10%)', value: neg(facts.reservesFiliales), type: 'negative' },
+    { label: 'REMONTÉE HOLDING (90%)', value: usdR(facts.remonteeHolding), type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    ...(manual.holding.fraisDetail.length > 0
+      ? manual.holding.fraisDetail.map((f) => ({ label: f.label, value: neg(f.amount), type: 'negative' }))
+      : [{ label: 'Frais Holding', value: neg(facts.fraisHolding), type: 'negative' }]),
+    { label: 'RÉSULTAT NET HOLDING', value: usdR(facts.resultatNetHolding), type: 'total-positive' },
+    { label: '', value: '', type: 'spacer' },
+    { label: `Maxence (${dist.maxencePct}%)`, value: neg(facts.maxenceAmount), type: 'negative' },
+    { label: `Thibault (${dist.thibaultPct}%)`, value: neg(facts.thibaultAmount), type: 'negative' },
+    ...(dist.willInThibault
+      ? [{ label: '   ↳ dont Will', value: usdR(dist.willInThibault), type: 'indent-muted' }]
+      : []),
+    { label: `Florian (${dist.florianPct}%)`, value: neg(facts.florianAmount), type: 'negative' },
+    { label: 'SALAIRES MANAGEMENT (100%)', value: neg(facts.resultatNetHolding), type: 'total-negative' },
+    { label: '', value: '', type: 'spacer' },
+    { label: 'SOLDE HOLDING', value: usdR(0), type: 'highlight' },
+  ];
+
   const out: any = {
     ...base,
     monthLabel,
@@ -749,6 +780,7 @@ export function buildPCGroupMonthData(
     overviewComparisonTotal: overviewComparisonTotal as any,
     entityCards: entityCards as any,
     pieData: pieData as any,
+    consolidatedPL: consolidatedPL as any,
     holdingKPIs: holdingKPIs as any,
     holdingComparison: holdingComparison as any,
     holdingPieData: holdingPieData as any,

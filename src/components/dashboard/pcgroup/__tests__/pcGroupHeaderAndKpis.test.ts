@@ -129,13 +129,12 @@ describe('PCGroup — header/footer & KPIs réactifs aux changements de config',
       const facts = computeConsolidatedFacts('mar-2026');
       expect(facts).not.toBeNull();
       expect(facts!.caGroupe).toBeGreaterThan(0);
-      // Invariants : marge brute = somme des contributions par entité
+      // Invariants : SPY/Comment sont inclus dans Digit (produits internes),
+      // donc la marge brute = Agency + Structuring + Digit (consolidé).
       const sum =
         facts!.agencyPartPCA +
         facts!.structuringMargeNette +
-        facts!.digitMargeNette +
-        facts!.spyMargeNette +
-        facts!.commentMargeNette;
+        facts!.digitMargeNette;
       expect(Math.abs(sum - facts!.margeBruteGroupe)).toBeLessThan(0.5);
       // Réserves = 10 % marge brute, remontée = 90 %
       expect(Math.abs(facts!.reservesFiliales - facts!.margeBruteGroupe * 0.1)).toBeLessThan(0.5);
@@ -155,7 +154,7 @@ describe('PCGroup — header/footer & KPIs réactifs aux changements de config',
       expect(computeConsolidatedFacts('mar-2026')).not.toBeNull();
     });
 
-    it('reflète la modification d\'une entité manuelle (SPY) dans le CA Groupe', () => {
+    it('reflète la modification d\'une entité manuelle (SPY) sans impacter le CA Groupe (SPY est inclus dans Digit)', () => {
       const baseline = computeConsolidatedFacts('mar-2026')!;
       const baselineCA = baseline.caGroupe;
       const baselineSpyCA = baseline.spyCA;
@@ -171,7 +170,8 @@ describe('PCGroup — header/footer & KPIs réactifs aux changements de config',
 
       const updated = computeConsolidatedFacts('mar-2026')!;
       expect(updated.spyCA).toBe(baselineSpyCA + 10000);
-      expect(Math.abs(updated.caGroupe - (baselineCA + 10000))).toBeLessThan(0.5);
+      // SPY étant un sous-composant informatif de Digit, le CA Groupe ne bouge pas.
+      expect(Math.abs(updated.caGroupe - baselineCA)).toBeLessThan(0.5);
     });
 
     it('reflète une modification des frais Holding sur le résultat net', () => {

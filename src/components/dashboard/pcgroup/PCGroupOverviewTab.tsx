@@ -218,7 +218,7 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
         <div className="pcg-section-header">
           <div>
             <h3 className="pcg-section-title">📈 P&L Consolidé - {monthLabel}</h3>
-            <p className="pcg-section-subtitle">Synthèse financière des 5 entités</p>
+            <p className="pcg-section-subtitle">Synthèse financière groupe (Agency, Structuring, Digit Solution — SPY & Comment inclus dans Digit)</p>
           </div>
         </div>
         <div className="pcg-section-body">
