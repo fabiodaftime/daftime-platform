@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
 import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
-import { IntercosCashAuditLog } from './IntercosCashAuditLog';
+
 
 import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
