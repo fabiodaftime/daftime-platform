@@ -539,7 +539,6 @@ type PreviewState = {
 
 type ProgressState = { phase: 'fetch' | 'build'; loaded: number; total: number } | null;
 
-function ExportSection() {
 type MonthOpt = { month_id: string; label: string; year: number; month_num: number };
 type EntityOpt = { code: string; name: string };
 type CompanyOpt = { id: string; name: string };
