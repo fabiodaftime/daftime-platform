@@ -598,10 +598,10 @@ const aprData: PCAMonthData = {
   // ⚠️ Suivi Blink : valeurs restated du HTML Avril (paiements rattrapés sur Jan→Mar, Avril non payé).
   blinkHeaders: ["", "Jan-26", "Feb-26", "Mar-26", "Apr-26", "Cumule"],
   blinkRows: [
-    { l: "Revenu Net", v: [4489, 26778, 29892, 45541, 106700], bg: null, b: true, sep: false },
-    { l: "PCA Share (50%)", v: [2245, 13389, 14946, 22770, 53350], bg: null, b: false, sep: true },
-    { l: "Benefit a payer", v: [2245, 13389, 14946, 22770, 0], bg: null, b: true, sep: false },
-    { l: "Paye par PCA sur Benefit", v: [2245, 13389, 14946, 0, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Revenu Net", v: [8648, 26778, 29892, 45541, 110859], bg: null, b: true, sep: false },
+    { l: "PCA Share (50%)", v: [4324, 13389, 14946, 22770, 55429], bg: null, b: false, sep: true },
+    { l: "Benefit a payer", v: [4324, 13389, 14946, 22770, 0], bg: null, b: true, sep: false },
+    { l: "Paye par PCA sur Benefit", v: [4324, 13389, 14946, 0, 0], bg: "greenSoft", b: false, sep: false },
     { l: "Solde Benefit mensuel", v: [0, 0, 0, 22770, 0], bg: null, b: false, sep: false },
     { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 0, 22770], bg: "redSoft", b: true, sep: true },
     { l: "Media CL a payer", v: [21009, 210984, 161343, 43125, 0], bg: null, b: false, sep: false },
@@ -622,7 +622,7 @@ const aprData: PCAMonthData = {
     { label: "Marge Nette record 77.4%", desc: "+13 pts vs Mars grace a la baisse Ads (-49%) et hausse du CA (+27%).", severity: "low", icon: "📈" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
     { month: "Feb-26", gross: 36184, net: 26778, expenses: 9406, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
     { month: "Mar-26", gross: 46402, net: 29892, expenses: 16555, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
     { month: "Apr-26", gross: 58853, net: 45541, expenses: 13313, media: 1629485, ccMedia: 1586420, clMedia: 43125, newClients: 87, renewed: 63, upgraded: 9, trial: 9 },
