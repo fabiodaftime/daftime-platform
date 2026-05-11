@@ -29,6 +29,7 @@ import AdminPCGroupDiagnostics from "./pages/AdminPCGroupDiagnostics";
 import AdminPCGroupEntities from "./pages/AdminPCGroupEntities";
 import AdminEntityInputs from "./pages/AdminEntityInputs";
 import AdminDataSources from "./pages/AdminDataSources";
+import AdminCsvImport from "./pages/AdminCsvImport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
