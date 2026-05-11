@@ -23,6 +23,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { runPostImportValidation } from '@/lib/postImportValidation';
+import { PostImportValidationStatus } from '@/components/admin/PostImportValidationStatus';
 
 // ---------------------------------------------------------------------------
 // Templates (headers stricts — toute colonne en plus/moins est rejetée)
