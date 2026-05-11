@@ -141,10 +141,7 @@ export function PCGroupIntercosTab({ data }: Props) {
                   <td style={{ color: r.s2Color ? COLOR[r.s2Color] : undefined, fontWeight: r.bold ? 700 : 400 }}>{r.s2}</td>
                 </tr>
               ))}
-              <tr style={{ background: 'rgba(245, 158, 11, 0.05)' }}>
-                <td>Non exigible</td>
-                <td colSpan={2} style={{ textAlign: 'center', color: '#F59E0B' }}>{marsNote}</td>
-              </tr>
+              {/* Ligne "Non exigible" retirée — vue simplifiée */}
             </tbody>
           </table>
         </div>
