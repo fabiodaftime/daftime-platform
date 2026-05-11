@@ -1,75 +1,85 @@
-// Non-régression : structure du tableau Flux Intercos pour Avril 2026.
-// Vérifie :
-//   1) exactement 1 colonne par mois source (jan, fév, mars, avril)
-//   2) la colonne "Non Exigible" = somme des transferts dont due-date > view
-//   3) la colonne YTD (par ligne et total) = exigible + non-exigible
-// Source de vérité : INTERCO_RULES + computeExpectedTransfer (mêmes adapters
-// que la vue Groupe).
+// Non-régression Flux Intercos — vue simplifiée Avril 2026.
+// Vérifie uniquement les 3 indicateurs visibles :
+//   • Somme à Remonter  (= ytd des transferts attendus)
+//   • Somme Remontée    (= cash effectivement reçu par la Holding)
+//   • Solde             (= à Remonter - Remontée)
+// + structure du tableau : 1 colonne par mois source + Total à Remonter (ytd).
 
 import { describe, it, expect } from 'vitest';
 import { computeIntercos } from '../pcGroupIntercosCompute';
 import { INTERCO_RULES, computeExpectedTransfer } from '../intercosRules';
+import { INTERCOS_CASH } from '../manualEntities';
 import type { PCGSourceMonthId } from '../sources/entityAdapters';
 
 const VIEW: PCGSourceMonthId = 'apr-2026';
 const SOURCE_MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
 
-// Parse "$1,234" / "-$1,234" → number
-const parseUSD = (s: string) =>
-  Number(String(s).replace(/[^0-9.-]/g, '')) || 0;
+const parseUSD = (s: string) => Number(String(s).replace(/[^0-9.-]/g, '')) || 0;
 
-describe('Flux Intercos — tableau Avril 2026', () => {
+describe('Flux Intercos — vue simplifiée Avril 2026', () => {
   const intercos = computeIntercos(VIEW);
-  const table = intercos.table;
 
-  it('expose exactement 1 colonne par mois source (jan, fév, mars, avril)', () => {
-    const monthCols = table.columns.map((c: any) => c.key);
-    expect(monthCols).toEqual(SOURCE_MONTHS);
-    expect(table.columns).toHaveLength(SOURCE_MONTHS.length);
-  });
+  // Sources de vérité recalculées à partir des mêmes adapters que la vue groupe.
+  const expectedToRemit = SOURCE_MONTHS.reduce(
+    (acc, m) => acc + INTERCO_RULES.reduce((a, r) => a + computeExpectedTransfer(r, m), 0),
+    0,
+  );
+  const expectedReceived = SOURCE_MONTHS.reduce((acc, m) => {
+    const block = INTERCOS_CASH[m];
+    if (!block) return acc;
+    return acc + Object.values(block.received).reduce<number>((s, v) => s + (v ?? 0), 0);
+  }, 0);
+  const expectedSolde = Math.max(0, expectedToRemit - expectedReceived);
 
-  it('flag isExigible cohérent : jan/fév/mars exigibles en avril, avril non-exigible', () => {
-    const flags = Object.fromEntries(
-      table.columns.map((c: any) => [c.key, c.isExigible]),
-    );
-    expect(flags['jan-2026']).toBe(true);
-    expect(flags['feb-2026']).toBe(true);
-    expect(flags['mar-2026']).toBe(true);
-    expect(flags['apr-2026']).toBe(false);
-  });
+  describe('KPIs (3 cartes)', () => {
+    it('expose exactement 3 cartes : à Remonter / Remontée / Solde', () => {
+      expect(intercos.kpis).toHaveLength(3);
+      const labels = intercos.kpis.map((k: any) => k.label);
+      expect(labels).toEqual(['Somme à Remonter', 'Somme Remontée', 'Solde']);
+    });
 
-  it('expose 1 ligne par règle interco (5 entités) + 1 total', () => {
-    expect(table.rows).toHaveLength(INTERCO_RULES.length);
-    expect(table.total.entity).toBe('TOTAL ATTENDU');
-  });
+    it('Somme à Remonter = total YTD des transferts attendus', () => {
+      expect(Math.abs(parseUSD(intercos.kpis[0].value) - Math.round(expectedToRemit)))
+        .toBeLessThanOrEqual(INTERCO_RULES.length * SOURCE_MONTHS.length);
+    });
 
-  it('chaque ligne : Non Exigible = transfert d\'avril ; YTD = exigible + non-exigible', () => {
-    INTERCO_RULES.forEach((rule, i) => {
-      const row = table.rows[i];
-      const expectedAprUsd = Math.round(computeExpectedTransfer(rule, 'apr-2026'));
-      const expectedExigUsd = Math.round(
-        ['jan-2026', 'feb-2026', 'mar-2026']
-          .map((m) => computeExpectedTransfer(rule, m as PCGSourceMonthId))
-          .reduce((a, b) => a + b, 0),
-      );
+    it('Somme Remontée = total cash reçu par la Holding', () => {
+      expect(Math.abs(parseUSD(intercos.kpis[1].value) - Math.round(expectedReceived)))
+        .toBeLessThanOrEqual(1);
+    });
 
-      expect(Math.abs(parseUSD(row.notYetDue) - expectedAprUsd)).toBeLessThanOrEqual(1);
-      expect(Math.abs(parseUSD(row.exigible) - expectedExigUsd)).toBeLessThanOrEqual(3);
-      expect(Math.abs(parseUSD(row.ytd) - (expectedExigUsd + expectedAprUsd))).toBeLessThanOrEqual(4);
+    it('Solde = Somme à Remonter - Somme Remontée (clamp ≥ 0)', () => {
+      expect(Math.abs(parseUSD(intercos.kpis[2].value) - Math.round(expectedSolde)))
+        .toBeLessThanOrEqual(INTERCO_RULES.length * SOURCE_MONTHS.length);
+    });
+
+    it('aucun KPI ne mentionne "exigible" ou "non exigible"', () => {
+      const blob = JSON.stringify(intercos.kpis).toLowerCase();
+      expect(blob).not.toMatch(/exigible/);
     });
   });
 
-  it('total : Non Exigible et YTD = somme des lignes', () => {
-    const sumRows = (key: string) =>
-      table.rows.reduce((a: number, r: any) => a + parseUSD(r[key]), 0);
+  describe('Tableau détail', () => {
+    const table = intercos.table;
 
-    const TOL = INTERCO_RULES.length; // tolérance arrondi USD ligne par ligne
-    expect(Math.abs(parseUSD(table.total.notYetDue) - sumRows('notYetDue'))).toBeLessThanOrEqual(TOL);
-    expect(Math.abs(parseUSD(table.total.ytd) - sumRows('ytd'))).toBeLessThanOrEqual(TOL);
-    expect(Math.abs(parseUSD(table.total.exigible) - sumRows('exigible'))).toBeLessThanOrEqual(TOL);
-    // Identité comptable : YTD total = exigible total + non-exigible total
-    expect(
-      Math.abs(parseUSD(table.total.ytd) - (parseUSD(table.total.exigible) + parseUSD(table.total.notYetDue))),
-    ).toBeLessThanOrEqual(TOL);
+    it('1 colonne par mois source (jan, fév, mars, avril)', () => {
+      expect(table.columns.map((c: any) => c.key)).toEqual(SOURCE_MONTHS);
+    });
+
+    it('chaque ligne : Total à Remonter = somme des montants mensuels', () => {
+      INTERCO_RULES.forEach((rule, i) => {
+        const row = table.rows[i];
+        const expectedYtd = Math.round(
+          SOURCE_MONTHS.reduce((a, m) => a + computeExpectedTransfer(rule, m), 0),
+        );
+        expect(Math.abs(parseUSD(row.ytd) - expectedYtd)).toBeLessThanOrEqual(SOURCE_MONTHS.length);
+      });
+    });
+
+    it('total : Total à Remonter = somme des lignes', () => {
+      const sumRowsYtd = table.rows.reduce((a: number, r: any) => a + parseUSD(r.ytd), 0);
+      expect(Math.abs(parseUSD(table.total.ytd) - sumRowsYtd))
+        .toBeLessThanOrEqual(INTERCO_RULES.length);
+    });
   });
 });
