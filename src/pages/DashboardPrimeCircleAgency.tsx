@@ -9,7 +9,7 @@ import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClie
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
 import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
-import { PCAIntegrityPanel } from '@/components/dashboard/primecircle-agency/PCAIntegrityPanel';
+
 import { PCAValidationJournalTab } from '@/components/dashboard/primecircle-agency/PCAValidationJournalTab';
 
 import { C, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthId } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
@@ -91,8 +91,6 @@ export default function DashboardPrimeCircleAgency() {
           </div>
         </div>
       </header>
-
-      <PCAIntegrityPanel />
 
       <main className="pca-container">
         {tab === "overview" && <PCAOverviewTab data={data} />}
