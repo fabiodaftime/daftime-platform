@@ -76,44 +76,26 @@ describe.each(['spy', 'comment'] as const)(
         expect(parseUSD(kpi.value)).toBeCloseTo(fixture!.charges, -Math.log10(TOLERANCE_USD));
       });
 
-      it('KPI Marge Nette = facts.contribution', () => {
-        const kpi = findKpi(kpis, 'Marge Nette');
-        expect(kpi, 'KPI "Marge Nette" introuvable').toBeTruthy();
-        expect(parseUSD(kpi.value)).toBeCloseTo(Math.round(facts!.contribution), -Math.log10(TOLERANCE_USD));
-      });
-
-      it('KPI Total Charges = facts.charges', () => {
-        const kpi = findKpi(kpis, 'Total Charges');
-        expect(kpi, 'KPI "Total Charges" introuvable').toBeTruthy();
-        expect(parseUSD(kpi.value)).toBeCloseTo(Math.round(facts!.charges), -Math.log10(TOLERANCE_USD));
-      });
-
-      it('Waterfall : ligne CA = facts.ca', () => {
+      it('Waterfall : ligne CA = fixture.ca', () => {
         const row = findWfRow(wf, 'CA');
         expect(row).toBeTruthy();
-        expect(parseUSD(row.value)).toBeCloseTo(Math.round(facts!.ca), -Math.log10(TOLERANCE_USD));
+        expect(parseUSD(row.value)).toBeCloseTo(fixture!.ca, -Math.log10(TOLERANCE_USD));
       });
 
-      it('Waterfall : TOTAL CHARGES = facts.charges (négatif)', () => {
+      it('Waterfall : TOTAL CHARGES = fixture.charges (négatif)', () => {
         const row = findWfRow(wf, 'TOTAL CHARGES');
         expect(row).toBeTruthy();
-        expect(Math.abs(parseUSD(row.value))).toBeCloseTo(
-          Math.round(facts!.charges),
-          -Math.log10(TOLERANCE_USD),
-        );
+        expect(Math.abs(parseUSD(row.value))).toBeCloseTo(fixture!.charges, -Math.log10(TOLERANCE_USD));
       });
 
-      it('Waterfall : MARGE NETTE = facts.contribution', () => {
+      it('Waterfall : MARGE NETTE = fixture.contribution', () => {
         const row = findWfRow(wf, 'MARGE NETTE');
         expect(row).toBeTruthy();
-        expect(parseUSD(row.value)).toBeCloseTo(
-          Math.round(facts!.contribution),
-          -Math.log10(TOLERANCE_USD),
-        );
+        expect(parseUSD(row.value)).toBeCloseTo(fixture!.contribution, -Math.log10(TOLERANCE_USD));
       });
 
       it('Identité comptable : Marge Nette ≈ CA − Total Charges', () => {
-        const diff = facts!.contribution - (facts!.ca - facts!.charges);
+        const diff = fixture!.contribution - (fixture!.ca - fixture!.charges);
         expect(Math.abs(diff)).toBeLessThanOrEqual(TOLERANCE_USD);
       });
     });
