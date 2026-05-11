@@ -470,14 +470,19 @@ const TARGETS: Record<'pcg' | 'fin', ExportTarget> = {
 
 const PAGE_SIZE = 500;
 
+type FilterFn = (q: any) => any;
+
 // Async paginated fetch with progress callback. Yields chunks (no big memory spike up-front).
 async function fetchAllPaginated(
   target: ExportTarget,
   onProgress: (loaded: number, total: number) => void,
   signal: { cancelled: boolean },
+  applyFilters: FilterFn = (q) => q,
 ): Promise<any[]> {
-  // Get total count first
-  const countRes = await (supabase.from(target.table) as any).select(target.select, { count: 'exact', head: true });
+  // Get total count first (with filters applied)
+  const countRes = await applyFilters(
+    (supabase.from(target.table) as any).select(target.select, { count: 'exact', head: true })
+  );
   if (countRes.error) throw countRes.error;
   const total = countRes.count ?? 0;
   onProgress(0, total);
@@ -489,6 +494,7 @@ async function fetchAllPaginated(
     const to = Math.min(from + PAGE_SIZE - 1, total - 1);
     let q: any = (supabase.from(target.table) as any).select(target.select).range(from, to);
     for (const o of target.orderBy) q = q.order(o.column);
+    q = applyFilters(q);
     const { data, error } = await q;
     if (error) throw error;
     all.push(...(data ?? []));
