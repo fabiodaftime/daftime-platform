@@ -7,16 +7,29 @@ interface Props { data: PCAMonthData; }
 export function PCAOverviewTab({ data }: Props) {
   const hasPrev = data.prevGross > 0;
 
+  // YTD months up to and including the currently selected one
+  const ytdMonthIds = (() => {
+    const ids = PCA_AVAILABLE_MONTHS.map((m) => m.id as PCAMonthId);
+    const idx = ids.indexOf(data.monthId);
+    return idx >= 0 ? ids.slice(0, idx + 1) : ids;
+  })();
+  const ytdMonths: PCAMonthData[] = ytdMonthIds.map((id) => getPCAMonthData(id));
+
+  // Aggregated YTD expense breakdown across all months up to current
+  const ytdExpenseBreakdown = (() => {
+    const acc = new Map<string, number>();
+    ytdMonths.forEach((m) => {
+      m.expenseBreakdown.forEach((e) => acc.set(e.name, (acc.get(e.name) || 0) + e.value));
+    });
+    return Array.from(acc.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  })();
+  const ytdExpensesTotal = ytdExpenseBreakdown.reduce((s, e) => s + e.value, 0);
+  const ytdAdsValue = ytdExpenseBreakdown.find((e) => e.name === 'Ads')?.value || 0;
+
   const adsCost = data.expenseBreakdown.find(r => r.name === "Ads");
   const setupCost = data.expenseBreakdown.find(r => r.name === "Setup Cost");
-
-  // Costs comparison data for bar chart
-  const costsCompData = [
-    { name: "Setup Cost", jan: data.waterfallRows.find(r => r.l === "Setup Cost")?.prev ? Math.abs(data.waterfallRows.find(r => r.l === "Setup Cost")!.prev) : 0, feb: setupCost?.value || 0 },
-    { name: "Salary", jan: 1200, feb: 1200 },
-    { name: "Ads", jan: data.waterfallRows.find(r => r.l === "Ads")?.prev ? Math.abs(data.waterfallRows.find(r => r.l === "Ads")!.prev) : 0, feb: adsCost?.value || 0 },
-    { name: "Referrals", jan: data.waterfallRows.find(r => r.l === "Master Referral")?.prev ? Math.abs(data.waterfallRows.find(r => r.l === "Master Referral")!.prev) : 0, feb: (data.expenseBreakdown.find(r => r.name === "Master Referral")?.value || 0) + (data.expenseBreakdown.find(r => r.name === "No Limit Referral")?.value || 0) },
-  ];
 
   // Margin data
   const marginData = data.monthlyTrend.map(m => ({
