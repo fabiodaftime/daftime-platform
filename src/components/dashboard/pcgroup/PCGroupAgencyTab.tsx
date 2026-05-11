@@ -35,16 +35,31 @@ export function PCGroupAgencyTab({ data, entityRoutes }: Props) {
       {agencyComparison && (() => {
         const rows = agencyComparison as PCGComparisonRow[];
         const hasMar = rows.some((r) => Boolean(r.mar));
+        const hasAvr = rows.some((r) => Boolean((r as any).avr));
         const hasYtd = rows.some((r) => Boolean(r.ytd));
-        const headers = ['Indicateur', 'Janvier', 'Février', ...(hasMar ? ['Mars'] : []), `Variation${hasMar ? ' (Fév→Mars)' : ''}`, ...(hasYtd ? ['YTD'] : [])];
+        const variationLabel = hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
+        const titleSuffix = hasAvr
+          ? 'Janvier / Février / Mars / Avril 2026'
+          : hasMar
+            ? 'Janvier / Février / Mars 2026'
+            : 'M-1';
+        const headers = ['Indicateur', 'Janvier', 'Février',
+          ...(hasMar ? ['Mars'] : []),
+          ...(hasAvr ? ['Avril'] : []),
+          `Variation${variationLabel}`,
+          ...(hasYtd ? ['YTD'] : [])];
         return (
           <PCGroupComparisonTable
-            title={`📊 Comparatif ${hasMar ? 'Janvier / Février / Mars' : 'M-1'}`}
+            title={`📊 Comparatif ${titleSuffix}`}
             mappingContext={`Onglet Agency · ${data.monthLabel}`}
             headers={headers}
             rows={rows.map((r) => {
-              const cells = [r.indicator, cell(r.jan), cell(r.feb), ...(hasMar ? [cell(r.mar)] : []), cell(r.variation), ...(hasYtd ? [cell(r.ytd)] : [])];
-              return { cells, varIndex: 3 + (hasMar ? 1 : 0), varType: r.varType };
+              const cells = [r.indicator, cell(r.jan), cell(r.feb),
+                ...(hasMar ? [cell(r.mar)] : []),
+                ...(hasAvr ? [cell((r as any).avr)] : []),
+                cell(r.variation),
+                ...(hasYtd ? [cell(r.ytd)] : [])];
+              return { cells, varIndex: 3 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0), varType: r.varType };
             })}
           />
         );
