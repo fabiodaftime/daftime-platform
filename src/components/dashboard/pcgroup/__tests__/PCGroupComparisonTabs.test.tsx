@@ -145,7 +145,7 @@ describe("PCGroup comparison tables — February view (hasMar = false)", () => {
     );
     const table = getComparisonTable(/Comparatif M-1/);
     const headers = getHeaderCells(table);
-    expect(headers).toEqual(["Indicateur", "Janvier", "Février", "Variation"]);
+    expect(headers).toEqual(["Indicateur", "Janvier", "Février", "Variation", "YTD"]);
     expect(headers).not.toContain("Mars");
 
     const rows = getBodyRows(table);
