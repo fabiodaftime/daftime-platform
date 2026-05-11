@@ -425,6 +425,15 @@ export function PCGroupIntercosTab({ data }: Props) {
       })()}
 
       <IntercosCashAuditLog />
+
+      <IntercoCashSourceDrawer
+        open={drawer != null}
+        onClose={() => setDrawer(null)}
+        entityCode={drawer?.entityCode ?? ''}
+        entityLabel={drawer?.entityLabel ?? ''}
+        mode={drawer?.mode ?? 'received'}
+        expectedTotal={drawer?.expected ?? 0}
+      />
     </div>
   );
 }
