@@ -248,36 +248,67 @@ export function PCAOverviewTab({ data }: Props) {
       <div className="pca-waterfall-section">
         <div style={{ marginBottom: 16, fontWeight: 700, fontSize: 15, color: '#fff' }}>P&L Waterfall — {data.monthLabel}</div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>Gross Revenue & Expenses : Summary of Financial Balance. Detail Sub/Setup/Disc : indicatif (Client Master)</div>
-        <table className="pca-waterfall-table">
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Ligne</th>
-              <th style={{ textAlign: 'right' }}>{data.monthShort.replace(' ', '-')}</th>
-              {hasPrev && <th style={{ textAlign: 'right' }}>Jan-26</th>}
-              {hasPrev && <th style={{ textAlign: 'right' }}>Variation</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {data.waterfallRows.map((r, i) => (
-              <tr key={i} className={r.b ? 'pca-wf-highlight' : ''}>
-                <td style={{ textAlign: 'left' }}>{r.l}</td>
-                <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: r.b ? 700 : 400 }}>
-                  {r.v < 0 ? `-${fmtF(Math.abs(r.v))}` : fmtF(r.v)}
-                </td>
-                {hasPrev && (
-                  <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {r.prev !== 0 ? (r.prev < 0 ? `-${fmtF(Math.abs(r.prev))}` : fmtF(r.prev)) : '—'}
-                  </td>
-                )}
-                {hasPrev && (
-                  <td style={{ textAlign: 'right' }}>
-                    {r.prev !== 0 ? pctChg(Math.abs(r.v), Math.abs(r.prev)) : 'NEW'}
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {(() => {
+          const allMonths: { id: PCAMonthId; label: string; data: PCAMonthData }[] =
+            PCA_AVAILABLE_MONTHS.map((m) => ({
+              id: m.id as PCAMonthId,
+              label: m.label.split(' ')[0].slice(0, 3) + '-26',
+              data: getPCAMonthData(m.id as PCAMonthId),
+            }));
+          const currentIdx = allMonths.findIndex((m) => m.id === data.monthId);
+          const labelToValues = new Map<string, number[]>();
+          data.waterfallRows.forEach((r) => {
+            const vals = allMonths.map((m) => {
+              const match = m.data.waterfallRows.find((x) => x.l === r.l);
+              return match ? match.v : 0;
+            });
+            labelToValues.set(r.l, vals);
+          });
+          return (
+            <table className="pca-waterfall-table">
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left' }}>Ligne</th>
+                  {allMonths.map((m, i) => (
+                    <th
+                      key={m.id}
+                      style={{
+                        textAlign: 'right',
+                        background: i === currentIdx ? 'rgba(30, 86, 160, 0.45)' : undefined,
+                        color: i === currentIdx ? '#fff' : undefined,
+                      }}
+                    >
+                      {m.label}{i === currentIdx ? ' ★' : ''}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.waterfallRows.map((r, i) => {
+                  const vals = labelToValues.get(r.l) || [];
+                  return (
+                    <tr key={i} className={r.b ? 'pca-wf-highlight' : ''}>
+                      <td style={{ textAlign: 'left' }}>{r.l}</td>
+                      {vals.map((v, j) => (
+                        <td
+                          key={j}
+                          style={{
+                            textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                            fontWeight: r.b || j === currentIdx ? 700 : 400,
+                            background: j === currentIdx ? 'rgba(30, 86, 160, 0.18)' : undefined,
+                          }}
+                        >
+                          {v === 0 ? '—' : v < 0 ? `-${fmtF(Math.abs(v))}` : fmtF(v)}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
 
       <div className="pca-kpi-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
