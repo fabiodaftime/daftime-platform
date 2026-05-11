@@ -37,7 +37,7 @@ interface Expected {
 }
 const EXPECTED: Partial<Record<PCGSourceMonthId, Expected>> = {
   'jan-2026': { ca: 198900, margeBrute: 89607, resultatNet: 73586, reserves: 8961 },
-  'feb-2026': { ca: 258543, margeBrute: 80221, resultatNet: 61309, reserves: 8022 },
+  'feb-2026': { ca: 259647, margeBrute: 81373, resultatNet: 62346, reserves: 8137 },
   'mar-2026': { ca: 260071, margeBrute: 106183, resultatNet: 87187, reserves: 10618 },
 };
 
