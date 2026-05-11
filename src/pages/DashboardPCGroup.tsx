@@ -28,7 +28,6 @@ const tabs = [
   { id: 'ytd', icon: '📈', label: 'YTD 2026' },
   { id: 'entities', icon: '🏢', label: 'Détail entités' },
   { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
-  { id: 'history', icon: '📋', label: 'Historique' },
 ];
 
 export default function DashboardPCGroup() {
