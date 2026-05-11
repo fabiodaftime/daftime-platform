@@ -196,12 +196,7 @@ export default function DashboardPCGroup() {
       <main className="pcg-main">
         {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} monthId={selectedMonth} entitiesCount={entitiesCount} />}
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
-        {tab === 'agency' && <PCGroupAgencyTab data={monthData} entityRoutes={entityRoutes} />}
-        {tab === 'structuring' && <PCGroupStructuringTab data={monthData} entityRoutes={entityRoutes} />}
-        {tab === 'digit' && <PCGroupDigitTab data={monthData} entityRoutes={entityRoutes} />}
-        {tab === 'spy' && <PCGroupSpyTab data={monthData} />}
-        {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
-        {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
+        {tab === 'entities' && <PCGroupEntitiesAccordion data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
         {tab === 'history' && <RestatementHistoryTab accent="gold" />}
       </main>
