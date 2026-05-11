@@ -220,7 +220,7 @@ const janData: PCAMonthData = {
     { label: "Yolanda: $22K spend, $0 revenu", desc: "3 trials, toutes stopped. $21.9K de media.", severity: "high", icon: "⚠️" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
   ],
 };
 
