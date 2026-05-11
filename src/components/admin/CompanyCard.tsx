@@ -38,12 +38,8 @@ export function CompanyCard({
               Données réelles
             </Badge>
           )}
-          {hasRealData === false && (
-            <Badge variant="outline" className="shrink-0 border-amber-500/50 text-amber-700 dark:text-amber-400 gap-1">
-              <AlertCircle className="w-3 h-3" />
-              Aucune donnée
-            </Badge>
-          )}
+          {/* Badge "Aucune donnée" volontairement retiré : on n'affiche plus rien
+              quand monthly_financials est vide pour garder les cards épurées. */}
         </div>
 
         {/* Actions */}
