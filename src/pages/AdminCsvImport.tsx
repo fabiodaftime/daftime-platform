@@ -335,19 +335,58 @@ function CsvCard({ title, description, template, templateName, expectedHeaders, 
           </div>
 
           {result.errors.length > 0 && (
-            <div className="max-h-48 overflow-auto rounded border bg-destructive/5 p-3 text-xs space-y-1 font-mono">
-              {result.errors.slice(0, 50).map((e, i) => (
-                <div key={i}>
-                  <span className="text-destructive font-semibold">
-                    {e.line === 0 ? 'header' : `L${e.line}`}
-                  </span>
-                  {e.field && <span className="text-muted-foreground"> · {e.field}</span>} — {e.message}
-                </div>
-              ))}
-              {result.errors.length > 50 && (
-                <div className="text-muted-foreground">… et {result.errors.length - 50} autres</div>
-              )}
-            </div>
+            <>
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const rawRows = text
+                      ? (Papa.parse<Record<string, string>>(text, {
+                          header: true,
+                          skipEmptyLines: 'greedy',
+                          transformHeader: (h) => h.trim(),
+                        }).data as Record<string, string>[])
+                      : [];
+                    const headers = ['line', 'field', 'message', ...expectedHeaders];
+                    const esc = (v: any) => {
+                      if (v === null || v === undefined) return '';
+                      const s = String(v);
+                      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+                    };
+                    const rows = result.errors.map((e) => {
+                      const raw = e.line >= 2 ? rawRows[e.line - 2] ?? {} : {};
+                      const base: Record<string, any> = {
+                        line: e.line === 0 ? 'header' : e.line,
+                        field: e.field ?? '',
+                        message: e.message,
+                      };
+                      expectedHeaders.forEach((h) => { base[h] = (raw as any)[h] ?? ''; });
+                      return headers.map((h) => esc(base[h])).join(',');
+                    });
+                    const csv = [headers.join(','), ...rows].join('\n');
+                    const stamp = new Date().toISOString().slice(0, 10);
+                    downloadText(`${templateName.replace(/\.csv$/, '')}_errors_${stamp}.csv`, csv);
+                    toast.success(`${result.errors.length} erreur(s) exportée(s)`);
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" /> Exporter erreurs ({result.errors.length})
+                </Button>
+              </div>
+              <div className="max-h-48 overflow-auto rounded border bg-destructive/5 p-3 text-xs space-y-1 font-mono">
+                {result.errors.slice(0, 50).map((e, i) => (
+                  <div key={i}>
+                    <span className="text-destructive font-semibold">
+                      {e.line === 0 ? 'header' : `L${e.line}`}
+                    </span>
+                    {e.field && <span className="text-muted-foreground"> · {e.field}</span>} — {e.message}
+                  </div>
+                ))}
+                {result.errors.length > 50 && (
+                  <div className="text-muted-foreground">… et {result.errors.length - 50} autres</div>
+                )}
+              </div>
+            </>
           )}
 
           {result.ok.length > 0 && (
