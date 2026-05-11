@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend, BarChart } from 'recharts';
 import { C, fmtF, fmt, pctChg, PIE_COLORS, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthData, type PCAMonthId } from './PrimeCircleAgencyData';
 import { PCATooltip } from './PCAShared';
 
