@@ -139,6 +139,48 @@ export function validateDigitConsistency(
         message: `CA Comment/Trust incohérent : PCGroup $${Math.round(comment.ca).toLocaleString()} vs dashboard Digit $${Math.round(dash.ctCa).toLocaleString()}.`,
       });
     }
+
+    // ---- Sum check : Digit Group total = Core + SPY + Comment ----
+    // Garantit qu'aucun cumul/erreur de saisie ne fait diverger
+    // (PCGroup sub-entities) ↔ (total Digit Group affiché sur le dashboard).
+    const corePCG = dFacts?.ca ?? 0;
+    const spyPCG = MANUAL_ENTITIES[m]?.spy?.ca ?? 0;
+    const commentPCG = MANUAL_ENTITIES[m]?.comment?.ca ?? 0;
+    const sumPCG = corePCG + spyPCG + commentPCG;
+    const sumDash = dash.coreCa + dash.spyCa + dash.ctCa;
+    if (sumDash > 0 && !approxEqual(sumPCG, sumDash)) {
+      const delta = sumPCG - sumDash;
+      issues.push({
+        severity: 'error',
+        entity: 'group',
+        month: m,
+        monthLabel,
+        field: 'ca_sum',
+        actual: sumPCG,
+        expected: sumDash,
+        message: `Total Digit Group incohérent : Σ(Core $${Math.round(corePCG).toLocaleString()} + SPY $${Math.round(spyPCG).toLocaleString()} + Comment $${Math.round(commentPCG).toLocaleString()}) = $${Math.round(sumPCG).toLocaleString()} vs total dashboard $${Math.round(sumDash).toLocaleString()} (Δ ${delta >= 0 ? '+' : ''}$${Math.round(delta).toLocaleString()}). Vérifier qu'aucun montant n'est compté deux fois.`,
+      });
+    }
+
+    // ---- Marge sum check ----
+    const margeCorePCG = dFacts?.margeNette ?? 0;
+    const margeSpyPCG = MANUAL_ENTITIES[m]?.spy?.margeNette ?? 0;
+    const margeCommentPCG = MANUAL_ENTITIES[m]?.comment?.margeNette ?? 0;
+    const margeSumPCG = margeCorePCG + margeSpyPCG + margeCommentPCG;
+    const margeSumDash = dash.coreMarge + dash.spyMarge + dash.ctMarge;
+    if (margeSumDash > 0 && !approxEqual(margeSumPCG, margeSumDash)) {
+      const delta = margeSumPCG - margeSumDash;
+      issues.push({
+        severity: 'warning',
+        entity: 'group',
+        month: m,
+        monthLabel,
+        field: 'marge_sum',
+        actual: margeSumPCG,
+        expected: margeSumDash,
+        message: `Marge Digit Group incohérente : Σ sous-entités $${Math.round(margeSumPCG).toLocaleString()} vs total dashboard $${Math.round(margeSumDash).toLocaleString()} (Δ ${delta >= 0 ? '+' : ''}$${Math.round(delta).toLocaleString()}).`,
+      });
+    }
   }
 
   // ---- Cross-month cumulation check (per entity) ----
