@@ -443,30 +443,10 @@ export function PCGroupIntercosTab({ data }: Props) {
                     </div>
                   </div>
 
-                  {/* Sous-entités — détail discret */}
-                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed #E5E7EB' }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
-                      Détail par sous-entité
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
-                      {digitGroupCard.subs.map((s: any) => (
-                        <div
-                          key={s.key}
-                          style={{
-                            borderLeft: `3px solid ${COLOR[s.level] ?? '#9CA3AF'}`,
-                            padding: '6px 10px',
-                            background: '#F9FAFB',
-                            borderRadius: 4,
-                          }}
-                        >
-                          <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 2 }}>{s.entity}</div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: COLOR[s.level] ?? '#1E3A5F' }}>{s.remaining}</div>
-                          <div style={{ fontSize: 10, color: '#9CA3AF' }}>
-                            {s.received} reçu / {s.expected} attendu
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  {/* Pas de détail reçu/attendu par sous-entité : Digit Group remonte
+                      un montant global unique, pas une remontée par sous-entité. */}
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #E5E7EB', fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>
+                    Périmètre : {digitGroupCard.subs.map((s: any) => s.entity).join(' + ')} — remontée groupée.
                   </div>
                 </div>
               )}
