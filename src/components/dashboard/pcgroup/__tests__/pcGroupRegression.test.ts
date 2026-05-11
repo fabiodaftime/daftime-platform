@@ -27,11 +27,11 @@ interface Expected {
 // d'où la révision des valeurs attendues.
 const EXPECTED: Record<'jan-2026' | 'feb-2026' | 'mar-2026', Expected> = {
   'jan-2026': {
-    caGroupe: 179_337,
-    margeBruteGroupe: 83_814,
-    reservesFiliales: 8_381,
-    remonteeHolding: 75_433,
-    resultatNetHolding: 68_373,
+    caGroupe: 183_496,
+    margeBruteGroupe: 85_893,
+    reservesFiliales: 8_589,
+    remonteeHolding: 77_304,
+    resultatNetHolding: 70_244,
   },
   'feb-2026': {
     caGroupe: 232_014,
