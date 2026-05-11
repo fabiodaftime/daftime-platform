@@ -1,7 +1,24 @@
+import Papa from 'papaparse';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Button } from '@/components/ui/button';
+import { Download, FileText } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
 
 interface Props {
   data: PCGroupMonthData;
+}
+
+function downloadBlob(content: BlobPart, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 const KPI_BG: Record<string, string> = {
