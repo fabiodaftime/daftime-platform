@@ -68,21 +68,24 @@ export function PCGroupIntercosTab({ data }: Props) {
         </div>
       </div>
 
-      {/* Tableau Détail Remontées */}
+      {/* Tableau Détail Remontées — colonnes dynamiques (1 par mois source) */}
       <div className="pcg-section">
         <div className="pcg-section-header">
           <h3 className="pcg-section-title">📊 Détail des Remontées Attendues vs Reçues</h3>
-          <span className="pcg-section-subtitle">Remontées = 90% de la marge nette filiale</span>
+          <span className="pcg-section-subtitle">Remontées = 90% de la marge nette filiale · M+1</span>
         </div>
         <div className="pcg-section-body">
           <table className="pcg-comparison-table">
             <thead>
               <tr>
                 <th>Entité</th>
-                <th>Janvier</th>
-                <th>Février</th>
+                {table.columns.map((c: any) => (
+                  <th key={c.key} style={{ background: c.isExigible ? undefined : 'rgba(245, 158, 11, 0.15)' }}>
+                    {c.label}{c.isExigible ? '' : ' (à venir)'}
+                  </th>
+                ))}
                 <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Total Exigible</th>
-                <th style={{ background: 'rgba(245, 158, 11, 0.15)' }}>Mars (Avr.)</th>
+                <th style={{ background: 'rgba(245, 158, 11, 0.15)' }}>Non Exigible</th>
                 <th>Cumul YTD</th>
               </tr>
             </thead>
@@ -90,25 +93,29 @@ export function PCGroupIntercosTab({ data }: Props) {
               {table.rows.map((r: any, i: number) => (
                 <tr key={i}>
                   <td>{r.entity}</td>
-                  <td>{r.jan}</td>
-                  <td>{r.feb}</td>
+                  {table.columns.map((c: any) => (
+                    <td key={c.key} style={c.isExigible ? undefined : { background: 'rgba(245, 158, 11, 0.05)' }}>
+                      {r[c.key] ?? '—'}
+                    </td>
+                  ))}
                   <td style={{ background: 'rgba(16, 185, 129, 0.1)', fontWeight: 600 }}>{r.exigible}</td>
-                  <td style={{ background: 'rgba(245, 158, 11, 0.1)' }}>{r.mars}</td>
+                  <td style={{ background: 'rgba(245, 158, 11, 0.1)' }}>{r.notYetDue}</td>
                   <td>{r.ytd}</td>
                 </tr>
               ))}
               <tr className="pcg-comparison-total">
                 <td>{table.total.entity}</td>
-                <td>{table.total.jan}</td>
-                <td>{table.total.feb}</td>
+                {table.columns.map((c: any) => (
+                  <td key={c.key}>{table.total[c.key] ?? '—'}</td>
+                ))}
                 <td style={{ background: '#1E3A5F', color: '#fff' }}>{table.total.exigible}</td>
-                <td style={{ background: 'rgba(245, 158, 11, 0.3)' }}>{table.total.mars}</td>
+                <td style={{ background: 'rgba(245, 158, 11, 0.3)' }}>{table.total.notYetDue}</td>
                 <td style={{ fontWeight: 700 }}>{table.total.ytd}</td>
               </tr>
             </tbody>
           </table>
           <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '1rem', fontStyle: 'italic' }}>
-            Note : Les remontées se font en M+1. Janvier exigible en Février, Février exigible en Mars, Mars exigible en Avril.
+            Note : les remontées se font en M+1 (marge d'un mois → exigible le mois suivant).
           </p>
         </div>
       </div>
