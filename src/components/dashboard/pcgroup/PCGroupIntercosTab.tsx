@@ -28,7 +28,7 @@ export function PCGroupIntercosTab({ data }: Props) {
   const intercos = (data as any).intercos;
   if (!intercos) return null;
 
-  const { kpis, table, calendar, recap } = intercos;
+  const { kpis, table, recap } = intercos;
 
   return (
     <div>
