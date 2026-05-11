@@ -888,6 +888,9 @@ export function buildPCGroupMonthData(
     reservesEntityTotal: reservesEntityTotal as any,
     reservesCards: reservesCards as any,
     intercos: computeIntercos(month) as any,
+    agencyKPIs: agencyKPIsOverlay as any,
+    agencyComparison: agencyComparisonOverlay as any,
+    agencyWaterfall: agencyWaterfallOverlay as any,
   };
   return out as PCGroupMonthData;
 }
