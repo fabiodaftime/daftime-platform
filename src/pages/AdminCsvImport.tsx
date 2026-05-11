@@ -18,6 +18,7 @@ import Papa from 'papaparse';
 import { z } from 'zod';
 import { ArrowLeft, Upload, Download, CheckCircle2, AlertTriangle, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
