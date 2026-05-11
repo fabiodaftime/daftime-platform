@@ -21,6 +21,7 @@ import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
 import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
+import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
