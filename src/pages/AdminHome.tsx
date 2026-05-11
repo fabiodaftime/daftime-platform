@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
-import { Plus, Search, LogOut, Building2, Users } from 'lucide-react';
+import { Plus, Search, LogOut, Building2, Users, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
