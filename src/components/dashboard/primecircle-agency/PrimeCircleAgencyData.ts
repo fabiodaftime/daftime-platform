@@ -490,9 +490,9 @@ const aprData: PCAMonthData = {
   gross: 58853, expenses: 13313, net: 45541, pcaShare: 22770,
   transactions: 184, mediaSpend: 1629485, clientsActifs: 82, totalEncaisse: 0, adAccounts: 89,
   marginPct: 77.4,
-  prevGross: 46402, prevExpenses: 16555, prevNet: 29892, prevPcaShare: 14946,
+  prevGross: 46402, prevExpenses: 16510, prevNet: 29892, prevPcaShare: 14946,
   prevTransactions: 149, prevMediaSpend: 1244096,
-  ytdNet: 110859, ytdPcaShare: 55429, ytdGross: 156324, ytdExpenses: 45511,
+  ytdNet: 110859, ytdPcaShare: 55429, ytdGross: 156324, ytdExpenses: 45466,
   expenseRatio: 22.6,
   expenseBreakdown: [
     { name: "Ads", value: 5719 },
