@@ -45,7 +45,7 @@ export function PCGroupIntercosTab({ data }: Props) {
   const intercos = (data as any).intercos;
   if (!intercos) return null;
 
-  const { kpis, table, recap } = intercos;
+  const { kpis, table } = intercos;
   const monthLabel = (data as any).monthLabel ?? '';
   const sourceMonths = table.columns.map((c: any) => c.label).join(', ');
   const safeLabel = String(monthLabel).replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'ytd';
