@@ -21,6 +21,7 @@ import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
 import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
 import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
+import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
 import { useLivePCGroupConfig } from '@/components/dashboard/pcgroup/config/useLivePCGroupConfig';
 import { EmptyConfigState } from '@/components/dashboard/pcgroup/config/EmptyConfigState';
@@ -38,6 +39,7 @@ const tabs = [
   { id: 'comment', icon: '💬', label: 'Comment' },
   { id: 'holding', icon: '🏛️', label: 'Holding' },
   { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
+  { id: 'history', icon: '📋', label: 'Historique' },
 ];
 
 export default function DashboardPCGroup() {
@@ -211,6 +213,7 @@ export default function DashboardPCGroup() {
         {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
         {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
         {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
+        {tab === 'history' && <RestatementHistoryTab accent="gold" />}
       </main>
 
       <footer className="pcg-footer">
