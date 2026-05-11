@@ -60,6 +60,28 @@ export function PCGroupIntercosTab({ data }: Props) {
   const validationIssues = validateDigitConsistency(sourceMonthIds);
   const hasErrors = validationIssues.some((i) => i.severity === 'error');
 
+  const parseUSDNum = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
+  const [drawer, setDrawer] = useState<
+    | { entityCode: string; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
+    | null
+  >(null);
+  const openDrawer = (row: any, mode: 'received' | 'remaining') => {
+    const code = row._key ?? row.key;
+    if (!code) return;
+    setDrawer({
+      entityCode: code,
+      entityLabel: row.entity,
+      mode,
+      expected: parseUSDNum(row.ytd),
+    });
+  };
+  const clickableCellStyle = {
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    textDecorationStyle: 'dotted' as const,
+    textUnderlineOffset: 3,
+  };
+
   const buildTableRows = () => {
     const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
     const rows = table.rows.map((r: any) => [
