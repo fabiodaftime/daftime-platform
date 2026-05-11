@@ -57,7 +57,7 @@ export default function AdminHome() {
 
       const currentYear = new Date().getFullYear();
       const companiesWithKPIs: CompanyWithKPIs[] = await Promise.all(
-        (companiesData || []).map(async (company, index) => {
+        (companiesData || []).map(async (company) => {
           const { data: financials } = await supabase
             .from('monthly_financials')
             .select('revenue_actual, revenue_budget')
@@ -66,24 +66,12 @@ export default function AdminHome() {
 
           const revenueYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_actual), 0) || 0;
           const budgetYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_budget), 0) || 0;
-          const hasData = financials && financials.length > 0;
-
-          const demoDataByLayout: Record<string, { revenue: number; budget: number; expenses: number }> = {
-            'cw_partners': { revenue: 895000, budget: 855000, expenses: 710000 },
-            'cwp_pl_2025': { revenue: 1760000, budget: 0, expenses: 1650000 },
-            'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
-            'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
-            'richissime': { revenue: 1262000, budget: 1180000, expenses: 890000 },
-            'nowmade': { revenue: 1183137, budget: 0, expenses: 788978 },
-            'default': { revenue: 750000 + index * 100000, budget: 720000 + index * 95000, expenses: 600000 + index * 80000 },
-          };
-          const demoData = demoDataByLayout[company.layout_type] || demoDataByLayout['default'];
 
           return {
             ...company,
-            revenueYTD: hasData ? revenueYTD : demoData.revenue,
-            budgetYTD: hasData ? budgetYTD : demoData.budget,
-            expensesYTD: hasData ? 0 : demoData.expenses,
+            revenueYTD,
+            budgetYTD,
+            expensesYTD: 0,
           };
         })
       );
