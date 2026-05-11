@@ -208,41 +208,42 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     },
   };
 
-  // -------- Calendrier --------
+  // -------- Calendrier (vue simplifiée : montant à remonter par mois) --------
   const calendar = sourceMonths.map((sm) => {
-    const dueIdx = MONTH_ORDER.indexOf(sm) + 1;
-    const dueLabel = MONTH_ORDER[dueIdx] ? MONTH_SHORT[MONTH_ORDER[dueIdx]] : '—';
     const amount = perEntity.reduce((a, e) => {
       const cell = e.monthly.find((x) => x.sourceMonth === sm);
       return a + (cell?.amount ?? 0);
     }, 0);
-    const isDue = dueIdx <= viewIdx;
     return {
       month: MONTH_LONG[sm],
       amount: usd(amount),
-      status: `${isDue ? '⚠️' : '🕐'} Exigible ${dueLabel}`,
-      tag: isDue ? 'EN RETARD' : 'NON EXIGIBLE',
-      level: (isDue ? 'danger' : 'warning') as 'danger' | 'warning',
+      status: 'Marge à remonter',
+      tag: '90% marge nette',
+      level: 'navy' as 'danger' | 'warning' | 'navy',
     };
   });
   calendar.push({
     month: 'Total YTD',
     amount: usd(totals.ytd),
-    status: 'Remontées attendues',
-    tag: 'Q1 2026',
+    status: 'Somme à remonter',
+    tag: periodLabel,
     level: 'navy' as any,
   });
 
-  // -------- Récap comparatif scénarios --------
+  // -------- Récap comparatif scénarios (basé sur YTD à remonter) --------
+  const recoveryRateYtd = totals.ytd > 0 ? (receivedTotal / totals.ytd) * 100 : 0;
+  const recoveryRateYtdApport =
+    totals.ytd > 0 ? ((receivedTotal + apportMaxence) / totals.ytd) * 100 : 0;
+  const soldeYtdApport = soldeYtd - apportMaxence;
   const recap = [
-    { label: 'Total exigible', s1: usd(totals.exigible), s2: usd(totals.exigible) },
+    { label: 'Somme à remonter', s1: usd(totals.ytd), s2: usd(totals.ytd) },
     { label: 'Encaissements reçus', s1: usd(receivedTotal), s2: usd(receivedTotal) },
     { label: 'Apport Maxence', s1: '—', s2: usdSigned(apportMaxence ? -apportMaxence : 0).replace('-', '+'), s2Color: 'success' as const },
     { label: 'Total fonds disponibles', s1: usd(receivedTotal), s2: usd(receivedTotal + apportMaxence) },
     {
-      label: 'Solde dû',
-      s1: usd(Math.max(0, solde)),
-      s2: usd(Math.max(0, soldeAvecApport)),
+      label: 'Solde',
+      s1: usd(Math.max(0, soldeYtd)),
+      s2: usd(Math.max(0, soldeYtdApport)),
       s1Color: 'danger' as const,
       s2Color: 'warning' as const,
       bold: true,
@@ -250,16 +251,14 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     },
     {
       label: 'Taux de recouvrement',
-      s1: fmtPct(recoveryRate),
-      s2: fmtPct(recoveryRateApport),
+      s1: fmtPct(recoveryRateYtd),
+      s2: fmtPct(recoveryRateYtdApport),
       s1Color: 'danger' as const,
       s2Color: 'success' as const,
     },
   ];
 
-  const marsNote = notDueMonths.length > 0
-    ? `${usd(totals.notYetDue)} → exigible(s) ${notDueMonths.map((m) => MONTH_SHORT[m]).join(', ')}`
-    : 'Aucune remontée en attente d\'exigibilité';
+  const marsNote = '';
 
   return {
     kpis,
