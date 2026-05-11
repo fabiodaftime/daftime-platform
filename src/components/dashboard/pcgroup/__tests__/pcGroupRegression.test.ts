@@ -95,19 +95,21 @@ describe('PCGroup — invariants de cohérence', () => {
     describe(monthId, () => {
       const f = computeConsolidatedFacts(monthId as PCGSourceMonthId)!;
 
-      it('somme des marges entités = Marge Brute Groupe', () => {
-        const sum =
-          f.agencyPartPCA +
-          f.structuringMargeNette +
-          f.digitMargeNette +
-          f.spyMargeNette +
-          f.commentMargeNette;
+      it('somme Agency + Structuring + Digit (consolidé) = Marge Brute Groupe', () => {
+        // SPY et Comment sont des produits inclus dans digitMargeNette.
+        const sum = f.agencyPartPCA + f.structuringMargeNette + f.digitMargeNette;
         expect(Math.abs(sum - f.margeBruteGroupe)).toBeLessThan(0.01);
       });
 
-      it('somme des CA entités = CA Groupe', () => {
-        const sum = f.agencyCA + f.structuringCA + f.digitCA + f.spyCA + f.commentCA;
+      it('somme Agency + Structuring + Digit (consolidé) = CA Groupe', () => {
+        const sum = f.agencyCA + f.structuringCA + f.digitCA;
         expect(Math.abs(sum - f.caGroupe)).toBeLessThan(0.01);
+      });
+
+      it('SPY et Comment sont inclus dans Digit (pas additionnés au groupe)', () => {
+        // Invariant anti-double-comptage : SPY + Comment ≤ marge Digit totale.
+        expect(f.spyMargeNette + f.commentMargeNette).toBeLessThanOrEqual(f.digitMargeNette + 0.01);
+        expect(f.spyCA + f.commentCA).toBeLessThanOrEqual(f.digitCA + 0.01);
       });
 
       it('Réserves = 10% Marge Brute', () => {
