@@ -16,12 +16,33 @@ export function PCGroupYTDTab({ data }: Props) {
       ? 'Janvier / Février / Mars / YTD 2026'
       : 'Janvier / Février / YTD 2026';
 
+  // Mois courant = dernier mois renseigné
+  const currentKey: 'jan' | 'feb' | 'mar' | 'avr' = hasAvr ? 'avr' : hasMar ? 'mar' : 'feb';
+  const currentLabel = { jan: 'Janvier', feb: 'Février', mar: 'Mars', avr: 'Avril' }[currentKey];
+  const HL_BG = 'rgba(212, 168, 85, 0.12)';
+  const HL_BORDER = '2px solid var(--pcg-gold)';
+  const hlCell = (key: 'jan' | 'feb' | 'mar' | 'avr', extra: React.CSSProperties = {}): React.CSSProperties =>
+    key === currentKey
+      ? { background: HL_BG, borderLeft: HL_BORDER, borderRight: HL_BORDER, ...extra }
+      : extra;
+  const hlHeader = (key: 'jan' | 'feb' | 'mar' | 'avr'): React.CSSProperties =>
+    key === currentKey
+      ? {
+          textAlign: 'right',
+          background: 'var(--pcg-gold)',
+          color: 'var(--pcg-navy)',
+          borderTopLeftRadius: 8,
+          borderTopRightRadius: 8,
+          fontWeight: 700,
+        }
+      : { textAlign: 'right' };
+
   const monthCells = (row: any, color?: string) => (
     <>
-      <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.jan ?? '—'}</td>
-      <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.feb ?? '—'}</td>
-      {hasMar && <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.mar ?? '—'}</td>}
-      {hasAvr && <td style={{ textAlign: 'right', color: color ?? undefined }}>{row.avr ?? '—'}</td>}
+      <td style={hlCell('jan', { textAlign: 'right', color: color ?? undefined })}>{row.jan ?? '—'}</td>
+      <td style={hlCell('feb', { textAlign: 'right', color: color ?? undefined })}>{row.feb ?? '—'}</td>
+      {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: color ?? undefined })}>{row.mar ?? '—'}</td>}
+      {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: color ?? undefined })}>{row.avr ?? '—'}</td>}
     </>
   );
 
