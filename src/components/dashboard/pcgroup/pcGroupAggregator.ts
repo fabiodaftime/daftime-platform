@@ -30,6 +30,8 @@ import {
 import { fmtUSD, fmtPct, pctChange, fmtPctSigned } from './pcGroupFormatters';
 import { MANUAL_ENTITIES, type ManualMonthExtras } from './manualEntities';
 import { getPCAMonthData, type PCAMonthId } from '../primecircle-agency/PrimeCircleAgencyData';
+import { getPCMonthData, type PCMonthId } from '../primecircle/PrimeCircleData';
+import { getDigitMonthData, type DigitMonthId } from '../digit/DigitData';
 
 export interface ConsolidatedFacts {
   monthId: PCGSourceMonthId;
@@ -861,6 +863,147 @@ export function buildPCGroupMonthData(
     agencyWaterfallOverlay = wf;
   }
 
+  // ===== STRUCTURING / DIGIT / SPY / COMMENT overlays =====
+  // Auto-derived from the same normalized adapters that feed the group view,
+  // so per-entity tabs stay coherent with the consolidated KPIs / pies / YTD.
+  const parseUSD = (s: string): number => {
+    const n = Number(String(s).replace(/[^0-9.-]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const negStr = (n: number) => `-${usdR(Math.abs(n))}`;
+
+  const buildEntityKPIs = (key: EntityKey) => {
+    const cur = getEntityMonth(key, month);
+    if (!cur) return null;
+    const prev = prevId ? getEntityMonth(key, prevId) : null;
+    const caDelta = prev ? pctChange(cur.ca, prev.ca) : null;
+    const margeDelta = prev ? pctChange(cur.contribution, prev.contribution) : null;
+    const chargesDelta = prev ? pctChange(cur.charges, prev.charges) : null;
+    const dealsLabel = (() => {
+      if (key === 'structuring' && cur.meta?.clients != null) {
+        const ticket = cur.meta.ticketMoyen ? ` · Moy. ${usdR(cur.meta.ticketMoyen)}/client` : '';
+        return { label: 'Clients', value: String(cur.meta.clients), detail: `Handled by Nathan${ticket}`, color: 'gold' };
+      }
+      if (cur.meta?.deals != null) {
+        return { label: 'Deals', value: String(cur.meta.deals), detail: 'Transactions du mois', color: 'gold' };
+      }
+      return null;
+    })();
+    const margeLabel = key === 'agency' ? 'Part PCA' : 'Marge Nette';
+    return [
+      { label: 'CA', value: usdR(cur.ca),
+        detail: caDelta != null ? `${fmtPctSigned(caDelta)} vs ${prevLabel}` : 'Premier mois',
+        color: 'navy' },
+      { label: margeLabel, value: usdR(cur.contribution),
+        detail: margeDelta != null ? `${fmtPctSigned(margeDelta)} vs ${prevLabel} (${fmtPct(cur.marginPct)})` : `${fmtPct(cur.marginPct)} du CA`,
+        color: 'green' },
+      ...(dealsLabel ? [dealsLabel] : []),
+      { label: 'Total Charges', value: usdR(cur.charges),
+        detail: chargesDelta != null ? `${fmtPctSigned(chargesDelta)} vs ${prevLabel}` : `${fmtPct(cur.ca > 0 ? (cur.charges / cur.ca) * 100 : 0)} du CA`,
+        color: 'pink' },
+    ];
+  };
+
+  const buildEntityComparison = (key: EntityKey): PCGComparisonRow[] | null => {
+    const cur = getEntityMonth(key, month);
+    if (!cur) return null;
+    const prev = prevId ? getEntityMonth(key, prevId) : null;
+    const margeLabel = key === 'agency' ? 'Part PCA (50%)' : 'Marge Nette';
+    const mkRow = (
+      indicator: string,
+      sel: (b: ReturnType<typeof getEntityMonth>) => number,
+      inverse = false,
+    ): PCGComparisonRow => {
+      const row: PCGComparisonRow = { indicator };
+      monthsForCols.forEach((m) => {
+        const b = getEntityMonth(key, m.id);
+        row[BUILD_MONTH_KEY[m.id as MonthId]] = b ? usdR(sel(b)) : '—';
+      });
+      const ytdSum = monthsForCols.reduce((acc, m) => {
+        const b = getEntityMonth(key, m.id);
+        return acc + (b ? sel(b) : 0);
+      }, 0);
+      row.ytd = usdR(ytdSum);
+      if (prev) {
+        const variation = pctChange(sel(cur), sel(prev));
+        row.variation = fmtPctSigned(variation);
+        row.varType = variation === 0 ? 'neutral' : (inverse ? variation < 0 : variation > 0) ? 'positive' : 'negative';
+      }
+      return row;
+    };
+    return [
+      mkRow('CA', (b) => b!.ca),
+      mkRow('Charges', (b) => b!.charges, true),
+      mkRow(margeLabel, (b) => b!.contribution),
+    ];
+  };
+
+  // ----- Structuring overlay
+  let structuringKPIsOverlay: any = base.structuringKPIs;
+  let structuringComparisonOverlay: any = base.structuringComparison;
+  let structuringWaterfallOverlay: any = base.structuringWaterfall;
+  try {
+    const sData = getPCMonthData(month as PCMonthId);
+    const sFacts = getEntityMonth('structuring', month);
+    if (sData && sFacts) {
+      structuringKPIsOverlay = buildEntityKPIs('structuring') ?? structuringKPIsOverlay;
+      structuringComparisonOverlay = buildEntityComparison('structuring') ?? structuringComparisonOverlay;
+      const c = sData.costs;
+      const wfRows: { label: string; value: string; type: string }[] = [
+        { label: 'CA', value: usdR(sFacts.ca), type: 'positive' },
+        { label: '', value: '', type: 'spacer' },
+      ];
+      const pushCost = (label: string, v?: number) => {
+        if (v && v > 0) wfRows.push({ label, value: negStr(v), type: 'negative' });
+      };
+      pushCost('AWD Event', c.awdEvent);
+      pushCost('Coûts Fournisseurs', c.productProviderCosts ?? c.serviceCosts);
+      pushCost('Publicité (ADS)', c.advertising);
+      pushCost('Marketing', c.marketing);
+      pushCost('Achats Alibaba', c.alibabaPurchases);
+      pushCost('Com. Sales', c.salesCommission);
+      pushCost('Com. Referral', c.referralCommission);
+      pushCost('Events', c.events);
+      pushCost('Frais bancaires', c.bankFees);
+      wfRows.push({ label: 'TOTAL CHARGES', value: negStr(sFacts.charges), type: 'total-negative' });
+      wfRows.push({ label: '', value: '', type: 'spacer' });
+      wfRows.push({ label: 'MARGE NETTE', value: usdR(sFacts.contribution), type: 'highlight' });
+      structuringWaterfallOverlay = wfRows;
+    }
+  } catch { /* keep base */ }
+
+  // ----- Digit overlay
+  let digitKPIsOverlay: any = base.digitKPIs;
+  let digitComparisonOverlay: any = base.digitComparison;
+  let digitWaterfallOverlay: any = base.digitWaterfall;
+  try {
+    const dData = getDigitMonthData(month as DigitMonthId);
+    const dFacts = getEntityMonth('digit', month);
+    if (dData && dFacts) {
+      digitKPIsOverlay = buildEntityKPIs('digit') ?? digitKPIsOverlay;
+      digitComparisonOverlay = buildEntityComparison('digit') ?? digitComparisonOverlay;
+      const wfRows: { label: string; value: string; type: string }[] = [
+        { label: 'CA', value: usdR(dFacts.ca), type: 'positive' },
+        { label: '', value: '', type: 'spacer' },
+      ];
+      (dData.costsDetail ?? []).forEach((row: { label: string; value: string }) => {
+        const n = parseUSD(row.value);
+        if (n > 0) wfRows.push({ label: row.label, value: negStr(n), type: 'negative' });
+      });
+      wfRows.push({ label: 'TOTAL CHARGES', value: negStr(dFacts.charges), type: 'total-negative' });
+      wfRows.push({ label: '', value: '', type: 'spacer' });
+      wfRows.push({ label: 'MARGE NETTE', value: usdR(dFacts.contribution), type: 'highlight' });
+      digitWaterfallOverlay = wfRows;
+    }
+  } catch { /* keep base */ }
+
+  // ----- SPY / Comment overlays (KPIs + comparison only — waterfalls keep
+  // their bespoke detail since the manual blocks don't expose a breakdown).
+  const spyKPIsOverlay = buildEntityKPIs('spy') ?? base.spyKPIs;
+  const commentKPIsOverlay = buildEntityKPIs('comment') ?? (base as any).commentKPIs;
+  const spyComparisonOverlay = buildEntityComparison('spy') ?? (base as any).spyComparison;
+  const commentComparisonOverlay = buildEntityComparison('comment') ?? (base as any).commentComparison;
+
   const out: any = {
     ...base,
     monthLabel,
@@ -891,6 +1034,16 @@ export function buildPCGroupMonthData(
     agencyKPIs: agencyKPIsOverlay as any,
     agencyComparison: agencyComparisonOverlay as any,
     agencyWaterfall: agencyWaterfallOverlay as any,
+    structuringKPIs: structuringKPIsOverlay as any,
+    structuringComparison: structuringComparisonOverlay as any,
+    structuringWaterfall: structuringWaterfallOverlay as any,
+    digitKPIs: digitKPIsOverlay as any,
+    digitComparison: digitComparisonOverlay as any,
+    digitWaterfall: digitWaterfallOverlay as any,
+    spyKPIs: spyKPIsOverlay as any,
+    spyComparison: spyComparisonOverlay as any,
+    commentKPIs: commentKPIsOverlay as any,
+    commentComparison: commentComparisonOverlay as any,
   };
   return out as PCGroupMonthData;
 }
