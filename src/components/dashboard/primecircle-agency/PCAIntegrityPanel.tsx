@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, Wand2, Copy, X, Check } from 'lucide-react';
 import { validatePCAIntegrity, type PCAMonthIntegrity } from './pcaIntegrityValidator';
+import { recomputePCA, type PCAMonthRecompute, type PCAFieldCorrection } from './pcaRecompute';
 
 const fmtUsd = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(Math.round(n)).toLocaleString('en-US')}`;
 const fmtPct = (n: number) => `${n.toFixed(2)}%`;
