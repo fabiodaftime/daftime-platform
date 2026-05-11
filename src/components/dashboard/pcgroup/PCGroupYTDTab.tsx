@@ -61,21 +61,51 @@ export function PCGroupYTDTab({ data }: Props) {
       {/* Évolution Mensuelle */}
       <div className="pcg-section">
         <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📈 Évolution Mensuelle YTD</h3>
+          <div>
+            <h3 className="pcg-section-title">📈 Évolution Mensuelle YTD</h3>
+            <p className="pcg-section-subtitle">
+              Décomposition complète : CA → Marge Brute → Réserves (10%) → Remontée Holding (90%) → Frais Holding → Résultat Net
+            </p>
+          </div>
         </div>
         <div className="pcg-section-body">
           <div className="pcg-charts-row">
-            <div>
-              <table className="pcg-comparison-table">
+            <div style={{ overflowX: 'auto' }}>
+              <table className="pcg-comparison-table" style={{ fontSize: '0.85rem' }}>
                 <thead>
-                  <tr><th>Mois</th><th>CA</th><th>Marge Brute</th><th>Taux</th><th>Résultat Net</th></tr>
+                  <tr>
+                    <th>Mois</th>
+                    <th style={{ textAlign: 'right' }}>CA</th>
+                    <th style={{ textAlign: 'right' }}>Marge Brute</th>
+                    <th style={{ textAlign: 'right' }}>Taux</th>
+                    <th style={{ textAlign: 'right', color: '#EF4444' }}>− Réserves (10%)</th>
+                    <th style={{ textAlign: 'right' }}>= Remontée (90%)</th>
+                    <th style={{ textAlign: 'right', color: '#EF4444' }}>− Frais Holding</th>
+                    <th style={{ textAlign: 'right', background: 'rgba(212,168,85,0.10)', color: 'var(--pcg-navy)' }}>= Résultat Net</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {ytdMonthlyTable.map((row, i) => (
-                    <tr key={i}><td>{row.month}</td><td>{row.ca}</td><td>{row.margin}</td><td>{row.taux}</td><td>{row.net}</td></tr>
+                  {ytdMonthlyTable.map((row: any, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600 }}>{row.month}</td>
+                      <td style={{ textAlign: 'right' }}>{row.ca}</td>
+                      <td style={{ textAlign: 'right' }}>{row.margin}</td>
+                      <td style={{ textAlign: 'right', color: 'var(--pcg-text-muted)' }}>{row.taux}</td>
+                      <td style={{ textAlign: 'right', color: '#EF4444' }}>−{row.reserves}</td>
+                      <td style={{ textAlign: 'right' }}>{row.remontee}</td>
+                      <td style={{ textAlign: 'right', color: '#EF4444' }}>−{row.frais}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, background: 'rgba(212,168,85,0.10)', color: 'var(--pcg-navy)' }}>{row.net}</td>
+                    </tr>
                   ))}
                   <tr className="pcg-comparison-total">
-                    <td>{ytdMonthlyTotal.month}</td><td>{ytdMonthlyTotal.ca}</td><td>{ytdMonthlyTotal.margin}</td><td>{ytdMonthlyTotal.taux}</td><td>{ytdMonthlyTotal.net}</td>
+                    <td>{(ytdMonthlyTotal as any).month}</td>
+                    <td style={{ textAlign: 'right' }}>{(ytdMonthlyTotal as any).ca}</td>
+                    <td style={{ textAlign: 'right' }}>{(ytdMonthlyTotal as any).margin}</td>
+                    <td style={{ textAlign: 'right' }}>{(ytdMonthlyTotal as any).taux}</td>
+                    <td style={{ textAlign: 'right', color: '#EF4444' }}>−{(ytdMonthlyTotal as any).reserves}</td>
+                    <td style={{ textAlign: 'right' }}>{(ytdMonthlyTotal as any).remontee}</td>
+                    <td style={{ textAlign: 'right', color: '#EF4444' }}>−{(ytdMonthlyTotal as any).frais}</td>
+                    <td style={{ textAlign: 'right', background: 'var(--pcg-gold)', color: 'var(--pcg-navy)', fontWeight: 800 }}>{(ytdMonthlyTotal as any).net}</td>
                   </tr>
                 </tbody>
               </table>
