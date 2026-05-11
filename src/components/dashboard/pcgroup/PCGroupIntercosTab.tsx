@@ -61,15 +61,16 @@ export function PCGroupIntercosTab({ data }: Props) {
   const hasErrors = validationIssues.some((i) => i.severity === 'error');
 
   const parseUSDNum = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
+  const fmtUSDStr = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
   const [drawer, setDrawer] = useState<
-    | { entityCode: string; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
+    | { entityCodes: string[]; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
     | null
   >(null);
   const openDrawer = (row: any, mode: 'received' | 'remaining') => {
-    const code = row._key ?? row.key;
-    if (!code) return;
+    const codes: string[] = Array.isArray(row._codes) ? row._codes : [row._key ?? row.key];
+    if (codes.length === 0) return;
     setDrawer({
-      entityCode: code,
+      entityCodes: codes,
       entityLabel: row.entity,
       mode,
       expected: parseUSDNum(row.ytd),
@@ -81,6 +82,35 @@ export function PCGroupIntercosTab({ data }: Props) {
     textDecorationStyle: 'dotted' as const,
     textUnderlineOffset: 3,
   };
+
+  // Fusionne les lignes digit + spy + comment en une seule ligne "Digit Solution"
+  // dans le tableau "Détail des Remontées par Filiale".
+  const DIGIT_KEYS = ['digit', 'spy', 'comment'];
+  const displayRows = (() => {
+    const rows = (table.rows ?? []) as any[];
+    const digitParts = rows.filter((r) => DIGIT_KEYS.includes(r._key));
+    if (digitParts.length === 0) return rows;
+    const others = rows.filter((r) => !DIGIT_KEYS.includes(r._key));
+    const sumCol = (col: string) => digitParts.reduce((a, r) => a + parseUSDNum(r[col]), 0);
+    const merged: any = {
+      _key: 'digit-merged',
+      _codes: DIGIT_KEYS,
+      entity: 'Digit Solution (Core + SPY + Comment)',
+    };
+    table.columns.forEach((c: any) => {
+      merged[c.key] = fmtUSDStr(sumCol(c.key));
+    });
+    const ytd = sumCol('ytd');
+    const received = sumCol('received');
+    merged.ytd = fmtUSDStr(ytd);
+    merged.received = fmtUSDStr(received);
+    merged.remaining = fmtUSDStr(Math.max(0, ytd - received));
+    // Insère la ligne fusionnée à la position du premier sous-élément Digit
+    const firstDigitIdx = rows.findIndex((r) => DIGIT_KEYS.includes(r._key));
+    const out = [...others];
+    out.splice(Math.min(firstDigitIdx, out.length), 0, merged);
+    return out;
+  })();
 
   const buildTableRows = () => {
     const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
