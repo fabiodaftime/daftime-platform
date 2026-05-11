@@ -565,24 +565,28 @@ export function buildPCGroupMonthData(
     buildComparisonRow('Résultat Net Holding', (f) => f.resultatNetHolding),
   ];
 
-  const buildEntityRow = (entity: string, k: BuildEntityKey): PCGOverviewComparisonRow => {
+  const buildEntityRow = (
+    entity: string,
+    selector: (f: ConsolidatedFacts) => number,
+  ): PCGOverviewComparisonRow => {
     const row: PCGOverviewComparisonRow = { entity };
-    monthsForCols.forEach((m) => { row[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(entityMarge(m.facts, k)); });
-    const ytdSum = monthsForCols.reduce((acc, m) => acc + entityMarge(m.facts, k), 0);
+    monthsForCols.forEach((m) => { row[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(selector(m.facts)); });
+    const ytdSum = monthsForCols.reduce((acc, m) => acc + selector(m.facts), 0);
     row.ytd = usdR(ytdSum);
     if (prevFacts) {
-      const variation = pctChange(entityMarge(facts, k), entityMarge(prevFacts, k));
+      const variation = pctChange(selector(facts), selector(prevFacts));
       row.variation = fmtPctSigned(variation);
       row.varType = variation === 0 ? 'neutral' : variation > 0 ? 'positive' : 'negative';
     }
     return row;
   };
   const overviewComparison: PCGOverviewComparisonRow[] = [
-    buildEntityRow('Agency (Part PCA 50%)', 'agency'),
-    buildEntityRow('Structuring', 'structuring'),
-    buildEntityRow('Digit Solution', 'digit'),
-    buildEntityRow('SPY', 'spy'),
-    buildEntityRow('Comment/Trustpilot', 'comment'),
+    buildEntityRow('Agency (Part PCA 50%)', (f) => f.agencyPartPCA),
+    buildEntityRow('Structuring', (f) => f.structuringMargeNette),
+    buildEntityRow('Digit Solution (total)', digitConsolidatedMarge),
+    buildEntityRow('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildEntityRow('   ↳ dont SPY', (f) => f.spyMargeNette),
+    buildEntityRow('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
   const overviewComparisonTotal: PCGOverviewComparisonRow = (() => {
     const row: PCGOverviewComparisonRow = { entity: 'MARGE BRUTE GROUPE' };
