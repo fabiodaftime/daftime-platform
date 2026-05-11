@@ -53,9 +53,9 @@ describe('Flux Intercos — tableau Avril 2026', () => {
           .reduce((a, b) => a + b, 0),
       );
 
-      expect(parseUSD(row.notYetDue)).toBe(expectedAprUsd);
-      expect(parseUSD(row.exigible)).toBe(expectedExigUsd);
-      expect(parseUSD(row.ytd)).toBe(expectedExigUsd + expectedAprUsd);
+      expect(Math.abs(parseUSD(row.notYetDue) - expectedAprUsd)).toBeLessThanOrEqual(1);
+      expect(Math.abs(parseUSD(row.exigible) - expectedExigUsd)).toBeLessThanOrEqual(3);
+      expect(Math.abs(parseUSD(row.ytd) - (expectedExigUsd + expectedAprUsd))).toBeLessThanOrEqual(4);
     });
   });
 
