@@ -33,7 +33,7 @@ export function PCGroupIntercosTab({ data }: Props) {
   return (
     <div>
       {/* KPI Hero */}
-      <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+      <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {kpis.map((k: any, i: number) => (
           <div
             key={i}
