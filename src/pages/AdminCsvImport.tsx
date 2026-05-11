@@ -222,7 +222,7 @@ async function commitPCG(rows: PCGRow[]) {
   if (rows.length === 0) return { inserted: 0 };
   const { error } = await supabase
     .from('pcgroup_manual_facts')
-    .upsert(rows, { onConflict: 'month_id,entity_code' });
+    .upsert(rows as any, { onConflict: 'month_id,entity_code' });
   if (error) throw new Error(error.message);
   return { inserted: rows.length };
 }
@@ -231,7 +231,7 @@ async function commitFin(rows: FinRow[]) {
   if (rows.length === 0) return { inserted: 0 };
   const { error } = await supabase
     .from('monthly_financials')
-    .upsert(rows, { onConflict: 'company_id,year,month' });
+    .upsert(rows as any, { onConflict: 'company_id,year,month' });
   if (error) throw new Error(error.message);
   return { inserted: rows.length };
 }
