@@ -477,6 +477,8 @@ export function PCGroupIntercosTab({ data }: Props) {
         mode={drawer?.mode ?? 'received'}
         expectedTotal={drawer?.expected ?? 0}
       />
+
+      <ValidationIssueDrawer issue={issueDrawer} onClose={() => setIssueDrawer(null)} />
     </div>
   );
 }
