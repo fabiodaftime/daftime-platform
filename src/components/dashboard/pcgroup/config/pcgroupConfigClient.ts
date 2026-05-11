@@ -240,6 +240,9 @@ export async function upsertIntercoCash(
     old_amount: existing ? Number(existing.amount_received ?? 0) : null,
     new_amount: row.amount_received != null ? Number(row.amount_received) : null,
   });
+
+  // Recalcule automatiquement les soldes restants partout dans le dashboard.
+  await refreshPCGroupConfig();
 }
 
 export async function deleteIntercoCash(id: string) {
@@ -261,6 +264,9 @@ export async function deleteIntercoCash(id: string) {
       new_amount: null,
     });
   }
+
+  // Recalcule automatiquement les soldes restants partout dans le dashboard.
+  await refreshPCGroupConfig();
 }
 
 export async function fetchIntercoCashAudit(filters?: {
