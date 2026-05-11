@@ -5,9 +5,10 @@ import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
-import { validateDigitConsistency } from './digitConsistencyValidator';
+import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
 import { IntercosCashAuditLog } from './IntercosCashAuditLog';
 import { IntercoCashSourceDrawer } from './IntercoCashSourceDrawer';
+import { ValidationIssueDrawer } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
@@ -66,6 +67,7 @@ export function PCGroupIntercosTab({ data }: Props) {
     | { entityCodes: string[]; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
     | null
   >(null);
+  const [issueDrawer, setIssueDrawer] = useState<ValidationIssue | null>(null);
   const openDrawer = (row: any, mode: 'received' | 'remaining') => {
     const codes: string[] = Array.isArray(row._codes) ? row._codes : [row._key ?? row.key];
     if (codes.length === 0) return;
@@ -231,7 +233,18 @@ export function PCGroupIntercosTab({ data }: Props) {
           </div>
           <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151' }}>
             {validationIssues.map((iss, i) => (
-              <li key={i} style={{ marginBottom: 4 }}>
+              <li
+                key={i}
+                onClick={() => setIssueDrawer(iss)}
+                style={{
+                  marginBottom: 4,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textDecorationStyle: 'dotted',
+                  textUnderlineOffset: 3,
+                }}
+                title="Voir le détail des entités/montants à l'origine de l'écart"
+              >
                 <strong style={{ color: iss.severity === 'error' ? '#B91C1C' : '#B45309' }}>
                   [{iss.monthLabel} · {iss.entity.toUpperCase()}]
                 </strong>{' '}
@@ -464,6 +477,8 @@ export function PCGroupIntercosTab({ data }: Props) {
         mode={drawer?.mode ?? 'received'}
         expectedTotal={drawer?.expected ?? 0}
       />
+
+      <ValidationIssueDrawer issue={issueDrawer} onClose={() => setIssueDrawer(null)} />
     </div>
   );
 }
