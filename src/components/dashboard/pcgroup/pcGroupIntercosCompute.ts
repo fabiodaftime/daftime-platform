@@ -126,7 +126,7 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   });
 
   const tableRows = perEntity.map((e) => {
-    const cells: Record<string, string | number> = { entity: e.rule.label, _key: e.rule.key };
+    const cells: Record<string, string> = { entity: e.rule.label, _key: e.rule.key };
     e.monthly.forEach((m) => {
       cells[m.sourceMonth] = usd(m.amount);
     });
