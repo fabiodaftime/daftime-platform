@@ -30,7 +30,7 @@ const ENTITIES: Array<{
 ];
 
 export function PCGroupEntitiesAccordion({ data, entityRoutes }: Props) {
-  const [open, setOpen] = useState<Set<EntityKey>>(new Set(['agency']));
+  const [open, setOpen] = useState<Set<EntityKey>>(new Set());
 
   const toggle = (key: EntityKey) => {
     setOpen((prev) => {
