@@ -233,7 +233,18 @@ export function PCGroupIntercosTab({ data }: Props) {
           </div>
           <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151' }}>
             {validationIssues.map((iss, i) => (
-              <li key={i} style={{ marginBottom: 4 }}>
+              <li
+                key={i}
+                onClick={() => setIssueDrawer(iss)}
+                style={{
+                  marginBottom: 4,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textDecorationStyle: 'dotted',
+                  textUnderlineOffset: 3,
+                }}
+                title="Voir le détail des entités/montants à l'origine de l'écart"
+              >
                 <strong style={{ color: iss.severity === 'error' ? '#B91C1C' : '#B45309' }}>
                   [{iss.monthLabel} · {iss.entity.toUpperCase()}]
                 </strong>{' '}
