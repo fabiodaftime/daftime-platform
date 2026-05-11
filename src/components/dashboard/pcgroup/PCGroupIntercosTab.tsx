@@ -2,8 +2,10 @@ import Papa from 'papaparse';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
+import { validateDigitConsistency } from './digitConsistencyValidator';
+import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
   data: PCGroupMonthData;
