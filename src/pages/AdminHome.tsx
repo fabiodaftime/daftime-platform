@@ -243,6 +243,7 @@ export default function AdminHome() {
                   revenueVariance={revenueVariance}
                   margin={margin}
                   showSettings={isSuperAdmin}
+                  hasRealData={isSuperAdmin ? company.hasRealData : undefined}
                 />
               );
             })}
