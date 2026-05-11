@@ -104,12 +104,12 @@ const janData: PCAMonthData = {
   monthId: 'jan-2026',
   monthLabel: 'Janvier 2026',
   monthShort: 'JAN 2026',
-  gross: 10726, expenses: 6237, net: 4489, pcaShare: 2245,
+  gross: 14885, expenses: 6237, net: 8648, pcaShare: 4324,
   transactions: 62, mediaSpend: 279691, clientsActifs: 47, totalEncaisse: 28975, adAccounts: 33,
-  marginPct: 41.8,
+  marginPct: 58.1,
   prevGross: 0, prevExpenses: 0, prevNet: 0, prevPcaShare: 0, prevTransactions: 0, prevMediaSpend: 0,
-  ytdNet: 4489, ytdPcaShare: 2245, ytdGross: 10726, ytdExpenses: 6237,
-  expenseRatio: 58.2,
+  ytdNet: 8648, ytdPcaShare: 4324, ytdGross: 14885, ytdExpenses: 6237,
+  expenseRatio: 41.9,
   expenseBreakdown: [
     { name: "Chris Referral", value: 2633 }, { name: "Setup Cost", value: 1300 },
     { name: "Salary", value: 1200 }, { name: "Ads", value: 1038 }, { name: "Master Referral", value: 66 },
@@ -119,19 +119,19 @@ const janData: PCAMonthData = {
     { status: "Renewed", count: 20, color: C.primary }, { status: "Upgraded", count: 1, color: C.purple },
   ],
   waterfallRows: [
-    { l: "Subscriptions", v: 8074, prev: 0, bg: null, b: false },
+    { l: "Subscriptions", v: 12233, prev: 0, bg: null, b: false },
     { l: "Setup Fees", v: 2787, prev: 0, bg: null, b: false },
     { l: "Discounts", v: -135, prev: 0, bg: null, b: false },
-    { l: "GROSS REVENUE", v: 10726, prev: 0, bg: "greenSoft", b: true },
+    { l: "GROSS REVENUE", v: 14885, prev: 0, bg: "greenSoft", b: true },
     { l: "Setup Cost", v: -1300, prev: 0, bg: null, b: false },
     { l: "Salary", v: -1200, prev: 0, bg: null, b: false },
     { l: "Ads", v: -1038, prev: 0, bg: null, b: false },
     { l: "Chris Referral", v: -2633, prev: 0, bg: null, b: false },
     { l: "Master Referral", v: -66, prev: 0, bg: null, b: false },
     { l: "TOTAL EXPENSES", v: -6237, prev: 0, bg: "redSoft", b: true },
-    { l: "NET REVENUE", v: 4489, prev: 0, bg: "primarySoft", b: true },
-    { l: "PCA Share (50%)", v: 2245, prev: 0, bg: "purpleSoft", b: true },
-    { l: "PC Retained (50%)", v: 2244, prev: 0, bg: "accentSoft", b: true },
+    { l: "NET REVENUE", v: 8648, prev: 0, bg: "primarySoft", b: true },
+    { l: "PCA Share (50%)", v: 4324, prev: 0, bg: "purpleSoft", b: true },
+    { l: "PC Retained (50%)", v: 4324, prev: 0, bg: "accentSoft", b: true },
   ],
   clientKPIs: [
     { label: "Nouveaux", value: "21", icon: "🆕", sub: "Dont Stelio $13K" },
@@ -196,22 +196,22 @@ const janData: PCAMonthData = {
   ccSpendPctPrev: "", clSpendPctPrev: "",
   blinkHeaders: ["", "Sep-25", "Oct-25", "Nov-25", "Dec-25", "Jan-26"],
   blinkRows: [
-    { l: "Net Revenue", v: [198, 10644, 5854, 8518, 4489], bg: null, b: false, sep: false },
-    { l: "CA PCA (50%)", v: [99, 5322, 2927, 4259, 2244], bg: null, b: false, sep: false },
-    { l: "CA PCA Cumulated", v: [99, 5421, 8348, 12607, 14852], bg: "primarySoft", b: true, sep: false },
-    { l: "CA Blink to PAID (50%)", v: [99, 5322, 2927, 4259, 2244], bg: null, b: false, sep: false },
+    { l: "Net Revenue", v: [198, 10644, 5854, 8518, 8648], bg: null, b: false, sep: false },
+    { l: "CA PCA (50%)", v: [99, 5322, 2927, 4259, 4324], bg: null, b: false, sep: false },
+    { l: "CA PCA Cumulated", v: [99, 5421, 8348, 12607, 16931], bg: "primarySoft", b: true, sep: false },
+    { l: "CA Blink to PAID (50%)", v: [99, 5322, 2927, 4259, 4324], bg: null, b: false, sep: false },
     { l: "Paid by PCA on Benefit", v: [0, 0, 0, 0, 0], bg: "redSoft", b: false, sep: false },
-    { l: "To Paid Cumulated", v: [99, 5421, 8348, 12607, 14852], bg: "redSoft", b: true, sep: true },
+    { l: "To Paid Cumulated", v: [99, 5421, 8348, 12607, 16931], bg: "redSoft", b: true, sep: true },
     { l: "Total Media to Pay (CL)", v: [31788, 12866, 5730, 4406, 21009], bg: null, b: false, sep: false },
     { l: "Paid by PCA on Media", v: [31788, 12866, 5730, 4406, 21009], bg: "greenSoft", b: false, sep: false },
     { l: "To Paid Cumulated (Media)", v: [0, 0, 0, 0, 0], bg: "greenSoft", b: true, sep: true },
-    { l: "Total Blink / Month", v: [31887, 18188, 8657, 8665, 23253], bg: null, b: false, sep: false },
-    { l: "Total Blink Cumulated", v: [99, 5421, 8348, 12607, 14852], bg: "purpleSoft", b: true, sep: false },
+    { l: "Total Blink / Month", v: [31887, 18188, 8657, 8665, 25333], bg: null, b: false, sep: false },
+    { l: "Total Blink Cumulated", v: [99, 5421, 8348, 12607, 16931], bg: "purpleSoft", b: true, sep: false },
   ],
   riskKPIs: [
     { l: "Concentration Hugo", v: "60.8%", s: "du media spend", c: C.redText },
     { l: "CL Exposure", v: "$21.0K", s: "media avance", c: C.redText },
-    { l: "Marge Nette", v: "41.8%", s: "vs 54.8% en Dec", c: C.orangeText },
+    { l: "Marge Nette", v: "58.1%", s: "vs 54.8% en Dec", c: C.greenText },
     { l: "Clients Stopped", v: "14", s: "23% des tx", c: C.orangeText },
   ],
   risks: [
@@ -220,7 +220,7 @@ const janData: PCAMonthData = {
     { label: "Yolanda: $22K spend, $0 revenu", desc: "3 trials, toutes stopped. $21.9K de media.", severity: "high", icon: "⚠️" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
   ],
 };
 
@@ -232,9 +232,9 @@ const febData: PCAMonthData = {
   gross: 36184, expenses: 9406, net: 26778, pcaShare: 13389,
   transactions: 148, mediaSpend: 515952, clientsActifs: 0, totalEncaisse: 0, adAccounts: 63,
   marginPct: 74.0,
-  prevGross: 10726, prevExpenses: 6237, prevNet: 4489, prevPcaShare: 2245,
+  prevGross: 14885, prevExpenses: 6237, prevNet: 8648, prevPcaShare: 4324,
   prevTransactions: 62, prevMediaSpend: 279691,
-  ytdNet: 31267, ytdPcaShare: 15634, ytdGross: 46910, ytdExpenses: 15643,
+  ytdNet: 35426, ytdPcaShare: 17713, ytdGross: 51069, ytdExpenses: 15643,
   expenseRatio: 26.0,
   expenseBreakdown: [
     { name: "Ads", value: 6666 }, { name: "Setup Cost", value: 1300 },
@@ -247,19 +247,19 @@ const febData: PCAMonthData = {
     { status: "Trial", count: 3, color: C.orange },
   ],
   waterfallRows: [
-    { l: "Subscriptions", v: 29993, prev: 8074, bg: null, b: false },
+    { l: "Subscriptions", v: 29993, prev: 12233, bg: null, b: false },
     { l: "Setup Fees", v: 7959, prev: 2787, bg: null, b: false },
     { l: "Discounts", v: -1768, prev: -135, bg: null, b: false },
-    { l: "GROSS REVENUE", v: 36184, prev: 10726, bg: "greenSoft", b: true },
+    { l: "GROSS REVENUE", v: 36184, prev: 14885, bg: "greenSoft", b: true },
     { l: "Setup Cost", v: -1300, prev: -1300, bg: null, b: false },
     { l: "Salary", v: -1200, prev: -1200, bg: null, b: false },
     { l: "Ads", v: -6666, prev: -1038, bg: null, b: false },
     { l: "Master Referral", v: -211, prev: -66, bg: null, b: false },
     { l: "No Limit Referral", v: -29, prev: 0, bg: null, b: false },
     { l: "TOTAL EXPENSES", v: -9406, prev: -6237, bg: "redSoft", b: true },
-    { l: "NET REVENUE", v: 26778, prev: 4489, bg: "primarySoft", b: true },
-    { l: "PCA Share (50%)", v: 13389, prev: 2244, bg: "purpleSoft", b: true },
-    { l: "PC Retained (50%)", v: 13389, prev: 2244, bg: "accentSoft", b: true },
+    { l: "NET REVENUE", v: 26778, prev: 8648, bg: "primarySoft", b: true },
+    { l: "PCA Share (50%)", v: 13389, prev: 4324, bg: "purpleSoft", b: true },
+    { l: "PC Retained (50%)", v: 13389, prev: 4324, bg: "accentSoft", b: true },
   ],
   clientKPIs: [
     { label: "Nouveaux", value: "118", icon: "🆕", sub: "vs 21 en Jan" },
@@ -324,26 +324,26 @@ const febData: PCAMonthData = {
   ccSpendPctPrev: "vs 92.5% en Jan", clSpendPctPrev: "vs 7.5% en Jan",
   blinkHeaders: ["", "Jan-26", "Feb-26", "YTD"],
   blinkRows: [
-    { l: "Revenu Net", v: [4489, 26778, 31267], bg: null, b: false, sep: false },
-    { l: "CA PCA (50%)", v: [2245, 13389, 15634], bg: null, b: false, sep: false },
-    { l: "CA Blink a payer (50%)", v: [2245, 13389, 15634], bg: null, b: false, sep: false },
-    { l: "Paye par PCA sur Benefit", v: [2245, 13389, 15634], bg: "greenSoft", b: true, sep: true },
+    { l: "Revenu Net", v: [8648, 26778, 35426], bg: null, b: false, sep: false },
+    { l: "CA PCA (50%)", v: [4324, 13389, 17713], bg: null, b: false, sep: false },
+    { l: "CA Blink a payer (50%)", v: [4324, 13389, 17713], bg: null, b: false, sep: false },
+    { l: "Paye par PCA sur Benefit", v: [4324, 13389, 17713], bg: "greenSoft", b: true, sep: true },
     { l: "Total Media a payer (CL)", v: [21009, 210984, 231993], bg: null, b: false, sep: false },
     { l: "Paye par PCA sur Media", v: [21009, 210984, 231993], bg: "greenSoft", b: true, sep: true },
-    { l: "Total Blink a payer / Mois", v: [23253, 224373, 247627], bg: "primarySoft", b: true, sep: false },
+    { l: "Total Blink a payer / Mois", v: [25333, 224373, 249706], bg: "primarySoft", b: true, sep: false },
   ],
   riskKPIs: [
     { l: "Top Spender Concentration", v: "25.6%", s: "Salmech - mieux reparti vs Jan", c: C.orangeText },
     { l: "CL Exposure", v: "$211K", s: "x10 vs Jan ($21K)", c: C.redText },
-    { l: "Marge Nette", v: "74.0%", s: "vs 41.8% en Jan", c: C.greenText },
+    { l: "Marge Nette", v: "74.0%", s: "vs 58.1% en Jan", c: C.greenText },
   ],
   risks: [
     { label: "Concentration Salmech", desc: "25.6% du media spend Feb ($132K).", severity: "medium", icon: "🎯" },
     { label: "CL Exposure croissante", desc: "$211K de media CL en Feb vs $21K en Jan (x10).", severity: "high", icon: "💳" },
-    { label: "Marge Nette 74.0%", desc: "En forte hausse vs 41.8% en Jan.", severity: "low", icon: "📈" },
+    { label: "Marge Nette 74.0%", desc: "En forte hausse vs 58.1% en Jan.", severity: "low", icon: "📈" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
     { month: "Feb-26", gross: 36184, net: 26778, expenses: 9406, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
   ],
 };
@@ -359,7 +359,7 @@ const marData: PCAMonthData = {
   prevGross: 36184, prevExpenses: 9406, prevNet: 26778, prevPcaShare: 13389,
   prevTransactions: 148, prevMediaSpend: 515952,
   // YTD 2026 (Jan + Feb + Mar + restatement adjustments)
-  ytdNet: 61159, ytdPcaShare: 30579, ytdGross: 93312, ytdExpenses: 32198,
+  ytdNet: 65318, ytdPcaShare: 32659, ytdGross: 97471, ytdExpenses: 32198,
   expenseRatio: 35.7,
   expenseBreakdown: [
     { name: "Ads", value: 11163 }, { name: "Setup Cost", value: 3500 },
@@ -446,31 +446,31 @@ const marData: PCAMonthData = {
   ccSpendPctPrev: "vs 59.1% en Feb", clSpendPctPrev: "vs 40.9% en Feb",
   blinkHeaders: ["", "Jan-26", "Feb-26", "Mar-26", "Cumule"],
   blinkRows: [
-    { l: "Revenu Net", v: [4489, 26778, 29892, 61159], bg: null, b: false, sep: false },
-    { l: "PCA Share (50%)", v: [2244, 13389, 14946, 30579], bg: null, b: false, sep: true },
-    { l: "Benefit a payer", v: [2244, 13389, 14946, 0], bg: null, b: false, sep: false },
-    { l: "Paye par PCA sur Benefit", v: [2244, 13389, 0, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Revenu Net", v: [8648, 26778, 29892, 65318], bg: null, b: false, sep: false },
+    { l: "PCA Share (50%)", v: [4324, 13389, 14946, 32659], bg: null, b: false, sep: true },
+    { l: "Benefit a payer", v: [4324, 13389, 14946, 0], bg: null, b: false, sep: false },
+    { l: "Paye par PCA sur Benefit", v: [4324, 13389, 0, 0], bg: "greenSoft", b: false, sep: false },
     { l: "Solde Benefit mensuel", v: [0, 0, 14946, 0], bg: null, b: false, sep: false },
-    { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 18869], bg: "redSoft", b: true, sep: true },
+    { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 14946], bg: "redSoft", b: true, sep: true },
     { l: "Media CL a payer", v: [21009, 210984, 161343, 0], bg: null, b: false, sep: false },
     { l: "Paye par PCA sur Media", v: [21009, 210984, 67423, 0], bg: "greenSoft", b: false, sep: false },
     { l: "Solde Media mensuel", v: [0, 0, 93920, 0], bg: null, b: false, sep: false },
     { l: "Solde Media du (cumule)", v: [0, 0, 0, 93920], bg: "redSoft", b: true, sep: true },
-    { l: "Total Cumule du a Blink", v: [0, 0, 0, 112789], bg: "primarySoft", b: true, sep: false },
+    { l: "Total Cumule du a Blink", v: [0, 0, 0, 108866], bg: "primarySoft", b: true, sep: false },
   ],
   riskKPIs: [
     { l: "Top Spender Concentration", v: "11.5%", s: "Carl - bien reparti", c: C.greenText },
     { l: "CL Exposure", v: "$139.9K", s: "vs $211K en Feb (-34%)", c: C.orangeText },
     { l: "Marge Nette", v: "64.4%", s: "vs 74.0% en Feb (-9.6 pts)", c: C.orangeText },
-    { l: "Solde Blink du", v: "$112.8K", s: "Benefit + Media cumule", c: C.redText },
+    { l: "Solde Blink du", v: "$108.9K", s: "Benefit + Media cumule", c: C.redText },
   ],
   risks: [
-    { label: "Solde Blink cumule $112.8K", desc: "Benefit ($18.9K) + Media ($93.9K) non payes a fin Mars.", severity: "high", icon: "💰" },
+    { label: "Solde Blink cumule $108.9K", desc: "Benefit ($14.9K) + Media ($93.9K) non payes a fin Mars.", severity: "high", icon: "💰" },
     { label: "Charges +76% vs Feb", desc: "Total expenses passent de $9.4K a $16.5K (Ads x1.7).", severity: "medium", icon: "📈" },
     { label: "Marge Nette -9.6 pts", desc: "64.4% vs 74.0% en Feb, due a la hausse Ads.", severity: "medium", icon: "📊" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
     { month: "Feb-26", gross: 36184, net: 26778, expenses: 9406, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
     { month: "Mar-26", gross: 46402, net: 29892, expenses: 16555, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
   ],
@@ -479,11 +479,11 @@ const marData: PCAMonthData = {
 // ===== APR 2026 DATA =====
 // Source : prime_circle_apr_2026.html (Avril 2026)
 // ⚠️ Feb 2026 restated (gross $36,184, expenses $9,406, net $26,778, pcaShare $13,389).
-// Jan reste à $10,726 (non restated). YTD :
-//   YTD Gross   = 10726 + 36184 + 46402 + 58853 = $152,165
+// ⚠️ Jan 2026 restated (gross $14,885, net $8,648, pcaShare $4,324). YTD :
+//   YTD Gross   = 14885 + 36184 + 46402 + 58853 = $156,324
 //   YTD Exp     =  6237 +  9406 + 16555 + 13313 =  $45,511
-//   YTD Net     =  4489 + 26778 + 29892 + 45541 = $106,700
-//   YTD PCA     =  2245 + 13389 + 14946 + 22770 =  $53,350
+//   YTD Net     =  8648 + 26778 + 29892 + 45541 = $110,859
+//   YTD PCA     =  4324 + 13389 + 14946 + 22770 =  $55,429
 const aprData: PCAMonthData = {
   monthId: 'apr-2026',
   monthLabel: 'Avril 2026',
@@ -493,7 +493,7 @@ const aprData: PCAMonthData = {
   marginPct: 77.4,
   prevGross: 46402, prevExpenses: 16555, prevNet: 29892, prevPcaShare: 14946,
   prevTransactions: 149, prevMediaSpend: 1244096,
-  ytdNet: 106700, ytdPcaShare: 53350, ytdGross: 152165, ytdExpenses: 45511,
+  ytdNet: 110859, ytdPcaShare: 55429, ytdGross: 156324, ytdExpenses: 45511,
   expenseRatio: 22.6,
   expenseBreakdown: [
     { name: "Ads", value: 5719 },
@@ -598,10 +598,10 @@ const aprData: PCAMonthData = {
   // ⚠️ Suivi Blink : valeurs restated du HTML Avril (paiements rattrapés sur Jan→Mar, Avril non payé).
   blinkHeaders: ["", "Jan-26", "Feb-26", "Mar-26", "Apr-26", "Cumule"],
   blinkRows: [
-    { l: "Revenu Net", v: [4489, 26778, 29892, 45541, 106700], bg: null, b: true, sep: false },
-    { l: "PCA Share (50%)", v: [2245, 13389, 14946, 22770, 53350], bg: null, b: false, sep: true },
-    { l: "Benefit a payer", v: [2245, 13389, 14946, 22770, 0], bg: null, b: true, sep: false },
-    { l: "Paye par PCA sur Benefit", v: [2245, 13389, 14946, 0, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Revenu Net", v: [8648, 26778, 29892, 45541, 110859], bg: null, b: true, sep: false },
+    { l: "PCA Share (50%)", v: [4324, 13389, 14946, 22770, 55429], bg: null, b: false, sep: true },
+    { l: "Benefit a payer", v: [4324, 13389, 14946, 22770, 0], bg: null, b: true, sep: false },
+    { l: "Paye par PCA sur Benefit", v: [4324, 13389, 14946, 0, 0], bg: "greenSoft", b: false, sep: false },
     { l: "Solde Benefit mensuel", v: [0, 0, 0, 22770, 0], bg: null, b: false, sep: false },
     { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 0, 22770], bg: "redSoft", b: true, sep: true },
     { l: "Media CL a payer", v: [21009, 210984, 161343, 43125, 0], bg: null, b: false, sep: false },
@@ -622,7 +622,7 @@ const aprData: PCAMonthData = {
     { label: "Marge Nette record 77.4%", desc: "+13 pts vs Mars grace a la baisse Ads (-49%) et hausse du CA (+27%).", severity: "low", icon: "📈" },
   ],
   monthlyTrend: [
-    { month: "Jan-26", gross: 10726, net: 4489, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
+    { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
     { month: "Feb-26", gross: 36184, net: 26778, expenses: 9406, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
     { month: "Mar-26", gross: 46402, net: 29892, expenses: 16555, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
     { month: "Apr-26", gross: 58853, net: 45541, expenses: 13313, media: 1629485, ccMedia: 1586420, clMedia: 43125, newClients: 87, renewed: 63, upgraded: 9, trial: 9 },
