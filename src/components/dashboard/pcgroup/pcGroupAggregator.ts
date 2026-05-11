@@ -615,15 +615,24 @@ export function buildPCGroupMonthData(
       ca: usdR(m.facts.caGroupe),
       margin: usdR(m.facts.margeBruteGroupe),
       taux: fmtPct(taux),
+      reserves: usdR(m.facts.reservesFiliales),
+      remontee: usdR(m.facts.remonteeHolding),
+      frais: usdR(m.facts.fraisHolding),
       net: usdR(m.facts.resultatNetHolding),
     };
   });
   const ytdTaux = ytd.caYTD > 0 ? (ytd.margeBruteYTD / ytd.caYTD) * 100 : 0;
+  const ytdReservesSum = monthsForCols.reduce((a, m) => a + m.facts.reservesFiliales, 0);
+  const ytdRemonteeSum = monthsForCols.reduce((a, m) => a + m.facts.remonteeHolding, 0);
+  const ytdFraisSum = monthsForCols.reduce((a, m) => a + m.facts.fraisHolding, 0);
   const ytdMonthlyTotal = {
     month: monthsForCols.length === 4 ? 'YTD TOTAL' : `YTD TOTAL ${monthsForCols.length === 3 ? 'Q1' : ''}`.trim(),
     ca: usdR(ytd.caYTD),
     margin: usdR(ytd.margeBruteYTD),
     taux: fmtPct(ytdTaux),
+    reserves: usdR(ytdReservesSum),
+    remontee: usdR(ytdRemonteeSum),
+    frais: usdR(ytdFraisSum),
     net: usdR(ytd.resultatNetYTD),
   };
 
