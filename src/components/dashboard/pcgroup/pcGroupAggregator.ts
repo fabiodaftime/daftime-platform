@@ -69,7 +69,11 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
   const m: ManualMonthExtras | undefined = MANUAL_ENTITIES[month];
   if (!a || !s || !d || !spy || !cmt || !m) return null;
 
-  const margeBrute = a.contribution + s.contribution + d.contribution + spy.contribution + cmt.contribution;
+  // IMPORTANT: digitFacts retourne déjà le TOTAL Digit (Core + SPY + Comment).
+  // SPY et Comment sont des produits internes à Digit Solution, pas des entités
+  // sœurs. Les ajouter ici créerait un double comptage. Ils sont conservés
+  // séparément uniquement pour l'affichage "↳ dont ...".
+  const margeBrute = a.contribution + s.contribution + d.contribution;
   const reserves = margeBrute * 0.10;
   const remontee = margeBrute - reserves;
   const fraisHolding = m.holding.fraisTotal;
