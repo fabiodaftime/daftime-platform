@@ -1004,6 +1004,7 @@ export function buildPCGroupMonthData(
   const spyComparisonOverlay = buildEntityComparison('spy') ?? (base as any).spyComparison;
   const commentComparisonOverlay = buildEntityComparison('comment') ?? (base as any).commentComparison;
 
+  const out: any = {
     ...base,
     monthLabel,
     footerLabel: monthLabel,
@@ -1033,6 +1034,16 @@ export function buildPCGroupMonthData(
     agencyKPIs: agencyKPIsOverlay as any,
     agencyComparison: agencyComparisonOverlay as any,
     agencyWaterfall: agencyWaterfallOverlay as any,
+    structuringKPIs: structuringKPIsOverlay as any,
+    structuringComparison: structuringComparisonOverlay as any,
+    structuringWaterfall: structuringWaterfallOverlay as any,
+    digitKPIs: digitKPIsOverlay as any,
+    digitComparison: digitComparisonOverlay as any,
+    digitWaterfall: digitWaterfallOverlay as any,
+    spyKPIs: spyKPIsOverlay as any,
+    spyComparison: spyComparisonOverlay as any,
+    commentKPIs: commentKPIsOverlay as any,
+    commentComparison: commentComparisonOverlay as any,
   };
   return out as PCGroupMonthData;
 }
