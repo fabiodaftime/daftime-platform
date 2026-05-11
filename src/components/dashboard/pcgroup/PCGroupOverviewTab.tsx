@@ -175,7 +175,7 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
         );
       })()}
 
-      <div className="pcg-entities-grid pcg-entities-5">
+      <div className="pcg-entities-grid">
         {entityCards.map((entity) => {
           const route = entityRoutes[entity.id as keyof PCGroupEntityRoutes];
           const isLinked = Boolean(route);
