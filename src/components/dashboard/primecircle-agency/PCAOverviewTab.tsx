@@ -132,23 +132,35 @@ export function PCAOverviewTab({ data }: Props) {
           </ResponsiveContainer>
         </div>
 
-        {hasPrev && (
-          <div className="pca-section">
-            <h3 className="pca-section-title">Charges — Jan vs Feb</h3>
-            <p className="pca-section-subtitle">Évolution par poste</p>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={costsCompData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
-                <XAxis dataKey="name" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={fmt} />
-                <Tooltip content={<PCATooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="jan" name="Jan-26" fill="#8899A6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="feb" name="Feb-26" fill={C.red} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {hasPrev && (() => {
+          const expensesYTD = data.monthlyTrend.map((m) => ({
+            month: m.month,
+            expenses: m.expenses,
+            ratio: m.gross > 0 ? Number(((m.expenses / m.gross) * 100).toFixed(1)) : 0,
+          }));
+          const totalYTD = expensesYTD.reduce((s, m) => s + m.expenses, 0);
+          const avgYTD = expensesYTD.length ? totalYTD / expensesYTD.length : 0;
+          return (
+            <div className="pca-section">
+              <h3 className="pca-section-title">Charges — YTD mensualisé</h3>
+              <p className="pca-section-subtitle">
+                Total YTD {fmtF(totalYTD)} · Moyenne {fmtF(avgYTD)} / mois
+              </p>
+              <ResponsiveContainer width="100%" height={260}>
+                <ComposedChart data={expensesYTD}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
+                  <XAxis dataKey="month" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="left" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={fmt} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fill: C.textMuted, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip content={<PCATooltip />} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar yAxisId="left" dataKey="expenses" name="Charges" fill={C.red} radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="ratio" name="% du CA" stroke={C.primary} strokeWidth={2} dot={{ r: 3 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── SECTION 3: GROSS MARGIN ── */}
