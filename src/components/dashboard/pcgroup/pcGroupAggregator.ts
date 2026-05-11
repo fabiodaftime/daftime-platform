@@ -29,6 +29,7 @@ import {
 } from './sources/normalizedAdapters';
 import { fmtUSD, fmtPct, pctChange, fmtPctSigned } from './pcGroupFormatters';
 import { MANUAL_ENTITIES, type ManualMonthExtras } from './manualEntities';
+import { getPCAMonthData, type PCAMonthId } from '../primecircle-agency/PrimeCircleAgencyData';
 
 export interface ConsolidatedFacts {
   monthId: PCGSourceMonthId;
