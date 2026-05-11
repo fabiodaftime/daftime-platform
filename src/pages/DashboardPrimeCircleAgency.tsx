@@ -8,13 +8,15 @@ import { PCAYTDTab } from '@/components/dashboard/primecircle-agency/PCAYTDTab';
 import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClientsTab';
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
+import { PCAIntegrityPanel } from '@/components/dashboard/primecircle-agency/PCAIntegrityPanel';
+import { useAuth } from '@/hooks/useAuth';
 
 import { C, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthId } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import pcaLogo from '@/assets/prime-circle-agency-logo.png';
 import './DashboardPrimeCircleAgency.css';
 
-const tabs = [
+const baseTabs = [
   { id: "overview", label: "Vue d'ensemble", icon: "📊" },
   { id: "ytd", label: "YTD 2026", icon: "📈" },
   { id: "clients", label: "Clients", icon: "👥" },
