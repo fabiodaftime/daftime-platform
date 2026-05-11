@@ -110,7 +110,7 @@ export function PCGroupYTDTab({ data }: Props) {
                 </tbody>
               </table>
             </div>
-            <div style={{ height: 280 }}>
+            <div style={{ height: 240 }}>
               <ResponsiveContainer>
                 <BarChart data={ytdTrendData}>
                   <XAxis dataKey="month" />
