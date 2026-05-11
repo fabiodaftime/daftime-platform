@@ -31,7 +31,7 @@ export function PrimeCircleCharts({ data }: Props) {
 
         {mainMonths.length > 1 && (
           <div className="pc-chart-card">
-            <h3>Monthly Trend (Jan vs Feb)</h3>
+            <h3>Monthly Trend — Évolution mensuelle</h3>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
                 data={[
