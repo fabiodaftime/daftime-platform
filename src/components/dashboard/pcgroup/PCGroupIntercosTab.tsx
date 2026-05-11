@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Papa from 'papaparse';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -6,6 +7,7 @@ import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
 import { validateDigitConsistency } from './digitConsistencyValidator';
 import { IntercosCashAuditLog } from './IntercosCashAuditLog';
+import { IntercoCashSourceDrawer } from './IntercoCashSourceDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
