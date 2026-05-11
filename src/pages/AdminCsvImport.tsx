@@ -427,6 +427,9 @@ export default function AdminCsvImport() {
 
         <PostImportValidationStatus />
 
+        <ExportSection />
+
+
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin mx-auto" />
