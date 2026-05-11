@@ -116,18 +116,25 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   };
 
   // -------- Détail par entité --------
-  // Columns = each source month + Total Exigible + Non-exigible(s) + YTD
-  const exigibleMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 <= viewIdx);
-  const notDueMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 > viewIdx);
+  // Per-entity cash actually received across the source months (excl. apport Maxence).
+  const receivedPerEntity: Record<string, number> = {};
+  INTERCO_RULES.forEach((r) => {
+    receivedPerEntity[r.key] = sourceMonths.reduce((acc, sm) => {
+      const block = INTERCOS_CASH[sm];
+      return acc + (block?.received?.[r.key] ?? 0);
+    }, 0);
+  });
 
   const tableRows = perEntity.map((e) => {
-    const cells: Record<string, string> = { entity: e.rule.label };
+    const cells: Record<string, string> = { entity: e.rule.label, _key: e.rule.key };
     e.monthly.forEach((m) => {
       cells[m.sourceMonth] = usd(m.amount);
     });
-    cells.exigible = usd(e.exigible);
-    cells.notYetDue = usd(e.notYetDue);
+    const received = receivedPerEntity[e.rule.key] ?? 0;
+    const remaining = Math.max(0, e.ytd - received);
     cells.ytd = usd(e.ytd);
+    cells.received = usd(received);
+    cells.remaining = usd(remaining);
     return cells;
   });
 
@@ -138,52 +145,47 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
       return a + (cell?.amount ?? 0);
     }, 0));
   });
-  totalRow.exigible = usd(totals.exigible);
-  totalRow.notYetDue = usd(totals.notYetDue);
+  const totalReceived = Object.values(receivedPerEntity).reduce((a, b) => a + b, 0);
+  const totalRemaining = Math.max(0, totals.ytd - totalReceived);
   totalRow.ytd = usd(totals.ytd);
+  totalRow.received = usd(totalReceived);
+  totalRow.remaining = usd(totalRemaining);
 
-  // Dynamic table: N source-month columns + Total Exigible + Non Exigible + YTD.
-  // Garde une compat backward (jan/feb/mars) pour les anciens consommateurs.
   const dynamicColumns = sourceMonths.map((sm) => ({
     key: sm,
     label: MONTH_SHORT[sm],
     isExigible: MONTH_ORDER.indexOf(sm) + 1 <= viewIdx,
   }));
-  const dynamicRows = perEntity.map((e) => {
-    const cells: Record<string, string> = { entity: e.rule.label };
-    e.monthly.forEach((m) => { cells[m.sourceMonth] = usd(m.amount); });
-    cells.exigible = usd(e.exigible);
-    cells.notYetDue = usd(e.notYetDue);
-    cells.ytd = usd(e.ytd);
-    return cells;
-  });
-  const dynamicTotal: Record<string, string> = { entity: 'TOTAL ATTENDU' };
-  sourceMonths.forEach((sm) => {
-    dynamicTotal[sm] = usd(perEntity.reduce((a, e) => {
-      const cell = e.monthly.find((x) => x.sourceMonth === sm);
-      return a + (cell?.amount ?? 0);
-    }, 0));
-  });
-  dynamicTotal.exigible = usd(totals.exigible);
-  dynamicTotal.notYetDue = usd(totals.notYetDue);
-  dynamicTotal.ytd = usd(totals.ytd);
 
   const legacyTable = {
     columns: dynamicColumns,
-    rows: dynamicRows,
-    total: dynamicTotal,
-    // legacy shape conservée pour compat — non utilisée par le rendu dynamique
-    legacyRows: tableRows.map((r) => ({
-      entity: r.entity,
-      jan: r['jan-2026'] ?? '—',
-      feb: r['feb-2026'] ?? '—',
-      exigible: r.exigible,
-      mars: r['mar-2026'] ?? r.notYetDue,
-      ytd: r.ytd,
-    })),
+    rows: tableRows,
+    total: totalRow,
   };
 
-  // -------- Scénarios --------
+  // -------- Cards visuelles : ce que chaque entité doit encore remonter --------
+  const entityCards = perEntity.map((e) => {
+    const received = receivedPerEntity[e.rule.key] ?? 0;
+    const expected = e.ytd;
+    const remaining = Math.max(0, expected - received);
+    const rate = expected > 0 ? (received / expected) * 100 : 0;
+    let level: 'danger' | 'warning' | 'success' = 'danger';
+    if (rate >= 80) level = 'success';
+    else if (rate >= 40) level = 'warning';
+    return {
+      key: e.rule.key,
+      entity: e.rule.label,
+      expected: usd(expected),
+      received: usd(received),
+      remaining: usd(remaining),
+      rate: fmtPct(rate),
+      ratePct: rate,
+      level,
+    };
+  });
+  const exigibleMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 <= viewIdx);
+
+  // -------- Scénarios (kept for backward compat) --------
   const scenarios = {
     base: {
       title: 'Scénario Base',
@@ -208,42 +210,26 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     },
   };
 
-  // -------- Calendrier (vue simplifiée : montant à remonter par mois) --------
-  const calendar = sourceMonths.map((sm) => {
-    const amount = perEntity.reduce((a, e) => {
+  const calendar = sourceMonths.map((sm) => ({
+    month: MONTH_LONG[sm],
+    amount: usd(perEntity.reduce((a, e) => {
       const cell = e.monthly.find((x) => x.sourceMonth === sm);
       return a + (cell?.amount ?? 0);
-    }, 0);
-    return {
-      month: MONTH_LONG[sm],
-      amount: usd(amount),
-      status: 'Marge à remonter',
-      tag: '90% marge nette',
-      level: 'navy' as 'danger' | 'warning' | 'navy',
-    };
-  });
-  calendar.push({
-    month: 'Total YTD',
-    amount: usd(totals.ytd),
-    status: 'Somme à remonter',
-    tag: periodLabel,
-    level: 'navy' as any,
-  });
+    }, 0)),
+    status: 'Marge à remonter',
+    tag: '90% marge nette',
+    level: 'navy' as 'danger' | 'warning' | 'navy',
+  }));
 
-  // -------- Récap comparatif scénarios (basé sur YTD à remonter) --------
+  // -------- Récap (kept minimal for backward compat — UI uses entityCards) --------
   const recoveryRateYtd = totals.ytd > 0 ? (receivedTotal / totals.ytd) * 100 : 0;
-  const recoveryRateYtdApport =
-    totals.ytd > 0 ? ((receivedTotal + apportMaxence) / totals.ytd) * 100 : 0;
-  const soldeYtdApport = soldeYtd - apportMaxence;
   const recap = [
     { label: 'Somme à remonter', s1: usd(totals.ytd), s2: usd(totals.ytd) },
     { label: 'Encaissements reçus', s1: usd(receivedTotal), s2: usd(receivedTotal) },
-    { label: 'Apport Maxence', s1: '—', s2: usdSigned(apportMaxence ? -apportMaxence : 0).replace('-', '+'), s2Color: 'success' as const },
-    { label: 'Total fonds disponibles', s1: usd(receivedTotal), s2: usd(receivedTotal + apportMaxence) },
     {
       label: 'Solde',
       s1: usd(Math.max(0, soldeYtd)),
-      s2: usd(Math.max(0, soldeYtdApport)),
+      s2: usd(Math.max(0, soldeYtd)),
       s1Color: 'danger' as const,
       s2Color: 'warning' as const,
       bold: true,
@@ -252,23 +238,21 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     {
       label: 'Taux de recouvrement',
       s1: fmtPct(recoveryRateYtd),
-      s2: fmtPct(recoveryRateYtdApport),
+      s2: fmtPct(recoveryRateYtd),
       s1Color: 'danger' as const,
       s2Color: 'success' as const,
     },
   ];
 
-  const marsNote = '';
-
   return {
     kpis,
     alert,
     table: legacyTable,
+    entityCards,
     scenarios,
     calendar,
     recap,
-    marsNote,
-    // Bonus: structured rule explanations for a future "rules" sub-block.
+    marsNote: '',
     rulesApplied: INTERCO_RULES.map((r) => ({
       entity: r.label,
       rate: `${(r.transferRate * 100).toFixed(0)}%`,

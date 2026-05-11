@@ -45,35 +45,41 @@ export function PCGroupIntercosTab({ data }: Props) {
   const intercos = (data as any).intercos;
   if (!intercos) return null;
 
-  const { kpis, table, recap } = intercos;
+  const { kpis, table } = intercos;
   const monthLabel = (data as any).monthLabel ?? '';
   const sourceMonths = table.columns.map((c: any) => c.label).join(', ');
   const safeLabel = String(monthLabel).replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'ytd';
 
+  const entityCards = (intercos as any).entityCards ?? [];
+
   const buildTableRows = () => {
-    const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter'];
+    const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
     const rows = table.rows.map((r: any) => [
       r.entity,
       ...table.columns.map((c: any) => r[c.key] ?? '—'),
       r.ytd,
+      r.received ?? '—',
+      r.remaining ?? '—',
     ]);
     const total = [
       table.total.entity,
       ...table.columns.map((c: any) => table.total[c.key] ?? '—'),
       table.total.ytd,
+      table.total.received ?? '—',
+      table.total.remaining ?? '—',
     ];
     return { header, rows, total };
   };
 
-  const buildRecapRows = () => {
-    const header = ['Indicateur', 'Scénario 1 (Base)', 'Scénario 2 (+ Apport Max)'];
-    const rows = recap.map((r: any) => [r.label, r.s1, r.s2]);
+  const buildCardsRows = () => {
+    const header = ['Entité', 'Attendu', 'Déjà Remonté', 'Reste à Remonter', 'Recouvrement'];
+    const rows = entityCards.map((c: any) => [c.entity, c.expected, c.received, c.remaining, c.rate]);
     return { header, rows };
   };
 
   const exportCSV = () => {
     const t = buildTableRows();
-    const rc = buildRecapRows();
+    const cards = buildCardsRows();
     const lines: any[][] = [];
     lines.push([`Récapitulatif Intercos — YTD ${monthLabel}`]);
     lines.push([`Mois sources: ${sourceMonths}`]);
@@ -83,23 +89,22 @@ export function PCGroupIntercosTab({ data }: Props) {
     t.rows.forEach((r) => lines.push(r));
     lines.push(t.total);
     lines.push([]);
-    lines.push(['== Récapitulatif Situation Intercos ==']);
-    lines.push(rc.header);
-    rc.rows.forEach((r) => lines.push(r));
+    lines.push(['== Solde à Remonter par Entité ==']);
+    lines.push(cards.header);
+    cards.rows.forEach((r: any) => lines.push(r));
     const csv = Papa.unparse(lines);
     downloadBlob('\uFEFF' + csv, `intercos_${safeLabel}.csv`, 'text/csv;charset=utf-8;');
   };
 
   const exportPDF = () => {
     const t = buildTableRows();
-    const rc = buildRecapRows();
+    const cards = buildCardsRows();
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
     doc.setFontSize(14);
     doc.text(`Récapitulatif Intercos — YTD ${monthLabel}`, 40, 40);
     doc.setFontSize(9);
     doc.text(`Mois sources: ${sourceMonths}`, 40, 58);
 
-    // KPIs
     autoTable(doc, {
       startY: 72,
       head: [['Indicateur', 'Valeur', 'Détail']],
@@ -125,8 +130,8 @@ export function PCGroupIntercosTab({ data }: Props) {
 
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 16,
-      head: [rc.header],
-      body: rc.rows,
+      head: [cards.header],
+      body: cards.rows,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [30, 58, 95] },
     });
@@ -174,7 +179,9 @@ export function PCGroupIntercosTab({ data }: Props) {
                 {table.columns.map((c: any) => (
                   <th key={c.key}>{c.label}</th>
                 ))}
-                <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Total à Remonter</th>
+                <th style={{ background: 'rgba(30, 58, 95, 0.1)' }}>Total à Remonter</th>
+                <th style={{ background: 'rgba(16, 185, 129, 0.15)' }}>Déjà Remonté</th>
+                <th style={{ background: 'rgba(245, 158, 11, 0.15)' }}>Solde Restant</th>
               </tr>
             </thead>
             <tbody>
@@ -184,7 +191,9 @@ export function PCGroupIntercosTab({ data }: Props) {
                   {table.columns.map((c: any) => (
                     <td key={c.key}>{r[c.key] ?? '—'}</td>
                   ))}
-                  <td style={{ background: 'rgba(16, 185, 129, 0.1)', fontWeight: 600 }}>{r.ytd}</td>
+                  <td style={{ background: 'rgba(30, 58, 95, 0.05)', fontWeight: 600 }}>{r.ytd}</td>
+                  <td style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669' }}>{r.received ?? '$0'}</td>
+                  <td style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706' }}>{r.remaining ?? '—'}</td>
                 </tr>
               ))}
               <tr className="pcg-comparison-total">
@@ -193,40 +202,53 @@ export function PCGroupIntercosTab({ data }: Props) {
                   <td key={c.key}>{table.total[c.key] ?? '—'}</td>
                 ))}
                 <td style={{ background: '#1E3A5F', color: '#fff', fontWeight: 700 }}>{table.total.ytd}</td>
+                <td style={{ background: '#059669', color: '#fff', fontWeight: 700 }}>{table.total.received}</td>
+                <td style={{ background: '#D97706', color: '#fff', fontWeight: 700 }}>{table.total.remaining}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Section "Analyse de la Situation Financière" retirée à la demande client */}
-      {/* Récapitulatif */}
-      <div className="pcg-section">
-        <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📋 Récapitulatif Situation Intercos</h3>
-        </div>
-        <div className="pcg-section-body">
-          <table className="pcg-comparison-table">
-            <thead>
-              <tr>
-                <th>Indicateur</th>
-                <th>Scénario 1 (Base)</th>
-                <th>Scénario 2 (+ Apport Max)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recap.map((r: any, i: number) => (
-                <tr key={i} style={r.highlight ? { background: 'rgba(239, 68, 68, 0.05)' } : undefined}>
-                  <td style={{ fontWeight: r.bold ? 700 : 400 }}>{r.label}</td>
-                  <td style={{ color: r.s1Color ? COLOR[r.s1Color] : undefined, fontWeight: r.bold ? 700 : 400 }}>{r.s1}</td>
-                  <td style={{ color: r.s2Color ? COLOR[r.s2Color] : undefined, fontWeight: r.bold ? 700 : 400 }}>{r.s2}</td>
-                </tr>
+      {/* Cards visuelles : ce que chaque entité doit encore remonter */}
+      {Array.isArray((intercos as any).entityCards) && (
+        <div className="pcg-section">
+          <div className="pcg-section-header">
+            <h3 className="pcg-section-title">💼 Solde à Remonter par Entité</h3>
+            <span className="pcg-section-subtitle">Hors apport Maxence — uniquement remontées effectives</span>
+          </div>
+          <div className="pcg-section-body">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              {(intercos as any).entityCards.map((c: any) => (
+                <div
+                  key={c.key}
+                  style={{
+                    border: `1px solid ${LEVEL_BORDER[c.level] ?? '#1E3A5F'}`,
+                    borderLeft: `4px solid ${COLOR[c.level] ?? '#1E3A5F'}`,
+                    borderRadius: 8,
+                    padding: 16,
+                    background: '#fff',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1E3A5F', marginBottom: 8 }}>{c.entity}</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: COLOR[c.level] ?? '#1E3A5F', marginBottom: 4 }}>
+                    {c.remaining}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 12 }}>Reste à remonter</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#374151', borderTop: '1px solid #E5E7EB', paddingTop: 8 }}>
+                    <span>Attendu : <strong>{c.expected}</strong></span>
+                    <span>Reçu : <strong style={{ color: '#059669' }}>{c.received}</strong></span>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: COLOR[c.level], fontWeight: 600 }}>
+                    Recouvrement : {c.rate}
+                  </div>
+                </div>
               ))}
-              {/* Ligne "Non exigible" retirée — vue simplifiée */}
-            </tbody>
-          </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
