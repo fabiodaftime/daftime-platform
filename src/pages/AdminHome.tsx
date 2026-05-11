@@ -175,6 +175,10 @@ export default function AdminHome() {
                   <Users className="w-4 h-4 mr-2" />
                   Gérer Utilisateurs
                 </Button>
+                <Button variant="outline" onClick={() => navigate('/admin/csv-import')}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import CSV
+                </Button>
                 <Button onClick={() => navigate('/admin/company/new')}>
                   <Plus className="w-4 h-4 mr-2" />
                   Nouveau Client
