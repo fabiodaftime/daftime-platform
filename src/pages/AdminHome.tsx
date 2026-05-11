@@ -35,7 +35,6 @@ export default function AdminHome() {
 
   const fetchCompaniesWithKPIs = async () => {
     try {
-      // Fetch companies
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
@@ -43,7 +42,19 @@ export default function AdminHome() {
 
       if (companiesError) throw companiesError;
 
-      // Fetch financial data for each company
+      // For client_viewer, skip the KPI fetch entirely (cards are minimalist).
+      if (!isSuperAdmin) {
+        setCompanies(
+          (companiesData || []).map((company) => ({
+            ...company,
+            revenueYTD: 0,
+            budgetYTD: 0,
+            expensesYTD: 0,
+          }))
+        );
+        return;
+      }
+
       const currentYear = new Date().getFullYear();
       const companiesWithKPIs: CompanyWithKPIs[] = await Promise.all(
         (companiesData || []).map(async (company, index) => {
@@ -55,14 +66,10 @@ export default function AdminHome() {
 
           const revenueYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_actual), 0) || 0;
           const budgetYTD = financials?.reduce((sum, f) => sum + Number(f.revenue_budget), 0) || 0;
-
-          // For now, use demo data per company type if no financials exist
           const hasData = financials && financials.length > 0;
-          
-          // Different demo data based on layout type
+
           const demoDataByLayout: Record<string, { revenue: number; budget: number; expenses: number }> = {
             'cw_partners': { revenue: 895000, budget: 855000, expenses: 710000 },
-            // Dedicated P&L package: show representative totals in the admin hub if no monthly_financials exist
             'cwp_pl_2025': { revenue: 1760000, budget: 0, expenses: 1650000 },
             'bocuse': { revenue: 5782746, budget: 5460000, expenses: 5440812 },
             'labarile': { revenue: 989000, budget: 955000, expenses: 700000 },
@@ -70,9 +77,8 @@ export default function AdminHome() {
             'nowmade': { revenue: 1183137, budget: 0, expenses: 788978 },
             'default': { revenue: 750000 + index * 100000, budget: 720000 + index * 95000, expenses: 600000 + index * 80000 },
           };
-          
           const demoData = demoDataByLayout[company.layout_type] || demoDataByLayout['default'];
-          
+
           return {
             ...company,
             revenueYTD: hasData ? revenueYTD : demoData.revenue,
