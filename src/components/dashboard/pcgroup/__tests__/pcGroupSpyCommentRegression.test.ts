@@ -14,9 +14,15 @@
 import { describe, it, expect } from 'vitest';
 import { getMonthData, type MonthId } from '../PCGroupData';
 import { getEntityMonth } from '../sources/normalizedAdapters';
+import {
+  ENTITY_MONTH_FIXTURES,
+  FIXTURE_TOLERANCE_USD,
+} from './fixtures/entityMonthFixtures';
 
 const MONTHS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
-const TOLERANCE_USD = 1; // arrondis à l'unité
+// On utilise la fixture comme source de vérité figée — toute dérive
+// de la source amont casse aussi pcGroupEntityFixtures.test.ts.
+const TOLERANCE_USD = FIXTURE_TOLERANCE_USD;
 
 const parseUSD = (s: string): number => {
   const sign = /^-/.test(s.trim()) ? -1 : 1;
@@ -39,56 +45,57 @@ describe.each(['spy', 'comment'] as const)(
       const kpis = entityKey === 'spy' ? data.spyKPIs : (data as any).commentKPIs;
       const wf = entityKey === 'spy' ? data.spyWaterfall : (data as any).commentWaterfall;
 
-      it('a une source normalisée disponible (alignée vue groupe)', () => {
+      const fixture = ENTITY_MONTH_FIXTURES[entityKey][monthId];
+
+      it('a une source normalisée disponible + fixture figée', () => {
         expect(facts).toBeTruthy();
         expect(kpis).toBeTruthy();
         expect(wf).toBeTruthy();
+        expect(fixture, `fixture manquante : ${entityKey}/${monthId}`).toBeTruthy();
+        // facts doit aussi matcher la fixture (même source que vue groupe)
+        expect(Math.round(facts!.ca)).toBe(fixture!.ca);
+        expect(Math.round(facts!.charges)).toBe(fixture!.charges);
+        expect(Math.round(facts!.contribution)).toBe(fixture!.contribution);
       });
 
-      it('KPI CA = facts.ca (même source que pies / overview)', () => {
+      it('KPI CA = fixture.ca (même source que pies / overview)', () => {
         const kpiCA = findKpi(kpis, 'CA');
         expect(kpiCA, 'KPI "CA" introuvable').toBeTruthy();
-        expect(parseUSD(kpiCA.value)).toBeCloseTo(Math.round(facts!.ca), -Math.log10(TOLERANCE_USD));
+        expect(parseUSD(kpiCA.value)).toBeCloseTo(fixture!.ca, -Math.log10(TOLERANCE_USD));
       });
 
-      it('KPI Marge Nette = facts.contribution', () => {
+      it('KPI Marge Nette = fixture.contribution', () => {
         const kpi = findKpi(kpis, 'Marge Nette');
         expect(kpi, 'KPI "Marge Nette" introuvable').toBeTruthy();
-        expect(parseUSD(kpi.value)).toBeCloseTo(Math.round(facts!.contribution), -Math.log10(TOLERANCE_USD));
+        expect(parseUSD(kpi.value)).toBeCloseTo(fixture!.contribution, -Math.log10(TOLERANCE_USD));
       });
 
-      it('KPI Total Charges = facts.charges', () => {
+      it('KPI Total Charges = fixture.charges', () => {
         const kpi = findKpi(kpis, 'Total Charges');
         expect(kpi, 'KPI "Total Charges" introuvable').toBeTruthy();
-        expect(parseUSD(kpi.value)).toBeCloseTo(Math.round(facts!.charges), -Math.log10(TOLERANCE_USD));
+        expect(parseUSD(kpi.value)).toBeCloseTo(fixture!.charges, -Math.log10(TOLERANCE_USD));
       });
 
-      it('Waterfall : ligne CA = facts.ca', () => {
+      it('Waterfall : ligne CA = fixture.ca', () => {
         const row = findWfRow(wf, 'CA');
         expect(row).toBeTruthy();
-        expect(parseUSD(row.value)).toBeCloseTo(Math.round(facts!.ca), -Math.log10(TOLERANCE_USD));
+        expect(parseUSD(row.value)).toBeCloseTo(fixture!.ca, -Math.log10(TOLERANCE_USD));
       });
 
-      it('Waterfall : TOTAL CHARGES = facts.charges (négatif)', () => {
+      it('Waterfall : TOTAL CHARGES = fixture.charges (négatif)', () => {
         const row = findWfRow(wf, 'TOTAL CHARGES');
         expect(row).toBeTruthy();
-        expect(Math.abs(parseUSD(row.value))).toBeCloseTo(
-          Math.round(facts!.charges),
-          -Math.log10(TOLERANCE_USD),
-        );
+        expect(Math.abs(parseUSD(row.value))).toBeCloseTo(fixture!.charges, -Math.log10(TOLERANCE_USD));
       });
 
-      it('Waterfall : MARGE NETTE = facts.contribution', () => {
+      it('Waterfall : MARGE NETTE = fixture.contribution', () => {
         const row = findWfRow(wf, 'MARGE NETTE');
         expect(row).toBeTruthy();
-        expect(parseUSD(row.value)).toBeCloseTo(
-          Math.round(facts!.contribution),
-          -Math.log10(TOLERANCE_USD),
-        );
+        expect(parseUSD(row.value)).toBeCloseTo(fixture!.contribution, -Math.log10(TOLERANCE_USD));
       });
 
       it('Identité comptable : Marge Nette ≈ CA − Total Charges', () => {
-        const diff = facts!.contribution - (facts!.ca - facts!.charges);
+        const diff = fixture!.contribution - (fixture!.ca - fixture!.charges);
         expect(Math.abs(diff)).toBeLessThanOrEqual(TOLERANCE_USD);
       });
     });
