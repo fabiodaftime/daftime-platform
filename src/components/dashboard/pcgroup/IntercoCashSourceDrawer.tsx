@@ -7,6 +7,7 @@ interface CashRow {
   month_id: string;
   entity_code: string;
   amount_received: number;
+  note?: string | null;
   created_at: string;
   updated_at: string;
 }
