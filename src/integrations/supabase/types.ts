@@ -470,6 +470,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pcgroup_intercos_cash_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          created_at: string
+          entity_code: string
+          id: string
+          month_id: string
+          new_amount: number | null
+          note: string | null
+          old_amount: number | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          entity_code: string
+          id?: string
+          month_id: string
+          new_amount?: number | null
+          note?: string | null
+          old_amount?: number | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          entity_code?: string
+          id?: string
+          month_id?: string
+          new_amount?: number | null
+          note?: string | null
+          old_amount?: number | null
+        }
+        Relationships: []
+      }
       pcgroup_manual_facts: {
         Row: {
           ca: number

@@ -93,13 +93,99 @@ export async function upsertHoldingFact(row: Partial<PCGHoldingFactRow> & { mont
 }
 
 // ---------- Mutations intercos cash ----------
+async function getActor() {
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user) return { id: null as string | null, name: null as string | null };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name,email')
+    .eq('id', user.id)
+    .maybeSingle();
+  return {
+    id: user.id,
+    name: profile?.full_name || profile?.email || user.email || null,
+  };
+}
+
+async function logIntercoCashAudit(params: {
+  month_id: string;
+  entity_code: string;
+  action: 'create' | 'update' | 'delete';
+  old_amount: number | null;
+  new_amount: number | null;
+  note?: string | null;
+}) {
+  const actor = await getActor();
+  await supabase.from('pcgroup_intercos_cash_audit').insert({
+    month_id: params.month_id,
+    entity_code: params.entity_code,
+    action: params.action,
+    old_amount: params.old_amount,
+    new_amount: params.new_amount,
+    actor_id: actor.id,
+    actor_name: actor.name,
+    note: params.note ?? null,
+  } as any);
+}
+
 export async function upsertIntercoCash(row: Partial<PCGIntercosCashRow> & { month_id: string; entity_code: string }) {
+  // Lit la valeur précédente pour le journal d'audit
+  const { data: existing } = await supabase
+    .from('pcgroup_intercos_cash')
+    .select('id, amount_received')
+    .eq('month_id', row.month_id)
+    .eq('entity_code', row.entity_code)
+    .maybeSingle();
+
   const { error } = await supabase
     .from('pcgroup_intercos_cash')
     .upsert(row as any, { onConflict: 'month_id,entity_code' });
   if (error) throw error;
+
+  await logIntercoCashAudit({
+    month_id: row.month_id,
+    entity_code: row.entity_code,
+    action: existing ? 'update' : 'create',
+    old_amount: existing ? Number(existing.amount_received ?? 0) : null,
+    new_amount: row.amount_received != null ? Number(row.amount_received) : null,
+  });
 }
+
 export async function deleteIntercoCash(id: string) {
+  const { data: existing } = await supabase
+    .from('pcgroup_intercos_cash')
+    .select('month_id, entity_code, amount_received')
+    .eq('id', id)
+    .maybeSingle();
+
   const { error } = await supabase.from('pcgroup_intercos_cash').delete().eq('id', id);
   if (error) throw error;
+
+  if (existing) {
+    await logIntercoCashAudit({
+      month_id: existing.month_id,
+      entity_code: existing.entity_code,
+      action: 'delete',
+      old_amount: Number(existing.amount_received ?? 0),
+      new_amount: null,
+    });
+  }
+}
+
+export async function fetchIntercoCashAudit(filters?: {
+  month_id?: string;
+  entity_code?: string;
+  limit?: number;
+}) {
+  let q = supabase
+    .from('pcgroup_intercos_cash_audit')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(filters?.limit ?? 200);
+  if (filters?.month_id) q = q.eq('month_id', filters.month_id);
+  if (filters?.entity_code) q = q.eq('entity_code', filters.entity_code);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data ?? [];
 }
