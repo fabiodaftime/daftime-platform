@@ -1079,8 +1079,10 @@ export function buildPCGroupMonthData(
     digitWaterfall: digitWaterfallOverlay as any,
     spyKPIs: spyKPIsOverlay as any,
     spyComparison: spyComparisonOverlay as any,
+    spyWaterfall: spyWaterfallOverlay as any,
     commentKPIs: commentKPIsOverlay as any,
     commentComparison: commentComparisonOverlay as any,
+    commentWaterfall: commentWaterfallOverlay as any,
   };
   return out as PCGroupMonthData;
 }
