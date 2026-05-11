@@ -69,7 +69,7 @@ export function PCGroupYTDTab({ data }: Props) {
           </div>
         </div>
         <div className="pcg-section-body">
-          <div className="pcg-charts-row">
+          <div className="pcg-charts-row" style={{ gridTemplateColumns: 'minmax(0, 2.4fr) minmax(0, 1fr)', alignItems: 'start' }}>
             <div style={{ overflowX: 'auto' }}>
               <table className="pcg-comparison-table" style={{ fontSize: '0.85rem' }}>
                 <thead>
