@@ -213,6 +213,7 @@ export default function DashboardPCGroup() {
         {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
         {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
         {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
+        {tab === 'history' && <RestatementHistoryTab accent="gold" />}
       </main>
 
       <footer className="pcg-footer">
