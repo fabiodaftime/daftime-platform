@@ -639,7 +639,7 @@ export function buildPCGroupMonthData(
     buildYtdEntity('Agency (Part PCA)', (f) => f.agencyPartPCA),
     buildYtdEntity('Structuring', (f) => f.structuringMargeNette),
     buildYtdEntity('Digit Solution (total)', digitConsolidatedMarge),
-    buildYtdEntity('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildYtdEntity('   ↳ dont Digit Core', digitCoreMarge),
     buildYtdEntity('   ↳ dont SPY', (f) => f.spyMargeNette),
     buildYtdEntity('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
