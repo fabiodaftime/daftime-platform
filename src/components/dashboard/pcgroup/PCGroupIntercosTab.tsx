@@ -67,6 +67,7 @@ export function PCGroupIntercosTab({ data }: Props) {
     | { entityCodes: string[]; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
     | null
   >(null);
+  const [issueDrawer, setIssueDrawer] = useState<ValidationIssue | null>(null);
   const openDrawer = (row: any, mode: 'received' | 'remaining') => {
     const codes: string[] = Array.isArray(row._codes) ? row._codes : [row._key ?? row.key];
     if (codes.length === 0) return;
