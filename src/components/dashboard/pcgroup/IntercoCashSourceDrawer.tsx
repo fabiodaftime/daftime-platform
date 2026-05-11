@@ -38,15 +38,17 @@ export function IntercoCashSourceDrawer({
     if (!open) return;
     let alive = true;
     setLoading(true);
-    supabase
-      .from('pcgroup_intercos_cash')
-      .select('*')
-      .eq('entity_code', entityCode)
-      .order('month_id', { ascending: true })
-      .then(({ data }) => {
-        if (alive) setRows((data ?? []) as CashRow[]);
-      })
-      .finally(() => alive && setLoading(false));
+    (async () => {
+      const { data } = await supabase
+        .from('pcgroup_intercos_cash')
+        .select('*')
+        .eq('entity_code', entityCode)
+        .order('month_id', { ascending: true });
+      if (alive) {
+        setRows((data ?? []) as CashRow[]);
+        setLoading(false);
+      }
+    })();
     return () => {
       alive = false;
     };
