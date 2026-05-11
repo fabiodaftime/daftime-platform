@@ -28,6 +28,10 @@ export function PCAOverviewTab({ data }: Props) {
   const ytdExpensesTotal = ytdExpenseBreakdown.reduce((s, e) => s + e.value, 0);
   const ytdAdsValue = ytdExpenseBreakdown.find((e) => e.name === 'Ads')?.value || 0;
 
+  // Previous-month short label, derived from the selected month (e.g. "Mar-26" when Apr is selected).
+  const currentMonthIdx = ytdMonths.length - 1;
+  const prevLabel = currentMonthIdx > 0 ? ytdMonths[currentMonthIdx - 1].monthShort.replace(' ', '-') : 'M-1';
+
   const adsCost = data.expenseBreakdown.find(r => r.name === "Ads");
   const setupCost = data.expenseBreakdown.find(r => r.name === "Setup Cost");
 
