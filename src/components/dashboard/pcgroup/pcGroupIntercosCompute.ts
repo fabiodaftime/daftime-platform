@@ -116,18 +116,25 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   };
 
   // -------- Détail par entité --------
-  // Columns = each source month + Total Exigible + Non-exigible(s) + YTD
-  const exigibleMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 <= viewIdx);
-  const notDueMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 > viewIdx);
+  // Per-entity cash actually received across the source months (excl. apport Maxence).
+  const receivedPerEntity: Record<string, number> = {};
+  INTERCO_RULES.forEach((r) => {
+    receivedPerEntity[r.key] = sourceMonths.reduce((acc, sm) => {
+      const block = INTERCOS_CASH[sm];
+      return acc + (block?.received?.[r.key] ?? 0);
+    }, 0);
+  });
 
   const tableRows = perEntity.map((e) => {
-    const cells: Record<string, string> = { entity: e.rule.label };
+    const cells: Record<string, string | number> = { entity: e.rule.label, _key: e.rule.key };
     e.monthly.forEach((m) => {
       cells[m.sourceMonth] = usd(m.amount);
     });
-    cells.exigible = usd(e.exigible);
-    cells.notYetDue = usd(e.notYetDue);
+    const received = receivedPerEntity[e.rule.key] ?? 0;
+    const remaining = Math.max(0, e.ytd - received);
     cells.ytd = usd(e.ytd);
+    cells.received = usd(received);
+    cells.remaining = usd(remaining);
     return cells;
   });
 
@@ -138,51 +145,44 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
       return a + (cell?.amount ?? 0);
     }, 0));
   });
-  totalRow.exigible = usd(totals.exigible);
-  totalRow.notYetDue = usd(totals.notYetDue);
+  const totalReceived = Object.values(receivedPerEntity).reduce((a, b) => a + b, 0);
+  const totalRemaining = Math.max(0, totals.ytd - totalReceived);
   totalRow.ytd = usd(totals.ytd);
+  totalRow.received = usd(totalReceived);
+  totalRow.remaining = usd(totalRemaining);
 
-  // Dynamic table: N source-month columns + Total Exigible + Non Exigible + YTD.
-  // Garde une compat backward (jan/feb/mars) pour les anciens consommateurs.
   const dynamicColumns = sourceMonths.map((sm) => ({
     key: sm,
     label: MONTH_SHORT[sm],
     isExigible: MONTH_ORDER.indexOf(sm) + 1 <= viewIdx,
   }));
-  const dynamicRows = perEntity.map((e) => {
-    const cells: Record<string, string> = { entity: e.rule.label };
-    e.monthly.forEach((m) => { cells[m.sourceMonth] = usd(m.amount); });
-    cells.exigible = usd(e.exigible);
-    cells.notYetDue = usd(e.notYetDue);
-    cells.ytd = usd(e.ytd);
-    return cells;
-  });
-  const dynamicTotal: Record<string, string> = { entity: 'TOTAL ATTENDU' };
-  sourceMonths.forEach((sm) => {
-    dynamicTotal[sm] = usd(perEntity.reduce((a, e) => {
-      const cell = e.monthly.find((x) => x.sourceMonth === sm);
-      return a + (cell?.amount ?? 0);
-    }, 0));
-  });
-  dynamicTotal.exigible = usd(totals.exigible);
-  dynamicTotal.notYetDue = usd(totals.notYetDue);
-  dynamicTotal.ytd = usd(totals.ytd);
 
   const legacyTable = {
     columns: dynamicColumns,
-    rows: dynamicRows,
-    total: dynamicTotal,
-    // legacy shape conservée pour compat — non utilisée par le rendu dynamique
-    legacyRows: tableRows.map((r) => ({
-      entity: r.entity,
-      jan: r['jan-2026'] ?? '—',
-      feb: r['feb-2026'] ?? '—',
-      exigible: r.exigible,
-      mars: r['mar-2026'] ?? r.notYetDue,
-      ytd: r.ytd,
-    })),
+    rows: tableRows,
+    total: totalRow,
   };
 
+  // -------- Cards visuelles : ce que chaque entité doit encore remonter --------
+  const entityCards = perEntity.map((e) => {
+    const received = receivedPerEntity[e.rule.key] ?? 0;
+    const expected = e.ytd;
+    const remaining = Math.max(0, expected - received);
+    const rate = expected > 0 ? (received / expected) * 100 : 0;
+    let level: 'danger' | 'warning' | 'success' = 'danger';
+    if (rate >= 80) level = 'success';
+    else if (rate >= 40) level = 'warning';
+    return {
+      key: e.rule.key,
+      entity: e.rule.label,
+      expected: usd(expected),
+      received: usd(received),
+      remaining: usd(remaining),
+      rate: fmtPct(rate),
+      ratePct: rate,
+      level,
+    };
+  });
   // -------- Scénarios --------
   const scenarios = {
     base: {
