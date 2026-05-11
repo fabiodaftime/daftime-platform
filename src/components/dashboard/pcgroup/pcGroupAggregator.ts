@@ -471,28 +471,38 @@ export function buildPCGroupMonthData(
   const prevLabel = prevId ? BUILD_MONTH_SHORT[prevId] : '';
   const monthsForCols = ytd.months;
 
-  const entityCards = BUILD_ENTITY_META.map((meta) => {
+  const entityCards = OVERVIEW_ENTITY_META.map((meta) => {
     const k = meta.id as BuildEntityKey;
-    const ca = entityCA(facts, k);
-    const marge = entityMarge(facts, k);
+    const isDigit = k === 'digit';
+    const ca = isDigit ? digitConsolidatedCA(facts) : entityCA(facts, k);
+    const marge = isDigit ? digitConsolidatedMarge(facts) : entityMarge(facts, k);
     const margin = ca > 0 ? (marge / ca) * 100 : 0;
+    const baseMetrics = [
+      { label: k === 'agency' ? 'CA Brut' : 'CA', value: usdR(ca) },
+      { label: k === 'agency' ? 'Part PCA' : 'Marge Nette', value: usdR(marge), colorClass: 'success' },
+    ];
+    const digitSub = isDigit
+      ? [
+          { label: '↳ dont Digit Core', value: usdR(facts.digitMargeNette), colorClass: 'muted' },
+          { label: '↳ dont SPY', value: usdR(facts.spyMargeNette), colorClass: 'muted' },
+          { label: '↳ dont Comment/Trust', value: usdR(facts.commentMargeNette), colorClass: 'muted' },
+        ]
+      : [];
     return {
       id: meta.id,
       name: meta.name,
       badge: meta.badge,
       gradient: meta.gradient,
       cssClass: meta.cssClass,
-      metrics: [
-        { label: k === 'agency' ? 'CA Brut' : 'CA', value: usdR(ca) },
-        { label: k === 'agency' ? 'Part PCA' : 'Marge Nette', value: usdR(marge), colorClass: 'success' },
-      ],
+      metrics: [...baseMetrics, ...digitSub],
       margin: Math.round(margin * 10) / 10,
       marginLevel: marginLevel(margin),
     };
   });
 
-  const pieData = BUILD_ENTITY_META.map((meta) => {
-    const m = entityMarge(facts, meta.id as BuildEntityKey);
+  const pieData = OVERVIEW_ENTITY_META.map((meta) => {
+    const k = meta.id as BuildEntityKey;
+    const m = k === 'digit' ? digitConsolidatedMarge(facts) : entityMarge(facts, k);
     return { name: `${meta.name} (${fmtUSDk(m)})`, value: Math.round(m), color: meta.pieColor };
   });
 
