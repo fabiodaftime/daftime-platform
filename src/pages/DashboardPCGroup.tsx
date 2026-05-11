@@ -14,12 +14,7 @@ import {
 } from '@/components/dashboard/pcgroup/PCGroupData';
 import { PCGroupOverviewTab } from '@/components/dashboard/pcgroup/PCGroupOverviewTab';
 import { PCGroupYTDTab } from '@/components/dashboard/pcgroup/PCGroupYTDTab';
-import { PCGroupAgencyTab } from '@/components/dashboard/pcgroup/PCGroupAgencyTab';
-import { PCGroupStructuringTab } from '@/components/dashboard/pcgroup/PCGroupStructuringTab';
-import { PCGroupDigitTab } from '@/components/dashboard/pcgroup/PCGroupDigitTab';
-import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
-import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
-import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
+import { PCGroupEntitiesAccordion } from '@/components/dashboard/pcgroup/PCGroupEntitiesAccordion';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
 import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
@@ -32,12 +27,7 @@ import './DashboardPCGroup.css';
 const tabs = [
   { id: 'overview', icon: '📊', label: 'Vue Groupe' },
   { id: 'ytd', icon: '📈', label: 'YTD 2026' },
-  { id: 'agency', icon: '📢', label: 'Agency' },
-  { id: 'structuring', icon: '🏛️', label: 'Structuring' },
-  { id: 'digit', icon: '💻', label: 'Digit Solution' },
-  { id: 'spy', icon: '🔍', label: 'SPY' },
-  { id: 'comment', icon: '💬', label: 'Comment' },
-  { id: 'holding', icon: '🏛️', label: 'Holding' },
+  { id: 'entities', icon: '🏢', label: 'Détail entités' },
   { id: 'intercos', icon: '💸', label: 'Flux Intercos' },
   { id: 'history', icon: '📋', label: 'Historique' },
 ];
@@ -206,12 +196,7 @@ export default function DashboardPCGroup() {
       <main className="pcg-main">
         {tab === 'overview' && <PCGroupOverviewTab data={monthData} entityRoutes={entityRoutes} monthId={selectedMonth} entitiesCount={entitiesCount} />}
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
-        {tab === 'agency' && <PCGroupAgencyTab data={monthData} entityRoutes={entityRoutes} />}
-        {tab === 'structuring' && <PCGroupStructuringTab data={monthData} entityRoutes={entityRoutes} />}
-        {tab === 'digit' && <PCGroupDigitTab data={monthData} entityRoutes={entityRoutes} />}
-        {tab === 'spy' && <PCGroupSpyTab data={monthData} />}
-        {tab === 'comment' && <PCGroupCommentTab data={monthData} />}
-        {tab === 'holding' && <PCGroupHoldingTab data={monthData} />}
+        {tab === 'entities' && <PCGroupEntitiesAccordion data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
         {tab === 'history' && <RestatementHistoryTab accent="gold" />}
       </main>
