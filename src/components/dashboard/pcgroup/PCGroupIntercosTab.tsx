@@ -47,27 +47,6 @@ export function PCGroupIntercosTab({ data }: Props) {
         ))}
       </div>
 
-      {/* Alerte */}
-      <div
-        className="pcg-section"
-        style={{
-          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)',
-          border: '2px solid rgba(239, 68, 68, 0.3)',
-        }}
-      >
-        <div className="pcg-section-body" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ fontSize: '2.5rem' }}>⚠️</div>
-          <div>
-            <div style={{ fontWeight: 700, color: '#EF4444', marginBottom: '0.25rem' }}>{alert.title}</div>
-            <div style={{ fontSize: '0.9rem', color: '#475569' }}>{alert.body}</div>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginTop: '0.5rem' }}>
-              Taux de recouvrement : <strong style={{ color: '#EF4444' }}>{alert.rate}</strong> | Solde dû :{' '}
-              <strong style={{ color: '#EF4444' }}>{alert.balance}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Tableau Détail Remontées — colonnes dynamiques (1 par mois source) */}
       <div className="pcg-section">
         <div className="pcg-section-header">
