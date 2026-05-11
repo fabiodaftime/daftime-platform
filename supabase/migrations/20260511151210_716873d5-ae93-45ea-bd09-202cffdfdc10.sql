@@ -1,0 +1,1 @@
+ALTER TABLE public.pcgroup_intercos_cash ADD COLUMN IF NOT EXISTS note text;

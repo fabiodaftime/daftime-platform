@@ -450,6 +450,7 @@ export type Database = {
           entity_code: string
           id: string
           month_id: string
+          note: string | null
           updated_at: string
         }
         Insert: {
@@ -458,6 +459,7 @@ export type Database = {
           entity_code: string
           id?: string
           month_id: string
+          note?: string | null
           updated_at?: string
         }
         Update: {
@@ -466,6 +468,7 @@ export type Database = {
           entity_code?: string
           id?: string
           month_id?: string
+          note?: string | null
           updated_at?: string
         }
         Relationships: []
