@@ -14,7 +14,7 @@ interface CashRow {
 interface Props {
   open: boolean;
   onClose: () => void;
-  entityCode: string; // ex: 'digit'
+  entityCode: string | string[]; // 'digit' ou ['digit','spy','comment']
   entityLabel: string; // ex: 'Digit Solution'
   mode: 'received' | 'remaining';
   expectedTotal: number; // total attendu (USD)
@@ -33,6 +33,8 @@ export function IntercoCashSourceDrawer({
 }: Props) {
   const [rows, setRows] = useState<CashRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const codes = Array.isArray(entityCode) ? entityCode : [entityCode];
+  const codesKey = codes.join(',');
 
   useEffect(() => {
     if (!open) return;
@@ -42,7 +44,7 @@ export function IntercoCashSourceDrawer({
       const { data } = await supabase
         .from('pcgroup_intercos_cash')
         .select('*')
-        .eq('entity_code', entityCode)
+        .in('entity_code', codes)
         .order('month_id', { ascending: true });
       if (alive) {
         setRows((data ?? []) as CashRow[]);
@@ -52,7 +54,7 @@ export function IntercoCashSourceDrawer({
     return () => {
       alive = false;
     };
-  }, [open, entityCode]);
+  }, [open, codesKey]);
 
   if (!open) return null;
 
