@@ -8,7 +8,7 @@ import { type PCGroupMonthData } from './PCGroupData';
 import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
 import { IntercosCashAuditLog } from './IntercosCashAuditLog';
 import { IntercoCashSourceDrawer } from './IntercoCashSourceDrawer';
-import { ValidationIssueDrawer } from './ValidationIssueDrawer';
+import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 
 interface Props {
