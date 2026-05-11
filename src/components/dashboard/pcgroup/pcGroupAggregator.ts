@@ -491,7 +491,7 @@ export function buildPCGroupMonthData(
     ];
     const digitSub = isDigit
       ? [
-          { label: '↳ dont Digit Core', value: usdR(facts.digitMargeNette), colorClass: 'muted' },
+          { label: '↳ dont Digit Core', value: usdR(digitCoreMarge(facts)), colorClass: 'muted' },
           { label: '↳ dont SPY', value: usdR(facts.spyMargeNette), colorClass: 'muted' },
           { label: '↳ dont Comment/Trust', value: usdR(facts.commentMargeNette), colorClass: 'muted' },
         ]
