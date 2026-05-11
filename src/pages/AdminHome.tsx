@@ -251,6 +251,7 @@ export default function AdminHome() {
                   revenueYTD={company.revenueYTD}
                   revenueVariance={revenueVariance}
                   margin={margin}
+                  showSettings={isSuperAdmin}
                 />
               );
             })}
