@@ -184,14 +184,18 @@ describe("PCGroup comparison tables — February view (hasMar = false)", () => {
     ]);
   });
 
-  it("Holding: no Mars column, variation at index 3", () => {
+  it("Holding: no Mars column, variation at index 3 (YTD always present from aggregator)", () => {
     renderWithRouter(<PCGroupHoldingTab data={feb} />);
     const table = getComparisonTable(/Comparatif M-1 Holding/);
+    // L'aggregator pose systématiquement r.ytd sur les lignes Holding
+    // (utile pour suivre les flux holding cumulés), donc la colonne YTD
+    // apparaît même en vue Février — contrairement aux autres tabs.
     expect(getHeaderCells(table)).toEqual([
       "Indicateur",
       "Janvier",
       "Février",
       "Variation",
+      "YTD",
     ]);
   });
 });
