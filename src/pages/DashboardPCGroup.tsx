@@ -196,7 +196,7 @@ export default function DashboardPCGroup() {
         {tab === 'ytd' && <PCGroupYTDTab data={monthData} />}
         {tab === 'entities' && <PCGroupEntitiesAccordion data={monthData} entityRoutes={entityRoutes} />}
         {tab === 'intercos' && <PCGroupIntercosTab data={monthData} />}
-        {tab === 'history' && <RestatementHistoryTab accent="gold" />}
+        
       </main>
 
       <footer className="pcg-footer">
