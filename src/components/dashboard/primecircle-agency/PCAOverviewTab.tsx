@@ -86,7 +86,7 @@ export function PCAOverviewTab({ data }: Props) {
       {hasPrev && (
         <div className="pca-section">
           <div style={{ marginBottom: 20 }}>
-            <h3 className="pca-section-title">Revenue — Jan vs Feb</h3>
+            <h3 className="pca-section-title">Revenue — Évolution mensuelle</h3>
             <p className="pca-section-subtitle">Gross Revenue (source : Summary of Financial Balance)</p>
           </div>
           <ResponsiveContainer width="100%" height={160}>
@@ -334,7 +334,7 @@ export function PCAOverviewTab({ data }: Props) {
         <>
           <div className="pca-section-header">MoM Evolution</div>
           <div className="pca-section">
-            <h3 className="pca-section-title">Revenu Brut, Net et Charges — Jan vs Feb</h3>
+            <h3 className="pca-section-title">Revenu Brut, Net et Charges — Évolution mensuelle</h3>
             <p className="pca-section-subtitle">Comparatif mensuel</p>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data.monthlyTrend}>
@@ -352,7 +352,7 @@ export function PCAOverviewTab({ data }: Props) {
 
           <div className="pca-two-col">
             <div className="pca-section">
-              <h3 className="pca-section-title">Media Spend — Jan vs Feb</h3>
+              <h3 className="pca-section-title">Media Spend — Évolution mensuelle</h3>
               <p className="pca-section-subtitle">Évolution du volume géré</p>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={mediaMoM}>
@@ -368,7 +368,7 @@ export function PCAOverviewTab({ data }: Props) {
             </div>
 
             <div className="pca-section">
-              <h3 className="pca-section-title">Transactions — Jan vs Feb</h3>
+              <h3 className="pca-section-title">Transactions — Évolution mensuelle</h3>
               <p className="pca-section-subtitle">Volume d'activité</p>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={txMoM}>
