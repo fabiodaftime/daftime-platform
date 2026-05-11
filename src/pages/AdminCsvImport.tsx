@@ -386,7 +386,80 @@ function CsvCard({ title, description, template, templateName, expectedHeaders, 
 }
 
 // ---------------------------------------------------------------------------
-// Page
+// Export section — same columns/order as the import templates (round-trip safe)
+// ---------------------------------------------------------------------------
+
+function toCsv(headers: readonly string[], rows: any[]): string {
+  const esc = (v: any) => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [headers.join(','), ...rows.map((r) => headers.map((h) => esc(r[h])).join(','))].join('\n');
+}
+
+function ExportSection() {
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const exportPCG = async () => {
+    setBusy('pcg');
+    try {
+      const { data, error } = await supabase
+        .from('pcgroup_manual_facts')
+        .select('month_id, entity_code, ca, charges, contribution, margin_pct, deals, warning')
+        .order('month_id').order('entity_code');
+      if (error) throw error;
+      downloadText(`pcgroup_manual_facts_${new Date().toISOString().slice(0, 10)}.csv`, toCsv(PCG_HEADERS, data ?? []));
+      toast.success(`${data?.length ?? 0} ligne(s) exportée(s)`);
+    } catch (e: any) {
+      toast.error(`Export échoué : ${e.message ?? e}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const exportFin = async () => {
+    setBusy('fin');
+    try {
+      const { data, error } = await supabase
+        .from('monthly_financials')
+        .select('company_id, year, month, revenue_actual, revenue_budget, revenue_prior_year, cash_balance, fx_rate')
+        .order('company_id').order('year').order('month');
+      if (error) throw error;
+      downloadText(`monthly_financials_${new Date().toISOString().slice(0, 10)}.csv`, toCsv(FIN_HEADERS, data ?? []));
+      toast.success(`${data?.length ?? 0} ligne(s) exportée(s)`);
+    } catch (e: any) {
+      toast.error(`Export échoué : ${e.message ?? e}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card className="p-6 space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Download className="w-5 h-5" /> Export CSV
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Téléchargez les données existantes au même format que les templates d'import. Round-trip garanti : modifiez en Excel puis réimportez (upsert).
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Button variant="outline" onClick={exportPCG} disabled={busy !== null}>
+          {busy === 'pcg' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+          PCGroup manual facts
+        </Button>
+        <Button variant="outline" onClick={exportFin} disabled={busy !== null}>
+          {busy === 'fin' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+          Monthly financials
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+
 // ---------------------------------------------------------------------------
 
 export default function AdminCsvImport() {
@@ -426,6 +499,9 @@ export default function AdminCsvImport() {
         </div>
 
         <PostImportValidationStatus />
+
+        <ExportSection />
+
 
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">
