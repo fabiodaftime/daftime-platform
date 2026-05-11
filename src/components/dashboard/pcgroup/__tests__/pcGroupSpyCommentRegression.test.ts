@@ -14,9 +14,15 @@
 import { describe, it, expect } from 'vitest';
 import { getMonthData, type MonthId } from '../PCGroupData';
 import { getEntityMonth } from '../sources/normalizedAdapters';
+import {
+  ENTITY_MONTH_FIXTURES,
+  FIXTURE_TOLERANCE_USD,
+} from './fixtures/entityMonthFixtures';
 
 const MONTHS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
-const TOLERANCE_USD = 1; // arrondis à l'unité
+// On utilise la fixture comme source de vérité figée — toute dérive
+// de la source amont casse aussi pcGroupEntityFixtures.test.ts.
+const TOLERANCE_USD = FIXTURE_TOLERANCE_USD;
 
 const parseUSD = (s: string): number => {
   const sign = /^-/.test(s.trim()) ? -1 : 1;
