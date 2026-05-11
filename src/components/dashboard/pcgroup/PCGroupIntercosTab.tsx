@@ -387,6 +387,8 @@ export function PCGroupIntercosTab({ data }: Props) {
           </div>
         );
       })()}
+
+      <IntercosCashAuditLog />
     </div>
   );
 }
