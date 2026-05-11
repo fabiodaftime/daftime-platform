@@ -592,7 +592,7 @@ export function buildPCGroupMonthData(
     buildEntityRow('Agency (Part PCA 50%)', (f) => f.agencyPartPCA),
     buildEntityRow('Structuring', (f) => f.structuringMargeNette),
     buildEntityRow('Digit Solution (total)', digitConsolidatedMarge),
-    buildEntityRow('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildEntityRow('   ↳ dont Digit Core', digitCoreMarge),
     buildEntityRow('   ↳ dont SPY', (f) => f.spyMargeNette),
     buildEntityRow('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
