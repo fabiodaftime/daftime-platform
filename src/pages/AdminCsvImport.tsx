@@ -274,6 +274,17 @@ function CsvCard({ title, description, template, templateName, expectedHeaders, 
     try {
       const { inserted } = await commit(result.ok);
       toast.success(`${inserted} ligne(s) importée(s) dans ${title}`);
+
+      // Auto-trigger : recalcul YTD + contrôle d'alignement après chaque import.
+      const validation = runPostImportValidation({ source: title, inserted });
+      if (validation.status === 'ok') {
+        toast.success('Contrôle d\'alignement & recalcul YTD : OK');
+      } else {
+        toast.warning(
+          `Validation : ${validation.alignment.issuesCount} écart(s) d'alignement, ${validation.ytd.correctionsCount} YTD/dérivés à corriger`,
+        );
+      }
+
       setText(null); setFilename(''); if (inputRef.current) inputRef.current.value = '';
     } catch (e: any) {
       toast.error(`Échec import : ${e.message ?? e}`);
