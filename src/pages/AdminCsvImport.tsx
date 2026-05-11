@@ -540,13 +540,103 @@ type PreviewState = {
 type ProgressState = { phase: 'fetch' | 'build'; loaded: number; total: number } | null;
 
 function ExportSection() {
+type MonthOpt = { month_id: string; label: string; year: number; month_num: number };
+type EntityOpt = { code: string; name: string };
+type CompanyOpt = { id: string; name: string };
+
+function ToggleChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-xs px-2 py-1 rounded border transition ${
+        active
+          ? 'bg-primary text-primary-foreground border-primary'
+          : 'bg-background hover:bg-muted border-border text-muted-foreground'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ExportSection() {
   const [busy, setBusy] = useState<string | null>(null);
   const [progress, setProgress] = useState<ProgressState>(null);
   const [preview, setPreview] = useState<PreviewState>(null);
   const cancelRef = useRef<{ cancelled: boolean }>({ cancelled: false });
 
+  // Filter options
+  const [monthOpts, setMonthOpts] = useState<MonthOpt[]>([]);
+  const [entityOpts, setEntityOpts] = useState<EntityOpt[]>([]);
+  const [companyOpts, setCompanyOpts] = useState<CompanyOpt[]>([]);
+
+  // PCG filters
+  const [pcgMonths, setPcgMonths] = useState<Set<string>>(new Set());
+  const [pcgEntities, setPcgEntities] = useState<Set<string>>(new Set());
+
+  // FIN filters
+  const [finCompanies, setFinCompanies] = useState<Set<string>>(new Set());
+  const [finYearFrom, setFinYearFrom] = useState<string>('');
+  const [finYearTo, setFinYearTo] = useState<string>('');
+  const [finMonthFrom, setFinMonthFrom] = useState<string>('');
+  const [finMonthTo, setFinMonthTo] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const [mRes, eRes, cRes] = await Promise.all([
+        supabase.from('pcgroup_months').select('month_id, label, year, month_num').order('display_order'),
+        supabase.from('pcgroup_entities').select('code, name').eq('is_active', true).order('display_order'),
+        supabase.from('companies').select('id, name').order('name'),
+      ]);
+      setMonthOpts((mRes.data ?? []) as MonthOpt[]);
+      setEntityOpts((eRes.data ?? []) as EntityOpt[]);
+      setCompanyOpts((cRes.data ?? []) as CompanyOpt[]);
+    })();
+  }, []);
+
+  const toggle = (set: Set<string>, key: string, setter: (s: Set<string>) => void) => {
+    const next = new Set(set);
+    next.has(key) ? next.delete(key) : next.add(key);
+    setter(next);
+  };
+
+  const buildFilters = (kind: 'pcg' | 'fin'): { fn: FilterFn; suffix: string } => {
+    if (kind === 'pcg') {
+      const parts: string[] = [];
+      const fn: FilterFn = (q) => {
+        let r = q;
+        if (pcgMonths.size > 0) r = r.in('month_id', Array.from(pcgMonths));
+        if (pcgEntities.size > 0) r = r.in('entity_code', Array.from(pcgEntities));
+        return r;
+      };
+      if (pcgMonths.size > 0) parts.push(`${pcgMonths.size}mois`);
+      if (pcgEntities.size > 0) parts.push(`${pcgEntities.size}ent`);
+      return { fn, suffix: parts.length ? `_${parts.join('-')}` : '' };
+    }
+    const parts: string[] = [];
+    const yf = finYearFrom ? parseInt(finYearFrom, 10) : null;
+    const yt = finYearTo ? parseInt(finYearTo, 10) : null;
+    const mf = finMonthFrom ? parseInt(finMonthFrom, 10) : null;
+    const mt = finMonthTo ? parseInt(finMonthTo, 10) : null;
+    const fn: FilterFn = (q) => {
+      let r = q;
+      if (finCompanies.size > 0) r = r.in('company_id', Array.from(finCompanies));
+      if (yf !== null) r = r.gte('year', yf);
+      if (yt !== null) r = r.lte('year', yt);
+      if (mf !== null) r = r.gte('month', mf);
+      if (mt !== null) r = r.lte('month', mt);
+      return r;
+    };
+    if (finCompanies.size > 0) parts.push(`${finCompanies.size}soc`);
+    if (yf !== null || yt !== null) parts.push(`y${yf ?? ''}-${yt ?? ''}`);
+    if (mf !== null || mt !== null) parts.push(`m${mf ?? ''}-${mt ?? ''}`);
+    return { fn, suffix: parts.length ? `_${parts.join('-')}` : '' };
+  };
+
   const load = async (kind: 'pcg' | 'fin') => {
     const target = TARGETS[kind];
+    const { fn, suffix } = buildFilters(kind);
     setBusy(kind);
     cancelRef.current = { cancelled: false };
     setProgress({ phase: 'fetch', loaded: 0, total: 0 });
@@ -555,12 +645,13 @@ function ExportSection() {
         target,
         (loaded, total) => setProgress({ phase: 'fetch', loaded, total }),
         cancelRef.current,
+        fn,
       );
       setPreview({
         kind,
         headers: target.headers,
         rows,
-        filename: `${target.filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`,
+        filename: `${target.filenamePrefix}${suffix}_${new Date().toISOString().slice(0, 10)}.csv`,
       });
     } catch (e: any) {
       if (e?.message !== 'Annulé') toast.error(`Chargement échoué : ${e.message ?? e}`);
@@ -599,22 +690,154 @@ function ExportSection() {
 
   const pct = progress && progress.total > 0 ? Math.round((progress.loaded / progress.total) * 100) : 0;
 
+  const pcgFilterCount = pcgMonths.size + pcgEntities.size;
+  const finFilterCount =
+    finCompanies.size + (finYearFrom ? 1 : 0) + (finYearTo ? 1 : 0) + (finMonthFrom ? 1 : 0) + (finMonthTo ? 1 : 0);
+
   return (
-    <Card className="p-6 space-y-3">
+    <Card className="p-6 space-y-4">
       <div>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Download className="w-5 h-5" /> Export CSV
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Génération paginée en arrière-plan (500 lignes/page) avec progression. Format identique aux templates d'import (round-trip via upsert).
+          Filtrez par période et/ou entité, prévisualisez, puis téléchargez. Export paginé en arrière-plan avec progression.
         </p>
       </div>
-      <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={() => load('pcg')} disabled={busy !== null}>
+
+      {/* PCG filters + action */}
+      <div className="border rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">PCGroup manual facts</h3>
+          {pcgFilterCount > 0 && (
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+              onClick={() => {
+                setPcgMonths(new Set());
+                setPcgEntities(new Set());
+              }}
+            >
+              Réinitialiser ({pcgFilterCount})
+            </button>
+          )}
+        </div>
+        <div>
+          <div className="text-xs font-medium text-muted-foreground mb-1">Mois</div>
+          <div className="flex flex-wrap gap-1">
+            {monthOpts.length === 0 && <span className="text-xs text-muted-foreground">…</span>}
+            {monthOpts.map((m) => (
+              <ToggleChip
+                key={m.month_id}
+                active={pcgMonths.has(m.month_id)}
+                onClick={() => toggle(pcgMonths, m.month_id, setPcgMonths)}
+              >
+                {m.label || m.month_id}
+              </ToggleChip>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs font-medium text-muted-foreground mb-1">Entités</div>
+          <div className="flex flex-wrap gap-1">
+            {entityOpts.length === 0 && <span className="text-xs text-muted-foreground">…</span>}
+            {entityOpts.map((e) => (
+              <ToggleChip
+                key={e.code}
+                active={pcgEntities.has(e.code)}
+                onClick={() => toggle(pcgEntities, e.code, setPcgEntities)}
+              >
+                {e.code}
+              </ToggleChip>
+            ))}
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => load('pcg')} disabled={busy !== null}>
           {busy === 'pcg' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
-          Prévisualiser PCGroup manual facts
+          Prévisualiser PCGroup
         </Button>
-        <Button variant="outline" onClick={() => load('fin')} disabled={busy !== null}>
+      </div>
+
+      {/* FIN filters + action */}
+      <div className="border rounded-lg p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Monthly financials</h3>
+          {finFilterCount > 0 && (
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+              onClick={() => {
+                setFinCompanies(new Set());
+                setFinYearFrom('');
+                setFinYearTo('');
+                setFinMonthFrom('');
+                setFinMonthTo('');
+              }}
+            >
+              Réinitialiser ({finFilterCount})
+            </button>
+          )}
+        </div>
+        <div>
+          <div className="text-xs font-medium text-muted-foreground mb-1">Sociétés</div>
+          <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+            {companyOpts.length === 0 && <span className="text-xs text-muted-foreground">…</span>}
+            {companyOpts.map((c) => (
+              <ToggleChip
+                key={c.id}
+                active={finCompanies.has(c.id)}
+                onClick={() => toggle(finCompanies, c.id, setFinCompanies)}
+              >
+                {c.name}
+              </ToggleChip>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-1">Année min</div>
+            <input
+              type="number"
+              value={finYearFrom}
+              onChange={(e) => setFinYearFrom(e.target.value)}
+              placeholder="ex 2024"
+              className="w-full text-xs px-2 py-1 border rounded bg-background"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-1">Année max</div>
+            <input
+              type="number"
+              value={finYearTo}
+              onChange={(e) => setFinYearTo(e.target.value)}
+              placeholder="ex 2026"
+              className="w-full text-xs px-2 py-1 border rounded bg-background"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-1">Mois min (1-12)</div>
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={finMonthFrom}
+              onChange={(e) => setFinMonthFrom(e.target.value)}
+              className="w-full text-xs px-2 py-1 border rounded bg-background"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-1">Mois max (1-12)</div>
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={finMonthTo}
+              onChange={(e) => setFinMonthTo(e.target.value)}
+              className="w-full text-xs px-2 py-1 border rounded bg-background"
+            />
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => load('fin')} disabled={busy !== null}>
           {busy === 'fin' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
           Prévisualiser Monthly financials
         </Button>
