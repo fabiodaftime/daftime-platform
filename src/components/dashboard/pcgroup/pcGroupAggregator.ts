@@ -441,15 +441,19 @@ function entityMarge(f: ConsolidatedFacts, k: BuildEntityKey): number {
   }
 }
 
-// "Digit Solution" entité totale = Digit Core + SPY + Comment/Trustpilot
-// (SPY et Comment sont des produits de Digit, pas des entités sœurs).
-// On les consolide dans la Vue Groupe pour éviter le double comptage et on
-// les expose en "dont" sur la carte/comparatif.
+// "Digit Solution" entité totale = valeur déjà consolidée par digitFacts
+// (qui inclut nativement SPY + Comment/Trustpilot, ce sont des produits Digit).
+// On expose SPY et Comment uniquement en "↳ dont" pour la transparence,
+// SANS les ajouter aux totaux pour éviter le double comptage.
 function digitConsolidatedCA(f: ConsolidatedFacts): number {
-  return f.digitCA + f.spyCA + f.commentCA;
+  return f.digitCA;
 }
 function digitConsolidatedMarge(f: ConsolidatedFacts): number {
-  return f.digitMargeNette + f.spyMargeNette + f.commentMargeNette;
+  return f.digitMargeNette;
+}
+// Digit "Core" hors SPY/Comment, pour l'affichage de la décomposition.
+function digitCoreMarge(f: ConsolidatedFacts): number {
+  return f.digitMargeNette - f.spyMargeNette - f.commentMargeNette;
 }
 
 // Pour la Vue Groupe : 3 entités consolidées (SPY + Comment fusionnés dans Digit).
