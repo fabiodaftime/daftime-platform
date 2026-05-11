@@ -14,12 +14,7 @@ import {
 } from '@/components/dashboard/pcgroup/PCGroupData';
 import { PCGroupOverviewTab } from '@/components/dashboard/pcgroup/PCGroupOverviewTab';
 import { PCGroupYTDTab } from '@/components/dashboard/pcgroup/PCGroupYTDTab';
-import { PCGroupAgencyTab } from '@/components/dashboard/pcgroup/PCGroupAgencyTab';
-import { PCGroupStructuringTab } from '@/components/dashboard/pcgroup/PCGroupStructuringTab';
-import { PCGroupDigitTab } from '@/components/dashboard/pcgroup/PCGroupDigitTab';
-import { PCGroupSpyTab } from '@/components/dashboard/pcgroup/PCGroupSpyTab';
-import { PCGroupCommentTab } from '@/components/dashboard/pcgroup/PCGroupCommentTab';
-import { PCGroupHoldingTab } from '@/components/dashboard/pcgroup/PCGroupHoldingTab';
+import { PCGroupEntitiesAccordion } from '@/components/dashboard/pcgroup/PCGroupEntitiesAccordion';
 import { PCGroupIntercosTab } from '@/components/dashboard/pcgroup/PCGroupIntercosTab';
 import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
 import { usePCGroupConfig } from '@/components/dashboard/pcgroup/config/usePCGroupConfig';
