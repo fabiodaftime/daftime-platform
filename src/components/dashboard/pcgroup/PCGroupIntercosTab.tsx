@@ -63,27 +63,7 @@ export function PCGroupIntercosTab({ data }: Props) {
 
   const parseUSDNum = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
   const fmtUSDStr = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-  const [drawer, setDrawer] = useState<
-    | { entityCodes: string[]; entityLabel: string; mode: 'received' | 'remaining'; expected: number }
-    | null
-  >(null);
   const [issueDrawer, setIssueDrawer] = useState<ValidationIssue | null>(null);
-  const openDrawer = (row: any, mode: 'received' | 'remaining') => {
-    const codes: string[] = Array.isArray(row._codes) ? row._codes : [row._key ?? row.key];
-    if (codes.length === 0) return;
-    setDrawer({
-      entityCodes: codes,
-      entityLabel: row.entity,
-      mode,
-      expected: parseUSDNum(row.ytd),
-    });
-  };
-  const clickableCellStyle = {
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    textDecorationStyle: 'dotted' as const,
-    textUnderlineOffset: 3,
-  };
 
   // Fusionne les lignes digit + spy + comment en une seule ligne "Digit Solution"
   // dans le tableau "Détail des Remontées par Filiale".
