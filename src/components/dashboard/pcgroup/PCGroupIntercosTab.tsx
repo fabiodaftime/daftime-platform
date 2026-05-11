@@ -446,7 +446,6 @@ export function PCGroupIntercosTab({ data }: Props) {
         );
       })()}
 
-      <IntercosCashAuditLog />
 
     </div>
   );
