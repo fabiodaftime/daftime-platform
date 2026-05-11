@@ -129,6 +129,40 @@ export function validateAllMonths(opts: ValidationOptions = {}): ValidationRepor
       }
     }
 
+    // ----- SOURCE ENTITIES alignment : margeNette = ca - charges
+    // (Agency / Structuring / Digit). Détecte toute incohérence entrée
+    // dans une source amont (gross/net/expenses désalignés).
+    const sourceChecks: { entity: string; facts: ReturnType<typeof agencyFacts> }[] = [
+      { entity: 'Agency', facts: agencyFacts(monthId) },
+      { entity: 'Structuring', facts: structuringFacts(monthId) },
+      { entity: 'Digit', facts: digitFacts(monthId) },
+    ];
+    for (const s of sourceChecks) {
+      if (!s.facts) continue;
+      const expectedMarge = s.facts.ca - s.facts.charges;
+      const deltaMarge = s.facts.margeNette - expectedMarge;
+      if (Math.abs(deltaMarge) > tolerance) {
+        deltas.push({
+          metric: `${s.entity} · Marge Nette vs (CA − Charges)`,
+          expected: expectedMarge,
+          actual: s.facts.margeNette,
+          delta: deltaMarge,
+        });
+        issues.push(
+          `Désalignement ${s.entity} : Marge Nette $${Math.round(s.facts.margeNette).toLocaleString('en-US')} ≠ CA − Charges $${Math.round(expectedMarge).toLocaleString('en-US')} (${deltaMarge >= 0 ? '+' : ''}$${Math.round(deltaMarge).toLocaleString('en-US')})`,
+        );
+      }
+      if (s.facts.ca > 0) {
+        const expectedPct = (s.facts.margeNette / s.facts.ca) * 100;
+        const deltaPct = s.facts.marginPct - expectedPct;
+        if (Math.abs(deltaPct) > 0.5) {
+          issues.push(
+            `Désalignement ${s.entity} : Marge % ${s.facts.marginPct.toFixed(1)}% ≠ Marge / CA ${expectedPct.toFixed(1)}% (${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)} pt)`,
+          );
+        }
+      }
+    }
+
     // ----- SPY / Comment integrity : Marge Nette = CA - Total Charges
     // Détecte toute incohérence saisie dans le bloc manuel (frais
     // recalculés vs marge déclarée). Tolérance = même que l'option.
@@ -164,7 +198,6 @@ export function validateAllMonths(opts: ValidationOptions = {}): ValidationRepor
         }
       }
     }
-
     const allMissing = !presence.agency && !presence.structuring && !presence.digit && !presence.manual;
     let status: ValidationStatus;
     if (allMissing) status = 'missing';
