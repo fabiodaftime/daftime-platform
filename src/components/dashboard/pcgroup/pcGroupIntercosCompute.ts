@@ -152,9 +152,38 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   totalRow.notYetDue = usd(totals.notYetDue);
   totalRow.ytd = usd(totals.ytd);
 
-  // Backwards-compatible flat shape (jan/feb/exigible/mars/ytd) for existing tab UI.
+  // Dynamic table: N source-month columns + Total Exigible + Non Exigible + YTD.
+  // Garde une compat backward (jan/feb/mars) pour les anciens consommateurs.
+  const dynamicColumns = sourceMonths.map((sm) => ({
+    key: sm,
+    label: MONTH_SHORT[sm],
+    isExigible: MONTH_ORDER.indexOf(sm) + 1 <= viewIdx,
+  }));
+  const dynamicRows = perEntity.map((e) => {
+    const cells: Record<string, string> = { entity: e.rule.label };
+    e.monthly.forEach((m) => { cells[m.sourceMonth] = usd(m.amount); });
+    cells.exigible = usd(e.exigible);
+    cells.notYetDue = usd(e.notYetDue);
+    cells.ytd = usd(e.ytd);
+    return cells;
+  });
+  const dynamicTotal: Record<string, string> = { entity: 'TOTAL ATTENDU' };
+  sourceMonths.forEach((sm) => {
+    dynamicTotal[sm] = usd(perEntity.reduce((a, e) => {
+      const cell = e.monthly.find((x) => x.sourceMonth === sm);
+      return a + (cell?.amount ?? 0);
+    }, 0));
+  });
+  dynamicTotal.exigible = usd(totals.exigible);
+  dynamicTotal.notYetDue = usd(totals.notYetDue);
+  dynamicTotal.ytd = usd(totals.ytd);
+
   const legacyTable = {
-    rows: tableRows.map((r) => ({
+    columns: dynamicColumns,
+    rows: dynamicRows,
+    total: dynamicTotal,
+    // legacy shape conservée pour compat — non utilisée par le rendu dynamique
+    legacyRows: tableRows.map((r) => ({
       entity: r.entity,
       jan: r['jan-2026'] ?? '—',
       feb: r['feb-2026'] ?? '—',
@@ -162,14 +191,6 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
       mars: r['mar-2026'] ?? r.notYetDue,
       ytd: r.ytd,
     })),
-    total: {
-      entity: totalRow.entity,
-      jan: totalRow['jan-2026'] ?? '—',
-      feb: totalRow['feb-2026'] ?? '—',
-      exigible: totalRow.exigible,
-      mars: totalRow['mar-2026'] ?? totalRow.notYetDue,
-      ytd: totalRow.ytd,
-    },
   };
 
   // -------- Scénarios --------
