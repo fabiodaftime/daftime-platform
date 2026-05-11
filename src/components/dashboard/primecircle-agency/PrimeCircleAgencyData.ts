@@ -353,18 +353,18 @@ const marData: PCAMonthData = {
   monthId: 'mar-2026',
   monthLabel: 'Mars 2026',
   monthShort: 'MAR 2026',
-  gross: 46402, expenses: 16555, net: 29892, pcaShare: 14946,
+  gross: 46402, expenses: 16510, net: 29892, pcaShare: 14946,
   transactions: 149, mediaSpend: 1244096, clientsActifs: 0, totalEncaisse: 0, adAccounts: 89,
   marginPct: 64.4,
   prevGross: 36184, prevExpenses: 9406, prevNet: 26778, prevPcaShare: 13389,
   prevTransactions: 148, prevMediaSpend: 515952,
   // YTD 2026 (Jan + Feb + Mar + restatement adjustments)
-  ytdNet: 65318, ytdPcaShare: 32659, ytdGross: 97471, ytdExpenses: 32198,
-  expenseRatio: 35.7,
+  ytdNet: 65318, ytdPcaShare: 32659, ytdGross: 97471, ytdExpenses: 32153,
+  expenseRatio: 35.6,
   expenseBreakdown: [
     { name: "Ads", value: 11163 }, { name: "Setup Cost", value: 3500 },
     { name: "Salary", value: 1400 }, { name: "Master Referral", value: 307 },
-    { name: "No Limit Referral", value: 140 }, { name: "Transaction Fees", value: 45 },
+    { name: "No Limit Referral", value: 140 },
   ],
   clientLifecycle: [
     { status: "New", count: 104, color: C.green },
@@ -382,8 +382,7 @@ const marData: PCAMonthData = {
     { l: "Ads (Facebook)", v: -11163, prev: -6666, bg: null, b: false },
     { l: "Master Referral", v: -307, prev: -211, bg: null, b: false },
     { l: "No Limit Referral", v: -140, prev: -30, bg: null, b: false },
-    { l: "Transaction Fees", v: -45, prev: 0, bg: null, b: false },
-    { l: "TOTAL EXPENSES", v: -16555, prev: -9406, bg: "redSoft", b: true },
+    { l: "TOTAL EXPENSES", v: -16510, prev: -9406, bg: "redSoft", b: true },
     { l: "NET REVENUE", v: 29892, prev: 26778, bg: "primarySoft", b: true },
     { l: "PCA Share (50%)", v: 14946, prev: 13389, bg: "purpleSoft", b: true },
     { l: "PC Retained (50%)", v: 14946, prev: 13389, bg: "accentSoft", b: true },
@@ -472,7 +471,7 @@ const marData: PCAMonthData = {
   monthlyTrend: [
     { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
     { month: "Feb-26", gross: 36184, net: 26778, expenses: 9406, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
-    { month: "Mar-26", gross: 46402, net: 29892, expenses: 16555, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
+    { month: "Mar-26", gross: 46402, net: 29892, expenses: 16510, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
   ],
 };
 
@@ -481,7 +480,7 @@ const marData: PCAMonthData = {
 // ⚠️ Feb 2026 restated (gross $36,184, expenses $9,406, net $26,778, pcaShare $13,389).
 // ⚠️ Jan 2026 restated (gross $14,885, net $8,648, pcaShare $4,324). YTD :
 //   YTD Gross   = 14885 + 36184 + 46402 + 58853 = $156,324
-//   YTD Exp     =  6237 +  9406 + 16555 + 13313 =  $45,511
+//   YTD Exp     =  6237 +  9406 + 16510 + 13313 =  $45,466
 //   YTD Net     =  8648 + 26778 + 29892 + 45541 = $110,859
 //   YTD PCA     =  4324 + 13389 + 14946 + 22770 =  $55,429
 const aprData: PCAMonthData = {
@@ -491,9 +490,9 @@ const aprData: PCAMonthData = {
   gross: 58853, expenses: 13313, net: 45541, pcaShare: 22770,
   transactions: 184, mediaSpend: 1629485, clientsActifs: 82, totalEncaisse: 0, adAccounts: 89,
   marginPct: 77.4,
-  prevGross: 46402, prevExpenses: 16555, prevNet: 29892, prevPcaShare: 14946,
+  prevGross: 46402, prevExpenses: 16510, prevNet: 29892, prevPcaShare: 14946,
   prevTransactions: 149, prevMediaSpend: 1244096,
-  ytdNet: 110859, ytdPcaShare: 55429, ytdGross: 156324, ytdExpenses: 45511,
+  ytdNet: 110859, ytdPcaShare: 55429, ytdGross: 156324, ytdExpenses: 45466,
   expenseRatio: 22.6,
   expenseBreakdown: [
     { name: "Ads", value: 5719 },
@@ -523,7 +522,7 @@ const aprData: PCAMonthData = {
     { l: "No Limit Referral", v: -45, prev: -140, bg: null, b: false },
     { l: "Mathias Referral", v: -213, prev: 0, bg: null, b: false },
     { l: "Transaction Fees", v: -1209, prev: -45, bg: null, b: false },
-    { l: "TOTAL EXPENSES", v: -13313, prev: -16555, bg: "redSoft", b: true },
+    { l: "TOTAL EXPENSES", v: -13313, prev: -16510, bg: "redSoft", b: true },
     { l: "NET REVENUE", v: 45541, prev: 29892, bg: "primarySoft", b: true },
     { l: "PCA Share (50%)", v: 22770, prev: 14946, bg: "purpleSoft", b: true },
     { l: "PC Retained (50%)", v: 22770, prev: 14946, bg: "accentSoft", b: true },
@@ -624,7 +623,7 @@ const aprData: PCAMonthData = {
   monthlyTrend: [
     { month: "Jan-26", gross: 14885, net: 8648, expenses: 6237, media: 279691, ccMedia: 258682, clMedia: 21009, newClients: 21, renewed: 20, upgraded: 1, trial: 20 },
     { month: "Feb-26", gross: 36184, net: 26778, expenses: 9406, media: 515952, ccMedia: 304968, clMedia: 210984, newClients: 118, renewed: 21, upgraded: 6, trial: 3 },
-    { month: "Mar-26", gross: 46402, net: 29892, expenses: 16555, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
+    { month: "Mar-26", gross: 46402, net: 29892, expenses: 16510, media: 1244096, ccMedia: 1104200, clMedia: 139896, newClients: 104, renewed: 27, upgraded: 6, trial: 12 },
     { month: "Apr-26", gross: 58853, net: 45541, expenses: 13313, media: 1629485, ccMedia: 1586420, clMedia: 43125, newClients: 87, renewed: 63, upgraded: 9, trial: 9 },
   ],
 };
