@@ -207,41 +207,6 @@ export function PCGroupYTDTab({ data }: Props) {
         </div>
       )}
 
-      {/* Marge Nette YTD par Entité */}
-      <div className="pcg-section">
-        <div className="pcg-section-header">
-          <h3 className="pcg-section-title">🏢 Marge Nette YTD par Entité</h3>
-        </div>
-        <div className="pcg-section-body">
-          <table className="pcg-comparison-table">
-            <thead>
-              <tr>
-                <th>Entité</th><th>Janvier</th><th>Février</th>
-                {hasMar && <th>Mars</th>}
-                {hasAvr && <th>Avril</th>}
-                <th>YTD</th><th>% du Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ytdEntityTable.map((row: any, i) => (
-                <tr key={i}>
-                  <td>{row.entity}</td><td>{row.jan ?? '—'}</td><td>{row.feb ?? '—'}</td>
-                  {hasMar && <td>{row.mar ?? '—'}</td>}
-                  {hasAvr && <td>{row.avr ?? '—'}</td>}
-                  <td>{row.ytd}</td><td>{row.pct}</td>
-                </tr>
-              ))}
-              <tr className="pcg-comparison-total">
-                <td>{ytdEntityTotal.entity}</td><td>{ytdEntityTotal.jan ?? '—'}</td><td>{ytdEntityTotal.feb ?? '—'}</td>
-                {hasMar && <td>{(ytdEntityTotal as any).mar ?? '—'}</td>}
-                {hasAvr && <td>{(ytdEntityTotal as any).avr ?? '—'}</td>}
-                <td>{ytdEntityTotal.ytd}</td><td>{ytdEntityTotal.pct}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Réserves par Entité */}
       <div className="pcg-section">
         <div className="pcg-section-header">
