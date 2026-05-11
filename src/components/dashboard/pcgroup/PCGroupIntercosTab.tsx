@@ -46,9 +46,105 @@ export function PCGroupIntercosTab({ data }: Props) {
   if (!intercos) return null;
 
   const { kpis, table, recap } = intercos;
+  const monthLabel = (data as any).monthLabel ?? '';
+  const sourceMonths = table.columns.map((c: any) => c.label).join(', ');
+  const safeLabel = String(monthLabel).replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'ytd';
+
+  const buildTableRows = () => {
+    const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter'];
+    const rows = table.rows.map((r: any) => [
+      r.entity,
+      ...table.columns.map((c: any) => r[c.key] ?? '—'),
+      r.ytd,
+    ]);
+    const total = [
+      table.total.entity,
+      ...table.columns.map((c: any) => table.total[c.key] ?? '—'),
+      table.total.ytd,
+    ];
+    return { header, rows, total };
+  };
+
+  const buildRecapRows = () => {
+    const header = ['Indicateur', 'Scénario 1 (Base)', 'Scénario 2 (+ Apport Max)'];
+    const rows = recap.map((r: any) => [r.label, r.s1, r.s2]);
+    return { header, rows };
+  };
+
+  const exportCSV = () => {
+    const t = buildTableRows();
+    const rc = buildRecapRows();
+    const lines: any[][] = [];
+    lines.push([`Récapitulatif Intercos — YTD ${monthLabel}`]);
+    lines.push([`Mois sources: ${sourceMonths}`]);
+    lines.push([]);
+    lines.push(['== Détail des Remontées par Filiale ==']);
+    lines.push(t.header);
+    t.rows.forEach((r) => lines.push(r));
+    lines.push(t.total);
+    lines.push([]);
+    lines.push(['== Récapitulatif Situation Intercos ==']);
+    lines.push(rc.header);
+    rc.rows.forEach((r) => lines.push(r));
+    const csv = Papa.unparse(lines);
+    downloadBlob('\uFEFF' + csv, `intercos_${safeLabel}.csv`, 'text/csv;charset=utf-8;');
+  };
+
+  const exportPDF = () => {
+    const t = buildTableRows();
+    const rc = buildRecapRows();
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(14);
+    doc.text(`Récapitulatif Intercos — YTD ${monthLabel}`, 40, 40);
+    doc.setFontSize(9);
+    doc.text(`Mois sources: ${sourceMonths}`, 40, 58);
+
+    // KPIs
+    autoTable(doc, {
+      startY: 72,
+      head: [['Indicateur', 'Valeur', 'Détail']],
+      body: kpis.map((k: any) => [k.label, k.value, k.detail ?? '']),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [30, 58, 95] },
+    });
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 16,
+      head: [t.header],
+      body: [...t.rows, t.total],
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [30, 58, 95] },
+      didParseCell: (data) => {
+        if (data.row.index === t.rows.length && data.section === 'body') {
+          data.cell.styles.fillColor = [30, 58, 95];
+          data.cell.styles.textColor = 255;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      },
+    });
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 16,
+      head: [rc.header],
+      body: rc.rows,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [30, 58, 95] },
+    });
+
+    doc.save(`intercos_${safeLabel}.pdf`);
+  };
 
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 12 }}>
+        <Button variant="outline" size="sm" onClick={exportCSV}>
+          <Download className="h-4 w-4 mr-2" /> Export CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={exportPDF}>
+          <FileText className="h-4 w-4 mr-2" /> Export PDF
+        </Button>
+      </div>
+
       {/* KPI Hero */}
       <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {kpis.map((k: any, i: number) => (
