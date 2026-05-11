@@ -647,30 +647,31 @@ export function buildPCGroupMonthData(
     net: Math.round(m.facts.resultatNetHolding),
   }));
 
-  const buildReservesRow = (entity: string, k: BuildEntityKey) => {
+  const buildReservesRow = (entity: string, sel: (f: ConsolidatedFacts) => number) => {
     const row: any = { entity };
-    monthsForCols.forEach((m) => { row[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(entityMarge(m.facts, k) * 0.10); });
-    const total = monthsForCols.reduce((a, m) => a + entityMarge(m.facts, k) * 0.10, 0);
+    monthsForCols.forEach((m) => { row[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(sel(m.facts) * 0.10); });
+    const total = monthsForCols.reduce((a, m) => a + sel(m.facts) * 0.10, 0);
     row.ytd = usdR(total);
     return row;
   };
   const reservesEntityTable = [
-    buildReservesRow('Agency (Part PCA)', 'agency'),
-    buildReservesRow('Structuring', 'structuring'),
-    buildReservesRow('Digit Solution', 'digit'),
-    buildReservesRow('SPY', 'spy'),
-    buildReservesRow('Comment/Trustpilot', 'comment'),
+    buildReservesRow('Agency (Part PCA)', (f) => f.agencyPartPCA),
+    buildReservesRow('Structuring', (f) => f.structuringMargeNette),
+    buildReservesRow('Digit Solution (total)', digitConsolidatedMarge),
+    buildReservesRow('   ↳ dont Digit Core', (f) => f.digitMargeNette),
+    buildReservesRow('   ↳ dont SPY', (f) => f.spyMargeNette),
+    buildReservesRow('   ↳ dont Comment/Trustpilot', (f) => f.commentMargeNette),
   ];
   const reservesEntityTotal: any = { entity: 'TOTAL RÉSERVES' };
   monthsForCols.forEach((m) => { reservesEntityTotal[BUILD_MONTH_KEY[m.id as MonthId]] = usdR(m.facts.reservesFiliales); });
   reservesEntityTotal.ytd = usdR(ytd.reservesYTD);
 
+  const digitConsolidatedYTD =
+    ytd.perEntityYTD.digit + ytd.perEntityYTD.spy + ytd.perEntityYTD.comment;
   const reservesEntries: { name: string; total: number }[] = [
     { name: 'Agency (Part PCA)', total: ytd.perEntityYTD.agency * 0.10 },
     { name: 'Structuring', total: ytd.perEntityYTD.structuring * 0.10 },
-    { name: 'Digit Solution', total: ytd.perEntityYTD.digit * 0.10 },
-    { name: 'SPY', total: ytd.perEntityYTD.spy * 0.10 },
-    { name: 'Comment/Trustpilot', total: ytd.perEntityYTD.comment * 0.10 },
+    { name: 'Digit Solution', total: digitConsolidatedYTD * 0.10 },
   ].sort((a, b) => b.total - a.total);
   const top3 = reservesEntries.slice(0, 3);
   const tail = reservesEntries.slice(3);
