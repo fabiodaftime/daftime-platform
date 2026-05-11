@@ -213,6 +213,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/csv-import"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminCsvImport />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
