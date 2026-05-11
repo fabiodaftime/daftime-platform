@@ -34,11 +34,11 @@ const EXPECTED: Record<'jan-2026' | 'feb-2026' | 'mar-2026', Expected> = {
     resultatNetHolding: 68_373,
   },
   'feb-2026': {
-    caGroupe: 230_910,
-    margeBruteGroupe: 76_522,
-    reservesFiliales: 7_652,
-    remonteeHolding: 68_870,
-    resultatNetHolding: 57_980,
+    caGroupe: 232_014,
+    margeBruteGroupe: 77_674,
+    reservesFiliales: 7_767,
+    remonteeHolding: 69_907,
+    resultatNetHolding: 59_017,
   },
   'mar-2026': {
     caGroupe: 221_860,
