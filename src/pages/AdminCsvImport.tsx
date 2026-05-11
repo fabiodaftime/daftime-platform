@@ -399,12 +399,7 @@ function toCsv(headers: readonly string[], rows: any[]): string {
   return [headers.join(','), ...rows.map((r) => headers.map((h) => esc(r[h])).join(','))].join('\n');
 }
 
-type PreviewState = {
-  kind: 'pcg' | 'fin';
-  headers: readonly string[];
-  rows: any[];
-  filename: string;
-} | null;
+
 
 type ExportTarget = {
   kind: 'pcg' | 'fin';
