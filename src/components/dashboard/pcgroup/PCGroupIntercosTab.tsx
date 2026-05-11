@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, FileText, AlertTriangle } from 'lucide-react';
 import { type PCGroupMonthData } from './PCGroupData';
 import { validateDigitConsistency, type ValidationIssue } from './digitConsistencyValidator';
-import { IntercosCashAuditLog } from './IntercosCashAuditLog';
+
 
 import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
@@ -192,8 +192,27 @@ export function PCGroupIntercosTab({ data }: Props) {
         </Button>
       </div>
 
+      {/* Rappel : remontées de cash effectives en mai */}
+      <div
+        style={{
+          border: '1px solid #1E3A5F',
+          borderLeft: '4px solid #D4A855',
+          background: 'rgba(212, 168, 85, 0.08)',
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 16,
+          fontSize: 13,
+          color: '#0F1E33',
+        }}
+      >
+        <strong style={{ color: '#1E3A5F' }}>Note —</strong>{' '}
+        Les montants « reçus » affichés correspondent aux remontées de cash <strong>effectivement encaissées en mai 2025</strong>,
+        intégrées au dashboard du mois d'avril pour refléter la réalité des flux interco.
+      </div>
+
       {/* Validation cohérence Digit / SPY / Comment */}
       {validationIssues.length > 0 && (
+
         <div
           style={{
             border: `1px solid ${hasErrors ? '#EF4444' : '#F59E0B'}`,
@@ -427,7 +446,6 @@ export function PCGroupIntercosTab({ data }: Props) {
         );
       })()}
 
-      <IntercosCashAuditLog />
 
     </div>
   );
