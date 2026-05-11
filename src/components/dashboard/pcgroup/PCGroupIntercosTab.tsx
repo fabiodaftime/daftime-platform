@@ -28,7 +28,7 @@ export function PCGroupIntercosTab({ data }: Props) {
   const intercos = (data as any).intercos;
   if (!intercos) return null;
 
-  const { kpis, table, calendar, recap } = intercos;
+  const { kpis, table, recap } = intercos;
 
   return (
     <div>
@@ -87,38 +87,6 @@ export function PCGroupIntercosTab({ data }: Props) {
       </div>
 
       {/* Section "Analyse de la Situation Financière" retirée à la demande client */}
-      {/* Calendrier d'exigibilité */}
-      <div className="pcg-section">
-        <div className="pcg-section-header">
-          <h3 className="pcg-section-title">📅 Calendrier d'Exigibilité</h3>
-        </div>
-        <div className="pcg-section-body">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-            {calendar.map((c: any, i: number) => {
-              const isNavy = c.level === 'navy';
-              return (
-                <div
-                  key={i}
-                  style={{
-                    background: isNavy ? 'linear-gradient(135deg, #1E3A5F 0%, #2D4A6F 100%)' : '#F8F9FC',
-                    color: isNavy ? '#fff' : '#0F172A',
-                    borderRadius: 12,
-                    padding: '1.25rem',
-                    textAlign: 'center',
-                    borderLeft: isNavy ? 'none' : `4px solid ${LEVEL_BORDER[c.level]}`,
-                  }}
-                >
-                  <div style={{ fontSize: '0.7rem', fontWeight: 600, color: isNavy ? 'rgba(255,255,255,0.7)' : '#94A3B8', textTransform: 'uppercase', letterSpacing: 1 }}>{c.month}</div>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '1.25rem', fontWeight: 700, margin: '0.5rem 0' }}>{c.amount}</div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: isNavy ? 'rgba(255,255,255,0.8)' : COLOR[c.level] }}>{c.status}</div>
-                  <div style={{ fontSize: '0.7rem', color: isNavy ? 'rgba(255,255,255,0.6)' : '#94A3B8', marginTop: '0.25rem' }}>{c.tag}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* Récapitulatif */}
       <div className="pcg-section">
         <div className="pcg-section-header">
