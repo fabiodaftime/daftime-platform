@@ -187,10 +187,13 @@ const additiveCheck = (
   actual: number,
   ytdSourcePath: string,
   field: BaseField,
-  tolerance = TOLERANCE_ABS,
+  tolerance?: number,
 ): YTDValidationIssue | null => {
   const delta = actual - expected;
-  if (Math.abs(delta) <= tolerance) return null;
+  // Relative tolerance: ignore drifts under max($500, 0.5% of expected) — rounding noise on
+  // 6-figure YTD bases (e.g. $200 on a $183k figure) is not a real consistency issue.
+  const effective = tolerance ?? Math.max(500, Math.abs(expected) * 0.005);
+  if (Math.abs(delta) <= effective) return null;
   return {
     month,
     indicator,
