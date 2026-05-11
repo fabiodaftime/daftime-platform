@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Legend, BarChart } from 'recharts';
-import { C, fmtF, fmt, pctChg, PIE_COLORS, type PCAMonthData } from './PrimeCircleAgencyData';
+import { C, fmtF, fmt, pctChg, PIE_COLORS, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthData, type PCAMonthId } from './PrimeCircleAgencyData';
 import { PCATooltip } from './PCAShared';
 
 interface Props { data: PCAMonthData; }
@@ -7,16 +7,29 @@ interface Props { data: PCAMonthData; }
 export function PCAOverviewTab({ data }: Props) {
   const hasPrev = data.prevGross > 0;
 
+  // YTD months up to and including the currently selected one
+  const ytdMonthIds = (() => {
+    const ids = PCA_AVAILABLE_MONTHS.map((m) => m.id as PCAMonthId);
+    const idx = ids.indexOf(data.monthId);
+    return idx >= 0 ? ids.slice(0, idx + 1) : ids;
+  })();
+  const ytdMonths: PCAMonthData[] = ytdMonthIds.map((id) => getPCAMonthData(id));
+
+  // Aggregated YTD expense breakdown across all months up to current
+  const ytdExpenseBreakdown = (() => {
+    const acc = new Map<string, number>();
+    ytdMonths.forEach((m) => {
+      m.expenseBreakdown.forEach((e) => acc.set(e.name, (acc.get(e.name) || 0) + e.value));
+    });
+    return Array.from(acc.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  })();
+  const ytdExpensesTotal = ytdExpenseBreakdown.reduce((s, e) => s + e.value, 0);
+  const ytdAdsValue = ytdExpenseBreakdown.find((e) => e.name === 'Ads')?.value || 0;
+
   const adsCost = data.expenseBreakdown.find(r => r.name === "Ads");
   const setupCost = data.expenseBreakdown.find(r => r.name === "Setup Cost");
-
-  // Costs comparison data for bar chart
-  const costsCompData = [
-    { name: "Setup Cost", jan: data.waterfallRows.find(r => r.l === "Setup Cost")?.prev ? Math.abs(data.waterfallRows.find(r => r.l === "Setup Cost")!.prev) : 0, feb: setupCost?.value || 0 },
-    { name: "Salary", jan: 1200, feb: 1200 },
-    { name: "Ads", jan: data.waterfallRows.find(r => r.l === "Ads")?.prev ? Math.abs(data.waterfallRows.find(r => r.l === "Ads")!.prev) : 0, feb: adsCost?.value || 0 },
-    { name: "Referrals", jan: data.waterfallRows.find(r => r.l === "Master Referral")?.prev ? Math.abs(data.waterfallRows.find(r => r.l === "Master Referral")!.prev) : 0, feb: (data.expenseBreakdown.find(r => r.name === "Master Referral")?.value || 0) + (data.expenseBreakdown.find(r => r.name === "No Limit Referral")?.value || 0) },
-  ];
 
   // Margin data
   const marginData = data.monthlyTrend.map(m => ({
@@ -119,13 +132,13 @@ export function PCAOverviewTab({ data }: Props) {
 
       <div className="pca-two-col">
         <div className="pca-section">
-          <h3 className="pca-section-title">Répartition des Charges</h3>
-          <p className="pca-section-subtitle">{fmtF(data.expenses)} total — Ads = {((adsCost?.value || 0) / data.expenses * 100).toFixed(0)}%</p>
+          <h3 className="pca-section-title">Répartition des Charges — YTD</h3>
+          <p className="pca-section-subtitle">{fmtF(ytdExpensesTotal)} cumulés ({ytdMonths.length} mois) — Ads = {ytdExpensesTotal ? ((ytdAdsValue / ytdExpensesTotal) * 100).toFixed(0) : 0}%</p>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie data={data.expenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={90} paddingAngle={3}
+              <Pie data={ytdExpenseBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={90} paddingAngle={3}
                 label={(e) => `${e.name} $${e.value.toLocaleString()}`} labelLine={{ stroke: C.textLight }}>
-                {data.expenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i]} />)}
+                {ytdExpenseBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip content={<PCATooltip />} />
             </PieChart>
@@ -167,48 +180,52 @@ export function PCAOverviewTab({ data }: Props) {
       <div className="pca-section-header">Gross Margin</div>
       <div className="pca-two-col">
         <div className="pca-section">
-          <table className="pca-table">
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left' }}></th>
-                {hasPrev && <th style={{ textAlign: 'right' }}>Jan-26</th>}
-                <th style={{ textAlign: 'right' }}>Feb-26</th>
-                {hasPrev && <th style={{ textAlign: 'right' }}>Variation</th>}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ fontWeight: 700, textAlign: 'left' }}>Gross Revenue</td>
-                {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevGross)}</td>}
-                <td style={{ textAlign: 'right' }}>{fmtF(data.gross)}</td>
-                {hasPrev && <td style={{ textAlign: 'right' }}><span className="pca-change-badge">{pctChg(data.gross, data.prevGross)}</span></td>}
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 700, textAlign: 'left' }}>Total Expenses</td>
-                {hasPrev && <td style={{ textAlign: 'right' }}>{fmtF(data.prevExpenses)}</td>}
-                <td style={{ textAlign: 'right' }}>{fmtF(data.expenses)}</td>
-                {hasPrev && <td style={{ textAlign: 'right' }}><span className="pca-change-badge">{pctChg(data.expenses, data.prevExpenses)}</span></td>}
-              </tr>
-              <tr style={{ background: C.surfaceAlt }}>
-                <td style={{ fontWeight: 700, textAlign: 'left' }}>Gross Margin ($)</td>
-                {hasPrev && <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.prevNet)}</td>}
-                <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(data.net)}</td>
-                {hasPrev && <td style={{ textAlign: 'right' }}><span className="pca-change-badge">{pctChg(data.net, data.prevNet)}</span></td>}
-              </tr>
-              <tr style={{ background: C.surfaceAlt }}>
-                <td style={{ fontWeight: 700, textAlign: 'left' }}>Gross Margin (%)</td>
-                {hasPrev && <td style={{ textAlign: 'right', fontWeight: 700 }}>{(data.prevNet / data.prevGross * 100).toFixed(1)}%</td>}
-                <td style={{ textAlign: 'right', fontWeight: 700 }}>{data.marginPct}%</td>
-                {hasPrev && <td style={{ textAlign: 'right' }}><span className="pca-change-badge">+{(data.marginPct - data.prevNet / data.prevGross * 100).toFixed(1)} pts</span></td>}
-              </tr>
-            </tbody>
-          </table>
+          <h3 className="pca-section-title">Gross Margin — YTD mensualisé</h3>
+          <p className="pca-section-subtitle">Détail mois par mois + total YTD</p>
+          {(() => {
+            const trend = data.monthlyTrend.slice(0, ytdMonths.length);
+            const tot = trend.reduce(
+              (s, m) => ({ gross: s.gross + m.gross, expenses: s.expenses + m.expenses, net: s.net + m.net }),
+              { gross: 0, expenses: 0, net: 0 },
+            );
+            return (
+              <table className="pca-table">
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left' }}>Mois</th>
+                    <th style={{ textAlign: 'right' }}>Gross Rev.</th>
+                    <th style={{ textAlign: 'right' }}>Expenses</th>
+                    <th style={{ textAlign: 'right' }}>Gross Margin</th>
+                    <th style={{ textAlign: 'right' }}>Margin %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trend.map((m, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600, textAlign: 'left' }}>{m.month}</td>
+                      <td style={{ textAlign: 'right' }}>{fmtF(m.gross)}</td>
+                      <td style={{ textAlign: 'right' }}>{fmtF(m.expenses)}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtF(m.net)}</td>
+                      <td style={{ textAlign: 'right' }}>{m.gross > 0 ? ((m.net / m.gross) * 100).toFixed(1) : '0.0'}%</td>
+                    </tr>
+                  ))}
+                  <tr style={{ background: C.surfaceAlt }}>
+                    <td style={{ fontWeight: 700, textAlign: 'left' }}>YTD</td>
+                    <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(tot.gross)}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(tot.expenses)}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 700 }}>{fmtF(tot.net)}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 700 }}>{tot.gross > 0 ? ((tot.net / tot.gross) * 100).toFixed(1) : '0.0'}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            );
+          })()}
         </div>
 
         {hasPrev && (
           <div className="pca-section">
-            <h3 className="pca-section-title">Marge Brute — Jan vs Feb</h3>
-            <p className="pca-section-subtitle">En montant et en pourcentage</p>
+            <h3 className="pca-section-title">Marge Brute — YTD mensualisé</h3>
+            <p className="pca-section-subtitle">Évolution mois par mois (montants & %)</p>
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={marginData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.borderLight} />
