@@ -406,58 +406,158 @@ type PreviewState = {
   filename: string;
 } | null;
 
+type ExportTarget = {
+  kind: 'pcg' | 'fin';
+  table: 'pcgroup_manual_facts' | 'monthly_financials';
+  select: string;
+  orderBy: { column: string }[];
+  headers: readonly string[];
+  filenamePrefix: string;
+};
+
+const TARGETS: Record<'pcg' | 'fin', ExportTarget> = {
+  pcg: {
+    kind: 'pcg',
+    table: 'pcgroup_manual_facts',
+    select: 'month_id, entity_code, ca, charges, contribution, margin_pct, deals, warning',
+    orderBy: [{ column: 'month_id' }, { column: 'entity_code' }],
+    headers: PCG_HEADERS,
+    filenamePrefix: 'pcgroup_manual_facts',
+  },
+  fin: {
+    kind: 'fin',
+    table: 'monthly_financials',
+    select: 'company_id, year, month, revenue_actual, revenue_budget, revenue_prior_year, cash_balance, fx_rate',
+    orderBy: [{ column: 'company_id' }, { column: 'year' }, { column: 'month' }],
+    headers: FIN_HEADERS,
+    filenamePrefix: 'monthly_financials',
+  },
+};
+
+const PAGE_SIZE = 500;
+
+// Async paginated fetch with progress callback. Yields chunks (no big memory spike up-front).
+async function fetchAllPaginated(
+  target: ExportTarget,
+  onProgress: (loaded: number, total: number) => void,
+  signal: { cancelled: boolean },
+): Promise<any[]> {
+  // Get total count first
+  const countRes = await (supabase.from(target.table) as any).select(target.select, { count: 'exact', head: true });
+  if (countRes.error) throw countRes.error;
+  const total = countRes.count ?? 0;
+  onProgress(0, total);
+
+  const all: any[] = [];
+  let from = 0;
+  while (from < total) {
+    if (signal.cancelled) throw new Error('Annulé');
+    const to = Math.min(from + PAGE_SIZE - 1, total - 1);
+    let q: any = (supabase.from(target.table) as any).select(target.select).range(from, to);
+    for (const o of target.orderBy) q = q.order(o.column);
+    const { data, error } = await q;
+    if (error) throw error;
+    all.push(...(data ?? []));
+    from += PAGE_SIZE;
+    onProgress(Math.min(all.length, total), total);
+    // yield to UI thread
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  return all;
+}
+
+// Build CSV in chunks to keep UI responsive on large datasets.
+async function buildCsvChunked(
+  headers: readonly string[],
+  rows: any[],
+  onProgress: (done: number, total: number) => void,
+  signal: { cancelled: boolean },
+): Promise<string> {
+  const esc = (v: any) => {
+    if (v === null || v === undefined) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const parts: string[] = [headers.join(',')];
+  const CHUNK = 1000;
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    if (signal.cancelled) throw new Error('Annulé');
+    const slice = rows.slice(i, i + CHUNK);
+    parts.push(slice.map((r) => headers.map((h) => esc(r[h])).join(',')).join('\n'));
+    onProgress(Math.min(i + CHUNK, rows.length), rows.length);
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  return parts.join('\n');
+}
+
+type PreviewState = {
+  kind: 'pcg' | 'fin';
+  headers: readonly string[];
+  rows: any[];
+  filename: string;
+} | null;
+
+type ProgressState = { phase: 'fetch' | 'build'; loaded: number; total: number } | null;
+
 function ExportSection() {
   const [busy, setBusy] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ProgressState>(null);
   const [preview, setPreview] = useState<PreviewState>(null);
+  const cancelRef = useRef<{ cancelled: boolean }>({ cancelled: false });
 
-  const loadPCG = async () => {
-    setBusy('pcg');
+  const load = async (kind: 'pcg' | 'fin') => {
+    const target = TARGETS[kind];
+    setBusy(kind);
+    cancelRef.current = { cancelled: false };
+    setProgress({ phase: 'fetch', loaded: 0, total: 0 });
     try {
-      const { data, error } = await supabase
-        .from('pcgroup_manual_facts')
-        .select('month_id, entity_code, ca, charges, contribution, margin_pct, deals, warning')
-        .order('month_id').order('entity_code');
-      if (error) throw error;
+      const rows = await fetchAllPaginated(
+        target,
+        (loaded, total) => setProgress({ phase: 'fetch', loaded, total }),
+        cancelRef.current,
+      );
       setPreview({
-        kind: 'pcg',
-        headers: PCG_HEADERS,
-        rows: data ?? [],
-        filename: `pcgroup_manual_facts_${new Date().toISOString().slice(0, 10)}.csv`,
+        kind,
+        headers: target.headers,
+        rows,
+        filename: `${target.filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`,
       });
     } catch (e: any) {
-      toast.error(`Chargement échoué : ${e.message ?? e}`);
+      if (e?.message !== 'Annulé') toast.error(`Chargement échoué : ${e.message ?? e}`);
     } finally {
       setBusy(null);
+      setProgress(null);
     }
   };
 
-  const loadFin = async () => {
-    setBusy('fin');
-    try {
-      const { data, error } = await supabase
-        .from('monthly_financials')
-        .select('company_id, year, month, revenue_actual, revenue_budget, revenue_prior_year, cash_balance, fx_rate')
-        .order('company_id').order('year').order('month');
-      if (error) throw error;
-      setPreview({
-        kind: 'fin',
-        headers: FIN_HEADERS,
-        rows: data ?? [],
-        filename: `monthly_financials_${new Date().toISOString().slice(0, 10)}.csv`,
-      });
-    } catch (e: any) {
-      toast.error(`Chargement échoué : ${e.message ?? e}`);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const confirmDownload = () => {
+  const confirmDownload = async () => {
     if (!preview) return;
-    downloadText(preview.filename, toCsv(preview.headers, preview.rows));
-    toast.success(`${preview.rows.length} ligne(s) exportée(s)`);
-    setPreview(null);
+    setBusy('download');
+    cancelRef.current = { cancelled: false };
+    setProgress({ phase: 'build', loaded: 0, total: preview.rows.length });
+    try {
+      const csv = await buildCsvChunked(
+        preview.headers,
+        preview.rows,
+        (loaded, total) => setProgress({ phase: 'build', loaded, total }),
+        cancelRef.current,
+      );
+      downloadText(preview.filename, csv);
+      toast.success(`${preview.rows.length} ligne(s) exportée(s)`);
+      setPreview(null);
+    } catch (e: any) {
+      if (e?.message !== 'Annulé') toast.error(`Export échoué : ${e.message ?? e}`);
+    } finally {
+      setBusy(null);
+      setProgress(null);
+    }
   };
+
+  const cancel = () => {
+    cancelRef.current.cancelled = true;
+  };
+
+  const pct = progress && progress.total > 0 ? Math.round((progress.loaded / progress.total) * 100) : 0;
 
   return (
     <Card className="p-6 space-y-3">
@@ -466,21 +566,35 @@ function ExportSection() {
           <Download className="w-5 h-5" /> Export CSV
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Prévisualisez les données avant téléchargement. Format identique aux templates d'import (round-trip via upsert).
+          Génération paginée en arrière-plan (500 lignes/page) avec progression. Format identique aux templates d'import (round-trip via upsert).
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={loadPCG} disabled={busy !== null}>
+        <Button variant="outline" onClick={() => load('pcg')} disabled={busy !== null}>
           {busy === 'pcg' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
           Prévisualiser PCGroup manual facts
         </Button>
-        <Button variant="outline" onClick={loadFin} disabled={busy !== null}>
+        <Button variant="outline" onClick={() => load('fin')} disabled={busy !== null}>
           {busy === 'fin' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
           Prévisualiser Monthly financials
         </Button>
       </div>
 
-      {preview && (
+      {progress && (
+        <div className="space-y-2 border-t pt-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              {progress.phase === 'fetch' ? 'Récupération des données' : 'Construction du CSV'} —{' '}
+              {progress.loaded.toLocaleString()} / {progress.total.toLocaleString()} ligne(s)
+            </span>
+            <span>{pct}%</span>
+          </div>
+          <Progress value={pct} />
+          <Button variant="ghost" size="sm" onClick={cancel}>Annuler</Button>
+        </div>
+      )}
+
+      {preview && !progress && (
         <div className="space-y-3 border-t pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="default">{preview.rows.length} ligne(s)</Badge>
@@ -510,16 +624,17 @@ function ExportSection() {
             )}
           </div>
           <div className="flex gap-2">
-            <Button onClick={confirmDownload} disabled={preview.rows.length === 0}>
+            <Button onClick={confirmDownload} disabled={preview.rows.length === 0 || busy !== null}>
               <Download className="w-4 h-4 mr-2" /> Télécharger le CSV
             </Button>
-            <Button variant="ghost" onClick={() => setPreview(null)}>Annuler</Button>
+            <Button variant="ghost" onClick={() => setPreview(null)} disabled={busy !== null}>Annuler</Button>
           </div>
         </div>
       )}
     </Card>
   );
 }
+
 
 
 
