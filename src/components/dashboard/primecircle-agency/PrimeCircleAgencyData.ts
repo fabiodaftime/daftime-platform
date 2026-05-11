@@ -522,7 +522,7 @@ const aprData: PCAMonthData = {
     { l: "No Limit Referral", v: -45, prev: -140, bg: null, b: false },
     { l: "Mathias Referral", v: -213, prev: 0, bg: null, b: false },
     { l: "Transaction Fees", v: -1209, prev: -45, bg: null, b: false },
-    { l: "TOTAL EXPENSES", v: -13313, prev: -16555, bg: "redSoft", b: true },
+    { l: "TOTAL EXPENSES", v: -13313, prev: -16510, bg: "redSoft", b: true },
     { l: "NET REVENUE", v: 45541, prev: 29892, bg: "primarySoft", b: true },
     { l: "PCA Share (50%)", v: 22770, prev: 14946, bg: "purpleSoft", b: true },
     { l: "PC Retained (50%)", v: 22770, prev: 14946, bg: "accentSoft", b: true },
