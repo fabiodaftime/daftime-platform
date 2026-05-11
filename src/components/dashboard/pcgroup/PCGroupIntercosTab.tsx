@@ -155,6 +155,38 @@ export function PCGroupIntercosTab({ data }: Props) {
         </Button>
       </div>
 
+      {/* Validation cohérence Digit / SPY / Comment */}
+      {validationIssues.length > 0 && (
+        <div
+          style={{
+            border: `1px solid ${hasErrors ? '#EF4444' : '#F59E0B'}`,
+            borderLeft: `4px solid ${hasErrors ? '#EF4444' : '#F59E0B'}`,
+            background: hasErrors ? 'rgba(239, 68, 68, 0.05)' : 'rgba(245, 158, 11, 0.05)',
+            borderRadius: 8,
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: hasErrors ? '#B91C1C' : '#B45309', fontWeight: 700 }}>
+            <AlertTriangle className="h-5 w-5" />
+            <span>
+              {hasErrors ? 'Erreur de cohérence détectée' : 'Avertissement de cohérence'} —
+              Digit Solution / SPY / Comment-Trust ({validationIssues.length} {validationIssues.length > 1 ? 'alertes' : 'alerte'})
+            </span>
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151' }}>
+            {validationIssues.map((iss, i) => (
+              <li key={i} style={{ marginBottom: 4 }}>
+                <strong style={{ color: iss.severity === 'error' ? '#B91C1C' : '#B45309' }}>
+                  [{iss.monthLabel} · {iss.entity.toUpperCase()}]
+                </strong>{' '}
+                {iss.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* KPI Hero */}
       <div className="pcg-hero-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {kpis.map((k: any, i: number) => (
