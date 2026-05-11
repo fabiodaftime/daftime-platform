@@ -147,29 +147,37 @@ export default function AdminHome() {
         {/* Title and actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <img 
-              src={daftimeLogo} 
-              alt="Daftime Advisory" 
-              className="h-10 w-auto"
-            />
+            {isSuperAdmin && (
+              <img 
+                src={daftimeLogo} 
+                alt="Daftime Advisory" 
+                className="h-10 w-auto"
+              />
+            )}
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Mes Clients</h2>
-              <p className="text-muted-foreground">
-                {companies.length} entreprise{companies.length > 1 ? 's' : ''} gérée{companies.length > 1 ? 's' : ''}
-              </p>
+              <h2 className="text-2xl font-bold text-foreground">
+                {isSuperAdmin ? 'Mes Clients' : 'Mes Dashboards'}
+              </h2>
+              {isSuperAdmin && (
+                <p className="text-muted-foreground">
+                  {companies.length} entreprise{companies.length > 1 ? 's' : ''} gérée{companies.length > 1 ? 's' : ''}
+                </p>
+              )}
             </div>
           </div>
           
           <div className="flex gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un client..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64"
-              />
-            </div>
+            {(isSuperAdmin || companies.length > 6) && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher un client..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-64"
+                />
+              </div>
+            )}
             {isSuperAdmin && (
               <>
                 <Button variant="outline" onClick={() => navigate('/admin/users')}>
