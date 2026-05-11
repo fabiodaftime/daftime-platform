@@ -1036,6 +1036,7 @@ export function buildPCGroupMonthData(
     consolidatedPL: consolidatedPL as any,
     holdingKPIs: holdingKPIs as any,
     holdingComparison: holdingComparison as any,
+    holdingSynthese: holdingSynthese as any,
     holdingPieData: holdingPieData as any,
     holdingNetResult: usdR(facts.resultatNetHolding),
     directors: directors as any,
