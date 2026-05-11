@@ -2,6 +2,7 @@
 // Lit les 6 tables et les mutations CRUD.
 
 import { supabase } from '@/integrations/supabase/client';
+import { setPCGroupConfig } from './configStore';
 import type {
   PCGroupConfig,
   PCGEntityRow,
@@ -11,6 +12,13 @@ import type {
   PCGHoldingFactRow,
   PCGIntercosCashRow,
 } from './types';
+
+/** Recharge la config et hydrate le store → recalcule automatiquement
+ *  les soldes restants partout dans le dashboard. */
+export async function refreshPCGroupConfig(): Promise<void> {
+  const fresh = await fetchPCGroupConfig();
+  setPCGroupConfig(fresh);
+}
 
 export async function fetchPCGroupConfig(): Promise<PCGroupConfig> {
   const [entities, months, rules, manualFacts, holdingFacts, intercosCash] = await Promise.all([
