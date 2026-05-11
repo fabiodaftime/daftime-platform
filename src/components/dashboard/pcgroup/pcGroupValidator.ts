@@ -129,6 +129,42 @@ export function validateAllMonths(opts: ValidationOptions = {}): ValidationRepor
       }
     }
 
+    // ----- SPY / Comment integrity : Marge Nette = CA - Total Charges
+    // Détecte toute incohérence saisie dans le bloc manuel (frais
+    // recalculés vs marge déclarée). Tolérance = même que l'option.
+    if (presence.manual) {
+      const manual = MANUAL_ENTITIES[monthId]!;
+      const checks: { entity: string; ca: number; charges: number; marge: number; pct: number }[] = [
+        { entity: 'SPY', ca: manual.spy.ca, charges: manual.spy.charges, marge: manual.spy.margeNette, pct: manual.spy.marginPct },
+        { entity: 'Comment', ca: manual.comment.ca, charges: manual.comment.charges, marge: manual.comment.margeNette, pct: manual.comment.marginPct },
+      ];
+      for (const c of checks) {
+        const expectedMarge = c.ca - c.charges;
+        const deltaMarge = c.marge - expectedMarge;
+        if (Math.abs(deltaMarge) > tolerance) {
+          deltas.push({
+            metric: `${c.entity} · Marge Nette vs (CA − Charges)`,
+            expected: expectedMarge,
+            actual: c.marge,
+            delta: deltaMarge,
+          });
+          issues.push(
+            `Incohérence ${c.entity} : Marge Nette saisie $${Math.round(c.marge).toLocaleString('en-US')} ≠ CA − Charges $${Math.round(expectedMarge).toLocaleString('en-US')} (${deltaMarge >= 0 ? '+' : ''}$${Math.round(deltaMarge).toLocaleString('en-US')})`,
+          );
+        }
+        // Marge % cohérente avec marge / CA
+        if (c.ca > 0) {
+          const expectedPct = (c.marge / c.ca) * 100;
+          const deltaPct = c.pct - expectedPct;
+          if (Math.abs(deltaPct) > 0.5) {
+            issues.push(
+              `Incohérence ${c.entity} : Marge % saisie ${c.pct.toFixed(1)}% ≠ Marge / CA ${expectedPct.toFixed(1)}% (${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)} pt)`,
+            );
+          }
+        }
+      }
+    }
+
     const allMissing = !presence.agency && !presence.structuring && !presence.digit && !presence.manual;
     let status: ValidationStatus;
     if (allMissing) status = 'missing';
