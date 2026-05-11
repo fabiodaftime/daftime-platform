@@ -191,12 +191,17 @@ export function IntercoCashSourceDrawer({
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id} style={{ borderTop: '1px solid #F3F4F6' }}>
-                    <td style={{ padding: 8, color: '#374151', fontWeight: 600 }}>{r.month_id}</td>
-                    <td style={{ padding: 8, color: '#6B7280', textTransform: 'capitalize' }}>{r.entity_code}</td>
-                    <td style={{ padding: 8, color: '#059669', fontWeight: 700, textAlign: 'right' }}>
+                    <td style={{ padding: 8, color: '#374151', fontWeight: 600, verticalAlign: 'top' }}>{r.month_id}</td>
+                    <td style={{ padding: 8, color: '#6B7280', textTransform: 'capitalize', verticalAlign: 'top' }}>{r.entity_code}</td>
+                    <td style={{ padding: 8, color: '#059669', fontWeight: 700, textAlign: 'right', verticalAlign: 'top' }}>
                       {fmtUSD(Number(r.amount_received ?? 0))}
+                      {r.note ? (
+                        <div style={{ fontSize: 10, fontWeight: 500, color: '#92400E', marginTop: 4, fontStyle: 'italic', textAlign: 'right' }}>
+                          {r.note}
+                        </div>
+                      ) : null}
                     </td>
-                    <td style={{ padding: 8, color: '#9CA3AF', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: 8, color: '#9CA3AF', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
                       {new Date(r.updated_at).toLocaleDateString('fr-FR')}
                     </td>
                   </tr>
