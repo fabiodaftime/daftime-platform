@@ -100,6 +100,7 @@ export default function DashboardPrimeCircleAgency() {
         {tab === "clients" && <PCAClientsTab data={data} />}
         {tab === "media" && <PCAMediaTab data={data} />}
         {tab === "blink" && <PCABlinkTab data={data} />}
+        {tab === "integrity" && isSuperAdmin && <PCAIntegrityPanel />}
       </main>
 
       <div className="pca-footer" style={{ maxWidth: 1280, margin: '0 auto' }}>
