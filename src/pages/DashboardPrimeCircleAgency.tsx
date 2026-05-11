@@ -92,8 +92,6 @@ export default function DashboardPrimeCircleAgency() {
         </div>
       </header>
 
-      <PCAIntegrityPanel />
-
       <main className="pca-container">
         {tab === "overview" && <PCAOverviewTab data={data} />}
         {tab === "ytd" && <PCAYTDTab data={data} />}
