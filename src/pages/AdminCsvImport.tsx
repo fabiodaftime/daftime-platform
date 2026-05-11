@@ -23,6 +23,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { runPostImportValidation } from '@/lib/postImportValidation';
+import { PostImportValidationStatus } from '@/components/admin/PostImportValidationStatus';
 
 // ---------------------------------------------------------------------------
 // Templates (headers stricts — toute colonne en plus/moins est rejetée)
@@ -272,6 +274,17 @@ function CsvCard({ title, description, template, templateName, expectedHeaders, 
     try {
       const { inserted } = await commit(result.ok);
       toast.success(`${inserted} ligne(s) importée(s) dans ${title}`);
+
+      // Auto-trigger : recalcul YTD + contrôle d'alignement après chaque import.
+      const validation = runPostImportValidation({ source: title, inserted });
+      if (validation.status === 'ok') {
+        toast.success('Contrôle d\'alignement & recalcul YTD : OK');
+      } else {
+        toast.warning(
+          `Validation : ${validation.alignment.issuesCount} écart(s) d'alignement, ${validation.ytd.correctionsCount} YTD/dérivés à corriger`,
+        );
+      }
+
       setText(null); setFilename(''); if (inputRef.current) inputRef.current.value = '';
     } catch (e: any) {
       toast.error(`Échec import : ${e.message ?? e}`);
@@ -407,10 +420,12 @@ export default function AdminCsvImport() {
             </Button>
             <h1 className="text-2xl font-semibold mt-2">Import CSV</h1>
             <p className="text-sm text-muted-foreground">
-              Téléchargez le template, remplissez-le, puis envoyez-le. Toute erreur de format ou clé inconnue est listée avant l'import (aucun upload silencieux).
+              Téléchargez le template, remplissez-le, puis envoyez-le. Toute erreur de format ou clé inconnue est listée avant l'import (aucun upload silencieux). Le contrôle d'alignement et le recalcul YTD sont déclenchés automatiquement après chaque import.
             </p>
           </div>
         </div>
+
+        <PostImportValidationStatus />
 
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">
