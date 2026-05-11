@@ -37,8 +37,10 @@ function parseUSD(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+export { MONTH_LABEL as DIGIT_MONTH_LABEL };
+
 /** Read the 3 sub-product values from the Digit dashboard for a month. */
-function readDigitDashboard(month: PCGSourceMonthId) {
+export function readDigitDashboard(month: PCGSourceMonthId) {
   try {
     const d = getDigitMonthData(month as DigitMonthId);
     const core = d.overviewProducts?.find((p: any) => /Core/i.test(p.label));
