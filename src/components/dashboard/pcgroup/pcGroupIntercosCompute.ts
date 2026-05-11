@@ -80,37 +80,27 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   const recoveryRateApport =
     totals.exigible > 0 ? ((receivedTotal + apportMaxence) / totals.exigible) * 100 : 0;
 
-  // -------- KPI hero (4 cards) --------
-  const lastDueMonth = sourceMonths[Math.max(0, viewIdx - 1)];
-  const notYetLabel = sourceMonths
-    .filter((sm) => MONTH_ORDER.indexOf(sm) + 1 > viewIdx)
-    .map((sm) => MONTH_SHORT[sm])
-    .join(' + ') || '—';
-
+  // -------- KPI hero (3 cards) — vue simplifiée : à remonter / remontée / solde --------
+  const soldeYtd = totals.ytd - receivedTotal;
+  const periodLabel = `${MONTH_SHORT[sourceMonths[0]]} → ${MONTH_SHORT[sourceMonths[sourceMonths.length - 1]]}`;
   const kpis = [
     {
-      label: 'Remontées Attendues',
-      value: usd(totals.exigible),
-      detail: `Exigibles jusqu'à ${MONTH_SHORT[lastDueMonth]}`,
+      label: 'Somme à Remonter',
+      value: usd(totals.ytd),
+      detail: `Marges filiales · ${periodLabel}`,
       color: 'navy' as const,
     },
     {
-      label: 'Réellement Reçu',
+      label: 'Somme Remontée',
       value: usd(receivedTotal),
-      detail: 'Encaissé à date',
-      color: receivedTotal < totals.exigible * 0.7 ? ('danger' as const) : ('success' as const),
+      detail: 'Encaissée par la Holding',
+      color: receivedTotal < totals.ytd * 0.7 ? ('danger' as const) : ('success' as const),
     },
     {
-      label: 'Solde Dû',
-      value: usd(Math.max(0, solde)),
-      detail: 'Écart à régulariser',
-      color: solde > 0 ? ('warning' as const) : ('success' as const),
-    },
-    {
-      label: `${notYetLabel} (Non exigible)`,
-      value: usd(totals.notYetDue),
-      detail: 'Sera exigible plus tard',
-      color: 'success' as const,
+      label: 'Solde',
+      value: usd(Math.max(0, soldeYtd)),
+      detail: 'Reste à remonter',
+      color: soldeYtd > 0 ? ('warning' as const) : ('success' as const),
     },
   ];
 
