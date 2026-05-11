@@ -183,7 +183,9 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
       level,
     };
   });
-  // -------- Scénarios --------
+  const exigibleMonths = sourceMonths.filter((sm) => MONTH_ORDER.indexOf(sm) + 1 <= viewIdx);
+
+  // -------- Scénarios (kept for backward compat) --------
   const scenarios = {
     base: {
       title: 'Scénario Base',
@@ -208,42 +210,26 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     },
   };
 
-  // -------- Calendrier (vue simplifiée : montant à remonter par mois) --------
-  const calendar = sourceMonths.map((sm) => {
-    const amount = perEntity.reduce((a, e) => {
+  const calendar = sourceMonths.map((sm) => ({
+    month: MONTH_LONG[sm],
+    amount: usd(perEntity.reduce((a, e) => {
       const cell = e.monthly.find((x) => x.sourceMonth === sm);
       return a + (cell?.amount ?? 0);
-    }, 0);
-    return {
-      month: MONTH_LONG[sm],
-      amount: usd(amount),
-      status: 'Marge à remonter',
-      tag: '90% marge nette',
-      level: 'navy' as 'danger' | 'warning' | 'navy',
-    };
-  });
-  calendar.push({
-    month: 'Total YTD',
-    amount: usd(totals.ytd),
-    status: 'Somme à remonter',
-    tag: periodLabel,
-    level: 'navy' as any,
-  });
+    }, 0)),
+    status: 'Marge à remonter',
+    tag: '90% marge nette',
+    level: 'navy' as 'danger' | 'warning' | 'navy',
+  }));
 
-  // -------- Récap comparatif scénarios (basé sur YTD à remonter) --------
+  // -------- Récap (kept minimal for backward compat — UI uses entityCards) --------
   const recoveryRateYtd = totals.ytd > 0 ? (receivedTotal / totals.ytd) * 100 : 0;
-  const recoveryRateYtdApport =
-    totals.ytd > 0 ? ((receivedTotal + apportMaxence) / totals.ytd) * 100 : 0;
-  const soldeYtdApport = soldeYtd - apportMaxence;
   const recap = [
     { label: 'Somme à remonter', s1: usd(totals.ytd), s2: usd(totals.ytd) },
     { label: 'Encaissements reçus', s1: usd(receivedTotal), s2: usd(receivedTotal) },
-    { label: 'Apport Maxence', s1: '—', s2: usdSigned(apportMaxence ? -apportMaxence : 0).replace('-', '+'), s2Color: 'success' as const },
-    { label: 'Total fonds disponibles', s1: usd(receivedTotal), s2: usd(receivedTotal + apportMaxence) },
     {
       label: 'Solde',
       s1: usd(Math.max(0, soldeYtd)),
-      s2: usd(Math.max(0, soldeYtdApport)),
+      s2: usd(Math.max(0, soldeYtd)),
       s1Color: 'danger' as const,
       s2Color: 'warning' as const,
       bold: true,
@@ -252,23 +238,21 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     {
       label: 'Taux de recouvrement',
       s1: fmtPct(recoveryRateYtd),
-      s2: fmtPct(recoveryRateYtdApport),
+      s2: fmtPct(recoveryRateYtd),
       s1Color: 'danger' as const,
       s2Color: 'success' as const,
     },
   ];
 
-  const marsNote = '';
-
   return {
     kpis,
     alert,
     table: legacyTable,
+    entityCards,
     scenarios,
     calendar,
     recap,
-    marsNote,
-    // Bonus: structured rule explanations for a future "rules" sub-block.
+    marsNote: '',
     rulesApplied: INTERCO_RULES.map((r) => ({
       entity: r.label,
       rate: `${(r.transferRate * 100).toFixed(0)}%`,
