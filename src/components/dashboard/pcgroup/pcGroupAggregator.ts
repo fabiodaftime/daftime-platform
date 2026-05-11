@@ -1016,12 +1016,28 @@ export function buildPCGroupMonthData(
     }
   } catch { /* keep base */ }
 
-  // ----- SPY / Comment overlays (KPIs + comparison only — waterfalls keep
-  // their bespoke detail since the manual blocks don't expose a breakdown).
+  // ----- SPY / Comment overlays (KPIs + comparison + waterfall)
+  // Manual blocks ne fournissent pas de détail des charges, mais on garantit
+  // au minimum CA / Total Charges / Marge Nette cohérents avec le mois courant
+  // (sinon le waterfall reste figé sur les données hardcodées de Mars).
   const spyKPIsOverlay = buildEntityKPIs('spy') ?? base.spyKPIs;
   const commentKPIsOverlay = buildEntityKPIs('comment') ?? (base as any).commentKPIs;
   const spyComparisonOverlay = buildEntityComparison('spy') ?? (base as any).spyComparison;
   const commentComparisonOverlay = buildEntityComparison('comment') ?? (base as any).commentComparison;
+
+  const buildManualWaterfall = (key: 'spy' | 'comment', fallback: any) => {
+    const cur = getEntityMonth(key, month);
+    if (!cur) return fallback;
+    return [
+      { label: 'CA', value: usdR(cur.ca), type: 'positive' },
+      { label: '', value: '', type: 'spacer' },
+      { label: 'TOTAL CHARGES', value: negStr(cur.charges), type: 'total-negative' },
+      { label: '', value: '', type: 'spacer' },
+      { label: 'MARGE NETTE', value: usdR(cur.contribution), type: 'highlight' },
+    ];
+  };
+  const spyWaterfallOverlay = buildManualWaterfall('spy', base.spyWaterfall);
+  const commentWaterfallOverlay = buildManualWaterfall('comment', (base as any).commentWaterfall);
 
   const out: any = {
     ...base,
@@ -1062,8 +1078,10 @@ export function buildPCGroupMonthData(
     digitWaterfall: digitWaterfallOverlay as any,
     spyKPIs: spyKPIsOverlay as any,
     spyComparison: spyComparisonOverlay as any,
+    spyWaterfall: spyWaterfallOverlay as any,
     commentKPIs: commentKPIsOverlay as any,
     commentComparison: commentComparisonOverlay as any,
+    commentWaterfall: commentWaterfallOverlay as any,
   };
   return out as PCGroupMonthData;
 }
