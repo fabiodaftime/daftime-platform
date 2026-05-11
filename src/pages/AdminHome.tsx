@@ -51,6 +51,7 @@ export default function AdminHome() {
             revenueYTD: 0,
             budgetYTD: 0,
             expensesYTD: 0,
+            hasRealData: false,
           }))
         );
         return;
@@ -73,6 +74,7 @@ export default function AdminHome() {
             revenueYTD,
             budgetYTD,
             expensesYTD: 0,
+            hasRealData: !!financials && financials.length > 0,
           };
         })
       );
