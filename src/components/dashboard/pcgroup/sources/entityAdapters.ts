@@ -79,20 +79,22 @@ export function structuringFacts(month: PCGSourceMonthId): EntityFacts | null {
 // dedicated companion file for use by the consolidated aggregator.
 export function digitFacts(month: PCGSourceMonthId): EntityFacts | null {
   // Live override from the canonical inputs DB (super-admin editable).
+  // IMPORTANT: in the consolidated PCGroup view, "Digit" represents Digit
+  // Solution **Core only**. SPY and Comment-Trust are tracked as separate
+  // entities (see MANUAL_ENTITIES). Using ca_total / marge_total here would
+  // double-count SPY+Comment at consolidation. We therefore prefer the
+  // explicit Core inputs (ca_core / marge_core) and only fall back to totals
+  // if Core inputs are missing AND no SPY/Comment exists.
   const live = getEntityInput('digit', month);
-  if (live && typeof live.ca_total === 'number' && typeof live.marge_total === 'number') {
-    const ca = live.ca_total;
-    const marge = live.marge_total;
+  if (live && typeof live.ca_core === 'number' && typeof live.marge_core === 'number' && live.ca_core > 0) {
+    const ca = live.ca_core;
+    const marge = live.marge_core;
     return {
       ca,
       margeNette: marge,
       charges: ca - marge,
       marginPct: ca > 0 ? (marge / ca) * 100 : 0,
-      deals: typeof live.deals_total === 'number' ? live.deals_total : undefined,
-      ticketMoyen:
-        typeof live.deals_total === 'number' && live.deals_total > 0
-          ? ca / live.deals_total
-          : undefined,
+      // deals/ticket are reported at total level — leave undefined for Core.
     };
   }
   // Fallback to the static seed (kept for resilience).
