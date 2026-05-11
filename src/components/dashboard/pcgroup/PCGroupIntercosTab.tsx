@@ -248,44 +248,144 @@ export function PCGroupIntercosTab({ data }: Props) {
       </div>
 
       {/* Cards visuelles : ce que chaque entité doit encore remonter */}
-      {Array.isArray((intercos as any).entityCards) && (
-        <div className="pcg-section">
-          <div className="pcg-section-header">
-            <h3 className="pcg-section-title">💼 Solde à Remonter par Entité</h3>
-            <span className="pcg-section-subtitle">Hors apport Maxence — uniquement remontées effectives</span>
-          </div>
-          <div className="pcg-section-body">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-              {(intercos as any).entityCards.map((c: any) => (
-                <div
-                  key={c.key}
-                  style={{
-                    border: `1px solid ${LEVEL_BORDER[c.level] ?? '#1E3A5F'}`,
-                    borderLeft: `4px solid ${COLOR[c.level] ?? '#1E3A5F'}`,
-                    borderRadius: 8,
-                    padding: 16,
-                    background: '#fff',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1E3A5F', marginBottom: 8 }}>{c.entity}</div>
-                  <div style={{ fontSize: 24, fontWeight: 700, color: COLOR[c.level] ?? '#1E3A5F', marginBottom: 4 }}>
-                    {c.remaining}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 12 }}>Reste à remonter</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#374151', borderTop: '1px solid #E5E7EB', paddingTop: 8 }}>
-                    <span>Attendu : <strong>{c.expected}</strong></span>
-                    <span>Reçu : <strong style={{ color: '#059669' }}>{c.received}</strong></span>
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: 11, color: COLOR[c.level], fontWeight: 600 }}>
-                    Recouvrement : {c.rate}
-                  </div>
-                </div>
-              ))}
+      {Array.isArray((intercos as any).entityCards) && (() => {
+        const cards = (intercos as any).entityCards as any[];
+        const parseUSD = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
+        const fmtUSD = (n: number) => `$${Math.round(n).toLocaleString()}`;
+        const digitKeys = ['digit', 'spy', 'comment'];
+        const digitSubs = cards.filter((c) => digitKeys.includes(c.key));
+        const others = cards.filter((c) => !digitKeys.includes(c.key));
+
+        let digitGroupCard: any = null;
+        if (digitSubs.length > 0) {
+          const expected = digitSubs.reduce((a, c) => a + parseUSD(c.expected), 0);
+          const received = digitSubs.reduce((a, c) => a + parseUSD(c.received), 0);
+          const remaining = Math.max(0, expected - received);
+          const rate = expected > 0 ? (received / expected) * 100 : 0;
+          let level: 'danger' | 'warning' | 'success' = 'danger';
+          if (rate >= 80) level = 'success';
+          else if (rate >= 40) level = 'warning';
+          digitGroupCard = {
+            key: 'digit-group',
+            entity: 'Digit Group',
+            subtitle: 'Digit Core + SPY + Comment/Trust',
+            expected: fmtUSD(expected),
+            received: fmtUSD(received),
+            remaining: fmtUSD(remaining),
+            rate: `${rate.toFixed(1)}%`,
+            level,
+            subs: digitSubs,
+          };
+        }
+
+        const renderCard = (c: any) => (
+          <div
+            key={c.key}
+            style={{
+              border: `1px solid ${LEVEL_BORDER[c.level] ?? '#1E3A5F'}`,
+              borderLeft: `4px solid ${COLOR[c.level] ?? '#1E3A5F'}`,
+              borderRadius: 8,
+              padding: 16,
+              background: '#fff',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#1E3A5F', marginBottom: 8 }}>{c.entity}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: COLOR[c.level] ?? '#1E3A5F', marginBottom: 4 }}>
+              {c.remaining}
+            </div>
+            <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 12 }}>Reste à remonter</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#374151', borderTop: '1px solid #E5E7EB', paddingTop: 8 }}>
+              <span>Attendu : <strong>{c.expected}</strong></span>
+              <span>Reçu : <strong style={{ color: '#059669' }}>{c.received}</strong></span>
+            </div>
+            <div style={{ marginTop: 8, fontSize: 11, color: COLOR[c.level], fontWeight: 600 }}>
+              Recouvrement : {c.rate}
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        return (
+          <div className="pcg-section">
+            <div className="pcg-section-header">
+              <h3 className="pcg-section-title">💼 Solde à Remonter par Entité</h3>
+              <span className="pcg-section-subtitle">Hors apport Maxence — uniquement remontées effectives</span>
+            </div>
+            <div className="pcg-section-body">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+                {others.map(renderCard)}
+              </div>
+
+              {digitGroupCard && (
+                <div
+                  style={{
+                    marginTop: 20,
+                    border: `2px solid ${LEVEL_BORDER[digitGroupCard.level] ?? '#1E3A5F'}`,
+                    borderLeft: `6px solid ${COLOR[digitGroupCard.level] ?? '#1E3A5F'}`,
+                    borderRadius: 10,
+                    padding: 20,
+                    background: 'linear-gradient(135deg, #FAFBFC 0%, #FFFFFF 100%)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                        Vue Globale
+                      </div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>
+                        {digitGroupCard.entity}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#9CA3AF' }}>{digitGroupCard.subtitle}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, color: '#6B7280' }}>Reste à remonter</div>
+                        <div style={{ fontSize: 28, fontWeight: 700, color: COLOR[digitGroupCard.level] }}>
+                          {digitGroupCard.remaining}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: 12, color: '#374151' }}>
+                        <div>Attendu : <strong>{digitGroupCard.expected}</strong></div>
+                        <div>Reçu : <strong style={{ color: '#059669' }}>{digitGroupCard.received}</strong></div>
+                        <div style={{ color: COLOR[digitGroupCard.level], fontWeight: 600, marginTop: 2 }}>
+                          Recouvrement : {digitGroupCard.rate}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sous-entités — détail discret */}
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed #E5E7EB' }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>
+                      Détail par sous-entité
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+                      {digitGroupCard.subs.map((s: any) => (
+                        <div
+                          key={s.key}
+                          style={{
+                            borderLeft: `3px solid ${COLOR[s.level] ?? '#9CA3AF'}`,
+                            padding: '6px 10px',
+                            background: '#F9FAFB',
+                            borderRadius: 4,
+                          }}
+                        >
+                          <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 2 }}>{s.entity}</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: COLOR[s.level] ?? '#1E3A5F' }}>{s.remaining}</div>
+                          <div style={{ fontSize: 10, color: '#9CA3AF' }}>
+                            {s.received} reçu / {s.expected} attendu
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
