@@ -206,8 +206,8 @@ export function PCGroupIntercosTab({ data }: Props) {
         }}
       >
         <strong style={{ color: '#1E3A5F' }}>Note —</strong>{' '}
-        Les montants « reçus » affichés correspondent aux remontées de cash <strong>effectivement encaissées en mai 2025</strong>,
-        intégrées au dashboard du mois d'avril pour refléter la réalité des flux interco.
+        Une partie seulement des montants « reçus » a été <strong>effectivement encaissée en mai 2026</strong> et intégrée au dashboard d'avril pour refléter la réalité des flux interco :{' '}
+        <strong>Structuring ≈ $49 965 (AED 183 500)</strong> et <strong>Digit ≈ $39 973 (AED 146 800)</strong>, soit ~<strong>$89 938</strong> au taux fixe AED→USD 3,6725. Le reste correspond aux remontées de mars 2026.
       </div>
 
       {/* Validation cohérence Digit / SPY / Comment */}
