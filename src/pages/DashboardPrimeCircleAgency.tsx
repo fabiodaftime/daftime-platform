@@ -8,6 +8,7 @@ import { PCAYTDTab } from '@/components/dashboard/primecircle-agency/PCAYTDTab';
 import { PCAClientsTab } from '@/components/dashboard/primecircle-agency/PCAClientsTab';
 import { PCAMediaTab } from '@/components/dashboard/primecircle-agency/PCAMediaTab';
 import { PCABlinkTab } from '@/components/dashboard/primecircle-agency/PCABlinkTab';
+import { RestatementHistoryTab } from '@/components/dashboard/pcgroup/RestatementHistoryTab';
 
 import { C, PCA_AVAILABLE_MONTHS, getPCAMonthData, type PCAMonthId } from '@/components/dashboard/primecircle-agency/PrimeCircleAgencyData';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
@@ -20,6 +21,7 @@ const tabs = [
   { id: "clients", label: "Clients", icon: "👥" },
   { id: "media", label: "Media Spend", icon: "📡" },
   { id: "blink", label: "Suivi Blink", icon: "🏦" },
+  { id: "history", label: "Historique", icon: "📋" },
 ];
 
 export default function DashboardPrimeCircleAgency() {
