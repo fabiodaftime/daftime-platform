@@ -45,16 +45,35 @@ describe.each(['spy', 'comment'] as const)(
       const kpis = entityKey === 'spy' ? data.spyKPIs : (data as any).commentKPIs;
       const wf = entityKey === 'spy' ? data.spyWaterfall : (data as any).commentWaterfall;
 
-      it('a une source normalisée disponible (alignée vue groupe)', () => {
+      const fixture = ENTITY_MONTH_FIXTURES[entityKey][monthId];
+
+      it('a une source normalisée disponible + fixture figée', () => {
         expect(facts).toBeTruthy();
         expect(kpis).toBeTruthy();
         expect(wf).toBeTruthy();
+        expect(fixture, `fixture manquante : ${entityKey}/${monthId}`).toBeTruthy();
+        // facts doit aussi matcher la fixture (même source que vue groupe)
+        expect(Math.round(facts!.ca)).toBe(fixture!.ca);
+        expect(Math.round(facts!.charges)).toBe(fixture!.charges);
+        expect(Math.round(facts!.contribution)).toBe(fixture!.contribution);
       });
 
-      it('KPI CA = facts.ca (même source que pies / overview)', () => {
+      it('KPI CA = fixture.ca (même source que pies / overview)', () => {
         const kpiCA = findKpi(kpis, 'CA');
         expect(kpiCA, 'KPI "CA" introuvable').toBeTruthy();
-        expect(parseUSD(kpiCA.value)).toBeCloseTo(Math.round(facts!.ca), -Math.log10(TOLERANCE_USD));
+        expect(parseUSD(kpiCA.value)).toBeCloseTo(fixture!.ca, -Math.log10(TOLERANCE_USD));
+      });
+
+      it('KPI Marge Nette = fixture.contribution', () => {
+        const kpi = findKpi(kpis, 'Marge Nette');
+        expect(kpi, 'KPI "Marge Nette" introuvable').toBeTruthy();
+        expect(parseUSD(kpi.value)).toBeCloseTo(fixture!.contribution, -Math.log10(TOLERANCE_USD));
+      });
+
+      it('KPI Total Charges = fixture.charges', () => {
+        const kpi = findKpi(kpis, 'Total Charges');
+        expect(kpi, 'KPI "Total Charges" introuvable').toBeTruthy();
+        expect(parseUSD(kpi.value)).toBeCloseTo(fixture!.charges, -Math.log10(TOLERANCE_USD));
       });
 
       it('KPI Marge Nette = facts.contribution', () => {
