@@ -321,6 +321,39 @@ export type Database = {
         }
         Relationships: []
       }
+      labarile_pl_accounts: {
+        Row: {
+          account: string
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          month: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          account: string
+          amount?: number
+          category: string
+          created_at?: string
+          id?: string
+          month: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          account?: string
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          month?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       monthly_expenses: {
         Row: {
           amount_actual: number
