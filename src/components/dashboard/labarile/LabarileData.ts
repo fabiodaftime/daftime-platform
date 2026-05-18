@@ -162,6 +162,61 @@ export const MONTHLY_COSTS: MonthlyCostData[] = [
   },
 ];
 
+// Actuals mensuels Jan-Avr 2026 (source: P&L Zoho LLE FZCO, AED)
+// Mapping comptes → catégories:
+//  Coaches = Coach + Coach-Consultant + Closer Sales commission + Consultant Expense
+//  Marketing = Advertising + Media Buying + Video Editing + Podcast + Event venue
+//  IT = IT & Internet + Online tools & Software + Telephone
+//  Stripe = Stripe fees + Paypal Fees + Bank Fees
+//  Admin = Accounting & Audit + Salaries + Office Supplies + Travel + Meals + Automobile
+//  Autres = Bad Debt
+export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
+  {
+    month: 'JANVIER 2026',
+    revenue: 706389,
+    actual: { coaches: 82348, marketing: 178383, it: 13487, stripe: 35448, admin: 43618, autres: 0 },
+    commentType: 'success',
+    commentTitle: '💬 Commentaires Janvier:',
+    comments: [],
+  },
+  {
+    month: 'FÉVRIER 2026',
+    revenue: 878000,
+    actual: { coaches: 187743, marketing: 350225, it: 27786, stripe: 47969, admin: 113843, autres: 0 },
+    commentType: 'warning',
+    commentTitle: '💬 Commentaires Février:',
+    comments: [],
+  },
+  {
+    month: 'MARS 2026',
+    revenue: 667021,
+    actual: { coaches: 157145, marketing: 252550, it: 14238, stripe: 30576, admin: 118769, autres: 139433 },
+    commentType: 'critical',
+    commentTitle: '💬 Commentaires Mars:',
+    comments: [
+      '⚠️ Bad Debt 139.4k AED comptabilisé ce mois — créance irrécouvrable, à investiguer.',
+    ],
+  },
+  {
+    month: 'AVRIL 2026',
+    revenue: 1038364,
+    actual: { coaches: 126081, marketing: 231049, it: 7858, stripe: 46861, admin: 64167, autres: 0 },
+    commentType: 'success',
+    commentTitle: '💬 Commentaires Avril:',
+    comments: [
+      '✅ Meilleur mois 2026 : CA 1 038 k AED, charges maîtrisées → forte marge EBITDA (~54%).',
+    ],
+  },
+];
+
+// Synthèse YTD 2026 (Jan-Avr) calculée depuis MONTHLY_COSTS_2026
+export const YTD_2026 = {
+  months: 4,
+  caTotal: 706389 + 878000 + 667021 + 1038364, // 3 289 774 AED
+  netProfit: 353490 + 152440 + -45669 + 562432, // ≈ 1 022 693 AED (= Current Year Earnings Apr)
+};
+
+
 export const COSTS_Q4_DETAIL = [
   { category: 'Coaches', amount: '134.3k', pct: '10.3%' },
   { category: 'Marketing', amount: '141.1k', pct: '10.8%' },
