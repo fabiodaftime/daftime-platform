@@ -52,9 +52,10 @@ function generateActualComments(monthData: MonthlyCostData): string[] {
 }
 
 export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
-  const { monthlyCosts2026: MONTHLY_COSTS_2026, source } = useLabarileMonthly(2026);
+  const { monthlyCosts2026: MONTHLY_COSTS_2026, ytd2026, source } = useLabarileMonthly(2026);
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
+      <LabarileConsistencyCheck monthlyCosts={MONTHLY_COSTS_2026} displayedYtd={ytd2026} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         <LabarileKPICard label="Mois suivis Q4 2025" value={`${MONTHLY_COSTS.length}`} subtext="Réels mensuels" />
         <LabarileKPICard label="Mois suivis YTD 2026" value={`${MONTHLY_COSTS_2026.length}`} subtext="Janvier → Avril" variant="primary" />
