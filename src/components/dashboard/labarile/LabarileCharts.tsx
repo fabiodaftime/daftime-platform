@@ -103,22 +103,44 @@ interface DonutChartProps {
 }
 
 export function LabarileDonutChart({ data }: DonutChartProps) {
+  const total = data.reduce((acc, d) => acc + d.value, 0);
   return (
-    <div className="h-[200px] lg:h-[250px]">
+    <div className="h-[260px] lg:h-[300px] relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={62}
+            outerRadius={92}
+            paddingAngle={3}
+            dataKey="value"
+            stroke="white"
+            strokeWidth={3}
+          >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-            formatter={(value: number) => [value + '%', '']}
+          <Tooltip
+            content={
+              <LabarileTooltip valueFormatter={(v) => v + '%'} />
+            }
           />
-          <Legend verticalAlign="bottom" iconType="circle" formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>} />
+          <Legend
+            verticalAlign="bottom"
+            iconType="circle"
+            wrapperStyle={{ paddingTop: 8 }}
+            formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>}
+          />
         </PieChart>
       </ResponsiveContainer>
+      {/* Centered total */}
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center -mt-7">
+        <p className="text-[10px] uppercase tracking-wider text-labarile-muted font-semibold">Total</p>
+        <p className="font-bebas text-2xl text-labarile-primary-dark leading-none">{total}%</p>
+      </div>
     </div>
   );
 }
