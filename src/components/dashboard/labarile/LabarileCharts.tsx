@@ -1,21 +1,28 @@
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   Area,
   AreaChart,
   LineChart,
-  Line
+  Line,
+  LabelList,
 } from 'recharts';
 import { ACTUALS, ACTUALS_2026, SCENARIOS, MONTHS_2026, Scenario, BASKET_EVOLUTION, PROGRAMS_MIX, CLOSERS_DATA } from './LabarileData';
+import {
+  LabarileGradients,
+  LabarileTooltip,
+  LAB_AXIS_TICK,
+  LAB_GRID_STROKE,
+} from './LabarileChartPrimitives';
 
 const COLORS = {
   primary: '#7CC9CC',
@@ -28,7 +35,7 @@ const COLORS = {
   marketing: '#7CC9CC',
   admin: '#4EB79F',
   stripe: '#9DD8DA',
-  tools: '#C9EDEF'
+  tools: '#C9EDEF',
 };
 
 interface RevenueChartProps {
@@ -96,22 +103,44 @@ interface DonutChartProps {
 }
 
 export function LabarileDonutChart({ data }: DonutChartProps) {
+  const total = data.reduce((acc, d) => acc + d.value, 0);
   return (
-    <div className="h-[200px] lg:h-[250px]">
+    <div className="h-[260px] lg:h-[300px] relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={62}
+            outerRadius={92}
+            paddingAngle={3}
+            dataKey="value"
+            stroke="white"
+            strokeWidth={3}
+          >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-            formatter={(value: number) => [value + '%', '']}
+          <Tooltip
+            content={
+              <LabarileTooltip valueFormatter={(v) => v + '%'} />
+            }
           />
-          <Legend verticalAlign="bottom" iconType="circle" formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>} />
+          <Legend
+            verticalAlign="bottom"
+            iconType="circle"
+            wrapperStyle={{ paddingTop: 8 }}
+            formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>}
+          />
         </PieChart>
       </ResponsiveContainer>
+      {/* Centered total */}
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center -mt-7">
+        <p className="text-[10px] uppercase tracking-wider text-labarile-muted font-semibold">Total</p>
+        <p className="font-bebas text-2xl text-labarile-primary-dark leading-none">{total}%</p>
+      </div>
     </div>
   );
 }
@@ -294,21 +323,32 @@ export function LabarileMonthlyCostsChart({ actual, revenue }: MonthlyCostsChart
   }));
 
   return (
-    <div className="h-[250px] lg:h-[300px]">
+    <div className="h-[260px] lg:h-[310px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 11 }} />
-          <YAxis tickFormatter={(v) => (v/1000).toFixed(0) + ' k'} tick={{ fill: '#666', fontSize: 11 }} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }} 
-            formatter={(value: number) => {
-              const pct = (value / revenue * 100).toFixed(1);
-              return [(value / 1000).toFixed(1) + 'k AED (' + pct + '%)', ''];
-            }}
+        <BarChart data={data} margin={{ top: 24, right: 16, left: 6, bottom: 5 }} barCategoryGap="30%">
+          <LabarileGradients />
+          <CartesianGrid strokeDasharray="4 6" stroke={LAB_GRID_STROKE} vertical={false} />
+          <XAxis dataKey="name" tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} dy={6} />
+          <YAxis tickFormatter={(v) => (v / 1000).toFixed(0) + ' k'} tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} />
+          <Tooltip
+            cursor={{ fill: 'rgba(232,126,96,0.08)' }}
+            content={
+              <LabarileTooltip
+                valueFormatter={(v) => {
+                  const pct = revenue > 0 ? ((v / revenue) * 100).toFixed(1) : '0.0';
+                  return (v / 1000).toFixed(1) + 'k AED · ' + pct + '%';
+                }}
+              />
+            }
           />
-          <Legend />
-          <Bar dataKey="actual" fill={COLORS.warning} name="Réel" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="actual" name="Réel" fill="url(#lab-grad-warning)" radius={[8, 8, 0, 0]} maxBarSize={56}>
+            <LabelList
+              dataKey="actual"
+              position="top"
+              formatter={(v: number) => (v / 1000).toFixed(0) + 'k'}
+              style={{ fill: '#a04a30', fontSize: 10, fontWeight: 700 }}
+            />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -322,22 +362,40 @@ export function LabarileTreasuryDonut() {
     { name: 'Provision TVA EU', value: 150, color: '#F59E0B' },
   ];
 
+  const total = data.reduce((a, d) => a + d.value, 0);
   return (
-    <div className="h-[250px] lg:h-[300px]">
+    <div className="h-[260px] lg:h-[310px] relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={62}
+            outerRadius={92}
+            paddingAngle={3}
+            dataKey="value"
+            stroke="white"
+            strokeWidth={3}
+          >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }} 
-            formatter={(value: number) => [value.toFixed(1) + ' kAED (' + (value / 500.6 * 100).toFixed(1) + '%)', '']}
+          <Tooltip
+            content={
+              <LabarileTooltip
+                valueFormatter={(v) => v.toFixed(1) + ' kAED · ' + (total > 0 ? ((v / total) * 100).toFixed(1) : '0') + '%'}
+              />
+            }
           />
-          <Legend verticalAlign="bottom" iconType="circle" formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>} />
+          <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ paddingTop: 8 }} formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>} />
         </PieChart>
       </ResponsiveContainer>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center -mt-7">
+        <p className="text-[10px] uppercase tracking-wider text-labarile-muted font-semibold">Total</p>
+        <p className="font-bebas text-2xl text-labarile-primary-dark leading-none">{total.toFixed(0)}k</p>
+      </div>
     </div>
   );
 }
@@ -350,17 +408,27 @@ export function LabarileDebtChart() {
   ];
 
   return (
-    <div className="h-[250px] lg:h-[300px]">
+    <div className="h-[260px] lg:h-[310px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 11 }} />
-          <YAxis tickFormatter={(v) => v + 'k'} tick={{ fill: '#666', fontSize: 11 }} />
-          <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }} formatter={(value: number) => [value.toFixed(1) + ' kAED', '']} />
-          <Bar dataKey="value" name="Montant (kAED)" radius={[4, 4, 0, 0]}>
+        <BarChart data={data} margin={{ top: 24, right: 16, left: 6, bottom: 5 }} barCategoryGap="30%">
+          <LabarileGradients />
+          <CartesianGrid strokeDasharray="4 6" stroke={LAB_GRID_STROKE} vertical={false} />
+          <XAxis dataKey="name" tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} dy={6} />
+          <YAxis tickFormatter={(v) => v + 'k'} tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} />
+          <Tooltip
+            cursor={{ fill: 'rgba(232,126,96,0.08)' }}
+            content={<LabarileTooltip valueFormatter={(v) => v.toFixed(1) + ' kAED'} />}
+          />
+          <Bar dataKey="value" name="Montant (kAED)" radius={[8, 8, 0, 0]} maxBarSize={64}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
+            <LabelList
+              dataKey="value"
+              position="top"
+              formatter={(v: number) => v.toFixed(0) + 'k'}
+              style={{ fill: '#0f172a', fontSize: 11, fontWeight: 700 }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
