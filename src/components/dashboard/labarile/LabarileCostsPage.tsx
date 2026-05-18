@@ -1,6 +1,7 @@
 import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileMonthlyCostsChart } from './LabarileCharts';
-import { MONTHLY_COSTS, MONTHLY_COSTS_2026, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
+import { MONTHLY_COSTS, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
+import { useLabarileMonthly } from './useLabarileMonthly';
 
 interface LabarileCostsPageProps {
   scenario: Scenario;
@@ -37,6 +38,7 @@ function generateActualComments(monthData: MonthlyCostData): string[] {
 }
 
 export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
+  const { monthlyCosts2026: MONTHLY_COSTS_2026, source } = useLabarileMonthly(2026);
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
@@ -140,8 +142,8 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
 
       {/* YTD 2026 Synthesis */}
       {(() => {
-        const ytd = MONTHLY_COSTS_2026.reduce((acc, m) => {
-          const charges = Object.values(m.actual).reduce((a, b) => a + b, 0);
+        const ytd = MONTHLY_COSTS_2026.reduce<{ ca: number; charges: number }>((acc, m) => {
+          const charges = (Object.values(m.actual) as number[]).reduce((a, b) => a + b, 0);
           return { ca: acc.ca + m.revenue, charges: acc.charges + charges };
         }, { ca: 0, charges: 0 });
         const chargesPct = (ytd.charges / ytd.ca * 100);

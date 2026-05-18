@@ -270,6 +270,57 @@ export type Database = {
         }
         Relationships: []
       }
+      labarile_monthly_pl: {
+        Row: {
+          admin: number
+          autres: number
+          coaches: number
+          created_at: string
+          id: string
+          it: number
+          marketing: number
+          month: number
+          note: string | null
+          revenue: number
+          stripe: number
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          admin?: number
+          autres?: number
+          coaches?: number
+          created_at?: string
+          id?: string
+          it?: number
+          marketing?: number
+          month: number
+          note?: string | null
+          revenue?: number
+          stripe?: number
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          admin?: number
+          autres?: number
+          coaches?: number
+          created_at?: string
+          id?: string
+          it?: number
+          marketing?: number
+          month?: number
+          note?: string | null
+          revenue?: number
+          stripe?: number
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       monthly_expenses: {
         Row: {
           amount_actual: number

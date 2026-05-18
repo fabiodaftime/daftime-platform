@@ -30,6 +30,7 @@ import AdminPCGroupEntities from "./pages/AdminPCGroupEntities";
 import AdminEntityInputs from "./pages/AdminEntityInputs";
 import AdminDataSources from "./pages/AdminDataSources";
 import AdminCsvImport from "./pages/AdminCsvImport";
+import AdminLabarileImport from "./pages/AdminLabarileImport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -218,6 +219,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminCsvImport />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/labarile-import"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminLabarileImport />
                 </ProtectedRoute>
               }
             />
