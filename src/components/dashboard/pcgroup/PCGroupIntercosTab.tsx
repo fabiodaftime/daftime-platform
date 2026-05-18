@@ -10,6 +10,7 @@ import { validateDigitConsistency, type ValidationIssue } from './digitConsisten
 
 import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
+import { useIntercosCashSources } from './useIntercosCashSources';
 
 interface Props {
   data: PCGroupMonthData;
@@ -60,6 +61,7 @@ export function PCGroupIntercosTab({ data }: Props) {
   const sourceMonthIds: PCGSourceMonthId[] = table.columns.map((c: any) => c.key);
   const validationIssues = validateDigitConsistency(sourceMonthIds);
   const hasErrors = validationIssues.some((i) => i.severity === 'error');
+  const cashSources = useIntercosCashSources(sourceMonthIds as string[]);
 
   const parseUSDNum = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
   const fmtUSDStr = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -192,23 +194,47 @@ export function PCGroupIntercosTab({ data }: Props) {
         </Button>
       </div>
 
-      {/* Rappel : remontées de cash effectives en mai */}
-      <div
-        style={{
-          border: '1px solid #1E3A5F',
-          borderLeft: '4px solid #D4A855',
-          background: 'rgba(212, 168, 85, 0.08)',
-          borderRadius: 8,
-          padding: '12px 16px',
-          marginBottom: 16,
-          fontSize: 13,
-          color: '#0F1E33',
-        }}
-      >
-        <strong style={{ color: '#1E3A5F' }}>Note —</strong>{' '}
-        Une partie seulement des montants « reçus » a été <strong>effectivement encaissée en mai 2026</strong> et intégrée au dashboard d'avril pour refléter la réalité des flux interco :{' '}
-        <strong>Structuring ≈ $49 965 (AED 183 500)</strong> et <strong>Digit ≈ $39 973 (AED 146 800)</strong>, soit ~<strong>$89 938</strong> au taux fixe AED→USD 3,6725. Le reste correspond aux remontées de mars 2026.
-      </div>
+      {/* Note auto-générée : décomposition des remontées par mois d'encaissement réel */}
+      {cashSources.buckets.length > 0 && (
+        <div
+          style={{
+            border: '1px solid #1E3A5F',
+            borderLeft: '4px solid #D4A855',
+            background: 'rgba(212, 168, 85, 0.08)',
+            borderRadius: 8,
+            padding: '12px 16px',
+            marginBottom: 16,
+            fontSize: 13,
+            color: '#0F1E33',
+            lineHeight: 1.6,
+          }}
+        >
+          <strong style={{ color: '#1E3A5F' }}>Note —</strong>{' '}
+          Décomposition des montants « reçus » par mois d'encaissement réel
+          {' '}(source : <code>pcgroup_intercos_cash</code>, taux fixe AED→USD {cashSources.fxAedPerUsd}) :
+          <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>
+            {cashSources.buckets.map((b) => (
+              <li key={b.label} style={{ marginBottom: 4 }}>
+                <strong style={{ textTransform: 'capitalize' }}>{b.label}</strong> —{' '}
+                {b.byEntity.map((e, i) => (
+                  <span key={e.entity}>
+                    {i > 0 ? ', ' : ''}
+                    {e.entity} ≈ <strong>${Math.round(e.usd).toLocaleString('en-US')}</strong>
+                    {' '}(AED {Math.round(e.aed).toLocaleString('en-US')})
+                  </span>
+                ))}
+                {b.byEntity.length > 1 && (
+                  <> — total <strong>~${Math.round(b.totalUsd).toLocaleString('en-US')}</strong></>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div style={{ marginTop: 6, fontSize: 11, color: '#6B7280' }}>
+            Classement basé sur la mention du mois dans la note Supabase, sinon sur la date de
+            dernière mise à jour de la ligne.
+          </div>
+        </div>
+      )}
 
       {/* Validation cohérence Digit / SPY / Comment */}
       {validationIssues.length > 0 && (
