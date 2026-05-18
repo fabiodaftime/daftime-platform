@@ -1,7 +1,7 @@
 import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileChartContainer } from './LabarileChartContainer';
 import { LabarileMonthlyCostsChart } from './LabarileCharts';
-import { MONTHLY_COSTS, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
+import { MONTHLY_COSTS, MONTHLY_COSTS_2026, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
 import { cn } from '@/lib/utils';
 
 interface LabarileCostsPageProps {
@@ -78,6 +78,11 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
         <LabarileKPICard label="Target EBITDA" value={`${ebitdaTarget}%`} subtext="Marge opérationnelle visée" variant="success" />
       </div>
 
+      {/* Section Q4 2025 */}
+      <div className="bg-labarile-ice1 border-l-4 border-l-labarile-primary rounded-md px-4 py-2">
+        <p className="font-bebas text-base tracking-wider text-labarile-primary-dark">Q4 2025 — Réel</p>
+      </div>
+
       {/* Monthly Cost Charts with Dynamic Comments */}
       {MONTHLY_COSTS.map((monthData, idx) => {
         const dynamicComments = generateDynamicComments(monthData, scenario);
@@ -107,6 +112,46 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
               </p>
               <ul className="space-y-1.5 ml-4 list-disc">
                 {dynamicComments.map((comment, cidx) => (
+                  <li key={cidx} className="text-sm leading-relaxed text-labarile-text">{comment}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Section YTD 2026 */}
+      <div className="bg-labarile-ice1 border-l-4 border-l-labarile-success rounded-md px-4 py-2 mt-2">
+        <p className="font-bebas text-base tracking-wider text-labarile-primary-dark">
+          YTD 2026 — Réel (Janvier → Avril)
+        </p>
+      </div>
+
+      {MONTHLY_COSTS_2026.map((monthData, idx) => {
+        const dynamicComments = generateDynamicComments(monthData, scenario);
+        const commentType = getDynamicCommentType(monthData, scenario);
+        return (
+          <div key={`m26-${idx}`} className="bg-labarile-white border border-labarile-border rounded-xl p-5 lg:p-7">
+            <h3 className="font-bebas text-lg lg:text-xl text-labarile-title mb-4 tracking-wide">
+              📊 {monthData.month} - Réel vs Prévu [{scenario.name}] (CA: {(monthData.revenue / 1000).toFixed(1)} kAED)
+            </h3>
+            <LabarileMonthlyCostsChart actual={monthData.actual} revenue={monthData.revenue} scenario={scenario} />
+            <div className={cn(
+              "mt-4 rounded-lg p-4 border-l-4",
+              commentType === 'warning' && "bg-amber-50 border-l-amber-500",
+              commentType === 'success' && "bg-emerald-50 border-l-emerald-500",
+              commentType === 'critical' && "bg-red-50 border-l-red-400",
+            )}>
+              <p className={cn(
+                "font-bold text-sm mb-2",
+                commentType === 'warning' && "text-amber-700",
+                commentType === 'success' && "text-emerald-700",
+                commentType === 'critical' && "text-red-700",
+              )}>
+                💬 Analyse vs Scénario {scenario.name} ({totalCostsTarget.toFixed(1)}% charges cibles):
+              </p>
+              <ul className="space-y-1.5 ml-4 list-disc">
+                {[...monthData.comments, ...dynamicComments].map((comment, cidx) => (
                   <li key={cidx} className="text-sm leading-relaxed text-labarile-text">{comment}</li>
                 ))}
               </ul>
@@ -172,6 +217,45 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Synthèse YTD 2026 */}
+      {(() => {
+        const ytd = MONTHLY_COSTS_2026.reduce((acc, m) => {
+          const charges = Object.values(m.actual).reduce((a, b) => a + b, 0);
+          return { ca: acc.ca + m.revenue, charges: acc.charges + charges };
+        }, { ca: 0, charges: 0 });
+        const chargesPct = (ytd.charges / ytd.ca * 100);
+        const ebitda = ytd.ca - ytd.charges;
+        const ebitdaPctYtd = (ebitda / ytd.ca * 100);
+        return (
+          <div className="bg-gradient-to-br from-emerald-50 to-labarile-white border-2 border-labarile-success rounded-xl p-5 lg:p-7">
+            <h3 className="font-bebas text-xl lg:text-2xl text-labarile-success mb-4 tracking-wide">
+              📋 SYNTHÈSE YTD 2026 (Jan → Avr) - vs Scénario {scenario.name}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+              <div>
+                <p className="text-sm font-bold text-labarile-title mb-1">CA Total YTD 2026:</p>
+                <p className="font-bebas text-2xl text-labarile-primary">{ytd.ca.toLocaleString()} AED</p>
+                <p className="text-xs text-labarile-muted mt-1">Moyenne mensuelle: {Math.round(ytd.ca / 4).toLocaleString()} AED</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-labarile-title mb-1">Charges Totales YTD:</p>
+                <p className="font-bebas text-2xl text-labarile-warning">{Math.round(ytd.charges).toLocaleString()} AED</p>
+                <p className="text-xs text-labarile-muted mt-1">{chargesPct.toFixed(1)}% du CA (target: {totalCostsTarget.toFixed(1)}%)</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-labarile-title mb-1">EBITDA YTD:</p>
+                <p className="font-bebas text-2xl text-labarile-success">{Math.round(ebitda).toLocaleString()} AED</p>
+                <p className="text-xs text-labarile-muted mt-1">{ebitdaPctYtd.toFixed(1)}% marge (target: {ebitdaTarget}%)</p>
+              </div>
+            </div>
+            <div className="bg-labarile-white rounded-lg p-4 text-sm text-labarile-text">
+              💡 Run-rate annualisé YTD: <strong>{Math.round(ytd.ca / 4 * 12 / 1000).toLocaleString()} kAED</strong> —
+              {' '}objectif 2026 scénario {scenario.name}: <strong>{scenario.total2026.toLocaleString()} kAED</strong>.
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

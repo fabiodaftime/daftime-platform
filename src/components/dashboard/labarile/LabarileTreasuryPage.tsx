@@ -1,17 +1,24 @@
 import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileChartContainer } from './LabarileChartContainer';
 import { LabarileTreasuryDonut, LabarileDebtChart } from './LabarileCharts';
-import { TREASURY_KPI, TREASURY_DETAIL, TREASURY_RATIOS, TVA_EU_Q4 } from './LabarileData';
+import { TREASURY_DETAIL, TREASURY_RATIOS, TVA_EU_Q4 } from './LabarileData';
 import { cn } from '@/lib/utils';
 
 export function LabarileTreasuryPage() {
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-        <LabarileKPICard label="Trésorerie Banque" value={TREASURY_KPI.tresorerieBanque} subtext="Relevé bancaire 31/12" variant="primary" />
-        <LabarileKPICard label="Stripe en attente" value={TREASURY_KPI.stripeEnAttente} subtext="Payout sous 2-3j" variant="success" />
-        <LabarileKPICard label="Trésorerie Disponible" value={TREASURY_KPI.tresorerieDisponible} subtext="Hors provision TVA 150k" variant="success" />
-        <LabarileKPICard label="Total Dettes" value={TREASURY_KPI.totalDettes} subtext="Incl. 150k TVA EU" />
+        <LabarileKPICard label="Trésorerie Bancaire" value="2 396 kAED" subtext="Relevés au 30/04/2026 (Wio AED+EUR, PayPal, Saving Taxes, Petty Cash)" variant="primary" />
+        <LabarileKPICard label="Stripe Clearing" value="59 kAED" subtext="En attente payout au 30/04/2026" variant="success" />
+        <LabarileKPICard label="Trésorerie Disponible" value="2 246 kAED" subtext="Hors provision Saving Taxes 150k" variant="success" />
+        <LabarileKPICard label="Créances Clients" value="2 202 kAED" subtext="Accounts Receivable au 30/04/2026" />
+      </div>
+
+      <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-4">
+        <p className="font-bold text-sm text-emerald-700 mb-1">💡 Position trésorerie au 30/04/2026</p>
+        <p className="text-sm text-labarile-text">
+          Forte amélioration de la trésorerie depuis le 31/12/2025 (500k → 2 396k AED), portée par les bons mois Q1-Avril 2026 (CA cumulé 3 290k AED, EBITDA cumulé ~1 023k AED). Le détail historique ci-dessous reste celui du 31/12/2025 pour traçabilité.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
