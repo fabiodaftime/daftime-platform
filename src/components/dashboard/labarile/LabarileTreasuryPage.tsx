@@ -1,7 +1,7 @@
 import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileChartContainer } from './LabarileChartContainer';
 import { LabarileTreasuryDonut, LabarileDebtChart } from './LabarileCharts';
-import { TREASURY_KPI, TREASURY_DETAIL, TREASURY_RATIOS, TVA_EU_Q4 } from './LabarileData';
+import { TREASURY_DETAIL, TREASURY_RATIOS, TVA_EU_Q4 } from './LabarileData';
 import { cn } from '@/lib/utils';
 
 export function LabarileTreasuryPage() {
