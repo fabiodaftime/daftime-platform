@@ -16,6 +16,7 @@ import { LabarileConfigPage } from '@/components/dashboard/labarile/LabarileConf
 import { LabarileDividendsPage } from '@/components/dashboard/labarile/LabarileDividendsPage';
 import { LabarileDonutChart } from '@/components/dashboard/labarile/LabarileCharts';
 import { LabarileActual2026Chart } from '@/components/dashboard/labarile/LabarileActual2026Chart';
+import { LabarileGradients } from '@/components/dashboard/labarile/LabarileChartPrimitives';
 import { useLabarileMonthly } from '@/components/dashboard/labarile/useLabarileMonthly';
 
 interface Company {
@@ -132,6 +133,7 @@ export default function DashboardLabarile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-labarile-light-gray via-white to-labarile-ice1/30 flex">
+      <LabarileGradients />
       <button onClick={() => setSidebarOpen(true)} className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-labarile-white border border-labarile-border rounded-lg shadow-sm">
         <Menu className="w-5 h-5 text-labarile-text" />
       </button>
