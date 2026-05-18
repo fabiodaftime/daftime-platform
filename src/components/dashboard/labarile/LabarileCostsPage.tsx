@@ -1,6 +1,7 @@
 import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileMonthlyCostsChart } from './LabarileCharts';
-import { MONTHLY_COSTS, MONTHLY_COSTS_2026, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
+import { MONTHLY_COSTS, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
+import { useLabarileMonthly } from './useLabarileMonthly';
 
 interface LabarileCostsPageProps {
   scenario: Scenario;
