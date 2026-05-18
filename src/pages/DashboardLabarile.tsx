@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Menu } from 'lucide-react';
+import { Menu, TrendingUp, Wallet, Activity, BarChart3, Calendar, Trophy, Gauge } from 'lucide-react';
 
 import { LabarileSidebar } from '@/components/dashboard/labarile/LabarileSidebar';
 import { LabarileHeader } from '@/components/dashboard/labarile/LabarileHeader';
@@ -158,10 +158,10 @@ export default function DashboardLabarile() {
           {activePage === 'overview' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard label="CA YTD 2026" value={fmtK(caYtd)} subtext={`${ytd2026.months} mois — Jan → Avr`} variant="primary" />
-                <LabarileKPICard label="EBITDA YTD 2026" value={fmtK(ebitdaYtd)} subtext={`Marge ${marginPct.toFixed(1)}%`} variant="success" />
-                <LabarileKPICard label="CA Moyen Mensuel" value={fmtK(avgMonthly)} subtext={`Meilleur mois : ${bestMonth ? bestMonth.month.split(' ')[0] : '—'}`} />
-                <LabarileKPICard label="Charges YTD" value={fmtK(totalCharges)} subtext={`${(100 - marginPct).toFixed(1)}% du CA`} variant="warning" />
+                <LabarileKPICard label="CA YTD 2026" value={fmtK(caYtd)} subtext={`${ytd2026.months} mois — Jan → Avr`} variant="primary" icon={BarChart3} />
+                <LabarileKPICard label="EBITDA YTD 2026" value={fmtK(ebitdaYtd)} subtext={`Marge ${marginPct.toFixed(1)}%`} variant="success" icon={TrendingUp} />
+                <LabarileKPICard label="CA Moyen Mensuel" value={fmtK(avgMonthly)} subtext={`Meilleur mois : ${bestMonth ? bestMonth.month.split(' ')[0] : '—'}`} icon={Activity} />
+                <LabarileKPICard label="Charges YTD" value={fmtK(totalCharges)} subtext={`${(100 - marginPct).toFixed(1)}% du CA`} variant="warning" icon={Wallet} />
               </div>
 
               <LabarileChartContainer title="Évolution CA Mensuel Réel 2026 (Jan → Avr)" tall>
@@ -236,10 +236,10 @@ export default function DashboardLabarile() {
           {activePage === 'evolution' && (
             <div className="space-y-6 lg:space-y-8 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-                <LabarileKPICard label="CA YTD 2026" value={fmtK(caYtd)} subtext={`${ytd2026.months} mois réels`} variant="primary" />
-                <LabarileKPICard label="CA Moyen Mensuel" value={fmtK(avgMonthly)} subtext="Sur la période YTD" />
-                <LabarileKPICard label="Meilleur mois" value={bestMonth ? `${(bestMonth.revenue / 1000).toFixed(0)}k` : '—'} subtext={bestMonth?.month ?? ''} variant="success" />
-                <LabarileKPICard label="Run-rate annualisé" value={fmtK(avgMonthly * 12)} subtext="Extrapolation YTD × 12 mois" variant="warning" />
+                <LabarileKPICard label="CA YTD 2026" value={fmtK(caYtd)} subtext={`${ytd2026.months} mois réels`} variant="primary" icon={BarChart3} />
+                <LabarileKPICard label="CA Moyen Mensuel" value={fmtK(avgMonthly)} subtext="Sur la période YTD" icon={Calendar} />
+                <LabarileKPICard label="Meilleur mois" value={bestMonth ? `${(bestMonth.revenue / 1000).toFixed(0)}k` : '—'} subtext={bestMonth?.month ?? ''} variant="success" icon={Trophy} />
+                <LabarileKPICard label="Run-rate annualisé" value={fmtK(avgMonthly * 12)} subtext="Extrapolation YTD × 12 mois" variant="warning" icon={Gauge} />
               </div>
 
               <LabarileChartContainer title="CA Mensuel Réel 2026 (Jan → Avr)" tall>
