@@ -35,8 +35,9 @@ interface RevenueChartProps {
   scenario: Scenario;
 }
 
-export function LabarileMainRevenueChart({ scenario }: RevenueChartProps) {
-  const actuals2026Count = ACTUALS_2026.revenue.length;
+export function LabarileMainRevenueChart({ scenario, actuals2026Override }: RevenueChartProps & { actuals2026Override?: { months: string[]; revenue: number[] } }) {
+  const actuals2026 = actuals2026Override ?? ACTUALS_2026;
+  const actuals2026Count = actuals2026.revenue.length;
   const data = [
     ...ACTUALS.months.map((month, idx) => ({
       month,
@@ -45,7 +46,7 @@ export function LabarileMainRevenueChart({ scenario }: RevenueChartProps) {
     })),
     ...MONTHS_2026.map((month, idx) => ({
       month: month + ' 26',
-      actual: idx < actuals2026Count ? ACTUALS_2026.revenue[idx] : (null as number | null),
+      actual: idx < actuals2026Count ? actuals2026.revenue[idx] : (null as number | null),
       projected: idx < actuals2026Count ? (null as number | null) : scenario.forecast2026[idx],
     })),
   ];
