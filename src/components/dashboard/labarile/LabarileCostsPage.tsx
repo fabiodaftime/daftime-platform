@@ -217,6 +217,45 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Synthèse YTD 2026 */}
+      {(() => {
+        const ytd = MONTHLY_COSTS_2026.reduce((acc, m) => {
+          const charges = Object.values(m.actual).reduce((a, b) => a + b, 0);
+          return { ca: acc.ca + m.revenue, charges: acc.charges + charges };
+        }, { ca: 0, charges: 0 });
+        const chargesPct = (ytd.charges / ytd.ca * 100);
+        const ebitda = ytd.ca - ytd.charges;
+        const ebitdaPctYtd = (ebitda / ytd.ca * 100);
+        return (
+          <div className="bg-gradient-to-br from-emerald-50 to-labarile-white border-2 border-labarile-success rounded-xl p-5 lg:p-7">
+            <h3 className="font-bebas text-xl lg:text-2xl text-labarile-success mb-4 tracking-wide">
+              📋 SYNTHÈSE YTD 2026 (Jan → Avr) - vs Scénario {scenario.name}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+              <div>
+                <p className="text-sm font-bold text-labarile-title mb-1">CA Total YTD 2026:</p>
+                <p className="font-bebas text-2xl text-labarile-primary">{ytd.ca.toLocaleString()} AED</p>
+                <p className="text-xs text-labarile-muted mt-1">Moyenne mensuelle: {Math.round(ytd.ca / 4).toLocaleString()} AED</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-labarile-title mb-1">Charges Totales YTD:</p>
+                <p className="font-bebas text-2xl text-labarile-warning">{Math.round(ytd.charges).toLocaleString()} AED</p>
+                <p className="text-xs text-labarile-muted mt-1">{chargesPct.toFixed(1)}% du CA (target: {totalCostsTarget.toFixed(1)}%)</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-labarile-title mb-1">EBITDA YTD:</p>
+                <p className="font-bebas text-2xl text-labarile-success">{Math.round(ebitda).toLocaleString()} AED</p>
+                <p className="text-xs text-labarile-muted mt-1">{ebitdaPctYtd.toFixed(1)}% marge (target: {ebitdaTarget}%)</p>
+              </div>
+            </div>
+            <div className="bg-labarile-white rounded-lg p-4 text-sm text-labarile-text">
+              💡 Run-rate annualisé YTD: <strong>{Math.round(ytd.ca / 4 * 12 / 1000).toLocaleString()} kAED</strong> —
+              {' '}objectif 2026 scénario {scenario.name}: <strong>{scenario.total2026.toLocaleString()} kAED</strong>.
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
