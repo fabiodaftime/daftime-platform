@@ -78,6 +78,11 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
         <LabarileKPICard label="Target EBITDA" value={`${ebitdaTarget}%`} subtext="Marge opérationnelle visée" variant="success" />
       </div>
 
+      {/* Section Q4 2025 */}
+      <div className="bg-labarile-ice1 border-l-4 border-l-labarile-primary rounded-md px-4 py-2">
+        <p className="font-bebas text-base tracking-wider text-labarile-primary-dark">Q4 2025 — Réel</p>
+      </div>
+
       {/* Monthly Cost Charts with Dynamic Comments */}
       {MONTHLY_COSTS.map((monthData, idx) => {
         const dynamicComments = generateDynamicComments(monthData, scenario);
