@@ -142,8 +142,8 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
 
       {/* YTD 2026 Synthesis */}
       {(() => {
-        const ytd = MONTHLY_COSTS_2026.reduce((acc, m) => {
-          const charges = Object.values(m.actual).reduce((a, b) => a + b, 0);
+        const ytd = MONTHLY_COSTS_2026.reduce<{ ca: number; charges: number }>((acc, m) => {
+          const charges = (Object.values(m.actual) as number[]).reduce((a, b) => a + b, 0);
           return { ca: acc.ca + m.revenue, charges: acc.charges + charges };
         }, { ca: 0, charges: 0 });
         const chargesPct = (ytd.charges / ytd.ca * 100);
