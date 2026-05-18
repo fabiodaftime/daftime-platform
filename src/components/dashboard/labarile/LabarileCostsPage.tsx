@@ -38,6 +38,7 @@ function generateActualComments(monthData: MonthlyCostData): string[] {
 }
 
 export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
+  const { monthlyCosts2026: MONTHLY_COSTS_2026, source } = useLabarileMonthly(2026);
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
