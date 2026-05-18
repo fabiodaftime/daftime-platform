@@ -1,37 +1,42 @@
 import type { TooltipProps } from 'recharts';
 
 /**
- * Shared SVG <defs> with reusable gradients for Labarile charts.
- * Drop <LabarileGradients /> inside any Recharts chart and reference by id.
+ * Hidden SVG defs mounted once at page level so `url(#lab-grad-*)` references
+ * resolve across all Recharts SVGs (gradient ids are document-scoped).
+ * Render <LabarileGradients /> once at the top of a dashboard page.
+ *
+ * Kept as a backwards-compatible no-op when placed inside a Recharts chart.
  */
 export function LabarileGradients() {
   return (
-    <defs>
-      <linearGradient id="lab-grad-primary" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#7CC9CC" stopOpacity={1} />
-        <stop offset="100%" stopColor="#5AB5B8" stopOpacity={0.85} />
-      </linearGradient>
-      <linearGradient id="lab-grad-success" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#5FD3B5" stopOpacity={1} />
-        <stop offset="100%" stopColor="#4EB79F" stopOpacity={0.85} />
-      </linearGradient>
-      <linearGradient id="lab-grad-warning" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#F19878" stopOpacity={1} />
-        <stop offset="100%" stopColor="#E87E60" stopOpacity={0.85} />
-      </linearGradient>
-      <linearGradient id="lab-grad-ice" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#C9EDEF" stopOpacity={1} />
-        <stop offset="100%" stopColor="#9DD8DA" stopOpacity={0.7} />
-      </linearGradient>
-      <linearGradient id="lab-grad-area" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#7CC9CC" stopOpacity={0.45} />
-        <stop offset="100%" stopColor="#7CC9CC" stopOpacity={0.02} />
-      </linearGradient>
-      <linearGradient id="lab-grad-projected" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#C9EDEF" stopOpacity={0.95} />
-        <stop offset="100%" stopColor="#9DD8DA" stopOpacity={0.6} />
-      </linearGradient>
-    </defs>
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+      <defs>
+        <linearGradient id="lab-grad-primary" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7CC9CC" stopOpacity={1} />
+          <stop offset="100%" stopColor="#5AB5B8" stopOpacity={0.85} />
+        </linearGradient>
+        <linearGradient id="lab-grad-success" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#5FD3B5" stopOpacity={1} />
+          <stop offset="100%" stopColor="#4EB79F" stopOpacity={0.85} />
+        </linearGradient>
+        <linearGradient id="lab-grad-warning" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F19878" stopOpacity={1} />
+          <stop offset="100%" stopColor="#E87E60" stopOpacity={0.85} />
+        </linearGradient>
+        <linearGradient id="lab-grad-ice" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#C9EDEF" stopOpacity={1} />
+          <stop offset="100%" stopColor="#9DD8DA" stopOpacity={0.7} />
+        </linearGradient>
+        <linearGradient id="lab-grad-area" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7CC9CC" stopOpacity={0.45} />
+          <stop offset="100%" stopColor="#7CC9CC" stopOpacity={0.02} />
+        </linearGradient>
+        <linearGradient id="lab-grad-projected" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#C9EDEF" stopOpacity={0.95} />
+          <stop offset="100%" stopColor="#9DD8DA" stopOpacity={0.6} />
+        </linearGradient>
+      </defs>
+    </svg>
   );
 }
 
