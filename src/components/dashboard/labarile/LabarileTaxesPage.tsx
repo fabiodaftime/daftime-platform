@@ -2,11 +2,10 @@ import { LabarileKPICard } from './LabarileKPICard';
 import {
   TAXES_Q4_DETAIL,
   SCENARIOS,
-  MONTHLY_COSTS_2026,
-  YTD_2026,
   type Scenario,
 } from './LabarileData';
 import { cn } from '@/lib/utils';
+import { useLabarileMonthly } from './useLabarileMonthly';
 
 interface LabarileTaxesPageProps {
   scenario: Scenario;
