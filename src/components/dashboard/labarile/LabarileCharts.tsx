@@ -15,7 +15,7 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { ACTUALS, SCENARIOS, MONTHS_2026, Scenario, BASKET_EVOLUTION, PROGRAMS_MIX, CLOSERS_DATA } from './LabarileData';
+import { ACTUALS, ACTUALS_2026, SCENARIOS, MONTHS_2026, Scenario, BASKET_EVOLUTION, PROGRAMS_MIX, CLOSERS_DATA } from './LabarileData';
 
 const COLORS = {
   primary: '#7CC9CC',
