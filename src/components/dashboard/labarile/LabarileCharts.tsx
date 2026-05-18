@@ -323,21 +323,32 @@ export function LabarileMonthlyCostsChart({ actual, revenue }: MonthlyCostsChart
   }));
 
   return (
-    <div className="h-[250px] lg:h-[300px]">
+    <div className="h-[260px] lg:h-[310px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 11 }} />
-          <YAxis tickFormatter={(v) => (v/1000).toFixed(0) + ' k'} tick={{ fill: '#666', fontSize: 11 }} />
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }} 
-            formatter={(value: number) => {
-              const pct = (value / revenue * 100).toFixed(1);
-              return [(value / 1000).toFixed(1) + 'k AED (' + pct + '%)', ''];
-            }}
+        <BarChart data={data} margin={{ top: 24, right: 16, left: 6, bottom: 5 }} barCategoryGap="30%">
+          <LabarileGradients />
+          <CartesianGrid strokeDasharray="4 6" stroke={LAB_GRID_STROKE} vertical={false} />
+          <XAxis dataKey="name" tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} dy={6} />
+          <YAxis tickFormatter={(v) => (v / 1000).toFixed(0) + ' k'} tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} />
+          <Tooltip
+            cursor={{ fill: 'rgba(232,126,96,0.08)' }}
+            content={
+              <LabarileTooltip
+                valueFormatter={(v) => {
+                  const pct = revenue > 0 ? ((v / revenue) * 100).toFixed(1) : '0.0';
+                  return (v / 1000).toFixed(1) + 'k AED · ' + pct + '%';
+                }}
+              />
+            }
           />
-          <Legend />
-          <Bar dataKey="actual" fill={COLORS.warning} name="Réel" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="actual" name="Réel" fill="url(#lab-grad-warning)" radius={[8, 8, 0, 0]} maxBarSize={56}>
+            <LabelList
+              dataKey="actual"
+              position="top"
+              formatter={(v: number) => (v / 1000).toFixed(0) + 'k'}
+              style={{ fill: '#a04a30', fontSize: 10, fontWeight: 700 }}
+            />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
