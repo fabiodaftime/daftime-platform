@@ -131,7 +131,7 @@ export default function DashboardLabarile() {
   const fmtK = (n: number) => `${Math.round(n / 1000).toLocaleString('fr-FR')} kAED`;
 
   return (
-    <div className="min-h-screen bg-labarile-light-gray flex">
+    <div className="min-h-screen bg-gradient-to-br from-labarile-light-gray via-white to-labarile-ice1/30 flex">
       <button onClick={() => setSidebarOpen(true)} className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-labarile-white border border-labarile-border rounded-lg shadow-sm">
         <Menu className="w-5 h-5 text-labarile-text" />
       </button>
@@ -173,19 +173,22 @@ export default function DashboardLabarile() {
               </LabarileChartContainer>
 
               {/* Synthèse mensuelle Jan-Avr */}
-              <div className="bg-labarile-white border border-labarile-border rounded-xl overflow-hidden">
-                <h3 className="px-5 py-4 font-bebas text-lg lg:text-xl text-labarile-primary-dark tracking-wide">
-                  📊 Performance mensuelle Réel 2026
-                </h3>
+              <div className="bg-gradient-to-br from-labarile-white to-labarile-light-gray/30 border border-labarile-border rounded-2xl overflow-hidden shadow-sm">
+                <div className="flex items-center gap-3 px-5 py-4 border-b border-labarile-border bg-gradient-to-r from-labarile-ice1/50 to-transparent">
+                  <span className="inline-block w-1 h-7 rounded-full bg-gradient-to-b from-labarile-primary-dark to-labarile-primary" />
+                  <h3 className="font-bebas text-lg lg:text-xl text-labarile-primary-dark tracking-wide">
+                    Performance mensuelle Réel 2026
+                  </h3>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gradient-to-r from-labarile-ice1 to-labarile-ice2">
+                    <thead className="bg-gradient-to-r from-labarile-ice1 to-labarile-ice2/60">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs uppercase font-bold text-labarile-primary-dark">Mois</th>
-                        <th className="px-4 py-3 text-right text-xs uppercase font-bold text-labarile-primary-dark">CA (kAED)</th>
-                        <th className="px-4 py-3 text-right text-xs uppercase font-bold text-labarile-primary-dark">Charges (kAED)</th>
-                        <th className="px-4 py-3 text-right text-xs uppercase font-bold text-labarile-primary-dark">EBITDA (kAED)</th>
-                        <th className="px-4 py-3 text-right text-xs uppercase font-bold text-labarile-primary-dark">Marge</th>
+                        <th className="px-4 py-3 text-left text-[11px] uppercase font-bold text-labarile-primary-dark tracking-wider">Mois</th>
+                        <th className="px-4 py-3 text-right text-[11px] uppercase font-bold text-labarile-primary-dark tracking-wider">CA (kAED)</th>
+                        <th className="px-4 py-3 text-right text-[11px] uppercase font-bold text-labarile-primary-dark tracking-wider">Charges (kAED)</th>
+                        <th className="px-4 py-3 text-right text-[11px] uppercase font-bold text-labarile-primary-dark tracking-wider">EBITDA (kAED)</th>
+                        <th className="px-4 py-3 text-right text-[11px] uppercase font-bold text-labarile-primary-dark tracking-wider">Marge</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -194,28 +197,32 @@ export default function DashboardLabarile() {
                         const ebitda = m.revenue - charges;
                         const margin = m.revenue > 0 ? (ebitda / m.revenue) * 100 : 0;
                         return (
-                          <tr key={m.month} className="hover:bg-labarile-light-gray border-t border-labarile-border">
-                            <td className="px-4 py-3 text-sm font-semibold">{m.month}</td>
-                            <td className="px-4 py-3 text-sm text-right">{(m.revenue / 1000).toFixed(1)}</td>
-                            <td className="px-4 py-3 text-sm text-right text-labarile-warning">{(charges / 1000).toFixed(1)}</td>
-                            <td className={`px-4 py-3 text-sm text-right font-semibold ${ebitda < 0 ? 'text-red-600' : 'text-labarile-success'}`}>
+                          <tr key={m.month} className="hover:bg-labarile-ice1/40 border-t border-labarile-border/60 transition-colors">
+                            <td className="px-4 py-3 text-sm font-semibold text-labarile-text">{m.month}</td>
+                            <td className="px-4 py-3 text-sm text-right tabular-nums">{(m.revenue / 1000).toFixed(1)}</td>
+                            <td className="px-4 py-3 text-sm text-right text-labarile-warning tabular-nums">{(charges / 1000).toFixed(1)}</td>
+                            <td className={`px-4 py-3 text-sm text-right font-semibold tabular-nums ${ebitda < 0 ? 'text-red-600' : 'text-labarile-success'}`}>
                               {(ebitda / 1000).toFixed(1)}
                             </td>
-                            <td className={`px-4 py-3 text-sm text-right font-semibold ${margin < 0 ? 'text-red-600' : 'text-labarile-success'}`}>
-                              {margin.toFixed(1)}%
+                            <td className="px-4 py-3 text-right">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums ${margin < 0 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-labarile-success'}`}>
+                                {margin.toFixed(1)}%
+                              </span>
                             </td>
                           </tr>
                         );
                       })}
-                      <tr className="bg-labarile-ice1 font-bold border-t-2 border-labarile-primary">
-                        <td className="px-4 py-3 text-sm">TOTAL YTD</td>
-                        <td className="px-4 py-3 text-sm text-right">{(caYtd / 1000).toFixed(1)}</td>
-                        <td className="px-4 py-3 text-sm text-right text-labarile-warning">{(totalCharges / 1000).toFixed(1)}</td>
-                        <td className={`px-4 py-3 text-sm text-right ${ebitdaYtd < 0 ? 'text-red-600' : 'text-labarile-success'}`}>
+                      <tr className="bg-gradient-to-r from-labarile-ice1 to-labarile-ice2/70 font-bold border-t-2 border-labarile-primary">
+                        <td className="px-4 py-3 text-sm text-labarile-primary-dark">TOTAL YTD</td>
+                        <td className="px-4 py-3 text-sm text-right tabular-nums">{(caYtd / 1000).toFixed(1)}</td>
+                        <td className="px-4 py-3 text-sm text-right text-labarile-warning tabular-nums">{(totalCharges / 1000).toFixed(1)}</td>
+                        <td className={`px-4 py-3 text-sm text-right tabular-nums ${ebitdaYtd < 0 ? 'text-red-600' : 'text-labarile-success'}`}>
                           {(ebitdaYtd / 1000).toFixed(1)}
                         </td>
-                        <td className={`px-4 py-3 text-sm text-right ${marginPct < 0 ? 'text-red-600' : 'text-labarile-success'}`}>
-                          {marginPct.toFixed(1)}%
+                        <td className="px-4 py-3 text-right">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold tabular-nums ${marginPct < 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {marginPct.toFixed(1)}%
+                          </span>
                         </td>
                       </tr>
                     </tbody>
