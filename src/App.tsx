@@ -222,6 +222,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/labarile-import"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminLabarileImport />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
