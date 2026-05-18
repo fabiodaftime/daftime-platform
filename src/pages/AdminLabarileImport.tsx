@@ -67,7 +67,44 @@ export default function AdminLabarileImport() {
         .from('labarile_monthly_pl')
         .upsert(rows, { onConflict: 'year,month' });
       if (error) throw error;
-      toast.success(`${rows.length} mois enregistré(s) en base.`);
+
+      // Persist account-level detail (for drill-down). Strategy: wipe + insert per (year, month).
+      let accountRowsCount = 0;
+      for (const m of result.months) {
+        await (supabase as any)
+          .from('labarile_pl_accounts')
+          .delete()
+          .eq('year', m.year)
+          .eq('month', m.month);
+
+        // Agrège les lignes par (compte, catégorie) — un compte peut apparaître plusieurs fois.
+        const agg = new Map<string, { account: string; amount: number; category: string }>();
+        for (const d of m.detail) {
+          const key = `${d.account}||${d.category}`;
+          const prev = agg.get(key);
+          if (prev) prev.amount += Math.abs(Number(d.amount));
+          else agg.set(key, { account: d.account, amount: Math.abs(Number(d.amount)), category: d.category });
+        }
+        const detailRows = [...agg.values()]
+          .filter((r) => Math.round(r.amount) !== 0)
+          .map((r) => ({
+            year: m.year,
+            month: m.month,
+            account: r.account,
+            amount: Math.round(r.amount),
+            category: r.category,
+          }));
+
+        if (detailRows.length) {
+          const { error: detailErr } = await (supabase as any)
+            .from('labarile_pl_accounts')
+            .insert(detailRows);
+          if (detailErr) throw detailErr;
+          accountRowsCount += detailRows.length;
+        }
+      }
+
+      toast.success(`${rows.length} mois + ${accountRowsCount} lignes de détail enregistré(s).`);
     } catch (e: any) {
       toast.error(`Erreur d'enregistrement : ${e.message ?? e}`);
     } finally {
