@@ -100,12 +100,22 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
 
       {MONTHLY_COSTS_2026.map((monthData, idx) => {
         const comments = generateActualComments(monthData);
+        const ym = parseMonthLabel(monthData.month);
         return (
           <div key={`m26-${idx}`} className="bg-labarile-white border border-labarile-border rounded-xl p-5 lg:p-7">
             <h3 className="font-bebas text-lg lg:text-xl text-labarile-title mb-4 tracking-wide">
               📊 {monthData.month} — Réel (CA: {(monthData.revenue / 1000).toFixed(1)} kAED)
             </h3>
             <LabarileMonthlyCostsChart actual={monthData.actual} revenue={monthData.revenue} />
+            {ym && (
+              <LabarileCategoryDrilldown
+                year={ym.year}
+                month={ym.month}
+                monthLabel={monthData.month}
+                totals={monthData.actual}
+                revenue={monthData.revenue}
+              />
+            )}
             <div className="mt-4 rounded-lg p-4 border-l-4 bg-labarile-ice1 border-l-labarile-primary">
               <p className="font-bold text-sm mb-2 text-labarile-primary-dark">💬 Détail du mois :</p>
               <ul className="space-y-1.5 ml-4 list-disc">
