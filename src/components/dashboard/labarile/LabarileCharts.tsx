@@ -1,21 +1,28 @@
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   Legend,
   Area,
   AreaChart,
   LineChart,
-  Line
+  Line,
+  LabelList,
 } from 'recharts';
 import { ACTUALS, ACTUALS_2026, SCENARIOS, MONTHS_2026, Scenario, BASKET_EVOLUTION, PROGRAMS_MIX, CLOSERS_DATA } from './LabarileData';
+import {
+  LabarileGradients,
+  LabarileTooltip,
+  LAB_AXIS_TICK,
+  LAB_GRID_STROKE,
+} from './LabarileChartPrimitives';
 
 const COLORS = {
   primary: '#7CC9CC',
@@ -28,7 +35,7 @@ const COLORS = {
   marketing: '#7CC9CC',
   admin: '#4EB79F',
   stripe: '#9DD8DA',
-  tools: '#C9EDEF'
+  tools: '#C9EDEF',
 };
 
 interface RevenueChartProps {
