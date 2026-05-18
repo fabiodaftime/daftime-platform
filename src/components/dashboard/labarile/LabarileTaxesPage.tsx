@@ -23,71 +23,54 @@ const fmtK = (aed: number) => `${Math.round(aed / 1000).toLocaleString()}k AED`;
 const fmtPct = (n: number) => `${n.toFixed(1)}%`;
 
 // ---------- YTD 2026 : taxes estimées sur la période ----------
-function buildYtd2026Taxes() {
-  const ca = YTD_2026.caTotal; // AED
-  const months = YTD_2026.months; // 4
-  const netProfit = YTD_2026.netProfit; // AED
+function buildYtd2026Taxes(ytdData: { months: number; caTotal: number; netProfit: number }) {
+  const ca = ytdData.caTotal;
+  const months = ytdData.months;
+  const netProfit = ytdData.netProfit;
 
   const vatEu = ca * (ASSUMPTIONS.vatEuRatePctOfCA / 100);
   const vatUae = ca * (ASSUMPTIONS.vatUaeRatePctOfCA / 100);
 
-  // Run-rate annuel à partir du YTD
-  const caAnnualRunRate = ca * (12 / months);
-  const profitAnnualRunRate = netProfit * (12 / months);
+  const caAnnualRunRate = months > 0 ? ca * (12 / months) : 0;
+  const profitAnnualRunRate = months > 0 ? netProfit * (12 / months) : 0;
   const taxableAnnual = Math.max(0, profitAnnualRunRate - ASSUMPTIONS.ctAbattementAED);
   const ctAnnualEstimate = taxableAnnual * (ASSUMPTIONS.ctRate / 100);
-  // Provision YTD au prorata (4/12 de la CT annuelle)
-  const ctYtdProrata = ctAnnualEstimate * (months / 12);
-  // Provision mensuelle théorique pour étaler la CT annuelle
+  const ctYtdProrata = months > 0 ? ctAnnualEstimate * (months / 12) : 0;
   const ctMonthlyProvision = ctAnnualEstimate / 12;
 
   const totalYtd = vatEu + vatUae + ctYtdProrata;
 
   return {
-    ca,
-    months,
-    netProfit,
-    vatEu,
-    vatUae,
-    ctYtdProrata,
-    ctAnnualEstimate,
-    ctMonthlyProvision,
-    caAnnualRunRate,
-    profitAnnualRunRate,
-    taxableAnnual,
-    totalYtd,
+    ca, months, netProfit, vatEu, vatUae,
+    ctYtdProrata, ctAnnualEstimate, ctMonthlyProvision,
+    caAnnualRunRate, profitAnnualRunRate, taxableAnnual, totalYtd,
   };
 }
 
 // ---------- Détail mensuel YTD 2026 ----------
-function buildMonthlyTaxRows() {
-  return MONTHLY_COSTS_2026.map((m) => {
-    const charges = Object.values(m.actual).reduce((a, b) => a + b, 0);
+function buildMonthlyTaxRows(monthly: Array<{ month: string; revenue: number; actual: Record<string, number> }>) {
+  return monthly.map((m) => {
+    const charges = (Object.values(m.actual) as number[]).reduce((a, b) => a + b, 0);
     const ebitda = m.revenue - charges;
     const vatEu = m.revenue * (ASSUMPTIONS.vatEuRatePctOfCA / 100);
     const vatUae = m.revenue * (ASSUMPTIONS.vatUaeRatePctOfCA / 100);
-    return {
-      month: m.month,
-      revenue: m.revenue,
-      ebitda,
-      vatEu,
-      vatUae,
-      total: vatEu + vatUae,
-    };
+    return { month: m.month, revenue: m.revenue, ebitda, vatEu, vatUae, total: vatEu + vatUae };
   });
 }
 
 function computeCT(s: Scenario) {
-  const ebitda = Math.round(s.total2026 * s.margins.operating / 100); // k AED
-  const profit = Math.max(0, ebitda - 375); // k AED, abattement 375k
+  const ebitda = Math.round(s.total2026 * s.margins.operating / 100);
+  const profit = Math.max(0, ebitda - 375);
   const ct = Math.round(profit * 0.09);
   const mensuel = Math.round(ct / 12);
   return { ebitda, profit, ct, mensuel };
 }
 
 export function LabarileTaxesPage({ scenario }: LabarileTaxesPageProps) {
-  const ytd = buildYtd2026Taxes();
-  const monthly = buildMonthlyTaxRows();
+  const { monthlyCosts2026, ytd2026 } = useLabarileMonthly(2026);
+  const ytd = buildYtd2026Taxes(ytd2026);
+  const monthly = buildMonthlyTaxRows(monthlyCosts2026);
+
   const ctScenarios = [
     { key: 'prudent', label: 'Prudent', ...computeCT(SCENARIOS.prudent), highlight: false },
     { key: 'base', label: 'Base', ...computeCT(SCENARIOS.base), highlight: true },
