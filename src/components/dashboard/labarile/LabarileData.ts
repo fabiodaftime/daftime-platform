@@ -5,6 +5,12 @@ export const ACTUALS = {
   revenue: [491.3, 438.4, 375.5]
 };
 
+// Actuals Jan-Apr 2026 (source: P&L Zoho LLE Educational Services FZCO, AED)
+export const ACTUALS_2026 = {
+  months: ['Jan 26', 'Fév 26', 'Mar 26', 'Avr 26'],
+  revenue: [706.4, 878.0, 667.0, 1038.4],
+};
+
 export interface Scenario {
   name: string;
   forecast2026: number[];
