@@ -36,17 +36,18 @@ interface RevenueChartProps {
 }
 
 export function LabarileMainRevenueChart({ scenario }: RevenueChartProps) {
+  const actuals2026Count = ACTUALS_2026.revenue.length;
   const data = [
     ...ACTUALS.months.map((month, idx) => ({
       month,
       actual: ACTUALS.revenue[idx],
-      projected: null as number | null
+      projected: null as number | null,
     })),
     ...MONTHS_2026.map((month, idx) => ({
       month: month + ' 26',
-      actual: null as number | null,
-      projected: scenario.forecast2026[idx]
-    }))
+      actual: idx < actuals2026Count ? ACTUALS_2026.revenue[idx] : (null as number | null),
+      projected: idx < actuals2026Count ? (null as number | null) : scenario.forecast2026[idx],
+    })),
   ];
 
   return (
