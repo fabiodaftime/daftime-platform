@@ -362,22 +362,40 @@ export function LabarileTreasuryDonut() {
     { name: 'Provision TVA EU', value: 150, color: '#F59E0B' },
   ];
 
+  const total = data.reduce((a, d) => a + d.value, 0);
   return (
-    <div className="h-[250px] lg:h-[300px]">
+    <div className="h-[260px] lg:h-[310px] relative">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={62}
+            outerRadius={92}
+            paddingAngle={3}
+            dataKey="value"
+            stroke="white"
+            strokeWidth={3}
+          >
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }} 
-            formatter={(value: number) => [value.toFixed(1) + ' kAED (' + (value / 500.6 * 100).toFixed(1) + '%)', '']}
+          <Tooltip
+            content={
+              <LabarileTooltip
+                valueFormatter={(v) => v.toFixed(1) + ' kAED · ' + (total > 0 ? ((v / total) * 100).toFixed(1) : '0') + '%'}
+              />
+            }
           />
-          <Legend verticalAlign="bottom" iconType="circle" formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>} />
+          <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ paddingTop: 8 }} formatter={(value) => <span className="text-xs text-labarile-muted">{value}</span>} />
         </PieChart>
       </ResponsiveContainer>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center -mt-7">
+        <p className="text-[10px] uppercase tracking-wider text-labarile-muted font-semibold">Total</p>
+        <p className="font-bebas text-2xl text-labarile-primary-dark leading-none">{total.toFixed(0)}k</p>
+      </div>
     </div>
   );
 }
@@ -390,17 +408,27 @@ export function LabarileDebtChart() {
   ];
 
   return (
-    <div className="h-[250px] lg:h-[300px]">
+    <div className="h-[260px] lg:h-[310px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 11 }} />
-          <YAxis tickFormatter={(v) => v + 'k'} tick={{ fill: '#666', fontSize: 11 }} />
-          <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }} formatter={(value: number) => [value.toFixed(1) + ' kAED', '']} />
-          <Bar dataKey="value" name="Montant (kAED)" radius={[4, 4, 0, 0]}>
+        <BarChart data={data} margin={{ top: 24, right: 16, left: 6, bottom: 5 }} barCategoryGap="30%">
+          <LabarileGradients />
+          <CartesianGrid strokeDasharray="4 6" stroke={LAB_GRID_STROKE} vertical={false} />
+          <XAxis dataKey="name" tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} dy={6} />
+          <YAxis tickFormatter={(v) => v + 'k'} tick={LAB_AXIS_TICK} axisLine={false} tickLine={false} />
+          <Tooltip
+            cursor={{ fill: 'rgba(232,126,96,0.08)' }}
+            content={<LabarileTooltip valueFormatter={(v) => v.toFixed(1) + ' kAED'} />}
+          />
+          <Bar dataKey="value" name="Montant (kAED)" radius={[8, 8, 0, 0]} maxBarSize={64}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
+            <LabelList
+              dataKey="value"
+              position="top"
+              formatter={(v: number) => v.toFixed(0) + 'k'}
+              style={{ fill: '#0f172a', fontSize: 11, fontWeight: 700 }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
