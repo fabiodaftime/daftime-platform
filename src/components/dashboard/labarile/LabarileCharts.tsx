@@ -276,29 +276,20 @@ export function LabarileBasketChart() {
   );
 }
 
-// Monthly Costs Chart (Actual vs Forecast)
+// Monthly Costs Chart (Actual only)
 interface MonthlyCostsChartProps {
   actual: { coaches: number; marketing: number; it: number; stripe: number; admin: number; autres: number };
   revenue: number;
-  scenario: Scenario;
+  scenario?: Scenario;
 }
 
-export function LabarileMonthlyCostsChart({ actual, revenue, scenario }: MonthlyCostsChartProps) {
+export function LabarileMonthlyCostsChart({ actual, revenue }: MonthlyCostsChartProps) {
   const labels = ['Coaches', 'Marketing', 'IT & Tools', 'Stripe/Fees', 'Admin', 'Autres'];
   const actualValues = [actual.coaches, actual.marketing, actual.it, actual.stripe, actual.admin, actual.autres];
-  const forecastValues = [
-    revenue * scenario.costs.coaches / 100,
-    revenue * scenario.costs.marketing / 100,
-    revenue * scenario.costs.tools / 100,
-    revenue * scenario.costs.stripe / 100,
-    revenue * scenario.costs.admin / 100,
-    0
-  ];
 
   const data = labels.map((label, idx) => ({
     name: label,
     actual: Math.round(actualValues[idx]),
-    forecast: Math.round(forecastValues[idx]),
   }));
 
   return (
@@ -317,7 +308,6 @@ export function LabarileMonthlyCostsChart({ actual, revenue, scenario }: Monthly
           />
           <Legend />
           <Bar dataKey="actual" fill={COLORS.warning} name="Réel" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="forecast" fill={COLORS.ice} name="Prévu (Scénario)" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
