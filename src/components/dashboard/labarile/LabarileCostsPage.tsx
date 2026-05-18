@@ -3,6 +3,7 @@ import { LabarileMonthlyCostsChart } from './LabarileCharts';
 import { MONTHLY_COSTS, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
 import { useLabarileMonthly } from './useLabarileMonthly';
 import { LabarileCategoryDrilldown } from './LabarileCategoryDrilldown';
+import { LabarileConsistencyCheck } from './LabarileConsistencyCheck';
 
 const MONTH_LABEL_TO_NUM: Record<string, number> = {
   JANVIER: 1, FÉVRIER: 2, FEVRIER: 2, MARS: 3, AVRIL: 4, MAI: 5, JUIN: 6,
