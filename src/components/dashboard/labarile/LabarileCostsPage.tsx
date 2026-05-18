@@ -2,6 +2,19 @@ import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileMonthlyCostsChart } from './LabarileCharts';
 import { MONTHLY_COSTS, COSTS_Q4_DETAIL, type Scenario, type MonthlyCostData } from './LabarileData';
 import { useLabarileMonthly } from './useLabarileMonthly';
+import { LabarileCategoryDrilldown } from './LabarileCategoryDrilldown';
+
+const MONTH_LABEL_TO_NUM: Record<string, number> = {
+  JANVIER: 1, FÉVRIER: 2, FEVRIER: 2, MARS: 3, AVRIL: 4, MAI: 5, JUIN: 6,
+  JUILLET: 7, AOÛT: 8, AOUT: 8, SEPTEMBRE: 9, OCTOBRE: 10, NOVEMBRE: 11, DÉCEMBRE: 12, DECEMBRE: 12,
+};
+function parseMonthLabel(label: string): { year: number; month: number } | null {
+  const m = label.trim().match(/^([A-ZÉÈÊÀÂÎÏÔÛÇa-zéèêàâîïôûç]+)\s+(\d{4})$/);
+  if (!m) return null;
+  const month = MONTH_LABEL_TO_NUM[m[1].toUpperCase()];
+  if (!month) return null;
+  return { year: +m[2], month };
+}
 
 interface LabarileCostsPageProps {
   scenario: Scenario;
@@ -87,12 +100,22 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
 
       {MONTHLY_COSTS_2026.map((monthData, idx) => {
         const comments = generateActualComments(monthData);
+        const ym = parseMonthLabel(monthData.month);
         return (
           <div key={`m26-${idx}`} className="bg-labarile-white border border-labarile-border rounded-xl p-5 lg:p-7">
             <h3 className="font-bebas text-lg lg:text-xl text-labarile-title mb-4 tracking-wide">
               📊 {monthData.month} — Réel (CA: {(monthData.revenue / 1000).toFixed(1)} kAED)
             </h3>
             <LabarileMonthlyCostsChart actual={monthData.actual} revenue={monthData.revenue} />
+            {ym && (
+              <LabarileCategoryDrilldown
+                year={ym.year}
+                month={ym.month}
+                monthLabel={monthData.month}
+                totals={monthData.actual}
+                revenue={monthData.revenue}
+              />
+            )}
             <div className="mt-4 rounded-lg p-4 border-l-4 bg-labarile-ice1 border-l-labarile-primary">
               <p className="font-bold text-sm mb-2 text-labarile-primary-dark">💬 Détail du mois :</p>
               <ul className="space-y-1.5 ml-4 list-disc">
