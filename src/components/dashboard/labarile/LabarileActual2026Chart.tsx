@@ -1,7 +1,12 @@
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, LabelList } from 'recharts';
 import { ACTUALS_2026 } from './LabarileData';
-
-const COLORS_BY_INDEX = ['#7CC9CC', '#4EB79F', '#9DD8DA', '#5AB5B8'];
+import {
+  LabarileGradients,
+  LabarileTooltip,
+  LAB_GRADIENT_BY_INDEX,
+  LAB_AXIS_TICK,
+  LAB_GRID_STROKE,
+} from './LabarileChartPrimitives';
 
 interface Props {
   actuals2026Override?: { months: string[]; revenue: number[] };
@@ -15,18 +20,40 @@ export function LabarileActual2026Chart({ actuals2026Override }: Props) {
   return (
     <div className="h-[280px] lg:h-[350px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis dataKey="month" tick={{ fill: '#666', fontSize: 12 }} axisLine={{ stroke: '#E0E0E0' }} tickLine={false} />
-          <YAxis tickFormatter={(v) => v + ' k'} tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <Tooltip
-            contentStyle={{ backgroundColor: 'white', border: '1px solid #E0E0E0', borderRadius: '8px' }}
-            formatter={(v: number) => [v.toFixed(1) + ' kAED', 'CA Réel']}
+        <BarChart data={data} margin={{ top: 24, right: 16, left: -8, bottom: 5 }} barCategoryGap="28%">
+          <LabarileGradients />
+          <CartesianGrid strokeDasharray="4 6" stroke={LAB_GRID_STROKE} vertical={false} />
+          <XAxis
+            dataKey="month"
+            tick={LAB_AXIS_TICK}
+            axisLine={false}
+            tickLine={false}
+            dy={6}
           />
-          <Bar dataKey="ca" name="CA Réel" radius={[4, 4, 0, 0]}>
+          <YAxis
+            tickFormatter={(v) => v + ' k'}
+            tick={LAB_AXIS_TICK}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            cursor={{ fill: 'rgba(124,201,204,0.08)' }}
+            content={
+              <LabarileTooltip
+                valueFormatter={(v) => v.toFixed(1) + ' kAED'}
+              />
+            }
+          />
+          <Bar dataKey="ca" name="CA Réel" radius={[8, 8, 0, 0]} maxBarSize={64}>
             {data.map((_, i) => (
-              <Cell key={i} fill={COLORS_BY_INDEX[i % COLORS_BY_INDEX.length]} />
+              <Cell key={i} fill={LAB_GRADIENT_BY_INDEX[i % LAB_GRADIENT_BY_INDEX.length]} />
             ))}
+            <LabelList
+              dataKey="ca"
+              position="top"
+              formatter={(v: number) => v.toFixed(0) + 'k'}
+              style={{ fill: '#0f4a4d', fontSize: 11, fontWeight: 700 }}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
