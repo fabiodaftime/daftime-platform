@@ -120,6 +120,46 @@ export function LabarileCostsPage({ scenario }: LabarileCostsPageProps) {
         );
       })}
 
+      {/* Section YTD 2026 */}
+      <div className="bg-labarile-ice1 border-l-4 border-l-labarile-success rounded-md px-4 py-2 mt-2">
+        <p className="font-bebas text-base tracking-wider text-labarile-primary-dark">
+          YTD 2026 — Réel (Janvier → Avril)
+        </p>
+      </div>
+
+      {MONTHLY_COSTS_2026.map((monthData, idx) => {
+        const dynamicComments = generateDynamicComments(monthData, scenario);
+        const commentType = getDynamicCommentType(monthData, scenario);
+        return (
+          <div key={`m26-${idx}`} className="bg-labarile-white border border-labarile-border rounded-xl p-5 lg:p-7">
+            <h3 className="font-bebas text-lg lg:text-xl text-labarile-title mb-4 tracking-wide">
+              📊 {monthData.month} - Réel vs Prévu [{scenario.name}] (CA: {(monthData.revenue / 1000).toFixed(1)} kAED)
+            </h3>
+            <LabarileMonthlyCostsChart actual={monthData.actual} revenue={monthData.revenue} scenario={scenario} />
+            <div className={cn(
+              "mt-4 rounded-lg p-4 border-l-4",
+              commentType === 'warning' && "bg-amber-50 border-l-amber-500",
+              commentType === 'success' && "bg-emerald-50 border-l-emerald-500",
+              commentType === 'critical' && "bg-red-50 border-l-red-400",
+            )}>
+              <p className={cn(
+                "font-bold text-sm mb-2",
+                commentType === 'warning' && "text-amber-700",
+                commentType === 'success' && "text-emerald-700",
+                commentType === 'critical' && "text-red-700",
+              )}>
+                💬 Analyse vs Scénario {scenario.name} ({totalCostsTarget.toFixed(1)}% charges cibles):
+              </p>
+              <ul className="space-y-1.5 ml-4 list-disc">
+                {[...monthData.comments, ...dynamicComments].map((comment, cidx) => (
+                  <li key={cidx} className="text-sm leading-relaxed text-labarile-text">{comment}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        );
+      })}
+
       {/* Q4 Synthesis - Dynamic */}
       <div className="bg-gradient-to-br from-labarile-ice1 to-labarile-white border-2 border-labarile-primary rounded-xl p-5 lg:p-7">
         <h3 className="font-bebas text-xl lg:text-2xl text-labarile-primary-dark mb-4 tracking-wide">
