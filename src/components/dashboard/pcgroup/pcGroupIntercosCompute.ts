@@ -52,10 +52,11 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     return { rule, monthly, exigible, notYetDue, ytd };
   });
 
-  // Aggregate received cash for source months whose due-date already passed.
+  // Aggregate ALL received cash across the period (matches the per-entity table
+  // total "Déjà Remonté"). Previously this filtered by a default settlement lag,
+  // which excluded the latest month's cash from the KPI even though it appeared
+  // in the table — causing a visible mismatch (e.g. 38k vs 128k).
   const receivedTotal = sourceMonths.reduce((acc, sm) => {
-    const dueIdx = MONTH_ORDER.indexOf(sm) + 1; // default lag
-    if (dueIdx > viewIdx) return acc;
     const block = INTERCOS_CASH[sm];
     if (!block) return acc;
     return (
