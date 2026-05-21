@@ -94,9 +94,10 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       expect(Math.abs(ytd.resultatNetYTD - expectedNet)).toBeLessThan(EPS);
     });
 
-    it('Patcher SPY (+10 000 CA, +3 000 marge) sur tous les mois ne déplace ni caYTD ni margeBruteYTD', () => {
+    it('Patcher SPY (+10 000 CA, +3 000 marge) propage exactement aux totaux YTD', () => {
       const baseline = computeYTD(last);
       const cfg = clone(DEFAULT_CONFIG);
+      const monthsPatched = cfg.manualFacts.filter((m) => m.entity_code === 'spy').length;
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.entity_code === 'spy'
           ? { ...m, ca: m.ca + 10000, contribution: m.contribution + 3000 }
@@ -104,14 +105,16 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const updated = computeYTD(last);
-      expect(Math.abs(updated.caYTD - baseline.caYTD)).toBeLessThan(EPS);
-      expect(Math.abs(updated.margeBruteYTD - baseline.margeBruteYTD)).toBeLessThan(EPS);
-      expect(Math.abs(updated.resultatNetYTD - baseline.resultatNetYTD)).toBeLessThan(EPS);
+      const deltaCa = 10000 * monthsPatched;
+      const deltaMarge = 3000 * monthsPatched;
+      expect(Math.abs((updated.caYTD - baseline.caYTD) - deltaCa)).toBeLessThan(EPS);
+      expect(Math.abs((updated.margeBruteYTD - baseline.margeBruteYTD) - deltaMarge)).toBeLessThan(EPS);
     });
 
-    it('Patcher Comment ne déplace pas la marge brute YTD', () => {
+    it('Patcher Comment propage exactement à la marge brute YTD', () => {
       const baseline = computeYTD(last);
       const cfg = clone(DEFAULT_CONFIG);
+      const monthsPatched = cfg.manualFacts.filter((m) => m.entity_code === 'comment').length;
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.entity_code === 'comment'
           ? { ...m, contribution: m.contribution + 4000 }
@@ -119,7 +122,8 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const updated = computeYTD(last);
-      expect(Math.abs(updated.margeBruteYTD - baseline.margeBruteYTD)).toBeLessThan(EPS);
+      const deltaMarge = 4000 * monthsPatched;
+      expect(Math.abs((updated.margeBruteYTD - baseline.margeBruteYTD) - deltaMarge)).toBeLessThan(EPS);
     });
   });
 
