@@ -67,34 +67,11 @@ export function PCGroupIntercosTab({ data }: Props) {
   const fmtUSDStr = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
   const [issueDrawer, setIssueDrawer] = useState<ValidationIssue | null>(null);
 
-  // Fusionne les lignes digit + spy + comment en une seule ligne "Digit Solution"
+  // Affiche les filiales en lignes distinctes — DG Solutions (Core), SPY et
+  // Comment/Trust sont des entités séparées et ne doivent PAS être fusionnées
   // dans le tableau "Détail des Remontées par Filiale".
-  const DIGIT_KEYS = ['digit', 'spy', 'comment'];
-  const displayRows = (() => {
-    const rows = (table.rows ?? []) as any[];
-    const digitParts = rows.filter((r) => DIGIT_KEYS.includes(r._key));
-    if (digitParts.length === 0) return rows;
-    const others = rows.filter((r) => !DIGIT_KEYS.includes(r._key));
-    const sumCol = (col: string) => digitParts.reduce((a, r) => a + parseUSDNum(r[col]), 0);
-    const merged: any = {
-      _key: 'digit-merged',
-      _codes: DIGIT_KEYS,
-      entity: 'Digit Solution (Core + SPY + Comment)',
-    };
-    table.columns.forEach((c: any) => {
-      merged[c.key] = fmtUSDStr(sumCol(c.key));
-    });
-    const ytd = sumCol('ytd');
-    const received = sumCol('received');
-    merged.ytd = fmtUSDStr(ytd);
-    merged.received = fmtUSDStr(received);
-    merged.remaining = fmtUSDStr(Math.max(0, ytd - received));
-    // Insère la ligne fusionnée à la position du premier sous-élément Digit
-    const firstDigitIdx = rows.findIndex((r) => DIGIT_KEYS.includes(r._key));
-    const out = [...others];
-    out.splice(Math.min(firstDigitIdx, out.length), 0, merged);
-    return out;
-  })();
+  const displayRows = (table.rows ?? []) as any[];
+
 
   const buildTableRows = () => {
     const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
@@ -352,36 +329,11 @@ export function PCGroupIntercosTab({ data }: Props) {
         </div>
       </div>
 
-      {/* Cards visuelles : ce que chaque entité doit encore remonter */}
+      {/* Cards visuelles : chaque filiale (Agency, Structuring, DG Solutions,
+          SPY, Comment/Trust) est affichée séparément — pas de regroupement
+          "Digit Group". */}
       {Array.isArray((intercos as any).entityCards) && (() => {
         const cards = (intercos as any).entityCards as any[];
-        const parseUSD = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
-        const fmtUSD = (n: number) => `$${Math.round(n).toLocaleString()}`;
-        const digitKeys = ['digit', 'spy', 'comment'];
-        const digitSubs = cards.filter((c) => digitKeys.includes(c.key));
-        const others = cards.filter((c) => !digitKeys.includes(c.key));
-
-        let digitGroupCard: any = null;
-        if (digitSubs.length > 0) {
-          const expected = digitSubs.reduce((a, c) => a + parseUSD(c.expected), 0);
-          const received = digitSubs.reduce((a, c) => a + parseUSD(c.received), 0);
-          const remaining = Math.max(0, expected - received);
-          const rate = expected > 0 ? (received / expected) * 100 : 0;
-          let level: 'danger' | 'warning' | 'success' = 'danger';
-          if (rate >= 80) level = 'success';
-          else if (rate >= 40) level = 'warning';
-          digitGroupCard = {
-            key: 'digit-group',
-            entity: 'Digit Group',
-            subtitle: 'Digit Core + SPY + Comment/Trust',
-            expected: fmtUSD(expected),
-            received: fmtUSD(received),
-            remaining: fmtUSD(remaining),
-            rate: `${rate.toFixed(1)}%`,
-            level,
-            subs: digitSubs,
-          };
-        }
 
         const renderCard = (c: any) => (
           <div
@@ -418,59 +370,13 @@ export function PCGroupIntercosTab({ data }: Props) {
             </div>
             <div className="pcg-section-body">
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-                {others.map(renderCard)}
+                {cards.map(renderCard)}
               </div>
-
-              {digitGroupCard && (
-                <div
-                  style={{
-                    marginTop: 20,
-                    border: `2px solid ${LEVEL_BORDER[digitGroupCard.level] ?? '#1E3A5F'}`,
-                    borderLeft: `6px solid ${COLOR[digitGroupCard.level] ?? '#1E3A5F'}`,
-                    borderRadius: 10,
-                    padding: 20,
-                    background: 'linear-gradient(135deg, #FAFBFC 0%, #FFFFFF 100%)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                        Vue Globale
-                      </div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#1E3A5F', marginBottom: 2 }}>
-                        {digitGroupCard.entity}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#9CA3AF' }}>{digitGroupCard.subtitle}</div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 11, color: '#6B7280' }}>Reste à remonter</div>
-                        <div style={{ fontSize: 28, fontWeight: 700, color: COLOR[digitGroupCard.level] }}>
-                          {digitGroupCard.remaining}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right', fontSize: 12, color: '#374151' }}>
-                        <div>Attendu : <strong>{digitGroupCard.expected}</strong></div>
-                        <div>Reçu : <strong style={{ color: '#059669' }}>{digitGroupCard.received}</strong></div>
-                        <div style={{ color: COLOR[digitGroupCard.level], fontWeight: 600, marginTop: 2 }}>
-                          Recouvrement : {digitGroupCard.rate}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pas de détail reçu/attendu par sous-entité : Digit Group remonte
-                      un montant global unique, pas une remontée par sous-entité. */}
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #E5E7EB', fontSize: 11, color: '#9CA3AF', fontStyle: 'italic' }}>
-                    Périmètre : {digitGroupCard.subs.map((s: any) => s.entity).join(' + ')} — remontée groupée.
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         );
       })()}
+
 
 
     </div>
