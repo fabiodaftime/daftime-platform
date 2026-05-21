@@ -8,6 +8,8 @@ import type { PCGSourceMonthId } from './sources/entityAdapters';
 import { digitFacts } from './sources/entityAdapters';
 import { MANUAL_ENTITIES } from './manualEntities';
 import { getDigitMonthData, type DigitMonthId } from '../digit/DigitData';
+import { applyDigitInputsToMonthData } from '@/lib/entityInputs/applyDigitInputs';
+
 
 export type ValidationSeverity = 'error' | 'warning';
 
@@ -39,10 +41,20 @@ function parseUSD(v: unknown): number {
 
 export { MONTH_LABEL as DIGIT_MONTH_LABEL };
 
-/** Read the 3 sub-product values from the Digit dashboard for a month. */
-export function readDigitDashboard(month: PCGSourceMonthId) {
+/** Read the 3 sub-product values from the Digit dashboard for a month.
+ * Applies `entity_monthly_inputs.digit` overrides (same logic as DashboardDigit page)
+ * so the validator compares PCGroup vs the *actually displayed* dashboard, not
+ * the raw static seed values. `digitInputsByMonth` is the map returned by
+ * `useEntityInputsByMonth('digit')`.
+ */
+export function readDigitDashboard(
+  month: PCGSourceMonthId,
+  digitInputsByMonth?: Record<string, { inputs?: any } | undefined>,
+) {
   try {
-    const d = getDigitMonthData(month as DigitMonthId);
+    const base = getDigitMonthData(month as DigitMonthId);
+    const row = digitInputsByMonth?.[month];
+    const d = row ? applyDigitInputsToMonthData(base, (row.inputs as any) ?? null) : base;
     const core = d.overviewProducts?.find((p: any) => /Core/i.test(p.label));
     const spy = d.overviewProducts?.find((p: any) => /^SPY/i.test(p.label));
     const ct = d.overviewProducts?.find((p: any) => /Comment|Trust/i.test(p.label));
@@ -59,6 +71,7 @@ export function readDigitDashboard(month: PCGSourceMonthId) {
   }
 }
 
+
 const REL_TOL = 0.05; // 5 % tolerance for CA matching
 const ABS_TOL = 50; // 50 USD absolute tolerance
 
@@ -70,13 +83,15 @@ function approxEqual(a: number, b: number) {
 
 export function validateDigitConsistency(
   months: PCGSourceMonthId[],
+  digitInputsByMonth?: Record<string, { inputs?: any } | undefined>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   for (const m of months) {
-    const dash = readDigitDashboard(m);
+    const dash = readDigitDashboard(m, digitInputsByMonth);
     if (!dash) continue;
     const monthLabel = MONTH_LABEL[m];
+
 
     // ---- Digit (Core only expected) ----
     const dFacts = digitFacts(m);
