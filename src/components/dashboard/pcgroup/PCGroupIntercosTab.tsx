@@ -300,38 +300,36 @@ export function PCGroupIntercosTab({ data }: Props) {
               </tr>
             </thead>
             <tbody>
-              {displayRows.map((r: any, i: number) => (
-                <>
-                  <tr key={i}>
-                    <td>{r.entity}</td>
-                    {table.columns.map((c: any) => (
-                      <td key={c.key}>{r[c.key] ?? '—'}</td>
-                    ))}
-                    <td style={{ background: 'rgba(30, 58, 95, 0.05)', fontWeight: 600 }}>{r.ytd}</td>
-                    <td style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669' }}>
-                      {r.received ?? '$0'}
-                    </td>
-                    <td style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706' }}>
-                      {r.remaining ?? '—'}
+              {displayRows.map((r: any, i: number) => [
+                <tr key={`row-${i}`}>
+                  <td>{r.entity}</td>
+                  {table.columns.map((c: any) => (
+                    <td key={c.key}>{r[c.key] ?? '—'}</td>
+                  ))}
+                  <td style={{ background: 'rgba(30, 58, 95, 0.05)', fontWeight: 600 }}>{r.ytd}</td>
+                  <td style={{ background: 'rgba(16, 185, 129, 0.08)', fontWeight: 600, color: '#059669' }}>
+                    {r.received ?? '$0'}
+                  </td>
+                  <td style={{ background: 'rgba(245, 158, 11, 0.08)', fontWeight: 600, color: '#D97706' }}>
+                    {r.remaining ?? '—'}
+                  </td>
+                </tr>,
+                r.note ? (
+                  <tr key={`note-${i}`}>
+                    <td colSpan={table.columns.length + 4}
+                        style={{
+                          fontSize: 11,
+                          color: '#6B7280',
+                          fontStyle: 'italic',
+                          background: 'rgba(245, 158, 11, 0.04)',
+                          padding: '6px 12px',
+                          borderTop: 'none',
+                        }}>
+                      ℹ️ {r.note}
                     </td>
                   </tr>
-                  {r.note && (
-                    <tr key={`${i}-note`}>
-                      <td colSpan={table.columns.length + 4}
-                          style={{
-                            fontSize: 11,
-                            color: '#6B7280',
-                            fontStyle: 'italic',
-                            background: 'rgba(245, 158, 11, 0.04)',
-                            padding: '6px 12px',
-                            borderTop: 'none',
-                          }}>
-                        ℹ️ {r.note}
-                      </td>
-                    </tr>
-                  )}
-                </>
-              ))}
+                ) : null,
+              ])}
               <tr className="pcg-comparison-total">
                 <td>{table.total.entity}</td>
                 {table.columns.map((c: any) => (
