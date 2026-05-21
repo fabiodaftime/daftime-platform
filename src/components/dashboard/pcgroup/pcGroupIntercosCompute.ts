@@ -188,11 +188,10 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   const maxscaleExpected = digitMonthlyAmounts
     .filter((m) => isMaxscale(m.month))
     .reduce((acc, m) => acc + m.amount, 0);
-  const maxscaleReceived = maxscaleMonths.reduce(
-    (acc, sm) => acc + receivedFor(['digit', 'comment', 'spy'], [sm]),
-    0,
-  );
-  const maxscaleMissing = Math.max(0, maxscaleExpected - maxscaleReceived);
+  // Les remontées Digit reçues sont imputées en priorité sur les périodes les
+  // plus anciennes (Jan/Fév) — donc le reliquat Jan/Fév = ce qui n'a pas pu
+  // être couvert par le total déjà remonté, et non l'attendu brut de la période.
+  const maxscaleMissing = Math.max(0, maxscaleExpected - digitReceived);
 
   const digitRow: Record<string, any> = {
     entity: 'Digit Solution',
@@ -207,10 +206,16 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   };
   digitMonthlyAmounts.forEach((m) => { digitRow[m.month] = usd(m.amount); });
   if (maxscaleMonths.length > 0) {
-    digitRow.note = `Comment/Trust est inclus dans Digit Solution. SPY est inclus dans Digit Solution sur ${maxscaleMonths.map((m) => MONTH_SHORT[m]).join('/')} ; au titre de cette période, il manque ${usd(maxscaleMissing)} à remonter.`;
+    const monthsLabel = maxscaleMonths.map((m) => MONTH_SHORT[m]).join('/');
+    if (maxscaleMissing > 0) {
+      digitRow.note = `Comment/Trust est inclus dans Digit Solution. SPY est inclus dans Digit Solution sur ${monthsLabel} (attendu ${usd(maxscaleExpected)}) ; après imputation des remontées déjà perçues, il reste ${usd(maxscaleMissing)} à régulariser au titre de cette période.`;
+    } else {
+      digitRow.note = `Comment/Trust est inclus dans Digit Solution. SPY est inclus dans Digit Solution sur ${monthsLabel} (attendu ${usd(maxscaleExpected)}) ; intégralement couvert par les remontées déjà perçues.`;
+    }
   } else {
     digitRow.note = 'Comment/Trust est inclus dans Digit Solution ; SPY est isolé depuis Mars.';
   }
+
   tableRows.push(digitRow);
 
   const spyIsolatedMonths = sourceMonths.filter(isSpyIsolatedMonth);
