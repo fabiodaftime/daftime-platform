@@ -3,9 +3,16 @@
 // INTERCOS_DATA block in PCGroupData.ts via applyComputedOverlay.
 
 import type { PCGSourceMonthId } from './sources/entityAdapters';
+import { digitFacts } from './sources/entityAdapters';
 import { INTERCO_RULES, computeExpectedTransfer } from './intercosRules';
-import { INTERCOS_CASH } from './manualEntities';
+import { INTERCOS_CASH, MANUAL_ENTITIES } from './manualEntities';
 import { fmtUSD, fmtPct } from './pcGroupFormatters';
+
+// Périodes métier : avant Mars 2026 = structure MaxScale (tout mélangé),
+// à partir de Mars 2026 = DG Solutions (DG + Comment), SPY isolé.
+const MAXSCALE_MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026'];
+const DG_PHASE_FROM = 'mar-2026' as PCGSourceMonthId;
+const TRANSFER_RATE = 0.9;
 
 const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
 const MONTH_SHORT: Record<PCGSourceMonthId, string> = {
