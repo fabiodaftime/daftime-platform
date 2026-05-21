@@ -72,11 +72,17 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
   const m: ManualMonthExtras | undefined = MANUAL_ENTITIES[month];
   if (!a || !s || !d || !spy || !cmt || !m) return null;
 
-  // IMPORTANT: digitFacts retourne déjà le TOTAL Digit (Core + SPY + Comment).
-  // SPY et Comment sont des produits internes à Digit Solution, pas des entités
-  // sœurs. Les ajouter ici créerait un double comptage. Ils sont conservés
-  // séparément uniquement pour l'affichage "↳ dont ...".
-  const margeBrute = a.contribution + s.contribution + d.contribution;
+  // IMPORTANT: l'adapter `digitFacts` (via collectEntityMonths -> block 'digit')
+  // retourne le CA / la marge de Digit **Core uniquement**. SPY et Comment sont
+  // des produits internes à Digit Solution exposés séparément. Pour la "Vue
+  // Groupe" et le comparatif, la ligne "Digit Solution" doit représenter le
+  // TOTAL consolidé (Core + SPY + Comment). On agrège donc ici, et toutes les
+  // formules en aval (margeBruteGroupe, caGroupe, "↳ dont …") reposent sur ce
+  // total — aucun double comptage car a/s/digitTotal sont les 3 piliers.
+  const digitTotalCA = d.ca + spy.ca + cmt.ca;
+  const digitTotalMarge = d.contribution + spy.contribution + cmt.contribution;
+
+  const margeBrute = a.contribution + s.contribution + digitTotalMarge;
   const reserves = margeBrute * 0.10;
   const remontee = margeBrute - reserves;
   const fraisHolding = m.holding.fraisTotal;
@@ -86,15 +92,15 @@ export function computeConsolidatedFacts(month: PCGSourceMonthId): ConsolidatedF
     monthId: month,
     agencyPartPCA: a.contribution,
     structuringMargeNette: s.contribution,
-    digitMargeNette: d.contribution,
+    digitMargeNette: digitTotalMarge,
     spyMargeNette: spy.contribution,
     commentMargeNette: cmt.contribution,
     agencyCA: a.ca,
     structuringCA: s.ca,
-    digitCA: d.ca,
+    digitCA: digitTotalCA,
     spyCA: spy.ca,
     commentCA: cmt.ca,
-    caGroupe: a.ca + s.ca + d.ca, // d.ca inclut déjà SPY + Comment
+    caGroupe: a.ca + s.ca + digitTotalCA,
     margeBruteGroupe: margeBrute,
     reservesFiliales: reserves,
     remonteeHolding: remontee,
