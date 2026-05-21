@@ -62,8 +62,10 @@ export function PCGroupIntercosTab({ data }: Props) {
 
   const entityCards = (intercos as any).entityCards ?? [];
   const sourceMonthIds: PCGSourceMonthId[] = table.columns.map((c: any) => c.key);
-  const validationIssues = validateDigitConsistency(sourceMonthIds);
+  const { byMonth: digitInputsByMonth } = useEntityInputsByMonth('digit');
+  const validationIssues = validateDigitConsistency(sourceMonthIds, digitInputsByMonth as any);
   const hasErrors = validationIssues.some((i) => i.severity === 'error');
+
   const cashSources = useIntercosCashSources(sourceMonthIds as string[]);
 
   const parseUSDNum = (v: string) => Number(String(v ?? '').replace(/[^\d.-]/g, '')) || 0;
