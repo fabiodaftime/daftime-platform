@@ -4,7 +4,7 @@
 
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 import { digitFacts } from './sources/entityAdapters';
-import { INTERCO_RULES, computeExpectedTransfer } from './intercosRules';
+import { INTERCO_RULES, computeExpectedTransfer, type IntercoEntityKey } from './intercosRules';
 import { INTERCOS_CASH, MANUAL_ENTITIES } from './manualEntities';
 import { fmtUSD, fmtPct } from './pcGroupFormatters';
 
