@@ -16,8 +16,12 @@ export function applyDigitInputsToMonthData<T extends Record<string, any>>(
 ): T {
   if (!inputs) return monthData;
 
-  const ca = inputs.ca_total;
-  const marge = inputs.marge_total;
+  // Source de vérité = somme des composantes (Core + SPY + Comment).
+  // Les champs `ca_total` / `marge_total` sont conservés pour compatibilité
+  // mais ne sont plus utilisés en affichage : ils provoquaient des écarts
+  // avec la Vue Groupe quand la saisie n'était pas réconciliée.
+  const ca = (inputs.ca_core ?? 0) + (inputs.ca_spy ?? 0) + (inputs.ca_comment ?? 0);
+  const marge = (inputs.marge_core ?? 0) + (inputs.marge_spy ?? 0) + (inputs.marge_comment ?? 0);
   const margePct = ca > 0 ? (marge / ca) * 100 : 0;
   const ticket = inputs.deals_total > 0 ? ca / inputs.deals_total : 0;
 
