@@ -210,9 +210,10 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       }
     });
 
-    it('Patcher SPY ne change pas la ligne TOTAL du comparatif', () => {
+    it('Patcher SPY propage exactement à la ligne TOTAL du comparatif (mois patché + YTD)', () => {
       const before = buildView(monthId as MonthId).overviewComparisonTotal!;
       const cfg = clone(DEFAULT_CONFIG);
+      const monthsPatched = cfg.manualFacts.filter((m) => m.entity_code === 'spy').length;
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.entity_code === 'spy'
           ? { ...m, contribution: m.contribution + 6000 }
@@ -220,9 +221,17 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const after = buildView(monthId as MonthId).overviewComparisonTotal!;
-      for (const c of ['jan', 'feb', 'mar', 'avr', 'ytd'] as const) {
-        expect(Math.abs(parseUsd((after as any)[c]) - parseUsd((before as any)[c]))).toBeLessThan(2);
+      for (const c of ['jan', 'feb', 'mar', 'avr'] as const) {
+        const beforeVal = parseUsd((before as any)[c]);
+        const afterVal = parseUsd((after as any)[c]);
+        if (beforeVal === 0 && afterVal === 0) continue;
+        expect(Math.abs((afterVal - beforeVal) - 6000)).toBeLessThan(2);
       }
+      expect(
+        Math.abs(
+          (parseUsd((after as any).ytd) - parseUsd((before as any).ytd)) - 6000 * monthsPatched,
+        ),
+      ).toBeLessThan(2);
     });
   });
 
