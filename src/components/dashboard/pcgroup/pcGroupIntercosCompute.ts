@@ -213,9 +213,9 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   }
   tableRows.push(digitRow);
 
-  const spyMonths = sourceMonths.filter(isSpyIsolatedMonth);
-  const spyExpected = spyMonths.reduce((acc, sm) => acc + expectedFor('spy', sm), 0);
-  const spyReceived = receivedFor(['spy'], spyMonths);
+  const spyIsolatedMonths = sourceMonths.filter(isSpyIsolatedMonth);
+  const spyExpected = spyIsolatedMonths.reduce((acc, sm) => acc + expectedFor('spy', sm), 0);
+  const spyReceived = receivedFor(['spy'], spyIsolatedMonths);
   const spyRemaining = Math.max(0, spyExpected - spyReceived);
   const spyRow: Record<string, any> = {
     entity: 'SPY isolé',
