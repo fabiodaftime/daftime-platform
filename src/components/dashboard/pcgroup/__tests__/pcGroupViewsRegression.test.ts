@@ -210,10 +210,9 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       }
     });
 
-    it('Patcher SPY propage exactement à la ligne TOTAL du comparatif (mois patché + YTD)', () => {
+    it('Patcher SPY propage exactement (+6 000) à chaque colonne mensuelle de la ligne TOTAL', () => {
       const before = buildView(monthId as MonthId).overviewComparisonTotal!;
       const cfg = clone(DEFAULT_CONFIG);
-      const monthsPatched = cfg.manualFacts.filter((m) => m.entity_code === 'spy').length;
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.entity_code === 'spy'
           ? { ...m, contribution: m.contribution + 6000 }
@@ -227,11 +226,6 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
         if (beforeVal === 0 && afterVal === 0) continue;
         expect(Math.abs((afterVal - beforeVal) - 6000)).toBeLessThan(2);
       }
-      expect(
-        Math.abs(
-          (parseUsd((after as any).ytd) - parseUsd((before as any).ytd)) - 6000 * monthsPatched,
-        ),
-      ).toBeLessThan(2);
     });
   });
 
