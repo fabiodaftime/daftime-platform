@@ -214,6 +214,66 @@ export function PCGroupIntercosTab({ data }: Props) {
         </div>
       )}
 
+      {/* Vérification automatique de cohérence : attendu vs remonté vs reste */}
+      {(() => {
+        const coherence = checkIntercosCoherence(intercos);
+        if (coherence.length === 0) {
+          return (
+            <div
+              style={{
+                border: '1px solid #10B981',
+                borderLeft: '4px solid #10B981',
+                background: 'rgba(16, 185, 129, 0.06)',
+                borderRadius: 8,
+                padding: '8px 14px',
+                marginBottom: 16,
+                fontSize: 12,
+                color: '#065F46',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 14 }}>✓</span>
+              <span>
+                <strong>Cohérence vérifiée</strong> — Total attendu, remonté et reste alignés sur l'ensemble des lignes et des KPI.
+              </span>
+            </div>
+          );
+        }
+        const hasErr = coherence.some((c) => c.severity === 'error');
+        return (
+          <div
+            style={{
+              border: `1px solid ${hasErr ? '#EF4444' : '#F59E0B'}`,
+              borderLeft: `4px solid ${hasErr ? '#EF4444' : '#F59E0B'}`,
+              background: hasErr ? 'rgba(239, 68, 68, 0.05)' : 'rgba(245, 158, 11, 0.05)',
+              borderRadius: 8,
+              padding: 16,
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: hasErr ? '#B91C1C' : '#B45309', fontWeight: 700 }}>
+              <AlertTriangle className="h-5 w-5" />
+              <span>
+                {hasErr ? 'Incohérence détectée' : 'Avertissement de cohérence'} —
+                Flux Intercos ({coherence.length} {coherence.length > 1 ? 'écarts' : 'écart'})
+              </span>
+            </div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#374151' }}>
+              {coherence.map((c, i) => (
+                <li key={i} style={{ marginBottom: 4 }}>
+                  <strong style={{ color: c.severity === 'error' ? '#B91C1C' : '#B45309' }}>
+                    {c.label}
+                  </strong>{' '}
+                  — {c.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+
       {/* Validation cohérence Digit / SPY / Comment */}
       {validationIssues.length > 0 && (
 
