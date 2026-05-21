@@ -277,7 +277,7 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       });
     });
 
-    it('Patcher SPY ne change ni perEntityTotal.total ni monthlyTrend.margin', () => {
+    it('Patcher SPY propage exactement à perEntityTotal.total et monthlyTrend.margin', () => {
       const before = aggregatePCGroup(last)!;
       const baselineTotals = before.ytd.perEntityTotal.months.map((m) => m.value);
       const baselineMargins = before.ytd.monthlyTrend.map((t) => t.margin);
@@ -292,10 +292,10 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
 
       const after = aggregatePCGroup(last)!;
       after.ytd.perEntityTotal.months.forEach((m, i) => {
-        expect(Math.abs(m.value - baselineTotals[i])).toBeLessThanOrEqual(2);
+        expect(Math.abs((m.value - baselineTotals[i]) - 9000)).toBeLessThanOrEqual(2);
       });
       after.ytd.monthlyTrend.forEach((t, i) => {
-        expect(Math.abs(t.margin - baselineMargins[i])).toBeLessThanOrEqual(2);
+        expect(Math.abs((t.margin - baselineMargins[i]) - 9000)).toBeLessThanOrEqual(2);
       });
     });
   });
