@@ -67,34 +67,11 @@ export function PCGroupIntercosTab({ data }: Props) {
   const fmtUSDStr = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
   const [issueDrawer, setIssueDrawer] = useState<ValidationIssue | null>(null);
 
-  // Fusionne les lignes digit + spy + comment en une seule ligne "Digit Solution"
+  // Affiche les filiales en lignes distinctes — DG Solutions (Core), SPY et
+  // Comment/Trust sont des entités séparées et ne doivent PAS être fusionnées
   // dans le tableau "Détail des Remontées par Filiale".
-  const DIGIT_KEYS = ['digit', 'spy', 'comment'];
-  const displayRows = (() => {
-    const rows = (table.rows ?? []) as any[];
-    const digitParts = rows.filter((r) => DIGIT_KEYS.includes(r._key));
-    if (digitParts.length === 0) return rows;
-    const others = rows.filter((r) => !DIGIT_KEYS.includes(r._key));
-    const sumCol = (col: string) => digitParts.reduce((a, r) => a + parseUSDNum(r[col]), 0);
-    const merged: any = {
-      _key: 'digit-merged',
-      _codes: DIGIT_KEYS,
-      entity: 'Digit Solution (Core + SPY + Comment)',
-    };
-    table.columns.forEach((c: any) => {
-      merged[c.key] = fmtUSDStr(sumCol(c.key));
-    });
-    const ytd = sumCol('ytd');
-    const received = sumCol('received');
-    merged.ytd = fmtUSDStr(ytd);
-    merged.received = fmtUSDStr(received);
-    merged.remaining = fmtUSDStr(Math.max(0, ytd - received));
-    // Insère la ligne fusionnée à la position du premier sous-élément Digit
-    const firstDigitIdx = rows.findIndex((r) => DIGIT_KEYS.includes(r._key));
-    const out = [...others];
-    out.splice(Math.min(firstDigitIdx, out.length), 0, merged);
-    return out;
-  })();
+  const displayRows = (table.rows ?? []) as any[];
+
 
   const buildTableRows = () => {
     const header = ['Entité', ...table.columns.map((c: any) => c.label), 'Total à Remonter', 'Déjà Remonté', 'Solde Restant'];
