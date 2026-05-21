@@ -12,6 +12,8 @@ import { checkIntercosCoherence } from './intercosCoherenceCheck';
 import { ValidationIssueDetail } from './ValidationIssueDrawer';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 import { useIntercosCashSources } from './useIntercosCashSources';
+import { useEntityInputsByMonth } from '@/lib/entityInputs/hooks';
+
 
 interface Props {
   data: PCGroupMonthData;
