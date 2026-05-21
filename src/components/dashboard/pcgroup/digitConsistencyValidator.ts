@@ -8,6 +8,8 @@ import type { PCGSourceMonthId } from './sources/entityAdapters';
 import { digitFacts } from './sources/entityAdapters';
 import { MANUAL_ENTITIES } from './manualEntities';
 import { getDigitMonthData, type DigitMonthId } from '../digit/DigitData';
+import { applyDigitInputsToMonthData } from '@/lib/entityInputs/applyDigitInputs';
+
 
 export type ValidationSeverity = 'error' | 'warning';
 
