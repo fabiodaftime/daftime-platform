@@ -4,7 +4,7 @@
 
 import type { PCGSourceMonthId } from './sources/entityAdapters';
 import { digitFacts } from './sources/entityAdapters';
-import { INTERCO_RULES, computeExpectedTransfer } from './intercosRules';
+import { INTERCO_RULES, computeExpectedTransfer, type IntercoEntityKey } from './intercosRules';
 import { INTERCOS_CASH, MANUAL_ENTITIES } from './manualEntities';
 import { fmtUSD, fmtPct } from './pcGroupFormatters';
 
@@ -134,10 +134,10 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   });
 
   // -------- Construction des lignes du tableau --------
-  // Règle métier :
-  //   • Jan/Fév = ancienne structure MaxScale → SPY fait partie de "DG Solutions"
-  //     (Digit + CommentTrust + SPY mélangés)
-  //   • Mars+   = DG Solutions = Digit + CommentTrust uniquement, SPY isolé
+  // Règle : chaque ligne = 1 filiale = 90% de sa marge nette (cohérent avec
+  // les fiches détail par entité et le comparatif en vue groupe).
+  // Aucun agrégat composite : Digit Core, CommentTrust et SPY restent isolés
+  // pour une lecture ligne-à-ligne directe (montant = 0,9 × marge nette).
   const isMaxscale = (sm: PCGSourceMonthId) => MAXSCALE_MONTHS.includes(sm);
 
   const baseRow = (e: typeof perEntity[number]) => {
@@ -150,70 +150,23 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     return cells;
   };
 
-  const agencyE = perEntity.find((e) => e.rule.key === 'agency');
-  const structuringE = perEntity.find((e) => e.rule.key === 'structuring');
-  const digitE = perEntity.find((e) => e.rule.key === 'digit');
-  const spyE = perEntity.find((e) => e.rule.key === 'spy');
-  const commentE = perEntity.find((e) => e.rule.key === 'comment');
-
-  // ---- Ligne DG Solutions (Digit + Comment, + SPY uniquement Jan/Fév) ----
-  const dgRow: Record<string, any> = {
-    entity: 'DG Solutions (Digit + CommentTrust)',
-    _key: 'dg_solutions',
-    _composite: ['digit', 'comment'], // pour tests/parité
-  };
-  let dgYtd = 0;
-  let dgReceived = 0;
-  sourceMonths.forEach((sm) => {
-    const digitAmt = digitE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
-    const commAmt = commentE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
-    const spyAmt = spyE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
-    const includesSpy = isMaxscale(sm);
-    const amount = digitAmt + commAmt + (includesSpy ? spyAmt : 0);
-    dgRow[sm] = usd(amount);
-    dgYtd += amount;
-    const cash = INTERCOS_CASH[sm]?.received ?? {};
-    dgReceived += (cash.digit ?? 0) + (cash.comment ?? 0) + (includesSpy ? (cash.spy ?? 0) : 0);
-  });
-  dgRow.ytd = usd(dgYtd);
-  dgRow.received = usd(dgReceived);
-  const dgRemaining = Math.max(0, dgYtd - dgReceived);
-  dgRow.remaining = usd(dgRemaining);
-  const hasMaxscale = sourceMonths.some(isMaxscale);
-  if (hasMaxscale && dgRemaining > 0) {
-    const maxscaleLabels = sourceMonths.filter(isMaxscale).map((m) => MONTH_SHORT[m]).join('/');
-    dgRow.note = `Inclut SPY pour ${maxscaleLabels} (structure MaxScale). Reste ${usd(dgRemaining)} non remonté sur la période.`;
-  }
-
-  // ---- Ligne SPY (uniquement Mars+) ----
-  const spyRow: Record<string, any> = {
-    entity: 'SPY (isolé Mars+)',
-    _key: 'spy',
-  };
-  let spyYtd = 0;
-  let spyReceivedRow = 0;
-  sourceMonths.forEach((sm) => {
-    if (isMaxscale(sm)) {
-      spyRow[sm] = '— (inclus dans DG)';
-    } else {
-      const amt = spyE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
-      spyRow[sm] = usd(amt);
-      spyYtd += amt;
-      spyReceivedRow += INTERCOS_CASH[sm]?.received?.spy ?? 0;
-    }
-  });
-  spyRow.ytd = usd(spyYtd);
-  spyRow.received = usd(spyReceivedRow);
-  spyRow.remaining = usd(Math.max(0, spyYtd - spyReceivedRow));
-  if (sourceMonths.some((m) => !isMaxscale(m))) {
-    spyRow.note = 'À partir de Mars : SPY géré séparément (PSP & coûts spécifiques).';
-  }
-
+  // Ordre d'affichage : Agency, Structuring, Digit Solution, CommentTrust, SPY
+  const orderedKeys: IntercoEntityKey[] = ['agency', 'structuring', 'digit', 'comment', 'spy'];
   const tableRows: Record<string, any>[] = [];
-  if (agencyE) tableRows.push(baseRow(agencyE));
-  if (structuringE) tableRows.push(baseRow(structuringE));
-  tableRows.push(dgRow);
-  if (sourceMonths.some((m) => !isMaxscale(m))) tableRows.push(spyRow);
+  orderedKeys.forEach((k) => {
+    const e = perEntity.find((x) => x.rule.key === k);
+    if (!e) return;
+    const row = baseRow(e);
+    const maxscaleLabels = sourceMonths.filter(isMaxscale).map((m) => MONTH_SHORT[m]);
+    if (k === 'digit' && maxscaleLabels.length > 0) {
+      row.note = `Montant ligne = 90% × marge nette Digit Core. Sur ${maxscaleLabels.join('/')} (ex-MaxScale), le cash réel de Digit/CommentTrust/SPY était encaissé dans un pot commun — l'écart Solde reflète cette régularisation à faire.`;
+    }
+    if (k === 'spy' && maxscaleLabels.length > 0) {
+      row.note = `Sur ${maxscaleLabels.join('/')} : SPY transitait via MaxScale (cash souvent mélangé avec Digit). À partir de Mars : flux SPY isolés.`;
+    }
+    tableRows.push(row);
+  });
+
 
   const totalRow: Record<string, string> = { entity: 'TOTAL ATTENDU' };
   sourceMonths.forEach((sm) => {
