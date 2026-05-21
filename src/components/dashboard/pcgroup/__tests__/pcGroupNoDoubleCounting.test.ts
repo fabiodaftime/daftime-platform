@@ -1,17 +1,19 @@
-// Tests d'invariants : garantissent qu'aucun écran/agrégateur ne double-compte
-// SPY ou Comment dans les totaux du groupe.
+// Tests d'invariants : garantissent la consolidation Digit (Core + SPY +
+// Comment/Trustpilot) dans les totaux groupe, sans double comptage.
 //
 // Règles métier :
 //  - SPY et Comment/Trustpilot sont des sous-produits de Digit Solution.
-//  - `digitCA` et `digitMargeNette` INCLUENT déjà SPY + Comment.
+//  - `computeConsolidatedFacts` agrège : digitCA = coreCA + spyCA + commentCA
+//    et digitMargeNette = coreMarge + spyMarge + commentMarge.
 //  - Donc :
 //      caGroupe         = agencyCA + structuringCA + digitCA
 //      margeBruteGroupe = agencyPartPCA + structuringMargeNette + digitMargeNette
-//    (ne jamais ajouter spyCA / commentCA / spyMargeNette / commentMargeNette)
+//    (les sous-composants SPY/Comment sont déjà inclus dans digitCA/digitMargeNette
+//     — ne jamais les rajouter une 2ᵉ fois.)
 //
-// On vérifie ces invariants sur tous les mois disponibles dans la config par
-// défaut + on patche SPY/Comment et on s'assure que les totaux groupe ne bougent
-// pas (sous-composants informatifs uniquement).
+// On vérifie ces invariants sur tous les mois disponibles + on patche
+// SPY/Comment et on s'assure que les totaux groupe se déplacent **exactement**
+// du delta patché (propagation 1-pour-1, pas de double comptage).
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
