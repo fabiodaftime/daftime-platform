@@ -83,13 +83,15 @@ function approxEqual(a: number, b: number) {
 
 export function validateDigitConsistency(
   months: PCGSourceMonthId[],
+  digitInputsByMonth?: Record<string, { inputs?: any } | undefined>,
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
 
   for (const m of months) {
-    const dash = readDigitDashboard(m);
+    const dash = readDigitDashboard(m, digitInputsByMonth);
     if (!dash) continue;
     const monthLabel = MONTH_LABEL[m];
+
 
     // ---- Digit (Core only expected) ----
     const dFacts = digitFacts(m);
