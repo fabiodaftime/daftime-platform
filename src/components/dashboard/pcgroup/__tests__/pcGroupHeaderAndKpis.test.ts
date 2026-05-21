@@ -154,7 +154,7 @@ describe('PCGroup — header/footer & KPIs réactifs aux changements de config',
       expect(computeConsolidatedFacts('mar-2026')).not.toBeNull();
     });
 
-    it('reflète la modification d\'une entité manuelle (SPY) sans impacter le CA Groupe (SPY est inclus dans Digit)', () => {
+    it('reflète la modification d\'une entité manuelle (SPY) sur le CA Groupe (SPY est inclus dans Digit consolidé)', () => {
       const baseline = computeConsolidatedFacts('mar-2026')!;
       const baselineCA = baseline.caGroupe;
       const baselineSpyCA = baseline.spyCA;
@@ -170,8 +170,8 @@ describe('PCGroup — header/footer & KPIs réactifs aux changements de config',
 
       const updated = computeConsolidatedFacts('mar-2026')!;
       expect(updated.spyCA).toBe(baselineSpyCA + 10000);
-      // SPY étant un sous-composant informatif de Digit, le CA Groupe ne bouge pas.
-      expect(Math.abs(updated.caGroupe - baselineCA)).toBeLessThan(0.5);
+      // SPY étant consolidé dans Digit Solution, le CA Groupe se déplace de +10000.
+      expect(Math.abs((updated.caGroupe - baselineCA) - 10000)).toBeLessThan(0.5);
     });
 
     it('reflète une modification des frais Holding sur le résultat net', () => {
