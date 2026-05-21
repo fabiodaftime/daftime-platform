@@ -161,3 +161,77 @@ describe('Phases métier — MaxScale / DG Solutions / SPY isolé', () => {
   });
 });
 
+// ============================================================
+// Note Jan/Fév sur la ligne Digit Solution — imputation FIFO
+// ============================================================
+describe('Ligne Digit Solution — note Jan/Fév (imputation FIFO des remontées)', () => {
+  it('Vue Janvier : note cohérente avec max(0, attendu Jan − reçu Digit total)', () => {
+    const i = computeIntercos('jan-2026');
+    const digitRow: any = i.table.rows.find((r: any) => r._key === 'digit');
+    expect(digitRow).toBeDefined();
+    const expectedJanFev = (
+      (digitFacts('jan-2026')?.margeNette ?? 0)
+      + (MANUAL_ENTITIES['jan-2026']?.comment.margeNette ?? 0)
+      + (MANUAL_ENTITIES['jan-2026']?.spy.margeNette ?? 0)
+    ) * 0.9;
+    const received = parseUSD(digitRow.received);
+    const expectedMissing = Math.max(0, expectedJanFev - received);
+    expect(typeof digitRow.note).toBe('string');
+    const nums = (digitRow.note.match(/\$[0-9,]+/g) ?? [])
+      .map((s: string) => Number(s.replace(/[^0-9.-]/g, '')));
+    if (expectedMissing > 0) {
+      expect(digitRow.note).toMatch(/régulariser/i);
+      expect(nums.some((n: number) => Math.abs(n - expectedMissing) <= TOL)).toBe(true);
+    } else {
+      expect(digitRow.note).toMatch(/intégralement couvert/i);
+    }
+  });
+
+  it('Vue Avril : reste Jan/Fév = max(0, attendu Jan+Fév − received Digit YTD), pas attendu brut', () => {
+    const i = computeIntercos('apr-2026');
+    const digitRow: any = i.table.rows.find((r: any) => r._key === 'digit');
+    const janFev: PCGSourceMonthId[] = ['jan-2026', 'feb-2026'];
+    const expectedJanFev = janFev.reduce((acc, sm) => acc
+      + (digitFacts(sm)?.margeNette ?? 0)
+      + (MANUAL_ENTITIES[sm]?.comment.margeNette ?? 0)
+      + (MANUAL_ENTITIES[sm]?.spy.margeNette ?? 0), 0) * 0.9;
+    const receivedYTD = parseUSD(digitRow.received);
+    const expectedMissing = Math.max(0, expectedJanFev - receivedYTD);
+
+    const nums = (digitRow.note.match(/\$[0-9,]+/g) ?? [])
+      .map((s: string) => Number(s.replace(/[^0-9.-]/g, '')));
+
+    // L'attendu brut Jan/Fév doit être mentionné dans la note (libellé "attendu").
+    expect(nums.some((n: number) => Math.abs(n - expectedJanFev) <= TOL)).toBe(true);
+
+    if (expectedMissing > 0) {
+      expect(digitRow.note).toMatch(/régulariser/i);
+      // Le reliquat affiché doit être le manquant FIFO, jamais l'attendu brut seul.
+      expect(nums.some((n: number) => Math.abs(n - expectedMissing) <= TOL)).toBe(true);
+    } else {
+      expect(digitRow.note).toMatch(/intégralement couvert/i);
+    }
+
+    // Sanity : missing ≤ attendu, et missing ≤ remaining global de la ligne.
+    expect(expectedMissing).toBeLessThanOrEqual(expectedJanFev + TOL);
+    expect(expectedMissing).toBeLessThanOrEqual(parseUSD(digitRow.remaining) + TOL);
+  });
+
+  it('FIFO : si received Digit YTD ≥ attendu Jan/Fév → "intégralement couvert", sinon "régulariser"', () => {
+    const i = computeIntercos('apr-2026');
+    const digitRow: any = i.table.rows.find((r: any) => r._key === 'digit');
+    const janFev: PCGSourceMonthId[] = ['jan-2026', 'feb-2026'];
+    const expectedJanFev = janFev.reduce((acc, sm) => acc
+      + (digitFacts(sm)?.margeNette ?? 0)
+      + (MANUAL_ENTITIES[sm]?.comment.margeNette ?? 0)
+      + (MANUAL_ENTITIES[sm]?.spy.margeNette ?? 0), 0) * 0.9;
+    const receivedYTD = parseUSD(digitRow.received);
+    if (receivedYTD >= expectedJanFev) {
+      expect(digitRow.note).toMatch(/intégralement couvert/i);
+    } else {
+      expect(digitRow.note).toMatch(/régulariser/i);
+    }
+  });
+});
+
+
