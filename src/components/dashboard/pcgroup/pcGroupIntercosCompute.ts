@@ -252,6 +252,87 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     },
   ];
 
+  // ====================================================================
+  // PHASES MÉTIER — restructuration demandée par le client
+  // --------------------------------------------------------------------
+  // A) Phase MaxScale (Jan/Fév) : DG + Comment + SPY mélangés sur l'ancienne
+  //    structure. On compare juste théorique vs réel, sans split entité.
+  // B) Phase DG Solutions (Mars+) : DG + Comment uniquement. SPY exclu.
+  // C) Bloc SPY (Mars+) : isolé, info uniquement, aucun impact sur DG.
+  // ====================================================================
+  const periodMaxscale = sourceMonths.filter((m) => MAXSCALE_MONTHS.includes(m));
+  const periodDgPhase = sourceMonths.filter(
+    (m) => MONTH_ORDER.indexOf(m) >= MONTH_ORDER.indexOf(DG_PHASE_FROM),
+  );
+
+  // ---- A) MaxScale ----
+  const sumMaxscaleMargin = periodMaxscale.reduce((acc, sm) => {
+    const dg = digitFacts(sm)?.margeNette ?? 0;
+    const comment = MANUAL_ENTITIES[sm]?.comment.margeNette ?? 0;
+    const spy = MANUAL_ENTITIES[sm]?.spy.margeNette ?? 0;
+    return acc + dg + comment + spy;
+  }, 0);
+  const maxscaleTheorique = sumMaxscaleMargin * TRANSFER_RATE;
+  const maxscaleRecu = periodMaxscale.reduce((acc, sm) => {
+    const r = INTERCOS_CASH[sm]?.received ?? {};
+    return acc + (r.digit ?? 0) + (r.comment ?? 0) + (r.spy ?? 0);
+  }, 0);
+  const maxscaleEcart = maxscaleTheorique - maxscaleRecu;
+
+  const maxScalePhase = periodMaxscale.length > 0 ? {
+    periodLabel: periodMaxscale.map((m) => MONTH_SHORT[m]).join(' + '),
+    months: periodMaxscale.map((m) => MONTH_LONG[m]),
+    totalResultat: usd(sumMaxscaleMargin),
+    theorique: usd(maxscaleTheorique),
+    recu: usd(maxscaleRecu),
+    ecart: usd(Math.max(0, maxscaleEcart)),
+    ecartSigned: usdSigned(maxscaleEcart),
+    rate: fmtPct(TRANSFER_RATE * 100),
+    note: 'Pot historique MaxScale : DG activity + CommentTrust + SPY agrégés. Régularisation globale, pas de split entité.',
+  } : null;
+
+  // ---- B) DG Solutions ----
+  const dgMargin = periodDgPhase.reduce((acc, sm) => acc + (digitFacts(sm)?.margeNette ?? 0), 0);
+  const commentMargin = periodDgPhase.reduce((acc, sm) => acc + (MANUAL_ENTITIES[sm]?.comment.margeNette ?? 0), 0);
+  const dgBase = dgMargin + commentMargin;
+  const dgRemontable = dgBase * TRANSFER_RATE;
+  const dgRecu = periodDgPhase.reduce((acc, sm) => {
+    const r = INTERCOS_CASH[sm]?.received ?? {};
+    return acc + (r.digit ?? 0) + (r.comment ?? 0);
+  }, 0);
+  const dgSolde = dgRemontable - dgRecu;
+
+  const dgSolutionsPhase = periodDgPhase.length > 0 ? {
+    periodLabel: periodDgPhase.map((m) => MONTH_SHORT[m]).join(' → '),
+    rate: fmtPct(TRANSFER_RATE * 100),
+    dgActivity: usd(dgMargin),
+    commentTrust: usd(commentMargin),
+    base: usd(dgBase),
+    remontable: usd(dgRemontable),
+    recu: usd(dgRecu),
+    solde: usd(Math.max(0, dgSolde)),
+    soldeSigned: usdSigned(dgSolde),
+    note: 'DG Solutions = DG activity + CommentTrust. SPY exclu (géré séparément).',
+  } : null;
+
+  // ---- C) SPY isolé (Mars+) ----
+  const spyMonths = periodDgPhase; // SPY isolé uniquement à partir de Mars
+  const spyRevenue = spyMonths.reduce((acc, sm) => acc + (MANUAL_ENTITIES[sm]?.spy.ca ?? 0), 0);
+  const spyCosts = spyMonths.reduce((acc, sm) => acc + (MANUAL_ENTITIES[sm]?.spy.charges ?? 0), 0);
+  const spyProfit = spyMonths.reduce((acc, sm) => acc + (MANUAL_ENTITIES[sm]?.spy.margeNette ?? 0), 0);
+  const spyCashRecu = spyMonths.reduce((acc, sm) => acc + (INTERCOS_CASH[sm]?.received?.spy ?? 0), 0);
+  const spyMargin = spyRevenue > 0 ? (spyProfit / spyRevenue) * 100 : 0;
+
+  const spyIsolated = spyMonths.length > 0 ? {
+    periodLabel: spyMonths.map((m) => MONTH_SHORT[m]).join(' → '),
+    revenue: usd(spyRevenue),
+    costs: usd(spyCosts),
+    profit: usd(spyProfit),
+    marginPct: fmtPct(spyMargin),
+    cashRecu: usd(spyCashRecu),
+    note: 'Entité isolée — hors périmètre du calcul automatique DG Solutions. PSP & coûts spécifiques.',
+  } : null;
+
   return {
     kpis,
     alert,
@@ -261,6 +342,10 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     calendar,
     recap,
     marsNote: '',
+    // Nouveaux blocs structurés par phase métier
+    maxScalePhase,
+    dgSolutionsPhase,
+    spyIsolated,
     rulesApplied: INTERCO_RULES.map((r) => ({
       entity: r.label,
       rate: `${(r.transferRate * 100).toFixed(0)}%`,
@@ -268,3 +353,4 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     })),
   };
 }
+
