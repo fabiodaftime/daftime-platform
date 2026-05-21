@@ -138,7 +138,7 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       expect(Math.abs(f.resultatNetHolding - (f.remonteeHolding - f.fraisHolding))).toBeLessThan(EPS);
     });
 
-    it('Patcher SPY ne change pas Réserves / Remontée / Résultat Net', () => {
+    it('Patcher SPY propage exactement (×0.9) à Remontée et (×0.1) à Réserves', () => {
       const baseline = computeConsolidatedFacts(monthId)!;
       const cfg = clone(DEFAULT_CONFIG);
       cfg.manualFacts = cfg.manualFacts.map((m) =>
@@ -148,9 +148,9 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const updated = computeConsolidatedFacts(monthId)!;
-      expect(Math.abs(updated.reservesFiliales - baseline.reservesFiliales)).toBeLessThan(EPS);
-      expect(Math.abs(updated.remonteeHolding - baseline.remonteeHolding)).toBeLessThan(EPS);
-      expect(Math.abs(updated.resultatNetHolding - baseline.resultatNetHolding)).toBeLessThan(EPS);
+      expect(Math.abs((updated.reservesFiliales - baseline.reservesFiliales) - 750)).toBeLessThan(EPS);
+      expect(Math.abs((updated.remonteeHolding - baseline.remonteeHolding) - 6750)).toBeLessThan(EPS);
+      expect(Math.abs((updated.resultatNetHolding - baseline.resultatNetHolding) - 6750)).toBeLessThan(EPS);
     });
   });
 
