@@ -22,30 +22,29 @@ interface Expected {
   resultatNetHolding: number;
 }
 
-// NB: depuis la consolidation SPY+Comment dans Digit (produits internes,
-// déjà inclus dans digitFacts), les totaux Groupe ne les ajoutent plus —
-// d'où la révision des valeurs attendues.
+// NB: Digit Solution est consolidé (Digit Core + SPY + Comment/Trustpilot).
+// Les totaux Groupe = Agency + Structuring + Digit consolidé.
 const EXPECTED: Record<'jan-2026' | 'feb-2026' | 'mar-2026', Expected> = {
   'jan-2026': {
-    caGroupe: 183_496,
-    margeBruteGroupe: 85_893,
-    reservesFiliales: 8_589,
-    remonteeHolding: 77_304,
-    resultatNetHolding: 70_244,
+    caGroupe: 203_059,
+    margeBruteGroupe: 91_686,
+    reservesFiliales: 9_169,
+    remonteeHolding: 82_517,
+    resultatNetHolding: 75_457,
   },
   'feb-2026': {
-    caGroupe: 232_014,
-    margeBruteGroupe: 77_674,
-    reservesFiliales: 7_767,
-    remonteeHolding: 69_907,
-    resultatNetHolding: 59_017,
+    caGroupe: 259_647,
+    margeBruteGroupe: 81_373,
+    reservesFiliales: 8_137,
+    remonteeHolding: 73_236,
+    resultatNetHolding: 62_346,
   },
   'mar-2026': {
-    caGroupe: 221_860,
-    margeBruteGroupe: 102_010,
-    reservesFiliales: 10_201,
-    remonteeHolding: 91_809,
-    resultatNetHolding: 83_431,
+    caGroupe: 260_071,
+    margeBruteGroupe: 106_183,
+    reservesFiliales: 10_618,
+    remonteeHolding: 95_565,
+    resultatNetHolding: 87_187,
   },
 };
 

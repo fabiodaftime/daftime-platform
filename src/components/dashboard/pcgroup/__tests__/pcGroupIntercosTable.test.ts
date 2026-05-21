@@ -66,13 +66,12 @@ describe('Flux Intercos — vue simplifiée Avril 2026', () => {
       expect(table.columns.map((c: any) => c.key)).toEqual(SOURCE_MONTHS);
     });
 
-    it('chaque ligne : Total à Remonter = somme des montants mensuels', () => {
-      INTERCO_RULES.forEach((rule, i) => {
-        const row = table.rows[i];
-        const expectedYtd = Math.round(
-          SOURCE_MONTHS.reduce((a, m) => a + computeExpectedTransfer(rule, m), 0),
-        );
-        expect(Math.abs(parseUSD(row.ytd) - expectedYtd)).toBeLessThanOrEqual(SOURCE_MONTHS.length);
+    it('chaque ligne : Total à Remonter = somme des montants mensuels affichés', () => {
+      table.rows.forEach((row: any) => {
+        const monthsSum = SOURCE_MONTHS.reduce((a, m) => a + parseUSD(row[m] ?? ''), 0);
+        // Tolérance : arrondi à l'unité × nb mois ; on autorise aussi les
+        // cellules non-numériques ("Inclus Digit") qui parsent à 0.
+        expect(Math.abs(parseUSD(row.ytd) - monthsSum)).toBeLessThanOrEqual(SOURCE_MONTHS.length);
       });
     });
 

@@ -1,17 +1,19 @@
-// Tests d'invariants : garantissent qu'aucun écran/agrégateur ne double-compte
-// SPY ou Comment dans les totaux du groupe.
+// Tests d'invariants : garantissent la consolidation Digit (Core + SPY +
+// Comment/Trustpilot) dans les totaux groupe, sans double comptage.
 //
 // Règles métier :
 //  - SPY et Comment/Trustpilot sont des sous-produits de Digit Solution.
-//  - `digitCA` et `digitMargeNette` INCLUENT déjà SPY + Comment.
+//  - `computeConsolidatedFacts` agrège : digitCA = coreCA + spyCA + commentCA
+//    et digitMargeNette = coreMarge + spyMarge + commentMarge.
 //  - Donc :
 //      caGroupe         = agencyCA + structuringCA + digitCA
 //      margeBruteGroupe = agencyPartPCA + structuringMargeNette + digitMargeNette
-//    (ne jamais ajouter spyCA / commentCA / spyMargeNette / commentMargeNette)
+//    (les sous-composants SPY/Comment sont déjà inclus dans digitCA/digitMargeNette
+//     — ne jamais les rajouter une 2ᵉ fois.)
 //
-// On vérifie ces invariants sur tous les mois disponibles dans la config par
-// défaut + on patche SPY/Comment et on s'assure que les totaux groupe ne bougent
-// pas (sous-composants informatifs uniquement).
+// On vérifie ces invariants sur tous les mois disponibles + on patche
+// SPY/Comment et on s'assure que les totaux groupe se déplacent **exactement**
+// du delta patché (propagation 1-pour-1, pas de double comptage).
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
@@ -68,7 +70,7 @@ describe('PCGroup — invariants anti double-comptage SPY/Comment', () => {
       ).toBeLessThan(EPS);
     });
 
-    it('Patcher SPY (+10000 CA) ne change ni le CA Groupe ni la Marge Brute Groupe', () => {
+    it('Patcher SPY (+10000 CA) propage exactement +10000 au CA Groupe', () => {
       const baseline = computeConsolidatedFacts(monthId)!;
       const cfg = clone(DEFAULT_CONFIG);
       cfg.manualFacts = cfg.manualFacts.map((m) =>
@@ -79,11 +81,12 @@ describe('PCGroup — invariants anti double-comptage SPY/Comment', () => {
       setPCGroupConfig(cfg);
       const updated = computeConsolidatedFacts(monthId)!;
       expect(updated.spyCA).toBe(baseline.spyCA + 10000);
-      expect(Math.abs(updated.caGroupe - baseline.caGroupe)).toBeLessThan(EPS);
+      expect(Math.abs((updated.caGroupe - baseline.caGroupe) - 10000)).toBeLessThan(EPS);
+      // Marge non patchée → identique
       expect(Math.abs(updated.margeBruteGroupe - baseline.margeBruteGroupe)).toBeLessThan(EPS);
     });
 
-    it('Patcher Comment (+5000 marge) ne change pas la Marge Brute Groupe', () => {
+    it('Patcher Comment (+5000 marge) propage exactement +5000 à la Marge Brute Groupe', () => {
       const baseline = computeConsolidatedFacts(monthId)!;
       const cfg = clone(DEFAULT_CONFIG);
       cfg.manualFacts = cfg.manualFacts.map((m) =>
@@ -94,7 +97,7 @@ describe('PCGroup — invariants anti double-comptage SPY/Comment', () => {
       setPCGroupConfig(cfg);
       const updated = computeConsolidatedFacts(monthId)!;
       expect(updated.commentMargeNette).toBe(baseline.commentMargeNette + 5000);
-      expect(Math.abs(updated.margeBruteGroupe - baseline.margeBruteGroupe)).toBeLessThan(EPS);
+      expect(Math.abs((updated.margeBruteGroupe - baseline.margeBruteGroupe) - 5000)).toBeLessThan(EPS);
     });
 
     it('P&L consolidé : la ligne MARGE BRUTE GROUPE = Agency+Structuring+Digit (parsé depuis l\'affichage)', () => {

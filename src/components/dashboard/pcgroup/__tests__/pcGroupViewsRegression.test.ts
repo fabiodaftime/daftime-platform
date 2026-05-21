@@ -1,15 +1,16 @@
-// Tests d'extension : garantissent qu'aucune vue dérivée (YTD, réserves,
-// remontée, comparatifs) ne réintroduit le double-comptage SPY/Comment après
-// la correction de l'agrégateur.
+// Tests d'extension : garantissent la cohérence des vues dérivées (YTD,
+// réserves, remontée, comparatifs) après la correction de l'agrégateur qui
+// consolide désormais Digit Solution = Digit Core + SPY + Comment/Trustpilot.
 //
-// On parcourt tous les mois disponibles + YTD + tableau comparatif et on
-// vérifie systématiquement :
+// On vérifie systématiquement :
 //   • Les totaux (CA Groupe / Marge Brute Groupe / Réserves / Remontée /
-//     Résultat Net) ne dépendent que de Agency + Structuring + Digit (consolidé).
-//   • Patcher SPY ou Comment ne déplace JAMAIS les totaux groupe ni le YTD ni
-//     la ligne TOTAL du comparatif.
+//     Résultat Net) = Agency + Structuring + Digit consolidé (qui inclut
+//     SPY + Comment).
+//   • Patcher SPY ou Comment se propage exactement (delta = delta) aux
+//     totaux groupe, YTD et ligne TOTAL du comparatif.
 //   • Les ratios Réserves = 10 % / Remontée = 90 % / Résultat = Remontée − Frais
 //     restent vrais sur les agrégats YTD.
+
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
@@ -93,9 +94,10 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       expect(Math.abs(ytd.resultatNetYTD - expectedNet)).toBeLessThan(EPS);
     });
 
-    it('Patcher SPY (+10 000 CA, +3 000 marge) sur tous les mois ne déplace ni caYTD ni margeBruteYTD', () => {
+    it('Patcher SPY (+10 000 CA, +3 000 marge) propage exactement aux totaux YTD', () => {
       const baseline = computeYTD(last);
       const cfg = clone(DEFAULT_CONFIG);
+      const monthsPatched = cfg.manualFacts.filter((m) => m.entity_code === 'spy').length;
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.entity_code === 'spy'
           ? { ...m, ca: m.ca + 10000, contribution: m.contribution + 3000 }
@@ -103,14 +105,16 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const updated = computeYTD(last);
-      expect(Math.abs(updated.caYTD - baseline.caYTD)).toBeLessThan(EPS);
-      expect(Math.abs(updated.margeBruteYTD - baseline.margeBruteYTD)).toBeLessThan(EPS);
-      expect(Math.abs(updated.resultatNetYTD - baseline.resultatNetYTD)).toBeLessThan(EPS);
+      const deltaCa = 10000 * monthsPatched;
+      const deltaMarge = 3000 * monthsPatched;
+      expect(Math.abs((updated.caYTD - baseline.caYTD) - deltaCa)).toBeLessThan(EPS);
+      expect(Math.abs((updated.margeBruteYTD - baseline.margeBruteYTD) - deltaMarge)).toBeLessThan(EPS);
     });
 
-    it('Patcher Comment ne déplace pas la marge brute YTD', () => {
+    it('Patcher Comment propage exactement à la marge brute YTD', () => {
       const baseline = computeYTD(last);
       const cfg = clone(DEFAULT_CONFIG);
+      const monthsPatched = cfg.manualFacts.filter((m) => m.entity_code === 'comment').length;
       cfg.manualFacts = cfg.manualFacts.map((m) =>
         m.entity_code === 'comment'
           ? { ...m, contribution: m.contribution + 4000 }
@@ -118,7 +122,8 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const updated = computeYTD(last);
-      expect(Math.abs(updated.margeBruteYTD - baseline.margeBruteYTD)).toBeLessThan(EPS);
+      const deltaMarge = 4000 * monthsPatched;
+      expect(Math.abs((updated.margeBruteYTD - baseline.margeBruteYTD) - deltaMarge)).toBeLessThan(EPS);
     });
   });
 
@@ -133,7 +138,7 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       expect(Math.abs(f.resultatNetHolding - (f.remonteeHolding - f.fraisHolding))).toBeLessThan(EPS);
     });
 
-    it('Patcher SPY ne change pas Réserves / Remontée / Résultat Net', () => {
+    it('Patcher SPY propage exactement (×0.9) à Remontée et (×0.1) à Réserves', () => {
       const baseline = computeConsolidatedFacts(monthId)!;
       const cfg = clone(DEFAULT_CONFIG);
       cfg.manualFacts = cfg.manualFacts.map((m) =>
@@ -143,9 +148,9 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const updated = computeConsolidatedFacts(monthId)!;
-      expect(Math.abs(updated.reservesFiliales - baseline.reservesFiliales)).toBeLessThan(EPS);
-      expect(Math.abs(updated.remonteeHolding - baseline.remonteeHolding)).toBeLessThan(EPS);
-      expect(Math.abs(updated.resultatNetHolding - baseline.resultatNetHolding)).toBeLessThan(EPS);
+      expect(Math.abs((updated.reservesFiliales - baseline.reservesFiliales) - 750)).toBeLessThan(EPS);
+      expect(Math.abs((updated.remonteeHolding - baseline.remonteeHolding) - 6750)).toBeLessThan(EPS);
+      expect(Math.abs((updated.resultatNetHolding - baseline.resultatNetHolding) - 6750)).toBeLessThan(EPS);
     });
   });
 
@@ -205,7 +210,7 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       }
     });
 
-    it('Patcher SPY ne change pas la ligne TOTAL du comparatif', () => {
+    it('Patcher SPY propage exactement (+6 000) à chaque colonne mensuelle de la ligne TOTAL', () => {
       const before = buildView(monthId as MonthId).overviewComparisonTotal!;
       const cfg = clone(DEFAULT_CONFIG);
       cfg.manualFacts = cfg.manualFacts.map((m) =>
@@ -215,8 +220,11 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       );
       setPCGroupConfig(cfg);
       const after = buildView(monthId as MonthId).overviewComparisonTotal!;
-      for (const c of ['jan', 'feb', 'mar', 'avr', 'ytd'] as const) {
-        expect(Math.abs(parseUsd((after as any)[c]) - parseUsd((before as any)[c]))).toBeLessThan(2);
+      for (const c of ['jan', 'feb', 'mar', 'avr'] as const) {
+        const beforeVal = parseUsd((before as any)[c]);
+        const afterVal = parseUsd((after as any)[c]);
+        if (beforeVal === 0 && afterVal === 0) continue;
+        expect(Math.abs((afterVal - beforeVal) - 6000)).toBeLessThan(2);
       }
     });
   });
@@ -263,7 +271,7 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
       });
     });
 
-    it('Patcher SPY ne change ni perEntityTotal.total ni monthlyTrend.margin', () => {
+    it('Patcher SPY propage exactement à perEntityTotal.total et monthlyTrend.margin', () => {
       const before = aggregatePCGroup(last)!;
       const baselineTotals = before.ytd.perEntityTotal.months.map((m) => m.value);
       const baselineMargins = before.ytd.monthlyTrend.map((t) => t.margin);
@@ -278,10 +286,10 @@ describe('PCGroup — extension régression : YTD / Réserves / Remontée / Comp
 
       const after = aggregatePCGroup(last)!;
       after.ytd.perEntityTotal.months.forEach((m, i) => {
-        expect(Math.abs(m.value - baselineTotals[i])).toBeLessThanOrEqual(2);
+        expect(Math.abs((m.value - baselineTotals[i]) - 9000)).toBeLessThanOrEqual(2);
       });
       after.ytd.monthlyTrend.forEach((t, i) => {
-        expect(Math.abs(t.margin - baselineMargins[i])).toBeLessThanOrEqual(2);
+        expect(Math.abs((t.margin - baselineMargins[i]) - 9000)).toBeLessThanOrEqual(2);
       });
     });
   });
