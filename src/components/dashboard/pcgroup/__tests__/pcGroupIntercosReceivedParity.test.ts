@@ -55,17 +55,32 @@ describe('Flux Intercos — parité receivedTotal vs totalReceived', () => {
           .toBeLessThanOrEqual(intercos.table.rows.length);
       });
 
-      it('Tableau Flux Intercos : chaque ligne entité = somme INTERCOS_CASH.received[entity] sur la période', () => {
+      it('Ligne DG Solutions = digit + comment cash (+ spy si Jan/Fév)', () => {
         const viewIdx = MONTHS.indexOf(viewMonth);
         const period = MONTHS.slice(0, viewIdx + 1);
-        intercos.table.rows.forEach((row: any) => {
-          const key = row._key as string;
-          const expected = period.reduce((acc, sm) => {
-            const block = INTERCOS_CASH[sm];
-            return acc + (block?.received?.[key as keyof typeof block.received] ?? 0);
-          }, 0);
-          expect(Math.abs(parseUSD(row.received) - expected)).toBeLessThanOrEqual(TOL);
-        });
+        const MAXSCALE = new Set<PCGSourceMonthId>(['jan-2026', 'feb-2026']);
+        const dgRow = intercos.table.rows.find((r: any) => r._key === 'dg_solutions');
+        if (!dgRow) return;
+        const expected = period.reduce((acc, sm) => {
+          const cash = INTERCOS_CASH[sm]?.received ?? {};
+          return acc + (cash.digit ?? 0) + (cash.comment ?? 0)
+            + (MAXSCALE.has(sm) ? (cash.spy ?? 0) : 0);
+        }, 0);
+        expect(Math.abs(parseUSD(dgRow.received) - expected)).toBeLessThanOrEqual(TOL);
+      });
+
+      it('Ligne SPY = spy cash uniquement à partir de Mars', () => {
+        const viewIdx = MONTHS.indexOf(viewMonth);
+        const period = MONTHS.slice(0, viewIdx + 1).filter(
+          (m) => !['jan-2026', 'feb-2026'].includes(m),
+        );
+        const spyRow = intercos.table.rows.find((r: any) => r._key === 'spy');
+        if (!spyRow) return; // pas affiché si on est avant Mars
+        const expected = period.reduce(
+          (acc, sm) => acc + (INTERCOS_CASH[sm]?.received?.spy ?? 0),
+          0,
+        );
+        expect(Math.abs(parseUSD(spyRow.received) - expected)).toBeLessThanOrEqual(TOL);
       });
 
       it('Tableau Flux Intercos : remaining = max(0, ytd − received) pour chaque ligne et le total', () => {
