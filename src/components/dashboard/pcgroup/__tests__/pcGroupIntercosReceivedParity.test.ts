@@ -8,8 +8,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { computeIntercos } from '../pcGroupIntercosCompute';
-import { INTERCOS_CASH } from '../manualEntities';
-import type { PCGSourceMonthId } from '../sources/entityAdapters';
+import { INTERCOS_CASH, MANUAL_ENTITIES } from '../manualEntities';
+import { digitFacts, type PCGSourceMonthId } from '../sources/entityAdapters';
 
 const parseUSD = (s: string) => Number(String(s).replace(/[^0-9.-]/g, '')) || 0;
 const MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
