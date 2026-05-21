@@ -55,33 +55,24 @@ describe('Flux Intercos — parité receivedTotal vs totalReceived', () => {
           .toBeLessThanOrEqual(intercos.table.rows.length);
       });
 
-      it('Ligne DG Solutions = digit + comment cash (+ spy si Jan/Fév)', () => {
-        const viewIdx = MONTHS.indexOf(viewMonth);
-        const period = MONTHS.slice(0, viewIdx + 1);
-        const MAXSCALE = new Set<PCGSourceMonthId>(['jan-2026', 'feb-2026']);
+      it('Chaque ligne du tableau = 90% × marge nette de la filiale (cohérence avec les fiches détail)', () => {
+        // Plus aucun agrégat composite : Digit, Comment, SPY chacun sur sa ligne.
         const dgRow = intercos.table.rows.find((r: any) => r._key === 'dg_solutions');
-        if (!dgRow) return;
-        const expected = period.reduce((acc, sm) => {
-          const cash = INTERCOS_CASH[sm]?.received ?? {};
-          return acc + (cash.digit ?? 0) + (cash.comment ?? 0)
-            + (MAXSCALE.has(sm) ? (cash.spy ?? 0) : 0);
-        }, 0);
-        expect(Math.abs(parseUSD(dgRow.received) - expected)).toBeLessThanOrEqual(TOL);
+        expect(dgRow).toBeUndefined();
       });
 
-      it('Ligne SPY = spy cash uniquement à partir de Mars', () => {
+      it('Ligne SPY = 90% × marge nette SPY sur toute la période ; received = tout le cash SPY', () => {
         const viewIdx = MONTHS.indexOf(viewMonth);
-        const period = MONTHS.slice(0, viewIdx + 1).filter(
-          (m) => !['jan-2026', 'feb-2026'].includes(m),
-        );
+        const period = MONTHS.slice(0, viewIdx + 1);
         const spyRow = intercos.table.rows.find((r: any) => r._key === 'spy');
-        if (!spyRow) return; // pas affiché si on est avant Mars
-        const expected = period.reduce(
+        if (!spyRow) return;
+        const expectedReceived = period.reduce(
           (acc, sm) => acc + (INTERCOS_CASH[sm]?.received?.spy ?? 0),
           0,
         );
-        expect(Math.abs(parseUSD(spyRow.received) - expected)).toBeLessThanOrEqual(TOL);
+        expect(Math.abs(parseUSD(spyRow.received) - expectedReceived)).toBeLessThanOrEqual(TOL);
       });
+
 
       it('Tableau Flux Intercos : remaining = max(0, ytd − received) pour chaque ligne et le total', () => {
         intercos.table.rows.forEach((row: any) => {
