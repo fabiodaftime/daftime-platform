@@ -55,40 +55,37 @@ describe('Flux Intercos — parité receivedTotal vs totalReceived', () => {
           .toBeLessThanOrEqual(intercos.table.rows.length);
       });
 
-      it('Chaque ligne du tableau = 90% × marge nette de la filiale (cohérence avec les fiches détail)', () => {
-        // Plus aucun agrégat composite : Digit, Comment, SPY chacun sur sa ligne.
-        const dgRow = intercos.table.rows.find((r: any) => r._key === 'dg_solutions');
-        expect(dgRow).toBeUndefined();
+      it('Comment/Trust est intégré à Digit Solution, sans ligne séparée', () => {
+        const commentRow = intercos.table.rows.find((r: any) => r._key === 'comment');
+        expect(commentRow).toBeUndefined();
       });
 
-      it('Ligne SPY = 90% × marge nette SPY sur toute la période ; received = tout le cash SPY', () => {
+      it('Ligne SPY = uniquement Mars+ ; Jan/Fév restent inclus dans Digit', () => {
         const viewIdx = MONTHS.indexOf(viewMonth);
         const period = MONTHS.slice(0, viewIdx + 1);
         const spyRow = intercos.table.rows.find((r: any) => r._key === 'spy');
         if (!spyRow) return;
-        const expectedReceived = period.reduce(
+        const isolatedPeriod = period.filter((m) => m === 'mar-2026' || m === 'apr-2026');
+        const expectedReceived = isolatedPeriod.reduce(
           (acc, sm) => acc + (INTERCOS_CASH[sm]?.received?.spy ?? 0),
           0,
         );
         expect(Math.abs(parseUSD(spyRow.received) - expectedReceived)).toBeLessThanOrEqual(TOL);
       });
-      it('Chaque ligne filiale = 90% × marge nette sur chaque mois affiché (cohérence fiches détail)', () => {
+
+      it('Digit Solution = 90% × (Digit Core + Comment/Trust + SPY Jan/Fév uniquement)', () => {
         const viewIdx = MONTHS.indexOf(viewMonth);
         const period = MONTHS.slice(0, viewIdx + 1);
-        const marginSelectors: Record<string, (m: PCGSourceMonthId) => number> = {
-          digit: (m) => digitFacts(m)?.margeNette ?? 0,
-          spy: (m) => MANUAL_ENTITIES[m]?.spy.margeNette ?? 0,
-          comment: (m) => MANUAL_ENTITIES[m]?.comment.margeNette ?? 0,
-        };
-        intercos.table.rows.forEach((row: any) => {
-          const sel = marginSelectors[row._key];
-          if (!sel) return; // agency/structuring ont leur propre baseSelector
-          period.forEach((sm) => {
-            const expected = sel(sm) * 0.9;
-            expect(Math.abs(parseUSD(row[sm]) - expected)).toBeLessThanOrEqual(TOL);
-          });
-          const expectedYtd = period.reduce((a, sm) => a + sel(sm) * 0.9, 0);
-          expect(Math.abs(parseUSD(row.ytd) - expectedYtd)).toBeLessThanOrEqual(TOL);
+        const digitRow = intercos.table.rows.find((r: any) => r._key === 'digit');
+        expect(digitRow).toBeDefined();
+        period.forEach((sm) => {
+          const spyIncluded = sm === 'jan-2026' || sm === 'feb-2026';
+          const expected = (
+            (digitFacts(sm)?.margeNette ?? 0) +
+            (MANUAL_ENTITIES[sm]?.comment.margeNette ?? 0) +
+            (spyIncluded ? (MANUAL_ENTITIES[sm]?.spy.margeNette ?? 0) : 0)
+          ) * 0.9;
+          expect(Math.abs(parseUSD(digitRow[sm]) - expected)).toBeLessThanOrEqual(TOL);
         });
       });
 
