@@ -133,18 +133,87 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     }, 0);
   });
 
-  const tableRows = perEntity.map((e) => {
-    const cells: Record<string, string> = { entity: e.rule.label, _key: e.rule.key };
-    e.monthly.forEach((m) => {
-      cells[m.sourceMonth] = usd(m.amount);
-    });
+  // -------- Construction des lignes du tableau --------
+  // Règle métier :
+  //   • Jan/Fév = ancienne structure MaxScale → SPY fait partie de "DG Solutions"
+  //     (Digit + CommentTrust + SPY mélangés)
+  //   • Mars+   = DG Solutions = Digit + CommentTrust uniquement, SPY isolé
+  const isMaxscale = (sm: PCGSourceMonthId) => MAXSCALE_MONTHS.includes(sm);
+
+  const baseRow = (e: typeof perEntity[number]) => {
+    const cells: Record<string, any> = { entity: e.rule.label, _key: e.rule.key };
+    e.monthly.forEach((m) => { cells[m.sourceMonth] = usd(m.amount); });
     const received = receivedPerEntity[e.rule.key] ?? 0;
-    const remaining = Math.max(0, e.ytd - received);
     cells.ytd = usd(e.ytd);
     cells.received = usd(received);
-    cells.remaining = usd(remaining);
+    cells.remaining = usd(Math.max(0, e.ytd - received));
     return cells;
+  };
+
+  const agencyE = perEntity.find((e) => e.rule.key === 'agency');
+  const structuringE = perEntity.find((e) => e.rule.key === 'structuring');
+  const digitE = perEntity.find((e) => e.rule.key === 'digit');
+  const spyE = perEntity.find((e) => e.rule.key === 'spy');
+  const commentE = perEntity.find((e) => e.rule.key === 'comment');
+
+  // ---- Ligne DG Solutions (Digit + Comment, + SPY uniquement Jan/Fév) ----
+  const dgRow: Record<string, any> = {
+    entity: 'DG Solutions (Digit + CommentTrust)',
+    _key: 'dg_solutions',
+    _composite: ['digit', 'comment'], // pour tests/parité
+  };
+  let dgYtd = 0;
+  let dgReceived = 0;
+  sourceMonths.forEach((sm) => {
+    const digitAmt = digitE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
+    const commAmt = commentE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
+    const spyAmt = spyE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
+    const includesSpy = isMaxscale(sm);
+    const amount = digitAmt + commAmt + (includesSpy ? spyAmt : 0);
+    dgRow[sm] = usd(amount);
+    dgYtd += amount;
+    const cash = INTERCOS_CASH[sm]?.received ?? {};
+    dgReceived += (cash.digit ?? 0) + (cash.comment ?? 0) + (includesSpy ? (cash.spy ?? 0) : 0);
   });
+  dgRow.ytd = usd(dgYtd);
+  dgRow.received = usd(dgReceived);
+  const dgRemaining = Math.max(0, dgYtd - dgReceived);
+  dgRow.remaining = usd(dgRemaining);
+  const hasMaxscale = sourceMonths.some(isMaxscale);
+  if (hasMaxscale && dgRemaining > 0) {
+    const maxscaleLabels = sourceMonths.filter(isMaxscale).map((m) => MONTH_SHORT[m]).join('/');
+    dgRow.note = `Inclut SPY pour ${maxscaleLabels} (structure MaxScale). Reste ${usd(dgRemaining)} non remonté sur la période.`;
+  }
+
+  // ---- Ligne SPY (uniquement Mars+) ----
+  const spyRow: Record<string, any> = {
+    entity: 'SPY (isolé Mars+)',
+    _key: 'spy',
+  };
+  let spyYtd = 0;
+  let spyReceivedRow = 0;
+  sourceMonths.forEach((sm) => {
+    if (isMaxscale(sm)) {
+      spyRow[sm] = '— (inclus dans DG)';
+    } else {
+      const amt = spyE?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
+      spyRow[sm] = usd(amt);
+      spyYtd += amt;
+      spyReceivedRow += INTERCOS_CASH[sm]?.received?.spy ?? 0;
+    }
+  });
+  spyRow.ytd = usd(spyYtd);
+  spyRow.received = usd(spyReceivedRow);
+  spyRow.remaining = usd(Math.max(0, spyYtd - spyReceivedRow));
+  if (sourceMonths.some((m) => !isMaxscale(m))) {
+    spyRow.note = 'À partir de Mars : SPY géré séparément (PSP & coûts spécifiques).';
+  }
+
+  const tableRows: Record<string, any>[] = [];
+  if (agencyE) tableRows.push(baseRow(agencyE));
+  if (structuringE) tableRows.push(baseRow(structuringE));
+  tableRows.push(dgRow);
+  if (sourceMonths.some((m) => !isMaxscale(m))) tableRows.push(spyRow);
 
   const totalRow: Record<string, string> = { entity: 'TOTAL ATTENDU' };
   sourceMonths.forEach((sm) => {
@@ -170,6 +239,7 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
     rows: tableRows,
     total: totalRow,
   };
+
 
   // -------- Cards visuelles : ce que chaque entité doit encore remonter --------
   const entityCards = perEntity.map((e) => {
