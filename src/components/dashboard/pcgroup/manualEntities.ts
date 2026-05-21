@@ -9,6 +9,7 @@
 import { getPCGroupConfig } from './config/configStore';
 import type { PCGroupConfig } from './config/types';
 import type { PCGSourceMonthId } from './sources/entityAdapters';
+import { getEntityInput } from '@/lib/entityInputs/store';
 
 export interface ManualEntityFacts {
   ca: number;
@@ -51,24 +52,30 @@ function buildManualExtras(cfg: PCGroupConfig, monthId: string): ManualMonthExtr
   const comment = facts.find((f) => f.entity_code === 'comment');
   const holding = cfg.holdingFacts.find((h) => h.month_id === monthId);
   const rule = cfg.rules.find((r) => r.month_id === monthId);
-  if (!spy || !comment || !holding) return undefined;
+  const digitInputs = getEntityInput('digit', monthId);
+  if ((!spy && !digitInputs) || (!comment && !digitInputs) || !holding) return undefined;
+
+  const spyCA = Number(digitInputs?.ca_spy ?? spy?.ca ?? 0);
+  const spyMargin = Number(digitInputs?.marge_spy ?? spy?.contribution ?? 0);
+  const commentCA = Number(digitInputs?.ca_comment ?? comment?.ca ?? 0);
+  const commentMargin = Number(digitInputs?.marge_comment ?? comment?.contribution ?? 0);
 
   return {
     spy: {
-      ca: Number(spy.ca),
-      margeNette: Number(spy.contribution),
-      charges: Number(spy.charges),
-      marginPct: Number(spy.margin_pct),
-      deals: spy.deals ?? undefined,
+      ca: spyCA,
+      margeNette: spyMargin,
+      charges: Number(digitInputs ? spyCA - spyMargin : spy?.charges ?? 0),
+      marginPct: spyCA > 0 ? (spyMargin / spyCA) * 100 : Number(spy?.margin_pct ?? 0),
+      deals: spy?.deals ?? undefined,
     },
     comment: {
-      ca: Number(comment.ca),
-      margeNette: Number(comment.contribution),
-      charges: Number(comment.charges),
-      marginPct: Number(comment.margin_pct),
-      deals: comment.deals ?? undefined,
+      ca: commentCA,
+      margeNette: commentMargin,
+      charges: Number(digitInputs ? commentCA - commentMargin : comment?.charges ?? 0),
+      marginPct: commentCA > 0 ? (commentMargin / commentCA) * 100 : Number(comment?.margin_pct ?? 0),
+      deals: comment?.deals ?? undefined,
     },
-    commentWarning: comment.warning ?? '',
+    commentWarning: comment?.warning ?? '',
     holding: {
       fraisTotal: Number(holding.frais_total),
       fraisDetail: holding.frais_detail ?? [],

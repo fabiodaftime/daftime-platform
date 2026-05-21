@@ -134,50 +134,120 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   });
 
   // -------- Construction des lignes du tableau --------
-  // Règle : chaque ligne = 1 filiale = 90% de sa marge nette (cohérent avec
-  // les fiches détail par entité et le comparatif en vue groupe).
-  // Aucun agrégat composite : Digit Core, CommentTrust et SPY restent isolés
-  // pour une lecture ligne-à-ligne directe (montant = 0,9 × marge nette).
+  // Règle métier Prime Circle : Comment/Trust est intégré dans Digit Solution.
+  // SPY est intégré dans Digit Solution en Jan/Fév (phase MaxScale), puis isolé
+  // uniquement à partir de Mars. Chaque montant affiché reste bien 90% de la
+  // marge nette du périmètre comptable de la ligne.
   const isMaxscale = (sm: PCGSourceMonthId) => MAXSCALE_MONTHS.includes(sm);
+  const isSpyIsolatedMonth = (sm: PCGSourceMonthId) => !isMaxscale(sm);
+
+  const expectedFor = (key: IntercoEntityKey, sm: PCGSourceMonthId) => {
+    const e = perEntity.find((x) => x.rule.key === key);
+    return e?.monthly.find((m) => m.sourceMonth === sm)?.amount ?? 0;
+  };
+
+  const receivedFor = (keys: IntercoEntityKey[], months: PCGSourceMonthId[]) => months.reduce((acc, sm) => {
+    const received = INTERCOS_CASH[sm]?.received ?? {};
+    return acc + keys.reduce((sum, key) => sum + (received[key] ?? 0), 0);
+  }, 0);
 
   const baseRow = (e: typeof perEntity[number]) => {
     const cells: Record<string, any> = { entity: e.rule.label, _key: e.rule.key };
     e.monthly.forEach((m) => { cells[m.sourceMonth] = usd(m.amount); });
     const received = receivedPerEntity[e.rule.key] ?? 0;
+    const remaining = Math.max(0, e.ytd - received);
     cells.ytd = usd(e.ytd);
     cells.received = usd(received);
-    cells.remaining = usd(Math.max(0, e.ytd - received));
+    cells.remaining = usd(remaining);
+    cells._ytdRaw = e.ytd;
+    cells._receivedRaw = received;
+    cells._remainingRaw = remaining;
     return cells;
   };
 
-  // Ordre d'affichage : Agency, Structuring, Digit Solution, CommentTrust, SPY
-  const orderedKeys: IntercoEntityKey[] = ['agency', 'structuring', 'digit', 'comment', 'spy'];
   const tableRows: Record<string, any>[] = [];
-  orderedKeys.forEach((k) => {
+  (['agency', 'structuring'] as IntercoEntityKey[]).forEach((k) => {
     const e = perEntity.find((x) => x.rule.key === k);
     if (!e) return;
-    const row = baseRow(e);
-    const maxscaleLabels = sourceMonths.filter(isMaxscale).map((m) => MONTH_SHORT[m]);
-    if (k === 'digit' && maxscaleLabels.length > 0) {
-      row.note = `Montant ligne = 90% × marge nette Digit Core. Sur ${maxscaleLabels.join('/')} (ex-MaxScale), le cash réel de Digit/CommentTrust/SPY était encaissé dans un pot commun — l'écart Solde reflète cette régularisation à faire.`;
-    }
-    if (k === 'spy' && maxscaleLabels.length > 0) {
-      row.note = `Sur ${maxscaleLabels.join('/')} : SPY transitait via MaxScale (cash souvent mélangé avec Digit). À partir de Mars : flux SPY isolés.`;
-    }
-    tableRows.push(row);
+    tableRows.push(baseRow(e));
   });
+
+  const digitMonthlyAmounts = sourceMonths.map((sm) => ({
+    month: sm,
+    amount:
+      expectedFor('digit', sm) +
+      expectedFor('comment', sm) +
+      (isMaxscale(sm) ? expectedFor('spy', sm) : 0),
+  }));
+  const digitExpected = digitMonthlyAmounts.reduce((acc, m) => acc + m.amount, 0);
+  const digitReceived = sourceMonths.reduce((acc, sm) => (
+    acc + receivedFor(isMaxscale(sm) ? ['digit', 'comment', 'spy'] : ['digit', 'comment'], [sm])
+  ), 0);
+  const digitRemaining = Math.max(0, digitExpected - digitReceived);
+  const maxscaleMonths = sourceMonths.filter(isMaxscale);
+  const maxscaleExpected = digitMonthlyAmounts
+    .filter((m) => isMaxscale(m.month))
+    .reduce((acc, m) => acc + m.amount, 0);
+  const maxscaleReceived = maxscaleMonths.reduce(
+    (acc, sm) => acc + receivedFor(['digit', 'comment', 'spy'], [sm]),
+    0,
+  );
+  const maxscaleMissing = Math.max(0, maxscaleExpected - maxscaleReceived);
+
+  const digitRow: Record<string, any> = {
+    entity: 'Digit Solution',
+    _key: 'digit',
+    _composite: ['digit', 'comment', 'spy-jan-feb'],
+    ytd: usd(digitExpected),
+    received: usd(digitReceived),
+    remaining: usd(digitRemaining),
+    _ytdRaw: digitExpected,
+    _receivedRaw: digitReceived,
+    _remainingRaw: digitRemaining,
+  };
+  digitMonthlyAmounts.forEach((m) => { digitRow[m.month] = usd(m.amount); });
+  if (maxscaleMonths.length > 0) {
+    digitRow.note = `Comment/Trust est inclus dans Digit Solution. SPY est inclus dans Digit Solution sur ${maxscaleMonths.map((m) => MONTH_SHORT[m]).join('/')} ; au titre de cette période, il manque ${usd(maxscaleMissing)} à remonter.`;
+  } else {
+    digitRow.note = 'Comment/Trust est inclus dans Digit Solution ; SPY est isolé depuis Mars.';
+  }
+  tableRows.push(digitRow);
+
+  const spyIsolatedMonths = sourceMonths.filter(isSpyIsolatedMonth);
+  const spyExpected = spyIsolatedMonths.reduce((acc, sm) => acc + expectedFor('spy', sm), 0);
+  const spyReceived = receivedFor(['spy'], spyIsolatedMonths);
+  const spyRemaining = Math.max(0, spyExpected - spyReceived);
+  const spyRow: Record<string, any> = {
+    entity: 'SPY isolé',
+    _key: 'spy',
+    ytd: usd(spyExpected),
+    received: usd(spyReceived),
+    remaining: usd(spyRemaining),
+    _ytdRaw: spyExpected,
+    _receivedRaw: spyReceived,
+    _remainingRaw: spyRemaining,
+    note: 'Jan/Fév : inclus dans Digit Solution. À partir de Mars : SPY est suivi et remonté séparément.',
+  };
+  sourceMonths.forEach((sm) => {
+    spyRow[sm] = isSpyIsolatedMonth(sm) ? usd(expectedFor('spy', sm)) : 'Inclus Digit';
+  });
+  tableRows.push(spyRow);
 
 
   const totalRow: Record<string, string> = { entity: 'TOTAL ATTENDU' };
   sourceMonths.forEach((sm) => {
-    totalRow[sm] = usd(perEntity.reduce((a, e) => {
-      const cell = e.monthly.find((x) => x.sourceMonth === sm);
-      return a + (cell?.amount ?? 0);
-    }, 0));
+    const totalMonth =
+      expectedFor('agency', sm) +
+      expectedFor('structuring', sm) +
+      expectedFor('digit', sm) +
+      expectedFor('comment', sm) +
+      expectedFor('spy', sm);
+    totalRow[sm] = usd(totalMonth);
   });
-  const totalReceived = Object.values(receivedPerEntity).reduce((a, b) => a + b, 0);
-  const totalRemaining = Math.max(0, totals.ytd - totalReceived);
-  totalRow.ytd = usd(totals.ytd);
+  const totalExpected = tableRows.reduce((acc, row) => acc + (row._ytdRaw ?? 0), 0);
+  const totalReceived = tableRows.reduce((acc, row) => acc + (row._receivedRaw ?? 0), 0);
+  const totalRemaining = Math.max(0, totalExpected - totalReceived);
+  totalRow.ytd = usd(totalExpected);
   totalRow.received = usd(totalReceived);
   totalRow.remaining = usd(totalRemaining);
 
@@ -194,18 +264,18 @@ export function computeIntercos(viewMonth: PCGSourceMonthId) {
   };
 
 
-  // -------- Cards visuelles : ce que chaque entité doit encore remonter --------
-  const entityCards = perEntity.map((e) => {
-    const received = receivedPerEntity[e.rule.key] ?? 0;
-    const expected = e.ytd;
-    const remaining = Math.max(0, expected - received);
+  // -------- Cards visuelles : ce que chaque périmètre doit encore remonter --------
+  const entityCards = tableRows.map((row) => {
+    const expected = row._ytdRaw ?? 0;
+    const received = row._receivedRaw ?? 0;
+    const remaining = row._remainingRaw ?? Math.max(0, expected - received);
     const rate = expected > 0 ? (received / expected) * 100 : 0;
     let level: 'danger' | 'warning' | 'success' = 'danger';
     if (rate >= 80) level = 'success';
     else if (rate >= 40) level = 'warning';
     return {
-      key: e.rule.key,
-      entity: e.rule.label,
+      key: row._key,
+      entity: row.entity,
       expected: usd(expected),
       received: usd(received),
       remaining: usd(remaining),
