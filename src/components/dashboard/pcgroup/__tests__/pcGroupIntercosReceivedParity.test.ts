@@ -54,6 +54,29 @@ describe('Flux Intercos — parité receivedTotal vs totalReceived', () => {
         expect(Math.abs(tableReceived - sumRows))
           .toBeLessThanOrEqual(intercos.table.rows.length);
       });
+
+      it('Tableau Flux Intercos : chaque ligne entité = somme INTERCOS_CASH.received[entity] sur la période', () => {
+        const viewIdx = MONTHS.indexOf(viewMonth);
+        const period = MONTHS.slice(0, viewIdx + 1);
+        intercos.table.rows.forEach((row: any) => {
+          const key = row._key as string;
+          const expected = period.reduce((acc, sm) => {
+            const block = INTERCOS_CASH[sm];
+            return acc + (block?.received?.[key as keyof typeof block.received] ?? 0);
+          }, 0);
+          expect(Math.abs(parseUSD(row.received) - expected)).toBeLessThanOrEqual(TOL);
+        });
+      });
+
+      it('Tableau Flux Intercos : remaining = max(0, ytd − received) pour chaque ligne et le total', () => {
+        intercos.table.rows.forEach((row: any) => {
+          const expected = Math.max(0, parseUSD(row.ytd) - parseUSD(row.received));
+          expect(Math.abs(parseUSD(row.remaining) - expected)).toBeLessThanOrEqual(TOL);
+        });
+        const total = intercos.table.total;
+        const expectedTotal = Math.max(0, parseUSD(total.ytd) - parseUSD(total.received));
+        expect(Math.abs(parseUSD(total.remaining) - expectedTotal)).toBeLessThanOrEqual(TOL);
+      });
     });
   });
 });
