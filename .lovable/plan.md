@@ -1,103 +1,75 @@
-# Automatisation des données : Google Sheets → Dashboards
 
-## Pourquoi c'est faisable maintenant
+## Objectif
 
-On vient de poser la table `entity_monthly_inputs` (Phase 1 Digit) qui sert de **source de vérité unique**. Tout dashboard lit depuis cette table → il suffit donc d'**alimenter cette table automatiquement** depuis une source externe pour que tous les dashboards se mettent à jour en cascade (KPIs entité + consolidé PCGroup).
+Refondre le tab **Flux Intercos** du dashboard PC Group pour refléter la réalité métier : MaxScale jusqu'à février (tout mélangé), puis bascule sur DG Solutions à partir de mars (DG + CommentTrust uniquement), avec SPY systématiquement isolé.
 
-C'est le bon moment : on n'a qu'**une seule porte d'entrée à automatiser**, pas 10 dashboards à refactorer.
+## Changements
 
-## Architecture proposée
+### 1. Logique de calcul (`pcGroupIntercosCompute.ts`)
+
+Découper la période YTD en deux phases au lieu d'une boucle uniforme :
+
+- **Phase MaxScale** = `jan-2026`, `feb-2026`
+  - Agréger en UN SEUL bloc : DG activity + CommentTrust + SPY + (Agency + Structuring si pertinent — à confirmer, défaut = inclus car flux MaxScale historique)
+  - Sortir 4 chiffres : Total résultat MaxScale, Théorique à remonter (× 90%), Réellement remonté, Écart
+  - Pas de séparation par entité dans cette phase
+
+- **Phase DG Solutions** = `mar-2026`, `apr-2026`, ...
+  - Bloc DG remontable = (Digit core + Comment) × 90%
+  - SPY exclu du calcul automatique
+  - Agency et Structuring restent avec leur règle propre (non concernés par la bascule)
+
+- **Bloc SPY isolé** (Mars+) : Revenue, Costs, Profit (depuis `MANUAL_ENTITIES[m].spy`), cash remonté `INTERCOS_CASH[m].received.spy`. Affiché à part, jamais agrégé dans le total DG.
+
+### 2. UI (`PCGroupIntercosTab.tsx`)
+
+Remplacer le tableau monolithique « Détail des Remontées par Filiale » par 3 sections visuelles :
 
 ```text
-┌──────────────────┐      ┌──────────────────┐      ┌────────────────────┐
-│  Google Sheet    │─────▶│  Edge Function   │─────▶│ entity_monthly_    │
-│  (source live)   │ pull │  sync-gsheet     │ write│ inputs (DB)        │
-└──────────────────┘      └──────────────────┘      └────────────────────┘
-        │                          ▲                          │
-        │ webhook (Apps Script)    │ cron pg_cron             │ Realtime
-        │ ou trigger onEdit        │ (toutes les 15 min)      ▼
-        └──────────────────────────┘                  Dashboards refresh
-                                                      automatique
+┌─────────────────────────────────────────────┐
+│ A — HISTORIQUE / TRANSITION MaxScale        │
+│     (visible si jan ou fév dans la période) │
+│  • Total résultat MaxScale                  │
+│  • Théorique à remonter (90%)               │
+│  • Réellement remonté                       │
+│  • Écart / régularisation                   │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ B — DG SOLUTIONS (Mars+)                    │
+│  • DG activity      $X                      │
+│  • CommentTrust     $Y                      │
+│  • Total DG remontable = (X+Y) × 90%        │
+│  • Reçu / Solde                             │
+└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ C — SPY (Mars+) — ISOLÉ                     │
+│  • Revenue / Costs / Profit                 │
+│  • Flux remonté (info uniquement)           │
+│  • Badge : "Hors périmètre calcul DG"       │
+└─────────────────────────────────────────────┘
 ```
 
-Trois mécanismes de déclenchement, cumulables :
-1. **Push instantané** : Apps Script dans le Sheet → POST vers une edge function dès qu'une cellule change (latence ~2 sec)
-2. **Pull périodique** : `pg_cron` toutes les 15 min appelle l'edge function (filet de sécurité)
-3. **Bouton "Synchroniser maintenant"** dans l'écran Super Admin
+Garder Agency et Structuring (PCA, structuring) dans leur propre section comme aujourd'hui — elles ne sont pas concernées par la transition MaxScale→DG.
 
-## Sources supportées
+### 3. KPI Hero
 
-| Source | Statut | Mécanisme |
-|---|---|---|
-| **Google Sheets** | Phase 1 (priorité) | Connector Google Sheets déjà disponible dans Lovable Cloud |
-| **Excel** (OneDrive/SharePoint) | Phase 2 | Connector Microsoft Excel |
-| **Zoho Books / CRM** | Phase 3 | API Zoho directe (pas de connector natif → secret OAuth) |
-| **CSV upload manuel** | déjà existant | Garde le fallback actuel |
+Garder les 3 cards mais ajuster les libellés :
+- « Somme à Remonter » = MaxScale théorique (Jan+Fév) + DG Solutions théorique (Mars+) + Agency/Structuring théorique
+- « Somme Remontée » = total reçu toutes périodes
+- « Solde » = différence
+- **SPY exclu** de ces 3 KPI dès qu'on est ≥ mars.
 
-## Mapping configurable (clé du système)
+### 4. Tests
 
-Une nouvelle table `entity_data_mappings` qui décrit, **par entité**, comment lire le fichier source :
+Mettre à jour `pcGroupIntercosReceivedParity.test.ts` :
+- Vérifier qu'à partir de mars, le calcul DG remontable n'inclut PAS la marge SPY
+- Vérifier que le total MaxScale Jan+Fév = somme des marges DG+Comment+SPY de ces mois
+- Conserver la parité KPI/table sur la part non-SPY
 
-```
-entity_layout: 'digit'
-source_type: 'google_sheets'
-source_ref: 'sheet_id_xxx' / 'tab=Janvier 2026'
-field_map: {
-  "ca_total":   { cell: "B5",  type: "number" },
-  "marge":      { cell: "B12", type: "number" },
-  "deals":      { cell: "B20", type: "integer" },
-  "produits":   { range: "A30:D40", type: "table", schema: [...] }
-}
-month_detection: { column: "A", format: "YYYY-MM" }
-```
+## Points à confirmer
 
-L'écran Super Admin permet de :
-- Coller l'URL du Google Sheet
-- Voir un aperçu des cellules
-- Mapper visuellement chaque champ (clic sur la cellule du preview → assignation au champ Digit)
-- Tester le mapping (mode dry-run qui montre ce qui serait écrit)
-- Activer la synchro
+1. **Périmètre MaxScale Jan/Fév** : Agency (PCA) et Structuring étaient-ils déjà sur leur propre structure dès janvier, ou faisaient-ils aussi partie du « pot MaxScale » à régulariser ? Mon hypothèse par défaut : Agency et Structuring sont indépendants et restent dans leur propre bloc (comme aujourd'hui). Seul le trio DG+Comment+SPY constitue le « pot MaxScale » à régulariser.
 
-## Phase 1 — Pilote Google Sheets sur Digit (~1 jour)
+2. **SPY avant mars** : Le SPY de Jan/Fév est-il considéré « remonté via MaxScale » (donc inclus dans le pot régularisation) ou déjà isolé ? Mon hypothèse : inclus dans MaxScale Jan/Fév, isolé dès Mars.
 
-1. Connecter le **connector Google Sheets** (OAuth via Lovable)
-2. Créer la table `entity_data_mappings` + RLS Super Admin
-3. Edge function `sync-gsheet-to-inputs` :
-   - Lit le mapping pour `digit`
-   - Appelle gateway Google Sheets API
-   - Valide via le schéma Zod existant (`entityInputs/schema.ts`)
-   - Upsert dans `entity_monthly_inputs`
-   - Log dans `entity_input_edits_log` (actor = "auto-sync")
-4. Écran Super Admin **`/admin/data-sources`** :
-   - Liste des entités, colonne "Source" (manuel / Google Sheets / dernière synchro)
-   - Modal de mapping avec preview du Sheet
-   - Bouton "Synchroniser maintenant"
-   - Toggle "Auto-sync activé"
-5. Apps Script template (collable dans le Sheet par l'utilisateur) qui POST vers l'edge function sur `onEdit`
-6. Optionnel : `pg_cron` 15 min comme filet
-
-## Phase 2 — Étendre
-
-- Ajouter Excel (même pattern, autre connector)
-- Étendre le mapping aux autres entités (Structuring, Agency, Bocuse...)
-- Tableau de bord "Santé des syncs" : dernière exécution, erreurs, écarts détectés
-
-## Phase 3 — Zoho
-
-- OAuth Zoho (secret à ajouter, pas de connector natif)
-- Mapping orienté "compte comptable" plutôt que "cellule"
-- Reprise du même pipeline d'écriture
-
-## Garde-fous
-
-- **Validation Zod stricte** avant écriture (un mauvais format Sheet ne corrompt pas la DB)
-- **Audit trail** complet : qui a sync, quand, quelles valeurs ont changé
-- **Mode "draft"** : la sync écrit dans une zone de staging, un Super Admin valide avant publication (optionnel, à activer par entité)
-- **Verrouillage manuel** : si un Super Admin a édité une cellule manuellement, la sync ne l'écrase pas sans confirmation
-- **Alertes** : si la sync échoue 3x ou si un écart > X% est détecté → toast + entrée dans le journal
-
-## Questions avant de partir
-
-1. **Source prioritaire** : on commence par Google Sheets (le plus simple, OAuth déjà géré) ou tu veux directement Zoho ?
-2. **Granularité du Sheet** : un Sheet par entité (plus simple à mapper) ou un Sheet maître consolidé (un seul mapping mais plus complexe) ?
-3. **Mode strict ou tolérant** : la sync écrase toujours les valeurs manuelles, ou demande confirmation quand il y a conflit ?
+Si ces hypothèses sont OK je code directement ; sinon dis-moi ce qui change.
