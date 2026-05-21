@@ -1,15 +1,16 @@
-// Tests d'extension : garantissent qu'aucune vue dérivée (YTD, réserves,
-// remontée, comparatifs) ne réintroduit le double-comptage SPY/Comment après
-// la correction de l'agrégateur.
+// Tests d'extension : garantissent la cohérence des vues dérivées (YTD,
+// réserves, remontée, comparatifs) après la correction de l'agrégateur qui
+// consolide désormais Digit Solution = Digit Core + SPY + Comment/Trustpilot.
 //
-// On parcourt tous les mois disponibles + YTD + tableau comparatif et on
-// vérifie systématiquement :
+// On vérifie systématiquement :
 //   • Les totaux (CA Groupe / Marge Brute Groupe / Réserves / Remontée /
-//     Résultat Net) ne dépendent que de Agency + Structuring + Digit (consolidé).
-//   • Patcher SPY ou Comment ne déplace JAMAIS les totaux groupe ni le YTD ni
-//     la ligne TOTAL du comparatif.
+//     Résultat Net) = Agency + Structuring + Digit consolidé (qui inclut
+//     SPY + Comment).
+//   • Patcher SPY ou Comment se propage exactement (delta = delta) aux
+//     totaux groupe, YTD et ligne TOTAL du comparatif.
 //   • Les ratios Réserves = 10 % / Remontée = 90 % / Résultat = Remontée − Frais
 //     restent vrais sur les agrégats YTD.
+
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
