@@ -107,6 +107,7 @@ export default function DashboardDigit() {
         {tab === "costs" && <DigitCostsTab data={monthData} />}
         {tab === "products" && <DigitProductsTab data={monthData} />}
         {tab === "evolution" && <DigitEvolutionTab data={monthData} />}
+        {tab === "holding" && <DigitHoldingTransfersTab selectedMonth={selectedMonth} />}
         {tab === "validation" && <DigitValidationTab />}
         {tab === "comments" && <DigitCommentsTab monthLabel={monthData.monthLabel} />}
       </div>
