@@ -12,6 +12,7 @@ import { DigitProductsTab } from '@/components/dashboard/digit/DigitProductsTab'
 import { DigitEvolutionTab } from '@/components/dashboard/digit/DigitEvolutionTab';
 import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
 import { DigitValidationTab } from '@/components/dashboard/digit/DigitValidationTab';
+import { DigitHoldingTransfersTab } from '@/components/dashboard/digit/DigitHoldingTransfersTab';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import { useEntityInputsByMonth } from '@/lib/entityInputs/hooks';
 import { applyDigitInputsToMonthData } from '@/lib/entityInputs/applyDigitInputs';
