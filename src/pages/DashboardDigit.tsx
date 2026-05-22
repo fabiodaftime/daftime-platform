@@ -12,6 +12,7 @@ import { DigitProductsTab } from '@/components/dashboard/digit/DigitProductsTab'
 import { DigitEvolutionTab } from '@/components/dashboard/digit/DigitEvolutionTab';
 import { DigitCommentsTab } from '@/components/dashboard/digit/DigitCommentsTab';
 import { DigitValidationTab } from '@/components/dashboard/digit/DigitValidationTab';
+import { DigitHoldingTransfersTab } from '@/components/dashboard/digit/DigitHoldingTransfersTab';
 import { ConsolidatedAccessButton } from '@/components/dashboard/ConsolidatedAccessButton';
 import { useEntityInputsByMonth } from '@/lib/entityInputs/hooks';
 import { applyDigitInputsToMonthData } from '@/lib/entityInputs/applyDigitInputs';
@@ -25,6 +26,7 @@ const tabs = [
   { id: "costs", label: "📉 Analyse Charges" },
   { id: "products", label: "🌐 Produits" },
   { id: "evolution", label: "📊 Évolution MoM" },
+  { id: "holding", label: "💸 Remontées Holding" },
   { id: "validation", label: "🧪 Validation YTD" },
   { id: "comments", label: "💬 Commentaires" },
 ];
@@ -105,6 +107,7 @@ export default function DashboardDigit() {
         {tab === "costs" && <DigitCostsTab data={monthData} />}
         {tab === "products" && <DigitProductsTab data={monthData} />}
         {tab === "evolution" && <DigitEvolutionTab data={monthData} />}
+        {tab === "holding" && <DigitHoldingTransfersTab selectedMonth={selectedMonth} />}
         {tab === "validation" && <DigitValidationTab />}
         {tab === "comments" && <DigitCommentsTab monthLabel={monthData.monthLabel} />}
       </div>
