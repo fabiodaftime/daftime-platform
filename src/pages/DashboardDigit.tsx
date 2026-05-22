@@ -26,6 +26,7 @@ const tabs = [
   { id: "costs", label: "📉 Analyse Charges" },
   { id: "products", label: "🌐 Produits" },
   { id: "evolution", label: "📊 Évolution MoM" },
+  { id: "holding", label: "💸 Remontées Holding" },
   { id: "validation", label: "🧪 Validation YTD" },
   { id: "comments", label: "💬 Commentaires" },
 ];
