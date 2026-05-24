@@ -103,8 +103,9 @@ export function LabarileCostsPage() {
         </p>
       </div>
 
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         <LabarileKPICard label="Mois suivis 2026" value={`${MONTHLY_COSTS_2026.length}`} subtext="Janvier → Avril" variant="primary" />
+
         <LabarileKPICard label="CA YTD 2026" value={`${(ytd.ca / 1000).toFixed(0)}k AED`} subtext="Réel mensuel" variant="success" />
         <LabarileKPICard label="Charges YTD" value={`${(ytd.charges / 1000).toFixed(0)}k AED`} subtext={`${chargesPct.toFixed(1)}% du CA`} variant="warning" />
         <LabarileKPICard label="EBITDA YTD" value={`${(ebitda / 1000).toFixed(0)}k AED`} subtext={`Marge ${ebitdaPctYtd.toFixed(1)}%`} variant="success" />
