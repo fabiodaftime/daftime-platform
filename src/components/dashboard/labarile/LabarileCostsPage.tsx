@@ -61,6 +61,55 @@ export function LabarileCostsPage() {
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <LabarileConsistencyCheck monthlyCosts={MONTHLY_COSTS_2026} displayedYtd={ytd2026} />
 
+      {/* Analyse variations mensuelles charges */}
+      {(() => {
+        const cats: { key: keyof MonthlyCostData['actual']; label: string }[] = [
+          { key: 'coaches', label: 'Coaches' },
+          { key: 'marketing', label: 'Marketing' },
+          { key: 'it', label: 'IT & Tools' },
+          { key: 'stripe', label: 'Stripe / Fees' },
+          { key: 'admin', label: 'Admin' },
+          { key: 'autres', label: 'Autres' },
+        ];
+        const variations: { from: string; to: string; cat: string; delta: number; pct: number }[] = [];
+        for (let i = 1; i < MONTHLY_COSTS_2026.length; i++) {
+          const prev = MONTHLY_COSTS_2026[i - 1];
+          const cur = MONTHLY_COSTS_2026[i];
+          for (const c of cats) {
+            const a = prev.actual[c.key] ?? 0;
+            const b = cur.actual[c.key] ?? 0;
+            const delta = b - a;
+            const pct = a > 0 ? (delta / a) * 100 : b > 0 ? 100 : 0;
+            if (Math.abs(delta) >= 15_000 && Math.abs(pct) >= 30) {
+              variations.push({ from: prev.month, to: cur.month, cat: c.label, delta, pct });
+            }
+          }
+        }
+        const significant = variations.length;
+        return (
+          <div className={`rounded-lg border-l-4 p-4 ${significant === 0 ? 'bg-emerald-50 border-l-emerald-500' : 'bg-amber-50 border-l-amber-500'}`}>
+            <p className={`font-bold text-sm mb-2 ${significant === 0 ? 'text-emerald-700' : 'text-amber-800'}`}>
+              📈 Variations mensuelles significatives — {significant} alerte{significant > 1 ? 's' : ''} (seuil : ±15k AED & ±30%)
+            </p>
+            {significant === 0 ? (
+              <p className="text-sm text-labarile-text">Aucune variation anormale détectée d'un mois à l'autre.</p>
+            ) : (
+              <ul className="text-sm text-labarile-text space-y-1 ml-4 list-disc">
+                {variations.map((v, idx) => (
+                  <li key={idx}>
+                    <strong>{v.cat}</strong> {v.from} → {v.to} :{' '}
+                    <span className={v.delta >= 0 ? 'text-amber-700 font-semibold' : 'text-emerald-700 font-semibold'}>
+                      {v.delta >= 0 ? '+' : ''}{Math.round(v.delta / 1000)}k AED ({v.pct >= 0 ? '+' : ''}{v.pct.toFixed(0)}%)
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })()}
+
+
       {/* Bande cible marge EBITDA — validée call 18/05/2026 (post-retraitement Anissa) */}
       {(() => {
         const inBand = ebitdaPctYtd >= MARGIN_TARGET_BAND.min && ebitdaPctYtd <= MARGIN_TARGET_BAND.max;
