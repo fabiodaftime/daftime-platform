@@ -61,6 +61,25 @@ export function LabarileCostsPage() {
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <LabarileConsistencyCheck monthlyCosts={MONTHLY_COSTS_2026} displayedYtd={ytd2026} />
 
+      {/* Bande cible marge EBITDA — validée call 18/05/2026 (post-retraitement Anissa) */}
+      {(() => {
+        const inBand = ebitdaPctYtd >= MARGIN_TARGET_BAND.min && ebitdaPctYtd <= MARGIN_TARGET_BAND.max;
+        const above = ebitdaPctYtd > MARGIN_TARGET_BAND.max;
+        const tone = inBand ? 'emerald' : above ? 'sky' : 'amber';
+        return (
+          <div className={`bg-${tone}-50 border-l-4 border-l-${tone}-500 rounded-lg p-4`}>
+            <p className={`font-bold text-sm text-${tone}-700 mb-1`}>
+              🎯 Bande cible marge EBITDA : {MARGIN_TARGET_BAND.min}–{MARGIN_TARGET_BAND.max}%
+            </p>
+            <p className="text-sm text-labarile-text">
+              Référence validée lors du call du 18/05/2026 (Luc, Simon, Fabio) après retraitement des doublons d'écritures et des paiements TVA par Anissa. Marge YTD 2026 actuelle : <strong>{ebitdaPctYtd.toFixed(1)}%</strong>{' '}
+              {inBand ? '— dans la bande cible.' : above ? '— au-dessus de la cible (à confirmer sur la durée).' : '— sous la cible : surveiller les charges variables.'}
+            </p>
+          </div>
+        );
+      })()}
+
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         <LabarileKPICard label="Mois suivis 2026" value={`${MONTHLY_COSTS_2026.length}`} subtext="Janvier → Avril" variant="primary" />
         <LabarileKPICard label="CA YTD 2026" value={`${(ytd.ca / 1000).toFixed(0)}k AED`} subtext="Réel mensuel" variant="success" />
