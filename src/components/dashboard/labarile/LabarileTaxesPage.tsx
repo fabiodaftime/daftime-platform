@@ -90,9 +90,10 @@ export function LabarileTaxesPage() {
           Le provisionnement % du CA est <strong>désactivé sur ces mois</strong> pour éviter le double-comptage.
           Les mois non couverts ({nonAllocatedMonths.join(', ') || 'aucun'}) gardent l'estimation {fmtPct(ASSUMPTIONS.vatEuRatePctOfCA)} du CA pour la prochaine échéance.
         </p>
-        <p className="text-xs text-amber-700 mt-2">
-          ⚠️ Hypothèse de rattachement Jan→Mar 2026 — non confirmée par Anissa. À valider (les 83k EUR pourraient couvrir tout ou partie de Q4 2025).
+        <p className="text-xs text-emerald-700 mt-2">
+          ✅ Rattachement Jan→Mar 2026 confirmé.
         </p>
+
       </div>
 
 
