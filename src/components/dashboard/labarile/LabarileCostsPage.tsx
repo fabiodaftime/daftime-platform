@@ -65,10 +65,14 @@ export function LabarileCostsPage() {
       {(() => {
         const inBand = ebitdaPctYtd >= MARGIN_TARGET_BAND.min && ebitdaPctYtd <= MARGIN_TARGET_BAND.max;
         const above = ebitdaPctYtd > MARGIN_TARGET_BAND.max;
-        const tone = inBand ? 'emerald' : above ? 'sky' : 'amber';
+        const cls = inBand
+          ? 'bg-emerald-50 border-l-emerald-500 text-emerald-700'
+          : above
+          ? 'bg-sky-50 border-l-sky-500 text-sky-700'
+          : 'bg-amber-50 border-l-amber-500 text-amber-700';
         return (
-          <div className={`bg-${tone}-50 border-l-4 border-l-${tone}-500 rounded-lg p-4`}>
-            <p className={`font-bold text-sm text-${tone}-700 mb-1`}>
+          <div className={`border-l-4 rounded-lg p-4 ${cls}`}>
+            <p className="font-bold text-sm mb-1">
               🎯 Bande cible marge EBITDA : {MARGIN_TARGET_BAND.min}–{MARGIN_TARGET_BAND.max}%
             </p>
             <p className="text-sm text-labarile-text">
@@ -78,6 +82,7 @@ export function LabarileCostsPage() {
           </div>
         );
       })()}
+
 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
