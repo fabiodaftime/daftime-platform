@@ -38,6 +38,21 @@ export function LabarileDividendsPage() {
 
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
+      {/* Stratégie fiscale validée call 18/05/2026 — salaires variables vs dividendes */}
+      <div className="bg-amber-50 border-l-4 border-l-amber-500 rounded-lg p-4">
+        <p className="font-bold text-sm text-amber-700 mb-1">
+          📌 Stratégie fiscale actée — Salaires variables plutôt que dividendes
+        </p>
+        <p className="text-sm text-labarile-text">
+          Décision prise lors du call du 18/05/2026 (Luc, Simon, Fabio) : privilégier des
+          <strong> contrats de travail avec clause de rémunération variable</strong> plutôt que la
+          distribution de dividendes, afin d'optimiser la fiscalité (déductibilité des salaires
+          côté société, charge réduite côté dirigeants vs IR sur dividendes). Demande de rédaction
+          envoyée à Justine. Le calcul de capacité distributive ci-dessous reste affiché à titre
+          de référence en attendant la mise en place des nouveaux contrats.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         <LabarileKPICard
           label="Reprise résultat 2025"

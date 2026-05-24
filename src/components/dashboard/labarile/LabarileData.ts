@@ -5,11 +5,16 @@ export const ACTUALS = {
   revenue: [491.3, 438.4, 375.5]
 };
 
-// Actuals Jan-Apr 2026 (source: P&L Zoho LLE Educational Services FZCO, AED)
+// Actuals Jan-Apr 2026 (source: P&L Zoho LLE Educational Services FZCO, AED — révision Anissa post-call 18/05/2026)
 export const ACTUALS_2026 = {
   months: ['Jan 26', 'Fév 26', 'Mar 26', 'Avr 26'],
-  revenue: [706.4, 878.0, 667.0, 1038.4],
+  revenue: [703.3, 877.9, 1025.0, 1038.4],
 };
+
+// Bande cible de marge EBITDA après retraitement des écritures (doublons + TVA d'Anissa)
+// Référence validée lors du call du 18/05/2026 avec Luc, Simon et Fabio.
+export const MARGIN_TARGET_BAND = { min: 40, max: 45 };
+
 
 export interface Scenario {
   name: string;
@@ -173,48 +178,60 @@ export const MONTHLY_COSTS: MonthlyCostData[] = [
 export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
   {
     month: 'JANVIER 2026',
-    revenue: 706389,
-    actual: { coaches: 82348, marketing: 178383, it: 13487, stripe: 35448, admin: 43618, autres: 0 },
+    revenue: 703339,
+    actual: { coaches: 82348, marketing: 178383, it: 16923, stripe: 35448, admin: 43618, autres: 0 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Janvier:',
-    comments: [],
+    comments: [
+      '✅ Marge EBITDA ~49% — au-dessus de la bande cible 40-45%.',
+    ],
   },
   {
     month: 'FÉVRIER 2026',
-    revenue: 878000,
-    actual: { coaches: 187743, marketing: 350225, it: 27786, stripe: 47969, admin: 113843, autres: 0 },
+    revenue: 877940,
+    actual: { coaches: 224652, marketing: 212407, it: 17517, stripe: 49370, admin: 47031, autres: 0 },
     commentType: 'warning',
     commentTitle: '💬 Commentaires Février:',
-    comments: [],
+    comments: [
+      '⚠️ Hausse charges expliquée : événement Paris + immersion villa + paiements intervenants.',
+      '⚠️ Cycle annuel des outils IT facturé sur février (impact ponctuel).',
+      '⚠️ Paiement 15k AED à Yazid initialement différé, comptabilisé en février.',
+      '📌 Marge EBITDA ~37% — sous la bande cible 40-45% (mois exceptionnel).',
+    ],
   },
   {
     month: 'MARS 2026',
-    revenue: 667021,
-    actual: { coaches: 157145, marketing: 252550, it: 14238, stripe: 30576, admin: 118769, autres: 139433 },
+    revenue: 1024972,
+    actual: { coaches: 164880, marketing: 263372, it: 14238, stripe: 62063, admin: 118769, autres: 139433 },
     commentType: 'critical',
     commentTitle: '💬 Commentaires Mars:',
     comments: [
+      '🔄 CA régularisé par Anissa : les 10 premiers jours (avant sync Stripe↔Zoho du 11/03) sont désormais intégrés (~+358k AED vs version précédente).',
       '⚠️ Bad Debt 139.4k AED comptabilisé ce mois — créance irrécouvrable, à investiguer.',
+      '⚠️ Marge EBITDA ~26% — pénalisée par le Bad Debt et la masse salariale (102k).',
     ],
   },
   {
     month: 'AVRIL 2026',
     revenue: 1038364,
-    actual: { coaches: 126081, marketing: 231049, it: 7858, stripe: 46861, admin: 64167, autres: 0 },
+    actual: { coaches: 135926, marketing: 232280, it: 7858, stripe: 46861, admin: 64167, autres: 0 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Avril:',
     comments: [
-      '✅ Meilleur mois 2026 : CA 1 038 k AED, charges maîtrisées → forte marge EBITDA (~54%).',
+      '✅ Meilleur mois 2026 : CA 1 038 k AED, charges maîtrisées → marge EBITDA ~53%.',
     ],
   },
 ];
 
 // Synthèse YTD 2026 (Jan-Avr) calculée depuis MONTHLY_COSTS_2026
+// Rev = 703 339 + 877 940 + 1 024 972 + 1 038 364 = 3 644 615 AED
+// EBITDA = 346 619 + 326 965 + 262 217 + 551 272 ≈ 1 487 073 AED
 export const YTD_2026 = {
   months: 4,
-  caTotal: 706389 + 878000 + 667021 + 1038364, // 3 289 774 AED
-  netProfit: 353490 + 152440 + -45669 + 562432, // ≈ 1 022 693 AED (= Current Year Earnings Apr)
+  caTotal: 703339 + 877940 + 1024972 + 1038364,
+  netProfit: 346619 + 326965 + 262217 + 551272,
 };
+
 
 
 export const COSTS_Q4_DETAIL = [
