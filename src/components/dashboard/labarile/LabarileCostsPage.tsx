@@ -1,9 +1,10 @@
 import { LabarileKPICard } from './LabarileKPICard';
 import { LabarileMonthlyCostsChart } from './LabarileCharts';
-import { type MonthlyCostData } from './LabarileData';
+import { type MonthlyCostData, MARGIN_TARGET_BAND } from './LabarileData';
 import { useLabarileMonthly } from './useLabarileMonthly';
 import { LabarileCategoryDrilldown } from './LabarileCategoryDrilldown';
 import { LabarileConsistencyCheck } from './LabarileConsistencyCheck';
+
 
 const MONTH_LABEL_TO_NUM: Record<string, number> = {
   JANVIER: 1, FÉVRIER: 2, FEVRIER: 2, MARS: 3, AVRIL: 4, MAI: 5, JUIN: 6,
