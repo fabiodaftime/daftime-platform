@@ -65,28 +65,36 @@ function buildMonthlyTaxRows(monthly: Array<{ month: string; revenue: number; ac
 
 export function LabarileTaxesPage() {
   const { monthlyCosts2026, ytd2026 } = useLabarileMonthly(2026);
-  const ytd = buildYtd2026Taxes(ytd2026);
   const monthly = buildMonthlyTaxRows(monthlyCosts2026);
+  const monthlyVatEuTotal = monthly.reduce((a, r) => a + r.vatEu, 0);
+  const ytd = buildYtd2026Taxes(ytd2026, monthlyVatEuTotal);
+  const allocatedMonths = monthly.filter((r) => r.allocated).map((r) => r.month);
+  const nonAllocatedMonths = monthly.filter((r) => !r.allocated).map((r) => r.month);
 
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       {/* KPIs YTD 2026 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         <LabarileKPICard label="Total Taxes YTD 2026" value={fmtK(ytd.totalYtd)} subtext={`Jan → Avr (${ytd.months} mois) — TVA + CT prorata`} variant="primary" />
-        <LabarileKPICard label="TVA EU estimée YTD" value={fmtK(ytd.vatEu)} subtext={`${fmtPct(ASSUMPTIONS.vatEuRatePctOfCA)} du CA`} variant="warning" />
+        <LabarileKPICard label="TVA EU YTD (étalée)" value={fmtK(ytd.vatEu)} subtext={`Paiement mai étalé sur ${allocatedMonths.length} mois`} variant="warning" />
         <LabarileKPICard label="TVA UAE estimée YTD" value={fmtK(ytd.vatUae)} subtext={`${fmtPct(ASSUMPTIONS.vatUaeRatePctOfCA)} du CA (ventes UAE)`} />
         <LabarileKPICard label="CT 2026 — Estimatif annuel" value={fmtK(ytd.ctAnnualEstimate)} subtext="9% × (profit run-rate − 375k abattement)" variant="success" />
       </div>
 
-      {/* TVA EU payée mai 2026 */}
+      {/* TVA EU payée mai 2026 — étalement Jan→Mar */}
       <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-4">
-        <p className="font-bold text-sm text-emerald-700 mb-2">💸 TVA EU déjà payée début mai 2026</p>
+        <p className="font-bold text-sm text-emerald-700 mb-2">💸 TVA EU payée début mai 2026 — étalée Jan → Mar</p>
         <p className="text-sm text-labarile-text leading-relaxed">
-          Paiement effectué début mai 2026 pour les périodes précédentes : <strong>{TVA_EU_PAID_MAY_EUR.toLocaleString('fr-FR')} EUR</strong>{' '}
-          (≈ <strong>{fmtK(TVA_EU_PAID_MAY_AED)}</strong> au taux EUR/AED {EUR_TO_AED}). Ce montant est <strong>déjà sorti de la trésorerie</strong>{' '}
-          et n'est plus à provisionner. L'estimatif TVA EU YTD ci-dessus ({fmtK(ytd.vatEu)}) couvre l'activité 2026 et reste à provisionner pour les prochaines échéances.
+          Paiement effectif : <strong>{TVA_EU_PAID_MAY_EUR.toLocaleString('fr-FR')} EUR</strong> (≈ <strong>{fmtK(TVA_EU_PAID_MAY_AED)}</strong> au taux EUR/AED {EUR_TO_AED}),
+          réparti linéairement sur <strong>{allocatedMonths.join(', ') || 'Jan → Mar'}</strong> à <strong>~{fmtK(TVA_EU_ALLOCATED_PER_MONTH)}/mois</strong>.
+          Le provisionnement % du CA est <strong>désactivé sur ces mois</strong> pour éviter le double-comptage.
+          Les mois non couverts ({nonAllocatedMonths.join(', ') || 'aucun'}) gardent l'estimation {fmtPct(ASSUMPTIONS.vatEuRatePctOfCA)} du CA pour la prochaine échéance.
+        </p>
+        <p className="text-xs text-amber-700 mt-2">
+          ⚠️ Hypothèse de rattachement Jan→Mar 2026 — non confirmée par Anissa. À valider (les 83k EUR pourraient couvrir tout ou partie de Q4 2025).
         </p>
       </div>
+
 
       {/* Hypothèses */}
       <div className="bg-blue-50 border-l-4 border-l-blue-500 rounded-lg p-4">
