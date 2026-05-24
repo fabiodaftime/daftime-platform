@@ -227,11 +227,11 @@ export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
 
 // Synthèse YTD 2026 (Jan-Avr) calculée depuis MONTHLY_COSTS_2026
 // Rev = 703 339 + 877 940 + 1 024 972 + 1 038 364 = 3 644 615 AED
-// EBITDA = 346 619 + 326 965 + 247 217 + 536 272 ≈ 1 457 073 AED (après provisions Yazid Mars+Avril)
+// EBITDA = 346 619 + 326 963 + 247 217 + 536 272 = 1 457 071 AED (après provisions Yazid Mars+Avril)
 export const YTD_2026 = {
   months: 4,
   caTotal: 703339 + 877940 + 1024972 + 1038364,
-  netProfit: 346619 + 326965 + 247217 + 536272,
+  netProfit: 346619 + 326963 + 247217 + 536272,
 };
 
 
