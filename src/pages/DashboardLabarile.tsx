@@ -8,7 +8,7 @@ import { LabarileSidebar } from '@/components/dashboard/labarile/LabarileSidebar
 import { LabarileHeader } from '@/components/dashboard/labarile/LabarileHeader';
 import { LabarileKPICard } from '@/components/dashboard/labarile/LabarileKPICard';
 import { LabarileChartContainer } from '@/components/dashboard/labarile/LabarileChartContainer';
-import { LabarileBreakdownPage } from '@/components/dashboard/labarile/LabarileBreakdownPage';
+
 import { LabarileCostsPage } from '@/components/dashboard/labarile/LabarileCostsPage';
 import { LabarileTreasuryPage } from '@/components/dashboard/labarile/LabarileTreasuryPage';
 import { LabarileTaxesPage } from '@/components/dashboard/labarile/LabarileTaxesPage';
@@ -30,7 +30,6 @@ interface Company {
 const NAV_ITEMS = [
   { id: 'overview', label: "Vue d'Ensemble", icon: '📊' },
   { id: 'evolution', label: 'Évolution CA', icon: '📈' },
-  { id: 'breakdown', label: 'Breakdown Ventes', icon: '🎯' },
   { id: 'costs', label: 'Charges & Coûts', icon: '💰' },
   { id: 'treasury', label: 'Trésorerie & Dettes', icon: '💵' },
   { id: 'taxes', label: 'Taxes & Provisions', icon: '🏛️' },
@@ -41,7 +40,6 @@ const NAV_ITEMS = [
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   overview: { title: "Vue d'Ensemble Financière", subtitle: "Réel YTD 2026 — Janvier → Avril" },
   evolution: { title: "Évolution du Chiffre d'Affaires", subtitle: "CA mensuel réel 2026" },
-  breakdown: { title: "Breakdown Ventes 2026", subtitle: "Performance mensuelle Jan → Avr" },
   costs: { title: "Charges & Structure de Coûts", subtitle: "Réel mensuel 2026" },
   treasury: { title: "Trésorerie & Dettes", subtitle: "Position au 30/04/2026 (Balance Sheet)" },
   taxes: { title: "Taxes & Provisions", subtitle: "Fiscalité réelle YTD 2026" },
@@ -258,7 +256,7 @@ export default function DashboardLabarile() {
             </div>
           )}
 
-          {activePage === 'breakdown' && <LabarileBreakdownPage />}
+          
           {activePage === 'costs' && <LabarileCostsPage />}
           {activePage === 'treasury' && <LabarileTreasuryPage />}
           {activePage === 'taxes' && <LabarileTaxesPage />}
