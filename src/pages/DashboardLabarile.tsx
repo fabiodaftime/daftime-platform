@@ -8,7 +8,7 @@ import { LabarileSidebar } from '@/components/dashboard/labarile/LabarileSidebar
 import { LabarileHeader } from '@/components/dashboard/labarile/LabarileHeader';
 import { LabarileKPICard } from '@/components/dashboard/labarile/LabarileKPICard';
 import { LabarileChartContainer } from '@/components/dashboard/labarile/LabarileChartContainer';
-import { LabarileBreakdownPage } from '@/components/dashboard/labarile/LabarileBreakdownPage';
+
 import { LabarileCostsPage } from '@/components/dashboard/labarile/LabarileCostsPage';
 import { LabarileTreasuryPage } from '@/components/dashboard/labarile/LabarileTreasuryPage';
 import { LabarileTaxesPage } from '@/components/dashboard/labarile/LabarileTaxesPage';
