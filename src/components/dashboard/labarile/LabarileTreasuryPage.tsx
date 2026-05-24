@@ -5,21 +5,47 @@ import { TREASURY_DETAIL, TREASURY_RATIOS, TVA_EU_Q4 } from './LabarileData';
 import { cn } from '@/lib/utils';
 
 export function LabarileTreasuryPage() {
+  // Position trésorerie fin avril 2026 (estimée d'après brief client + EBITDA YTD)
+  const TRESO_FIN_AVRIL_AED = 1_500_000;
+  const DISTRIBUTABLE_PCT = 60;
+  const DISTRIBUTABLE_AED = Math.round(TRESO_FIN_AVRIL_AED * (DISTRIBUTABLE_PCT / 100));
+
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
-        <LabarileKPICard label="Trésorerie Bancaire" value="2 396 kAED" subtext="Relevés au 30/04/2026 (Wio AED+EUR, PayPal, Saving Taxes, Petty Cash)" variant="primary" />
-        <LabarileKPICard label="Stripe Clearing" value="59 kAED" subtext="En attente payout au 30/04/2026" variant="success" />
-        <LabarileKPICard label="Trésorerie Disponible" value="2 246 kAED" subtext="Hors provision Saving Taxes 150k" variant="success" />
-        <LabarileKPICard label="Créances Clients" value="2 202 kAED" subtext="Accounts Receivable au 30/04/2026" />
+        <LabarileKPICard label="Trésorerie au 30/04/2026" value="≈ 1 500 kAED" subtext="Estimation brief client — à valider sur relevés bancaires consolidés" variant="primary" />
+        <LabarileKPICard label="Provision TVA (Saving)" value="150 kAED" subtext="Bloqué Wio Saving — couverture TVA EU/UAE" variant="warning" />
+        <LabarileKPICard label="Tréso opérationnelle" value="≈ 1 350 kAED" subtext="Disponible hors provision TVA" variant="success" />
+        <LabarileKPICard label="Capacité distributive" value={`≈ ${Math.round(DISTRIBUTABLE_AED / 1000)} kAED`} subtext={`~${DISTRIBUTABLE_PCT}% de la tréso fin avril (Luc + Simon)`} variant="success" />
+      </div>
+
+      {/* Bandeau capacité distributive Luc/Simon */}
+      <div className="bg-gradient-to-br from-emerald-50 to-amber-50 border-l-4 border-l-emerald-500 rounded-lg p-5">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <p className="font-bold text-sm text-emerald-700">💎 Capacité de sortie en salaire / dividende — Luc & Simon</p>
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 whitespace-nowrap">À arbitrer</span>
+        </div>
+        <p className="text-sm text-labarile-text leading-relaxed">
+          Position trésorerie estimée au 30/04/2026 : <strong>~{(TRESO_FIN_AVRIL_AED / 1000).toLocaleString('fr-FR')} kAED</strong>.
+          Après mise de côté de la provision TVA bloquée (150k) et d'un coussin opérationnel (~2 mois de charges variables), une enveloppe d'environ <strong>{DISTRIBUTABLE_PCT}% de la tréso disponible</strong> peut être envisagée en sortie associés.
+          <br />
+          <span className="inline-block mt-2 px-3 py-1.5 rounded-md bg-white border border-emerald-200 font-bebas text-lg text-emerald-700">
+            ≈ {DISTRIBUTABLE_AED.toLocaleString('fr-FR')} AED sortables (salaire + dividende, à répartir Luc/Simon)
+          </span>
+          <br />
+          <span className="text-xs text-labarile-muted">
+            📌 Arbitrage à faire : <strong>mix salaire/dividende</strong> en fonction de l'optimisation fiscale UAE (CT 9% au-delà de 375k AED de profit) et de la résidence fiscale des associés. À confirmer avec le tax advisor avant exécution.
+          </span>
+        </p>
       </div>
 
       <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-4">
-        <p className="font-bold text-sm text-emerald-700 mb-1">💡 Position trésorerie au 30/04/2026</p>
+        <p className="font-bold text-sm text-emerald-700 mb-1">💡 Évolution trésorerie depuis le 31/12/2025</p>
         <p className="text-sm text-labarile-text">
-          Forte amélioration de la trésorerie depuis le 31/12/2025 (500k → 2 396k AED), portée par les bons mois Q1-Avril 2026 (CA cumulé 3 290k AED, EBITDA cumulé ~1 023k AED). Le détail historique ci-dessous reste celui du 31/12/2025 pour traçabilité.
+          De ~500k AED (31/12/2025) à ~1 500k AED (30/04/2026) : <strong>+1 000k AED</strong> en 4 mois, en phase avec l'EBITDA YTD 2026 (~1 457k AED) net des paiements TVA (~360k AED) et besoins de fonctionnement. Le détail historique ci-dessous reste celui du 31/12/2025 pour traçabilité.
         </p>
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         <LabarileChartContainer title="Composition Trésorerie">
