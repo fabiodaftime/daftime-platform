@@ -202,34 +202,36 @@ export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
   {
     month: 'MARS 2026',
     revenue: 1024972,
-    actual: { coaches: 164880, marketing: 263372, it: 14238, stripe: 62063, admin: 118769, autres: 139433 },
+    actual: { coaches: 179880, marketing: 263372, it: 14238, stripe: 62063, admin: 118769, autres: 139433 },
     commentType: 'critical',
     commentTitle: '💬 Commentaires Mars:',
     comments: [
       '🔄 CA régularisé par Anissa : les 10 premiers jours (avant sync Stripe↔Zoho du 11/03) sont désormais intégrés (~+358k AED vs version précédente).',
       '⚠️ Bad Debt 139.4k AED comptabilisé ce mois — créance irrécouvrable, à investiguer.',
-      '⚠️ Marge EBITDA ~26% — pénalisée par le Bad Debt et la masse salariale (102k).',
+      "➕ Provision Yazid (closer) +15k AED : Yazid a demandé de ne pas être payé mars+avril (création de sa structure), payé 30k en mai. Charge réattribuée au mois d'origine (cf. call 18/05/2026).",
+      '⚠️ Marge EBITDA ~24% — pénalisée par le Bad Debt, la masse salariale et la provision closer différée.',
     ],
   },
   {
     month: 'AVRIL 2026',
     revenue: 1038364,
-    actual: { coaches: 135926, marketing: 232280, it: 7858, stripe: 46861, admin: 64167, autres: 0 },
+    actual: { coaches: 150926, marketing: 232280, it: 7858, stripe: 46861, admin: 64167, autres: 0 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Avril:',
     comments: [
-      '✅ Meilleur mois 2026 : CA 1 038 k AED, charges maîtrisées → marge EBITDA ~53%.',
+      '✅ Meilleur mois 2026 : CA 1 038 k AED, marge EBITDA ~52% après réintégration provision closer.',
+      "➕ Provision Yazid (closer) +15k AED : différé payé en mai, réattribué au mois d'origine (cf. call 18/05/2026).",
     ],
   },
 ];
 
 // Synthèse YTD 2026 (Jan-Avr) calculée depuis MONTHLY_COSTS_2026
 // Rev = 703 339 + 877 940 + 1 024 972 + 1 038 364 = 3 644 615 AED
-// EBITDA = 346 619 + 326 965 + 262 217 + 551 272 ≈ 1 487 073 AED
+// EBITDA = 346 619 + 326 965 + 247 217 + 536 272 ≈ 1 457 073 AED (après provisions Yazid Mars+Avril)
 export const YTD_2026 = {
   months: 4,
   caTotal: 703339 + 877940 + 1024972 + 1038364,
-  netProfit: 346619 + 326965 + 262217 + 551272,
+  netProfit: 346619 + 326965 + 247217 + 536272,
 };
 
 
