@@ -256,7 +256,7 @@ export default function DashboardLabarile() {
             </div>
           )}
 
-          {activePage === 'breakdown' && <LabarileBreakdownPage />}
+          
           {activePage === 'costs' && <LabarileCostsPage />}
           {activePage === 'treasury' && <LabarileTreasuryPage />}
           {activePage === 'taxes' && <LabarileTaxesPage />}
