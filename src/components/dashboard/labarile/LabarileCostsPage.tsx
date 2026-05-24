@@ -84,8 +84,26 @@ export function LabarileCostsPage() {
       })()}
 
 
+      {/* Bandeau décision commissions closers sur CA HT — call 18/05/2026 */}
+      <div className="bg-indigo-50 border-l-4 border-l-indigo-500 rounded-lg p-4">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <p className="font-bold text-sm text-indigo-700">
+            🤝 Commissions closers — bascule sur CA HT
+          </p>
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 whitespace-nowrap">
+            À négocier
+          </span>
+        </div>
+        <p className="text-sm text-labarile-text leading-relaxed">
+          Décision actée au call du 18/05/2026 : revoir le calcul des commissions des closers en se basant sur le <strong>CA hors taxes</strong> plutôt que sur le CA TTC. Objectif : aligner la base commissionnable avec le revenu réellement encaissé par l'entreprise (après TVA reversée).
+          <br />
+          <span className="text-xs text-labarile-muted">
+            📌 <strong>Impact prospectif uniquement</strong> — à appliquer après négociation individuelle avec chaque closer et signature des avenants. Aucun retraitement sur les commissions YTD 2026 déjà versées.
+          </span>
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+
         <LabarileKPICard label="Mois suivis 2026" value={`${MONTHLY_COSTS_2026.length}`} subtext="Janvier → Avril" variant="primary" />
         <LabarileKPICard label="CA YTD 2026" value={`${(ytd.ca / 1000).toFixed(0)}k AED`} subtext="Réel mensuel" variant="success" />
         <LabarileKPICard label="Charges YTD" value={`${(ytd.charges / 1000).toFixed(0)}k AED`} subtext={`${chargesPct.toFixed(1)}% du CA`} variant="warning" />
