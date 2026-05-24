@@ -9,20 +9,34 @@ const ASSUMPTIONS = {
   ctAbattementAED: 375_000,
 };
 
-// TVA EU effectivement payée début mai 2026 pour les périodes précédentes
+// TVA EU effectivement payée début mai 2026 (83k EUR) — étalée linéairement
+// sur Jan→Mar 2026 (hypothèse de rattachement à valider avec Anissa).
+// Le provisionnement % du CA est désactivé pour ces 3 mois pour éviter le double-comptage.
 const TVA_EU_PAID_MAY_EUR = 83_000;
 const EUR_TO_AED = 4.30;
 const TVA_EU_PAID_MAY_AED = TVA_EU_PAID_MAY_EUR * EUR_TO_AED;
+const TVA_EU_ALLOCATION_MONTHS = ['JANVIER', 'FÉVRIER', 'FEVRIER', 'MARS'];
+const TVA_EU_ALLOCATED_PER_MONTH = TVA_EU_PAID_MAY_AED / 3; // ~119k AED/mois
 
 const fmtK = (aed: number) => `${Math.round(aed / 1000).toLocaleString()}k AED`;
 const fmtPct = (n: number) => `${n.toFixed(1)}%`;
 
-function buildYtd2026Taxes(ytdData: { months: number; caTotal: number; netProfit: number }) {
+function isAllocatedMonth(monthLabel: string): boolean {
+  const upper = monthLabel.toUpperCase();
+  return TVA_EU_ALLOCATION_MONTHS.some((m) => upper.startsWith(m));
+}
+
+function buildYtd2026Taxes(
+  ytdData: { months: number; caTotal: number; netProfit: number },
+  monthlyVatEuTotal: number,
+) {
   const ca = ytdData.caTotal;
   const months = ytdData.months;
   const netProfit = ytdData.netProfit;
 
-  const vatEu = ca * (ASSUMPTIONS.vatEuRatePctOfCA / 100);
+  // TVA EU = somme des allocations mensuelles (paiement réel mai étalé Jan→Mar)
+  // + estimation % CA pour les mois non couverts par le paiement de mai.
+  const vatEu = monthlyVatEuTotal;
   const vatUae = ca * (ASSUMPTIONS.vatUaeRatePctOfCA / 100);
 
   const caAnnualRunRate = months > 0 ? ca * (12 / months) : 0;
@@ -41,9 +55,11 @@ function buildMonthlyTaxRows(monthly: Array<{ month: string; revenue: number; ac
   return monthly.map((m) => {
     const charges = (Object.values(m.actual) as number[]).reduce((a, b) => a + b, 0);
     const ebitda = m.revenue - charges;
-    const vatEu = m.revenue * (ASSUMPTIONS.vatEuRatePctOfCA / 100);
+    const allocated = isAllocatedMonth(m.month);
+    // Si le mois est couvert par le paiement mai 2026 → allocation réelle, pas d'estimation.
+    const vatEu = allocated ? TVA_EU_ALLOCATED_PER_MONTH : m.revenue * (ASSUMPTIONS.vatEuRatePctOfCA / 100);
     const vatUae = m.revenue * (ASSUMPTIONS.vatUaeRatePctOfCA / 100);
-    return { month: m.month, revenue: m.revenue, ebitda, vatEu, vatUae, total: vatEu + vatUae };
+    return { month: m.month, revenue: m.revenue, ebitda, vatEu, vatUae, total: vatEu + vatUae, allocated };
   });
 }
 
