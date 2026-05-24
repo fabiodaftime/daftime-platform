@@ -71,8 +71,47 @@ export function LabarileTaxesPage() {
   const allocatedMonths = monthly.filter((r) => r.allocated).map((r) => r.month);
   const nonAllocatedMonths = monthly.filter((r) => !r.allocated).map((r) => r.month);
 
+  // Recap global provisions
+  const provisionTvaSaving = 150_000; // AED bloqués Wio Saving
+  const tvaEuPaidYtd = TVA_EU_PAID_MAY_AED;
+  const tvaUaeYtd = ytd.vatUae;
+  const ctProvisionYtd = ytd.ctYtdProrata;
+  const totalProvisionNeeded = tvaEuPaidYtd + tvaUaeYtd + ctProvisionYtd;
+
   return (
     <div className="space-y-6 lg:space-y-8 animate-fade-in">
+      {/* Recap global Taxes & Provisions */}
+      <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border-l-4 border-l-indigo-500 rounded-lg p-5">
+        <p className="font-bold text-sm text-indigo-700 mb-3">🔍 Check global Taxes & Provisions YTD 2026</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+          <div className="bg-white rounded-md p-3 border border-indigo-100">
+            <p className="text-[11px] text-labarile-muted uppercase font-bold">TVA EU payée (mai)</p>
+            <p className="font-bebas text-xl text-emerald-700">{fmtK(tvaEuPaidYtd)}</p>
+            <p className="text-[10px] text-labarile-muted">83k EUR · étalée Jan→Mar</p>
+          </div>
+          <div className="bg-white rounded-md p-3 border border-indigo-100">
+            <p className="text-[11px] text-labarile-muted uppercase font-bold">TVA UAE estimée</p>
+            <p className="font-bebas text-xl text-blue-700">{fmtK(tvaUaeYtd)}</p>
+            <p className="text-[10px] text-labarile-muted">~0.28% du CA YTD</p>
+          </div>
+          <div className="bg-white rounded-md p-3 border border-indigo-100">
+            <p className="text-[11px] text-labarile-muted uppercase font-bold">Provision CT prorata</p>
+            <p className="font-bebas text-xl text-orange-600">{fmtK(ctProvisionYtd)}</p>
+            <p className="text-[10px] text-labarile-muted">Échéance Sep 2027</p>
+          </div>
+          <div className="bg-white rounded-md p-3 border-2 border-indigo-300">
+            <p className="text-[11px] text-labarile-muted uppercase font-bold">Total à provisionner</p>
+            <p className="font-bebas text-xl text-indigo-700">{fmtK(totalProvisionNeeded)}</p>
+            <p className="text-[10px] text-labarile-muted">vs Saving Wio : {fmtK(provisionTvaSaving)}</p>
+          </div>
+        </div>
+        <p className="text-sm text-labarile-text leading-relaxed">
+          <strong>✅ TVA EU :</strong> 83k EUR payés en mai pour les périodes antérieures — étalement comptable Jan→Mar 2026.
+          {' '}<strong>⚠️ Saving Wio (150k AED) insuffisant</strong> : couvre la prochaine échéance TVA EU mais pas la CT 2026 (provisionner ~{fmtK(ctProvisionYtd)} supplémentaires sur les 12 prochains mois, soit {fmtK(ytd.ctMonthlyProvision)}/mois dès septembre 2026).
+          {' '}<strong>📌 Action :</strong> ouvrir un second sous-compte "CT Provision" et y verser {fmtK(ytd.ctMonthlyProvision)}/mois.
+        </p>
+      </div>
+
       {/* KPIs YTD 2026 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         <LabarileKPICard label="Total Taxes YTD 2026" value={fmtK(ytd.totalYtd)} subtext={`Jan → Avr (${ytd.months} mois) — TVA + CT prorata`} variant="primary" />
@@ -80,6 +119,7 @@ export function LabarileTaxesPage() {
         <LabarileKPICard label="TVA UAE estimée YTD" value={fmtK(ytd.vatUae)} subtext={`${fmtPct(ASSUMPTIONS.vatUaeRatePctOfCA)} du CA (ventes UAE)`} />
         <LabarileKPICard label="CT 2026 — Estimatif annuel" value={fmtK(ytd.ctAnnualEstimate)} subtext="9% × (profit run-rate − 375k abattement)" variant="success" />
       </div>
+
 
       {/* TVA EU payée mai 2026 — étalement Jan→Mar */}
       <div className="bg-emerald-50 border-l-4 border-l-emerald-500 rounded-lg p-4">
