@@ -57,6 +57,7 @@ export default function DashboardDigit() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
+            <ViewSwitcher current="core" entityId={id} />
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {isSuperAdmin && (
                 <Button
