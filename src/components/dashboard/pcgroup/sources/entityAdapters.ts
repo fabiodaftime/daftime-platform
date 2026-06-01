@@ -74,38 +74,29 @@ export function structuringFacts(month: PCGSourceMonthId): EntityFacts | null {
   }
 }
 
-// ---------- DIGIT ----------
-// Digit source data is formatted strings; we maintain numeric facts in a
-// dedicated companion file for use by the consolidated aggregator.
+// ---------- DIGIT (Core only) ----------
+// Délègue au contrat d'entité Digit (source de vérité unique : saisies admin
+// > fallback statique). Dans la vue conso PCGroup, "Digit" = Core uniquement ;
+// SPY et Comment sont des entités séparées (cf. MANUAL_ENTITIES).
+import { getDigitEntityPnL } from '../../digit/contract/digitEntityContract';
 export function digitFacts(month: PCGSourceMonthId): EntityFacts | null {
-  // Live override from the canonical inputs DB (super-admin editable).
-  // IMPORTANT: in the consolidated PCGroup view, "Digit" represents Digit
-  // Solution **Core only**. SPY and Comment-Trust are tracked as separate
-  // entities (see MANUAL_ENTITIES). Using ca_total / marge_total here would
-  // double-count SPY+Comment at consolidation. We therefore prefer the
-  // explicit Core inputs (ca_core / marge_core) and only fall back to totals
-  // if Core inputs are missing AND no SPY/Comment exists.
-  const live = getEntityInput('digit', month);
-  if (live && typeof live.ca_core === 'number' && typeof live.marge_core === 'number' && live.ca_core > 0) {
-    const ca = live.ca_core;
-    const marge = live.marge_core;
-    return {
-      ca,
-      margeNette: marge,
-      charges: ca - marge,
-      marginPct: ca > 0 ? (marge / ca) * 100 : 0,
-      // deals/ticket are reported at total level — leave undefined for Core.
-    };
-  }
-  // Fallback to the static seed (kept for resilience).
-  const f = DIGIT_NUMERIC_FACTS[month];
-  if (!f) return null;
   try {
-    getDigitMonthData(month as DigitMonthId);
+    getDigitMonthData(month as DigitMonthId); // valide que le mois existe
   } catch {
     return null;
   }
-  return f;
+  const pnl = getDigitEntityPnL('core', month as DigitMonthId);
+  if (pnl.ca <= 0 && pnl.marge === 0) {
+    // Dernière chance : fallback historique (utilisé avant l'introduction du contrat)
+    const f = DIGIT_NUMERIC_FACTS[month];
+    return f ?? null;
+  }
+  return {
+    ca: pnl.ca,
+    margeNette: pnl.marge,
+    charges: pnl.charges,
+    marginPct: pnl.margePct,
+  };
 }
 
 // ---------- AVAILABLE MONTHS = intersection of the three ----------
