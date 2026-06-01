@@ -137,6 +137,22 @@ const App = () => (
               } 
             />
             <Route 
+              path="/dashboard-spy/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardSpy />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-comment/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardComment />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/dashboard-pc-group/:id" 
               element={
                 <ProtectedRoute>
