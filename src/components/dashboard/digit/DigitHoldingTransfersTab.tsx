@@ -185,11 +185,13 @@ function HistoryTable({ s, fmt }: { s: SubActivitySummary; fmt: (n: number) => s
 
 export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
   const data = useMemo(() => computeDigitHoldingTransfers(selectedMonth), [selectedMonth]);
-  // SPY est une entité indépendante de Digit : elle remonte ses marges à son
-  // propre holding, pas à celui de Digit Group. On l'exclut donc de cette vue.
-  const subActivities = data.subActivities.filter((s) => s.key !== 'spy');
   const { fmt, upToLabel } = data;
-  const totals = subActivities.reduce(
+
+  // Split : Digit Holding (Core + Comment) vs SPY (indépendant, holding propre)
+  const digitGroup = data.subActivities.filter((s) => s.key !== 'spy');
+  const spy = data.subActivities.find((s) => s.key === 'spy');
+
+  const digitTotals = digitGroup.reduce(
     (acc, s) => ({
       margin: acc.margin + s.totalMargin,
       expected: acc.expected + s.totalExpected,
@@ -198,26 +200,26 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
     }),
     { margin: 0, expected: 0, received: 0, remaining: 0 },
   );
-  const recoveryRate = totals.expected > 0 ? (totals.received / totals.expected) * 100 : 0;
+  const digitRecoveryRate = digitTotals.expected > 0 ? (digitTotals.received / digitTotals.expected) * 100 : 0;
 
   return (
     <div>
       <h2 className="digit-section-title">Remontées Holding Digit — Split par activité</h2>
       <p style={{ color: D.textSecondary, marginTop: -8, marginBottom: 20, fontSize: '0.9rem' }}>
-        Suivi des 90% de marge nette à remonter à la Holding Digit, ventilé entre <strong>Digit Core</strong> et{' '}
-        <strong>Comment/Trust</strong>. <strong>SPY</strong> est une entité indépendante : elle remonte à son
-        propre holding, suivi dans son dashboard dédié. Cumul Janvier → {upToLabel}. Imputation FIFO : les
-        encaissements couvrent en priorité les mois les plus anciens.
+        Suivi des 90% de marge nette à remonter à la <strong>Holding Digit</strong>, ventilé entre{' '}
+        <strong>Digit Core</strong> et <strong>Comment/Trust</strong>. <strong>SPY</strong> est une entité
+        indépendante (holding propre) affichée à part à titre informatif. Cumul Janvier → {upToLabel}. Imputation
+        FIFO : les encaissements couvrent en priorité les mois les plus anciens.
       </p>
 
-      {/* Cartes balance par sous-activité */}
+      {/* Cartes balance — Holding Digit (Core + Comment) */}
       <div className="digit-kpi-grid" style={{ marginBottom: 24 }}>
-        {subActivities.map((s) => (
+        {digitGroup.map((s) => (
           <BalanceCard key={s.key} s={s} fmt={fmt} />
         ))}
       </div>
 
-      {/* Total agrégé */}
+      {/* Total agrégé — Holding Digit uniquement */}
       <div
         style={{
           background: `linear-gradient(135deg, ${D.primary}, ${D.indigo})`,
@@ -231,30 +233,61 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
         }}
       >
         <div>
-          <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total à remonter</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fmt(totals.expected)}</div>
+          <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total à remonter (Holding Digit)</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fmt(digitTotals.expected)}</div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 2 }}>Core + Comment</div>
         </div>
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total remonté</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fmt(totals.received)}</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fmt(digitTotals.received)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Solde Digit Group</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800 }}>{fmt(totals.remaining)}</div>
+          <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Solde Holding Digit</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800 }}>{fmt(digitTotals.remaining)}</div>
         </div>
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Taux de recouvrement</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{recoveryRate.toFixed(1)}%</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{digitRecoveryRate.toFixed(1)}%</div>
         </div>
       </div>
 
-      {/* Historique par activité */}
+      {/* Historique par activité — Core + Comment */}
       <h3 className="digit-section-title" style={{ fontSize: '1.05rem' }}>
-        Historique mensuel par activité
+        Historique mensuel — Holding Digit
       </h3>
-      {subActivities.map((s) => (
+      {digitGroup.map((s) => (
         <HistoryTable key={s.key} s={s} fmt={fmt} />
       ))}
+
+      {/* Section SPY — indépendante, informationnelle */}
+      {spy && (
+        <>
+          <div
+            style={{
+              marginTop: 32,
+              padding: '14px 18px',
+              background: '#F4F0FA',
+              border: `1px solid ${spy.color}40`,
+              borderLeft: `4px solid ${spy.color}`,
+              borderRadius: 8,
+              fontSize: '0.85rem',
+              color: D.textSecondary,
+              marginBottom: 16,
+            }}
+          >
+            ℹ️ <strong>SPY</strong> est une entité <strong>indépendante de Digit</strong> : elle remonte ses
+            marges à <strong>son propre holding</strong>, pas à la Holding Digit. Ces chiffres sont affichés à
+            titre informatif et <strong>ne sont pas inclus</strong> dans le total Holding Digit ci-dessus.
+          </div>
+          <h3 className="digit-section-title" style={{ fontSize: '1.05rem' }}>
+            SPY — Remontée vers son holding propre (hors périmètre Digit)
+          </h3>
+          <div className="digit-kpi-grid" style={{ marginBottom: 16 }}>
+            <BalanceCard s={spy} fmt={fmt} />
+          </div>
+          <HistoryTable s={spy} fmt={fmt} />
+        </>
+      )}
     </div>
   );
 }
