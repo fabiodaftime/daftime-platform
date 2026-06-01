@@ -189,7 +189,7 @@ function KpiCard({ label, value, sub, accent }: { label: string; value: string; 
 export function ViewSwitcher({ current, entityId }: { current: EntityScope | 'core'; entityId: string }) {
   const navigate = useNavigate();
   const items: Array<{ key: EntityScope | 'core'; label: string; route: string; color: string }> = [
-    { key: 'core', label: '🟦 Digit (Core)', route: `/dashboard-digit/${entityId}`, color: '#1E56A0' },
+    { key: 'core', label: '🟦 Digit Solution (Groupe)', route: `/dashboard-digit/${entityId}`, color: '#1E56A0' },
     { key: 'spy', label: '🛰️ SPY', route: `/dashboard-spy/${entityId}`, color: '#7C3AED' },
     { key: 'comment', label: '💬 Comment', route: `/dashboard-comment/${entityId}`, color: '#17B169' },
   ];
