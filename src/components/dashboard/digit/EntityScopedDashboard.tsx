@@ -128,11 +128,12 @@ function OverviewSection({
         <KpiCard label="CA" value={fmtF(slice.ca)} sub={`${slice.kpis[0]?.sub || ''}`} accent={meta.accent} />
         <KpiCard label="Marge nette" value={fmtF(slice.marge)} sub={`${slice.margePct.toFixed(1)}% du CA`} accent={D.green} />
         <KpiCard label="Taux de marge" value={`${slice.margePct.toFixed(1)}%`} sub="Périmètre isolé" accent={D.primary} />
-        {showHolding ? (
-          <KpiCard label={`À remonter au groupe (${(transferRate * 100).toFixed(0)}%)`} value={fmtF(slice.marge * transferRate)} sub="Part Holding théorique" accent="#C9A227" />
-        ) : (
-          <KpiCard label="Remontée Holding" value="—" sub="Entité isolée (0%)" accent={D.textMuted} />
-        )}
+        <KpiCard
+          label={`À remonter (${(transferRate * 100).toFixed(0)}%)`}
+          value={fmtF(slice.marge * transferRate)}
+          sub={scope === 'spy' ? 'Vers holding propre SPY' : 'Vers Holding Digit'}
+          accent="#C9A227"
+        />
       </div>
 
       {slice.costsKPIs && (
