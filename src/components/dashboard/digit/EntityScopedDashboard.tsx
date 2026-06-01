@@ -170,12 +170,6 @@ function OverviewSection({
         </div>
       )}
 
-      {!slice.costsBreakdown && (
-        <div style={{ background: D.primarySoft, border: `1px dashed ${D.primary}`, borderRadius: 8, padding: '14px 16px', marginBottom: 16, fontSize: '0.85rem', color: D.textSecondary }}>
-          ℹ️ Détail des charges {meta.label} non disponible pour {slice.monthLabel}. La ventilation analytique
-          des charges par entité n'est pas encore en place dans la source — seuls les totaux CA / Marge sont garantis isolés.
-        </div>
-      )}
     </>
   );
 }
