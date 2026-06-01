@@ -72,7 +72,8 @@ describe('Property: roundMoney est idempotent', () => {
       fc.property(moneyArb, currencyArb, (x, c) => {
         const r1 = roundMoney(x, c);
         const r2 = roundMoney(r1, c);
-        expect(r2).toBe(r1);
+        // Normalise -0/+0 (équivalents en arithmétique financière)
+        expect(r2 + 0).toBe(r1 + 0);
       }),
       { numRuns: 300 },
     );
