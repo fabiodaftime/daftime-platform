@@ -91,7 +91,7 @@ export function EntityScopedDashboard({ scope, entityId }: Props) {
 
       <div className="digit-tab-content">
         {tab === 'overview' && (
-          <OverviewSection slice={slice} meta={meta} showHolding={showHolding} transferRate={transferRate} />
+          <OverviewSection scope={scope} slice={slice} meta={meta} showHolding={showHolding} transferRate={transferRate} />
         )}
         {tab === 'ytd' && <YTDSection ytd={ytd} evo={evo} meta={meta} showHolding={showHolding} />}
         {tab === 'revenue' && <RevenueSection evo={evo} slice={slice} meta={meta} />}
