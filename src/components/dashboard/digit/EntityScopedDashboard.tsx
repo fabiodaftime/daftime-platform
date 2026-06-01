@@ -108,8 +108,9 @@ export function EntityScopedDashboard({ scope, entityId }: Props) {
 // ============= Sections =============
 
 function OverviewSection({
-  slice, meta, showHolding, transferRate,
+  scope, slice, meta, showHolding, transferRate,
 }: {
+  scope: EntityScope;
   slice: ReturnType<typeof getEntityMonthSlice>;
   meta: typeof ENTITY_META[EntityScope];
   showHolding: boolean;
