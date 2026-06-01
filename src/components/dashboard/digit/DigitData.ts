@@ -255,7 +255,7 @@ const DIGIT_FEB = {
     { label: "Croissance Marge", value: "+2.1%", sub: "Février vs Janvier", type: "warning" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$244,660", sub: "Marge $83,447 (35.2%)", type: "primary" },
+    { label: "Digit Solution", value: "$236,979", sub: "Marge $83,447 (35.2%)", type: "primary" },
     { label: "SPY", value: "$44,050", sub: "Marge $6,822", type: "success" },
     { label: "Comment/Trust", value: "$3,146", sub: "Marge $2,671", type: "warning" },
   ],
@@ -264,7 +264,7 @@ const DIGIT_FEB = {
     { name: "Février", ca: 149963, marge: 46948 },
   ],
   ytdProductDistribution: [
-    { name: "Digit Solution", value: 244660 },
+    { name: "Digit Solution", value: 236979 },
     { name: "SPY", value: 44050 },
     { name: "Comment/Trust", value: 3146 },
   ],
