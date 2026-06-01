@@ -19,6 +19,7 @@ import DashboardNowmade from "./pages/DashboardNowmade";
 import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
 import DashboardPrimeCircleAgency from "./pages/DashboardPrimeCircleAgency";
 import DashboardDigit from "./pages/DashboardDigit";
+import DashboardDigitCore from "./pages/DashboardDigitCore";
 import DashboardSpy from "./pages/DashboardSpy";
 import DashboardComment from "./pages/DashboardComment";
 import DashboardPCGroup from "./pages/DashboardPCGroup";
@@ -133,6 +134,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardDigit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-digit-core/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardDigitCore />
                 </ProtectedRoute>
               } 
             />
