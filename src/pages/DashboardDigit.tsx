@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
+import { ViewSwitcher } from '@/components/dashboard/digit/EntityScopedDashboard';
 import { DIGIT_AVAILABLE_MONTHS, getDigitMonthData, type DigitMonthId } from '@/components/dashboard/digit/DigitData';
 import { DigitOverviewTab } from '@/components/dashboard/digit/DigitOverviewTab';
 import { DigitYTDTab } from '@/components/dashboard/digit/DigitYTDTab';
@@ -35,6 +36,7 @@ export default function DashboardDigit() {
   const [tab, setTab] = useState("overview");
   const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('apr-2026');
   const navigate = useNavigate();
+  const { id = '' } = useParams();
   const { isSuperAdmin } = useAuth();
   const { byMonth } = useEntityInputsByMonth('digit');
 
@@ -55,6 +57,7 @@ export default function DashboardDigit() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>
+            <ViewSwitcher current="core" entityId={id} />
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {isSuperAdmin && (
                 <Button

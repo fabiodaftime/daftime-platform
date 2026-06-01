@@ -19,6 +19,8 @@ import DashboardNowmade from "./pages/DashboardNowmade";
 import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
 import DashboardPrimeCircleAgency from "./pages/DashboardPrimeCircleAgency";
 import DashboardDigit from "./pages/DashboardDigit";
+import DashboardSpy from "./pages/DashboardSpy";
+import DashboardComment from "./pages/DashboardComment";
 import DashboardPCGroup from "./pages/DashboardPCGroup";
 import DashboardNexus from "./pages/DashboardNexus";
 import DashboardHotelX from "./pages/DashboardHotelX";
@@ -131,6 +133,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardDigit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-spy/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardSpy />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-comment/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardComment />
                 </ProtectedRoute>
               } 
             />
