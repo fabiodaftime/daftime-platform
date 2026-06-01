@@ -7,7 +7,7 @@
 import { getDigitMonthData, DIGIT_AVAILABLE_MONTHS, type DigitMonthId } from './DigitData';
 import { getDigitEntityPnL, type DigitEntity } from './contract/digitEntityContract';
 
-export type EntityScope = 'spy' | 'comment';
+export type EntityScope = 'core' | 'spy' | 'comment';
 
 export interface EntityKPI { label: string; value: string; sub: string; type: string }
 export interface EntityCostLine { label: string; value: string; negative?: boolean }
@@ -27,8 +27,26 @@ export interface EntityMonthSlice {
 
 export function getEntityMonthSlice(scope: EntityScope, monthId: DigitMonthId): EntityMonthSlice {
   const m = getDigitMonthData(monthId);
-  const entity: DigitEntity = scope === 'spy' ? 'spy' : 'comment';
+  const entity: DigitEntity = scope;
   const pnl = getDigitEntityPnL(entity, monthId);
+
+  if (scope === 'core') {
+    // Core = Digit Solution sans SPY ni Comment.
+    // Pas de breakdown isolé Core dans la data brute → on n'affiche pas le détail
+    // pour éviter d'afficher des charges qui incluraient SPY/Comment.
+    return {
+      monthId,
+      monthLabel: m.monthLabel,
+      ca: pnl.ca,
+      marge: pnl.marge,
+      margePct: pnl.margePct,
+      kpis: [],
+      costsKPIs: null,
+      costsBreakdown: null,
+      costsTotal: null,
+      alert: null,
+    };
+  }
 
   const isSpy = scope === 'spy';
   return {
@@ -63,6 +81,7 @@ export function getEntityYTD(scope: EntityScope, upToMonth: DigitMonthId) {
 }
 
 export const ENTITY_META: Record<EntityScope, { label: string; short: string; accent: string; route: string; emoji: string }> = {
+  core: { label: 'Digit Core', short: 'Core', accent: '#1E56A0', route: '/dashboard-digit-core', emoji: '🟦' },
   spy: { label: 'SPY', short: 'SPY', accent: '#7C3AED', route: '/dashboard-spy', emoji: '🛰️' },
   comment: { label: 'Comment / Trust', short: 'Comment', accent: '#17B169', route: '/dashboard-comment', emoji: '💬' },
 };
