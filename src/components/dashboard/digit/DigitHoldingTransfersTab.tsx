@@ -185,15 +185,29 @@ function HistoryTable({ s, fmt }: { s: SubActivitySummary; fmt: (n: number) => s
 
 export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
   const data = useMemo(() => computeDigitHoldingTransfers(selectedMonth), [selectedMonth]);
-  const { subActivities, totals, fmt, upToLabel } = data;
+  // SPY est une entité isolée (transferRate = 0) : on l'exclut de la vue Groupe
+  // pour ne pas suggérer une remontée Holding qui n'existe pas.
+  const subActivities = data.subActivities.filter((s) => s.totalExpected > 0 || s.key !== 'spy');
+  const { fmt, upToLabel } = data;
+  const totals = subActivities.reduce(
+    (acc, s) => ({
+      margin: acc.margin + s.totalMargin,
+      expected: acc.expected + s.totalExpected,
+      received: acc.received + s.totalReceived,
+      remaining: acc.remaining + s.totalRemaining,
+    }),
+    { margin: 0, expected: 0, received: 0, remaining: 0 },
+  );
+  const recoveryRate = totals.expected > 0 ? (totals.received / totals.expected) * 100 : 0;
 
   return (
     <div>
       <h2 className="digit-section-title">Remontées Holding — Split par activité</h2>
       <p style={{ color: D.textSecondary, marginTop: -8, marginBottom: 20, fontSize: '0.9rem' }}>
-        Suivi des 90% de marge nette à remonter à la Holding, ventilé entre <strong>Digit Core</strong>,{' '}
-        <strong>SPY</strong> et <strong>Comment/Trust</strong>. Cumul Janvier → {upToLabel}. Imputation FIFO :
-        les encaissements couvrent en priorité les mois les plus anciens de chaque activité.
+        Suivi des 90% de marge nette à remonter à la Holding, ventilé entre <strong>Digit Core</strong> et{' '}
+        <strong>Comment/Trust</strong>. <strong>SPY</strong> est une entité isolée (pas de remontée Holding).
+        Cumul Janvier → {upToLabel}. Imputation FIFO : les encaissements couvrent en priorité les mois les plus
+        anciens de chaque activité.
       </p>
 
       {/* Cartes balance par sous-activité */}
@@ -230,7 +244,7 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
         </div>
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Taux de recouvrement</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{totals.recoveryRate.toFixed(1)}%</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{recoveryRate.toFixed(1)}%</div>
         </div>
       </div>
 

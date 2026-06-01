@@ -14,7 +14,8 @@ import { digitFacts, type PCGSourceMonthId } from '../pcgroup/sources/entityAdap
 import { INTERCOS_CASH, MANUAL_ENTITIES } from '../pcgroup/manualEntities';
 import { fmtF } from './DigitData';
 
-const TRANSFER_RATE = 0.9;
+// Taux de remontée par sous-activité. SPY = 0 : entité isolée, marges
+// conservées en propre, aucune remontée vers la Holding.
 const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
 const MONTH_LONG: Record<PCGSourceMonthId, string> = {
   'jan-2026': 'Janvier 2026',
@@ -35,12 +36,17 @@ export interface SubActivity {
   label: string;
   receivedKey: 'digit' | 'spy' | 'comment';
   color: string;
+  transferRate: number; // 0.9 = 90% remonté, 0 = entité isolée
 }
 export const SUB_ACTIVITIES: SubActivity[] = [
-  { key: 'core', label: 'Digit Solution (Core)', receivedKey: 'digit', color: '#1E56A0' },
-  { key: 'spy', label: 'SPY', receivedKey: 'spy', color: '#7C3AED' },
-  { key: 'comment', label: 'Comment / Trust', receivedKey: 'comment', color: '#17B169' },
+  { key: 'core', label: 'Digit Solution (Core)', receivedKey: 'digit', color: '#1E56A0', transferRate: 0.9 },
+  { key: 'spy', label: 'SPY', receivedKey: 'spy', color: '#7C3AED', transferRate: 0 },
+  { key: 'comment', label: 'Comment / Trust', receivedKey: 'comment', color: '#17B169', transferRate: 0.9 },
 ];
+
+export function getTransferRate(key: SubActivityKey): number {
+  return SUB_ACTIVITIES.find((s) => s.key === key)?.transferRate ?? 0;
+}
 
 const usd = (n: number) => fmtF(Math.round(n));
 
@@ -106,7 +112,7 @@ export function computeDigitHoldingTransfers(
     // 1) Construire les lignes mensuelles brutes (expected/received par mois).
     const baseRows = months.map((m) => {
       const margin = marginFor(sub.key, m);
-      const expected = margin * TRANSFER_RATE;
+      const expected = margin * sub.transferRate;
       const received = receivedFor(sub.key, m);
       return { month: m, margin, expected, received };
     });
