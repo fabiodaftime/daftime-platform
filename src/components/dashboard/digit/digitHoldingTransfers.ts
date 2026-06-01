@@ -112,7 +112,7 @@ export function computeDigitHoldingTransfers(
     // 1) Construire les lignes mensuelles brutes (expected/received par mois).
     const baseRows = months.map((m) => {
       const margin = marginFor(sub.key, m);
-      const expected = margin * TRANSFER_RATE;
+      const expected = margin * sub.transferRate;
       const received = receivedFor(sub.key, m);
       return { month: m, margin, expected, received };
     });
