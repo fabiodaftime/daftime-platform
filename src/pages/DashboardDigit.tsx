@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthSelector } from '@/components/dashboard/MonthSelector';
+import { ViewSwitcher } from '@/components/dashboard/digit/EntityScopedDashboard';
 import { DIGIT_AVAILABLE_MONTHS, getDigitMonthData, type DigitMonthId } from '@/components/dashboard/digit/DigitData';
 import { DigitOverviewTab } from '@/components/dashboard/digit/DigitOverviewTab';
 import { DigitYTDTab } from '@/components/dashboard/digit/DigitYTDTab';
