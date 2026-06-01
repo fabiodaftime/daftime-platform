@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:ytd": "vitest run src/components/dashboard/digit/__tests__/digitYTDValidation.test.ts",
     "validate:ytd": "tsx scripts/validate-digit-ytd.ts",
-    "ci": "npm run lint && npm run validate:ytd && npm run test && npm run build"
+    "audit:coherence": "tsx scripts/audit-coherence.ts",
+    "ci": "npm run lint && npm run validate:ytd && npm run audit:coherence && npm run test && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

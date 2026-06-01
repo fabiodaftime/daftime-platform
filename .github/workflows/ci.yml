@@ -28,6 +28,12 @@ jobs:
       - name: Validate Digit YTD (additive + average)
         run: npm run validate:ytd
 
+      # 🚦 GATE: Global financial coherence audit.
+      # Blocks deploy if Σ entities ≠ group, CA/Marge%/identité, YTD
+      # or monthly evolutions diverge beyond the cent tolerance.
+      - name: Audit coherence (Σ centime, CA/Marge%, YTD, évolutions)
+        run: npm run audit:coherence
+
       # Vitest mirrors the same checks as automated tests for visibility.
       - name: Run tests (incl. YTD validation tests)
         run: npm test
