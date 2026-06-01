@@ -40,7 +40,7 @@ export interface SubActivity {
 }
 export const SUB_ACTIVITIES: SubActivity[] = [
   { key: 'core', label: 'Digit Solution (Core)', receivedKey: 'digit', color: '#1E56A0', transferRate: 0.9 },
-  { key: 'spy', label: 'SPY', receivedKey: 'spy', color: '#7C3AED', transferRate: 0 },
+  { key: 'spy', label: 'SPY', receivedKey: 'spy', color: '#7C3AED', transferRate: 0.9 },
   { key: 'comment', label: 'Comment / Trust', receivedKey: 'comment', color: '#17B169', transferRate: 0.9 },
 ];
 
