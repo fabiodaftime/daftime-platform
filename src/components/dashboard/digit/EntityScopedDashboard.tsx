@@ -59,9 +59,9 @@ export function EntityScopedDashboard({ scope, entityId }: Props) {
             <div>
               <h1 className="digit-title">{meta.emoji} {meta.label}</h1>
               <div className="digit-subtitle">
-                {showHolding
-                  ? 'Vue isolée — entité contribuant 90% de sa marge au Groupe'
-                  : 'Vue isolée — entité étanche (marges conservées, pas de remontée Holding)'}
+                {scope === 'spy'
+                  ? 'Vue isolée — entité indépendante, remontée vers son propre holding'
+                  : 'Vue isolée — entité contribuant 90% de sa marge à la Holding Digit'}
               </div>
               <div style={{ marginTop: 8 }}>
                 <MonthSelector
