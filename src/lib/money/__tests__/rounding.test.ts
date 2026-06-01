@@ -71,8 +71,9 @@ describe.each(CURRENCIES)('roundMoney + sumMoney [%s]', (cur) => {
     expect(sumMoney(arr, cur)).toBe(10);
   });
 
-  it('Σ avec valeurs au demi-centime reste stable', () => {
-    expect(sumMoney([0.005, 0.005, 0.005, 0.005], cur)).toBe(0.02);
+  it('Σ avec demi-centimes : chaque item arrondi half-away-from-zero puis sommé', () => {
+    // 0.005 → 0.01 (half away from zero), ×4 = 0.04
+    expect(sumMoney([0.005, 0.005, 0.005, 0.005], cur)).toBe(0.04);
   });
 
   it('grandes valeurs (1B + 0.01) = 1_000_000_000.01', () => {
