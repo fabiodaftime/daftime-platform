@@ -68,3 +68,37 @@ export function evolutionPct(curr: number, prev: number): number | null {
   if (!Number.isFinite(prev) || prev === 0) return null;
   return roundHalfAwayFromZero(((curr - prev) / Math.abs(prev)) * 100, 2);
 }
+
+/**
+ * Vérifie qu'un montant respecte déjà la précision de la devise (centime).
+ * Utilisé comme garde-fou avant écriture en base : lève une erreur si la
+ * valeur contient plus de décimales que la devise n'en autorise.
+ */
+export function assertRoundedMoney(value: number, currency: SupportedCurrency): void {
+  if (!Number.isFinite(value)) {
+    throw new Error(`assertRoundedMoney: valeur non finie (${value})`);
+  }
+  const rounded = roundMoney(value, currency);
+  if (Math.abs(rounded - value) > 1e-9) {
+    throw new Error(
+      `assertRoundedMoney: ${value} (${currency}) dépasse la précision centime ` +
+        `(attendu ${rounded})`,
+    );
+  }
+}
+
+/**
+ * Normalise une valeur lue depuis Supabase (numeric → number ou string PostgREST).
+ * Postgres `numeric` peut renvoyer une string si la précision dépasse Number ;
+ * cette fonction parse + arrondit à la devise en une étape.
+ */
+export function normalizeMoneyFromDb(
+  raw: unknown,
+  currency: SupportedCurrency,
+): number {
+  if (raw == null) return 0;
+  const n = typeof raw === 'number' ? raw : parseFloat(String(raw));
+  if (!Number.isFinite(n)) return 0;
+  return roundMoney(n, currency);
+}
+
