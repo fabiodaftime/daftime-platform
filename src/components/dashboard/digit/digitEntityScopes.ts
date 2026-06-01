@@ -1,8 +1,11 @@
-// Per-entity slices derived from DigitData for isolated SPY / Comment dashboards.
-// Source of truth = the per-product fields already present in DigitData
-// (spyKPIs / spyCostsKPIs / spyCostsBreakdown / ctKPIs / ctCostsKPIs / ctCostsBreakdown).
+// Per-entity slices for isolated SPY / Comment dashboards.
+// Source de vérité = `getDigitEntityPnL` (cf. contract/digitEntityContract.ts).
+// Les listes (kpis, costsBreakdown) restent extraites de DigitData pour
+// l'affichage détaillé — les chiffres headline (ca/marge/margePct) viennent
+// du contrat pour garantir la cohérence avec la conso group.
 
 import { getDigitMonthData, DIGIT_AVAILABLE_MONTHS, type DigitMonthId } from './DigitData';
+import { getDigitEntityPnL, type DigitEntity } from './contract/digitEntityContract';
 
 export type EntityScope = 'spy' | 'comment';
 
@@ -22,43 +25,23 @@ export interface EntityMonthSlice {
   alert: string | null;
 }
 
-const parseUSD = (v: unknown): number => {
-  if (typeof v !== 'string') return 0;
-  const cleaned = v.replace(/[^0-9.\-]/g, '');
-  return cleaned ? parseFloat(cleaned) : 0;
-};
-
 export function getEntityMonthSlice(scope: EntityScope, monthId: DigitMonthId): EntityMonthSlice {
   const m = getDigitMonthData(monthId);
-  if (scope === 'spy') {
-    const ca = parseUSD(m.spyKPIs?.[0]?.value);
-    const marge = parseUSD(m.spyKPIs?.[1]?.value);
-    return {
-      monthId,
-      monthLabel: m.monthLabel,
-      ca,
-      marge,
-      margePct: ca > 0 ? (marge / ca) * 100 : 0,
-      kpis: (m.spyKPIs ?? []) as EntityKPI[],
-      costsKPIs: (m.spyCostsKPIs ?? null) as EntityKPI[] | null,
-      costsBreakdown: (m.spyCostsBreakdown ?? null) as EntityCostLine[] | null,
-      costsTotal: m.spyCostsTotal ?? null,
-      alert: null,
-    };
-  }
-  const ca = parseUSD(m.ctKPIs?.[0]?.value);
-  const marge = parseUSD(m.ctKPIs?.[1]?.value);
+  const entity: DigitEntity = scope === 'spy' ? 'spy' : 'comment';
+  const pnl = getDigitEntityPnL(entity, monthId);
+
+  const isSpy = scope === 'spy';
   return {
     monthId,
     monthLabel: m.monthLabel,
-    ca,
-    marge,
-    margePct: ca > 0 ? (marge / ca) * 100 : 0,
-    kpis: (m.ctKPIs ?? []) as EntityKPI[],
-    costsKPIs: (m.ctCostsKPIs ?? null) as EntityKPI[] | null,
-    costsBreakdown: (m.ctCostsBreakdown ?? null) as EntityCostLine[] | null,
-    costsTotal: m.ctCostsTotal ?? null,
-    alert: m.ctAlert ?? null,
+    ca: pnl.ca,
+    marge: pnl.marge,
+    margePct: pnl.margePct,
+    kpis: (isSpy ? m.spyKPIs ?? [] : m.ctKPIs ?? []) as EntityKPI[],
+    costsKPIs: (isSpy ? m.spyCostsKPIs ?? null : m.ctCostsKPIs ?? null) as EntityKPI[] | null,
+    costsBreakdown: (isSpy ? m.spyCostsBreakdown ?? null : m.ctCostsBreakdown ?? null) as EntityCostLine[] | null,
+    costsTotal: (isSpy ? m.spyCostsTotal ?? null : m.ctCostsTotal ?? null),
+    alert: isSpy ? null : (m.ctAlert ?? null),
   };
 }
 
