@@ -185,9 +185,9 @@ function HistoryTable({ s, fmt }: { s: SubActivitySummary; fmt: (n: number) => s
 
 export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
   const data = useMemo(() => computeDigitHoldingTransfers(selectedMonth), [selectedMonth]);
-  // SPY est une entité isolée (transferRate = 0) : on l'exclut de la vue Groupe
-  // pour ne pas suggérer une remontée Holding qui n'existe pas.
-  const subActivities = data.subActivities.filter((s) => s.totalExpected > 0 || s.key !== 'spy');
+  // SPY est une entité indépendante de Digit : elle remonte ses marges à son
+  // propre holding, pas à celui de Digit Group. On l'exclut donc de cette vue.
+  const subActivities = data.subActivities.filter((s) => s.key !== 'spy');
   const { fmt, upToLabel } = data;
   const totals = subActivities.reduce(
     (acc, s) => ({
@@ -202,12 +202,12 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
 
   return (
     <div>
-      <h2 className="digit-section-title">Remontées Holding — Split par activité</h2>
+      <h2 className="digit-section-title">Remontées Holding Digit — Split par activité</h2>
       <p style={{ color: D.textSecondary, marginTop: -8, marginBottom: 20, fontSize: '0.9rem' }}>
-        Suivi des 90% de marge nette à remonter à la Holding, ventilé entre <strong>Digit Core</strong> et{' '}
-        <strong>Comment/Trust</strong>. <strong>SPY</strong> est une entité isolée (pas de remontée Holding).
-        Cumul Janvier → {upToLabel}. Imputation FIFO : les encaissements couvrent en priorité les mois les plus
-        anciens de chaque activité.
+        Suivi des 90% de marge nette à remonter à la Holding Digit, ventilé entre <strong>Digit Core</strong> et{' '}
+        <strong>Comment/Trust</strong>. <strong>SPY</strong> est une entité indépendante : elle remonte à son
+        propre holding, suivi dans son dashboard dédié. Cumul Janvier → {upToLabel}. Imputation FIFO : les
+        encaissements couvrent en priorité les mois les plus anciens.
       </p>
 
       {/* Cartes balance par sous-activité */}

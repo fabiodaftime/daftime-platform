@@ -59,9 +59,9 @@ export function EntityScopedDashboard({ scope, entityId }: Props) {
             <div>
               <h1 className="digit-title">{meta.emoji} {meta.label}</h1>
               <div className="digit-subtitle">
-                {showHolding
-                  ? 'Vue isolée — entité contribuant 90% de sa marge au Groupe'
-                  : 'Vue isolée — entité étanche (marges conservées, pas de remontée Holding)'}
+                {scope === 'spy'
+                  ? 'Vue isolée — entité indépendante, remontée vers son propre holding'
+                  : 'Vue isolée — entité contribuant 90% de sa marge à la Holding Digit'}
               </div>
               <div style={{ marginTop: 8 }}>
                 <MonthSelector
@@ -91,7 +91,7 @@ export function EntityScopedDashboard({ scope, entityId }: Props) {
 
       <div className="digit-tab-content">
         {tab === 'overview' && (
-          <OverviewSection slice={slice} meta={meta} showHolding={showHolding} transferRate={transferRate} />
+          <OverviewSection scope={scope} slice={slice} meta={meta} showHolding={showHolding} transferRate={transferRate} />
         )}
         {tab === 'ytd' && <YTDSection ytd={ytd} evo={evo} meta={meta} showHolding={showHolding} />}
         {tab === 'revenue' && <RevenueSection evo={evo} slice={slice} meta={meta} />}
@@ -108,8 +108,9 @@ export function EntityScopedDashboard({ scope, entityId }: Props) {
 // ============= Sections =============
 
 function OverviewSection({
-  slice, meta, showHolding, transferRate,
+  scope, slice, meta, showHolding, transferRate,
 }: {
+  scope: EntityScope;
   slice: ReturnType<typeof getEntityMonthSlice>;
   meta: typeof ENTITY_META[EntityScope];
   showHolding: boolean;
@@ -128,11 +129,12 @@ function OverviewSection({
         <KpiCard label="CA" value={fmtF(slice.ca)} sub={`${slice.kpis[0]?.sub || ''}`} accent={meta.accent} />
         <KpiCard label="Marge nette" value={fmtF(slice.marge)} sub={`${slice.margePct.toFixed(1)}% du CA`} accent={D.green} />
         <KpiCard label="Taux de marge" value={`${slice.margePct.toFixed(1)}%`} sub="Périmètre isolé" accent={D.primary} />
-        {showHolding ? (
-          <KpiCard label={`À remonter au groupe (${(transferRate * 100).toFixed(0)}%)`} value={fmtF(slice.marge * transferRate)} sub="Part Holding théorique" accent="#C9A227" />
-        ) : (
-          <KpiCard label="Remontée Holding" value="—" sub="Entité isolée (0%)" accent={D.textMuted} />
-        )}
+        <KpiCard
+          label={`À remonter (${(transferRate * 100).toFixed(0)}%)`}
+          value={fmtF(slice.marge * transferRate)}
+          sub={scope === 'spy' ? 'Vers holding propre SPY' : 'Vers Holding Digit'}
+          accent="#C9A227"
+        />
       </div>
 
       {slice.costsKPIs && (
