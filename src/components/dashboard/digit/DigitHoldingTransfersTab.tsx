@@ -244,7 +244,7 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
         </div>
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Taux de recouvrement</div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{totals.recoveryRate.toFixed(1)}%</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{recoveryRate.toFixed(1)}%</div>
         </div>
       </div>
 
