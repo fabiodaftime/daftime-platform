@@ -36,6 +36,7 @@ export default function DashboardDigit() {
   const [tab, setTab] = useState("overview");
   const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('apr-2026');
   const navigate = useNavigate();
+  const { id = '' } = useParams();
   const { isSuperAdmin } = useAuth();
   const { byMonth } = useEntityInputsByMonth('digit');
 
