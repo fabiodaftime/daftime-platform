@@ -767,22 +767,22 @@ const mayData: PCAMonthData = buildMonthData(aprData, {
   otherOpex: 2948,   // reste des charges opérationnelles Mai
   transactions: 67,
   mediaSpend: 1520000,
-  ccMedia: 1520000,
-  clMedia: 0,        // pas de media CL en Mai
+  ccMedia: 1453867,  // mediaSpend - clMedia
+  clMedia: 66133,    // Media CL Mai (Summary of Financial Balance)
   adAccounts: 102,
   newClients: 67, renewed: 0, upgraded: 0, trial: 0,
-  benefitPaidByPCA: 0,  // Mai non encore payé
-  mediaClPaidByPCA: 0,
+  benefitPaidByPCA: 0,  // Mai non encore paye
+  mediaClPaidByPCA: 0,  // Mai non encore paye
 }, {
   riskKPIs: [
     { l: 'Marge Nette', v: '87.3%', s: 'vs 77.4% en Avril (+9.9 pts)', c: C.greenText },
+    { l: 'Solde Blink du', v: '$96.6K', s: 'Benefit ($30.5K) + Media CL ($66.1K)', c: C.redText },
     { l: 'Charges', v: '$8.8K', s: '-34% vs Avril ($13.3K)', c: C.greenText },
-    { l: 'Données détaillées', v: 'Partielles', s: 'En attente du détail Blink/clients Mai', c: C.orangeText },
     { l: 'PCA Share (50%)', v: '$30.5K', s: '+34% vs Avril ($22.8K)', c: C.greenText },
   ],
   risks: [
-    { label: 'Données partielles Mai', desc: 'Top-line uniquement (gross/net/PCA share). Détails clients, top spenders et Blink en attente du fichier complet.', severity: 'medium', icon: '⏳' },
-    { label: 'Marge Nette record 87.3%', desc: '+9.9 pts vs Avril grâce à la forte baisse des charges (-34%).', severity: 'low', icon: '📈' },
+    { label: 'Solde Blink Mai non paye', desc: '$96.6K du a Blink (Benefit $30.5K + Media CL $66.1K) — Avril regularise.', severity: 'high', icon: '💰' },
+    { label: 'Marge Nette record 87.3%', desc: '+9.9 pts vs Avril grace a la forte baisse des charges (-34%).', severity: 'low', icon: '📈' },
   ],
 });
 
