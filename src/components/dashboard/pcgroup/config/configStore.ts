@@ -26,8 +26,9 @@ const DEFAULT_CONFIG: PCGroupConfig = {
     { id: 'd-feb', month_id: 'feb-2026', label: 'Février 2026', short_label: 'fév', year: 2026, month_num: 2, is_active: true, display_order: 2 },
     { id: 'd-mar', month_id: 'mar-2026', label: 'Mars 2026',    short_label: 'mar', year: 2026, month_num: 3, is_active: true, display_order: 3 },
     { id: 'd-apr', month_id: 'apr-2026', label: 'Avril 2026',   short_label: 'avr', year: 2026, month_num: 4, is_active: true, display_order: 4 },
+    { id: 'd-may', month_id: 'may-2026', label: 'Mai 2026',     short_label: 'mai', year: 2026, month_num: 5, is_active: true, display_order: 5 },
   ],
-  rules: ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'].map((m, i) => ({
+  rules: ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'].map((m, i) => ({
     id: `d-rule-${i}`,
     month_id: m,
     reserves_pct: 10,
