@@ -1045,6 +1045,11 @@ const APR_2026 = {
   ...MAR_2026,
   monthLabel: 'Avril 2026',
   footerLabel: 'Avril 2026',
+  agencyRisks: [
+    { label: 'Marge Nette', value: '77.4%', detail: 'vs 64.4% Mars (+13.0 pts)', severity: 'success' as const },
+    { label: 'Cumul dû à Blink', value: '$0', detail: 'Avril entièrement régularisé', severity: 'success' as const },
+    { label: 'Concentration Carl', value: '42.6%', detail: '$694K du media spend', severity: 'danger' as const },
+  ],
 };
 
 // ============ MAY 2026 (entity tabs hérités d'Avril ; KPIs/YTD/Holding
@@ -1054,6 +1059,11 @@ const MAY_2026 = {
   ...MAR_2026,
   monthLabel: 'Mai 2026',
   footerLabel: 'Mai 2026',
+  agencyRisks: [
+    { label: 'Marge Nette', value: '87.3%', detail: 'vs 77.4% Avril (+9.9 pts)', severity: 'success' as const },
+    { label: 'Cumul dû à Blink', value: '$96,611', detail: 'Benefit $30.5K + Media CL $66.1K', severity: 'danger' as const },
+    { label: 'Solde Media CL dû', value: '$66,133', detail: 'Non encore payé', severity: 'warning' as const },
+  ],
 };
 
 export function getMonthData(month: MonthId): PCGroupMonthData {
