@@ -993,6 +993,16 @@ export function buildPCGroupMonthData(
       pushCost('Com. Referral', c.referralCommission);
       pushCost('Events', c.events);
       pushCost('Frais bancaires', c.bankFees);
+      if (c.operatingExpenses && c.operatingExpenses > 0) {
+        wfRows.push({ label: 'OpEx', value: negStr(c.operatingExpenses), type: 'negative' });
+        if (Array.isArray((c as any).operatingExpensesBreakdown)) {
+          for (const item of (c as any).operatingExpensesBreakdown as { label: string; value: number }[]) {
+            if (item?.value > 0) {
+              wfRows.push({ label: `   • ${item.label}`, value: negStr(item.value), type: 'indent-muted' });
+            }
+          }
+        }
+      }
       wfRows.push({ label: 'TOTAL CHARGES', value: negStr(sFacts.charges), type: 'total-negative' });
       wfRows.push({ label: '', value: '', type: 'spacer' });
       wfRows.push({ label: 'MARGE NETTE', value: usdR(sFacts.contribution), type: 'highlight' });
