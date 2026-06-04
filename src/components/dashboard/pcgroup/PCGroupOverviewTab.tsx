@@ -175,6 +175,7 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
                     <td>{cell(total.feb)}</td>
                     {hasMar && <td>{cell(total.mar)}</td>}
                     {hasAvr && <td>{cell(total.avr)}</td>}
+                    {hasMai && <td>{cell(total.mai)}</td>}
                     <td className={`pcg-var-${total.varType}`}>{cell(total.variation)}</td>
                     {hasYtd && <td>{cell(total.ytd)}</td>}
                   </tr>
