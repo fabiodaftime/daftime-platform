@@ -669,6 +669,20 @@ const mayData: PCAMonthData = {
     ...aprData.monthlyTrend,
     { month: 'May-26', gross: 69797, net: 60956, expenses: 8841, media: 1520000, ccMedia: 1520000, clMedia: 0, newClients: 67, renewed: 0, upgraded: 0, trial: 0 },
   ],
+  blinkHeaders: ["", "Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Cumule"],
+  blinkRows: [
+    { l: "Revenu Net", v: [8648, 26778, 29892, 45541, 60956, 171815], bg: null, b: true, sep: false },
+    { l: "PCA Share (50%)", v: [4324, 13389, 14946, 22770, 30478, 85907], bg: null, b: false, sep: true },
+    { l: "Benefit a payer", v: [4324, 13389, 14946, 22770, 30478, 0], bg: null, b: true, sep: false },
+    { l: "Paye par PCA sur Benefit", v: [4324, 13389, 14946, 0, 0, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Solde Benefit mensuel", v: [0, 0, 0, 22770, 30478, 0], bg: null, b: false, sep: false },
+    { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 0, 0, 53248], bg: "redSoft", b: true, sep: true },
+    { l: "Media CL a payer", v: [21009, 210984, 161343, 43125, 0, 0], bg: null, b: false, sep: false },
+    { l: "Paye par PCA sur Media", v: [21009, 210984, 161343, 24827, 0, 0], bg: "greenSoft", b: false, sep: false },
+    { l: "Solde Media mensuel", v: [0, 0, 0, 18298, 0, 0], bg: null, b: false, sep: false },
+    { l: "Solde Media du (cumule)", v: [0, 0, 0, 0, 0, 18298], bg: "redSoft", b: true, sep: true },
+    { l: "Total Cumule du a Blink", v: [0, 0, 0, 0, 0, 71546], bg: "primarySoft", b: true, sep: false },
+  ],
 };
 
 const monthDataMap: Record<PCAMonthId, PCAMonthData> = {
