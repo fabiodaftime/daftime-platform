@@ -577,8 +577,8 @@ const mayData: PCMonthData = {
   kpis: {
     totalCustomers: 42,
     totalTurnover: 56780,
-    netProfit: 32664,        // estimé : marge brute 43 570 − opex prorata Avril 10 906
-    netMarginRate: 57.5,
+    netProfit: 34569,        // 56 780 − COGS 13 210 − ADS 0 − Sales comm 8 714 − Bank 287
+    netMarginRate: 60.9,
     completedServices: 28,
     inProgressServices: 13,
     cancelledServices: 0,
@@ -588,16 +588,16 @@ const mayData: PCMonthData = {
     prevMonthLabel: 'Avr',
     customers: { prev: 50, cur: 42, diff: -8, pct: -16.0 },
     turnover: { prev: 70875, cur: 56780, diff: -14095, pct: -19.9 },
-    netProfit: { prev: 38536, cur: 32664, diff: -5872, pct: -15.2, direction: 'negative' },
+    netProfit: { prev: 38536, cur: 34569, diff: -3967, pct: -10.3, direction: 'negative' },
     completed: { prev: 41, cur: 28, diff: -13, pct: -31.7 },
   },
   ytdData: {
     customers: 235,
     turnover: 309267,
-    netProfit: 162363,
-    netMarginRate: 52.5,
-    costs: 146904,
-    costsPct: 47.5,
+    netProfit: 164268,
+    netMarginRate: 53.1,
+    costs: 144999,
+    costsPct: 46.9,
     avgPerMonth: 61853,
   },
   monthlyComparison: [
@@ -606,17 +606,18 @@ const mayData: PCMonthData = {
     { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
     { month: 'March 2026', customers: 51, turnover: 55000, totalCosts: 25394, netProfit: 29606, netMarginRate: 53.8, varProfit: 40.7, varProfitDirection: 'positive' },
     { month: 'April 2026', customers: 50, turnover: 70875, totalCosts: 32339, netProfit: 38536, netMarginRate: 54.4, varProfit: 30.2, varProfitDirection: 'positive' },
-    { month: 'May 2026 (prov.)', customers: 42, turnover: 56780, totalCosts: 24116, netProfit: 32664, netMarginRate: 57.5, varProfit: -15.2, varProfitDirection: 'negative' },
+    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 22211, netProfit: 34569, netMarginRate: 60.9, varProfit: -10.3, varProfitDirection: 'negative' },
   ],
   costs: {
     productProviderCosts: 13210,
-    productProviderDetail: 'COGS implicites (TO − marge brute par ligne)',
-    advertising: 6320,
-    advertisingDetail: 'Estimé prorata Avril — fichier opex Mai non transmis',
-    salesCommission: 4299,
+    productProviderDetail: 'COGS implicites (TO 56 780 − marge brute 43 570)',
+    advertising: 0,
+    advertisingDetail: 'ADS Mai = 0 (case vide dans Banking_Customers_2026)',
+    salesCommission: 8714,
     bankFees: 287,
-    total: 24116,
+    total: 22211,
   },
+
   serviceCategories: [
     { name: 'LLC Services', value: 12010 },
     { name: 'Slash', value: 11200 },
