@@ -614,7 +614,7 @@ const mayData: PCMonthData = {
     productProviderCosts: 13210,
     productProviderDetail: 'COGS implicites (TO 56 780 − marge brute 43 570)',
     advertising: 5893,
-    advertisingDetail: 'Facebook Ads Mai 2026 — montant confirmé client',
+    advertisingDetail: 'Facebook Ads Mai 2026',
     salesCommission: 7535,
     bankFees: 50,
     // OpEx Mai (6 765 USD) reclassées en charges Holding — Tools, Travel, Lunch,
