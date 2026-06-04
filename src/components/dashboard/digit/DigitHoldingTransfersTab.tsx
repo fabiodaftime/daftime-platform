@@ -240,7 +240,7 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total à remonter (Holding Digit)</div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fmt(digitTotals.expected)}</div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 2 }}>Core + Comment</div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 2 }}>Digit + Comment + SPY Jan/Fév</div>
         </div>
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total remonté</div>
