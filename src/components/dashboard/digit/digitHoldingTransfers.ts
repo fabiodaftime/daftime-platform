@@ -1,22 +1,30 @@
-// Calcul des remontées Holding pour Digit Group, splitté par sous-activité
-// (Core / SPY / Comment-Trust). Source unique de vérité pour le tab
-// "Remontées Holding" du dashboard Digit.
+// Calcul des remontées Holding pour Digit Group, aligné sur la règle métier
+// Prime Circle utilisée par le dashboard consolidé (`pcGroupIntercosCompute.ts`).
 //
-// Règles métier :
-//   • Chaque sous-activité doit 90% de sa marge nette à la Holding (M+1).
-//   • Les encaissements proviennent de `INTERCOS_CASH[m].received[key]`.
-//   • Les remontées reçues d'une activité sont imputées en FIFO sur ses
-//     propres mois (cohérent avec le tableau PCGroup).
+// Règles métier (identiques à la Conso) :
+//   • Phase MaxScale (Jan/Fév) : Digit + Comment + SPY agrégés dans un seul
+//     pot "Digit Solution". Les remontées reçues (digit + comment + spy)
+//     couvrent indistinctement ce pot.
+//   • À partir de Mars : Digit + Comment restent agrégés dans "Digit Solution
+//     (Core)". SPY est isolé et suivi séparément (received.spy uniquement).
+//   • Comment/Trust n'a JAMAIS de remontée séparée — toujours intégré dans
+//     Core. La sous-activité 'comment' est conservée pour compat de routing
+//     (vues scopées entité), mais son taux de remontée est 0.
+//   • Imputation FIFO : les encaissements d'une sous-activité couvrent en
+//     priorité ses mois les plus anciens (même logique que PCGroup).
 //
-// → Renvoie : 3 cartes de balance + tableau historique mensuel + total.
+// → Renvoie : 3 sous-activités (core / spy / comment) + tableau historique
+//   mensuel + total. Source unique de vérité pour le tab "Remontées Holding"
+//   du dashboard Digit.
 
 import { digitFacts, type PCGSourceMonthId } from '../pcgroup/sources/entityAdapters';
 import { INTERCOS_CASH, MANUAL_ENTITIES } from '../pcgroup/manualEntities';
 import { fmtF } from './DigitData';
 
-// Taux de remontée par sous-activité. SPY = 0 : entité isolée, marges
-// conservées en propre, aucune remontée vers la Holding.
 const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
+const MAXSCALE_MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026'];
+const isMaxscale = (m: PCGSourceMonthId) => MAXSCALE_MONTHS.includes(m);
+
 const MONTH_LONG: Record<PCGSourceMonthId, string> = {
   'jan-2026': 'Janvier 2026',
   'feb-2026': 'Février 2026',
@@ -36,14 +44,13 @@ export type SubActivityKey = 'core' | 'spy' | 'comment';
 export interface SubActivity {
   key: SubActivityKey;
   label: string;
-  receivedKey: 'digit' | 'spy' | 'comment';
   color: string;
-  transferRate: number; // 0.9 = 90% remonté, 0 = entité isolée
+  transferRate: number; // 0.9 = 90% remonté, 0 = bundled / pas de remontée séparée
 }
 export const SUB_ACTIVITIES: SubActivity[] = [
-  { key: 'core', label: 'Digit Solution (Core)', receivedKey: 'digit', color: '#1E56A0', transferRate: 0.9 },
-  { key: 'spy', label: 'SPY', receivedKey: 'spy', color: '#7C3AED', transferRate: 0.9 },
-  { key: 'comment', label: 'Comment / Trust', receivedKey: 'comment', color: '#17B169', transferRate: 0.9 },
+  { key: 'core',    label: 'Digit Solution (Core + Comment + SPY Jan/Fév)', color: '#1E56A0', transferRate: 0.9 },
+  { key: 'spy',     label: 'SPY (isolé Mars+)',                              color: '#7C3AED', transferRate: 0.9 },
+  { key: 'comment', label: 'Comment / Trust (intégré dans Core)',            color: '#17B169', transferRate: 0   },
 ];
 
 export function getTransferRate(key: SubActivityKey): number {
@@ -52,15 +59,35 @@ export function getTransferRate(key: SubActivityKey): number {
 
 const usd = (n: number) => fmtF(Math.round(n));
 
+// Marge mensuelle de chaque sous-activité, alignée sur la règle Conso.
 function marginFor(key: SubActivityKey, m: PCGSourceMonthId): number {
-  if (key === 'core') return digitFacts(m)?.margeNette ?? 0;
-  if (key === 'spy') return MANUAL_ENTITIES[m]?.spy.margeNette ?? 0;
-  return MANUAL_ENTITIES[m]?.comment.margeNette ?? 0;
+  if (key === 'core') {
+    const digit = digitFacts(m)?.margeNette ?? 0;
+    const comment = MANUAL_ENTITIES[m]?.comment.margeNette ?? 0;
+    const spyBundled = isMaxscale(m) ? (MANUAL_ENTITIES[m]?.spy.margeNette ?? 0) : 0;
+    return digit + comment + spyBundled;
+  }
+  if (key === 'spy') {
+    // SPY isolé uniquement à partir de Mars. Jan/Fév → bundled dans Core.
+    return isMaxscale(m) ? 0 : (MANUAL_ENTITIES[m]?.spy.margeNette ?? 0);
+  }
+  // comment : toujours intégré dans Core, pas de remontée propre.
+  return 0;
 }
 
+// Cash reçu par la Holding Digit pour chaque sous-activité.
 function receivedFor(key: SubActivityKey, m: PCGSourceMonthId): number {
-  const rk = SUB_ACTIVITIES.find((s) => s.key === key)!.receivedKey;
-  return INTERCOS_CASH[m]?.received?.[rk] ?? 0;
+  const r = INTERCOS_CASH[m]?.received ?? {};
+  if (key === 'core') {
+    const digit = r.digit ?? 0;
+    const comment = r.comment ?? 0;
+    const spyBundled = isMaxscale(m) ? (r.spy ?? 0) : 0;
+    return digit + comment + spyBundled;
+  }
+  if (key === 'spy') {
+    return isMaxscale(m) ? 0 : (r.spy ?? 0);
+  }
+  return 0;
 }
 
 export interface MonthBreakdown {
@@ -71,7 +98,7 @@ export interface MonthBreakdown {
   expected: number;     // 90% margin
   received: number;
   balance: number;      // expected - received (cumulé FIFO sur cette ligne)
-  status: 'paid' | 'partial' | 'pending' | 'overpaid';
+  status: 'paid' | 'partial' | 'pending' | 'overpaid' | 'bundled';
 }
 
 export interface SubActivitySummary {
@@ -84,6 +111,7 @@ export interface SubActivitySummary {
   totalRemaining: number;     // FIFO : reliquat des mois non encore couverts
   recoveryRate: number;       // %
   rows: MonthBreakdown[];     // historique mensuel
+  transferRate: number;
 }
 
 export interface DigitHoldingTransfersData {
@@ -97,13 +125,12 @@ export interface DigitHoldingTransfersData {
     remaining: number;
     recoveryRate: number;
   };
-  // Helpers d'affichage
   fmt: (n: number) => string;
 }
 
 /** Construit la vue Remontées Holding pour le dashboard Digit, jusqu'au mois
- * `viewMonth` inclus. FIFO : les encaissements d'une activité couvrent en
- * priorité ses mois les plus anciens. */
+ *  `viewMonth` inclus. FIFO : les encaissements d'une activité couvrent en
+ *  priorité ses mois les plus anciens. Mêmes règles que la Conso. */
 export function computeDigitHoldingTransfers(
   viewMonth: PCGSourceMonthId,
 ): DigitHoldingTransfersData {
@@ -111,7 +138,6 @@ export function computeDigitHoldingTransfers(
   const months = MONTH_ORDER.slice(0, viewIdx + 1);
 
   const subActivities: SubActivitySummary[] = SUB_ACTIVITIES.map((sub) => {
-    // 1) Construire les lignes mensuelles brutes (expected/received par mois).
     const baseRows = months.map((m) => {
       const margin = marginFor(sub.key, m);
       const expected = margin * sub.transferRate;
@@ -119,8 +145,7 @@ export function computeDigitHoldingTransfers(
       return { month: m, margin, expected, received };
     });
 
-    // 2) Allocation FIFO : on prend le pool total reçu et on l'impute sur les
-    //    mois dans l'ordre chronologique (cohérent avec PCGroup).
+    // FIFO : pool total reçu imputé sur les mois dans l'ordre chronologique.
     const pool = baseRows.reduce((acc, r) => acc + r.received, 0);
     let remainingPool = pool;
     const rows: MonthBreakdown[] = baseRows.map((r) => {
@@ -128,7 +153,10 @@ export function computeDigitHoldingTransfers(
       remainingPool -= covered;
       const balance = Math.max(0, r.expected - covered);
       let status: MonthBreakdown['status'] = 'pending';
-      if (r.expected <= 0) status = 'paid';
+      // SPY Jan/Fév : bundled dans Core, on le marque explicitement.
+      if (sub.key === 'spy' && isMaxscale(r.month)) status = 'bundled';
+      else if (sub.transferRate === 0) status = 'bundled';
+      else if (r.expected <= 0) status = 'paid';
       else if (covered >= r.expected - 1) status = 'paid';
       else if (covered > 0) status = 'partial';
       return {
@@ -159,6 +187,7 @@ export function computeDigitHoldingTransfers(
       totalRemaining,
       recoveryRate,
       rows,
+      transferRate: sub.transferRate,
     };
   });
 

@@ -187,8 +187,11 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
   const data = useMemo(() => computeDigitHoldingTransfers(selectedMonth), [selectedMonth]);
   const { fmt, upToLabel } = data;
 
-  // Split : Digit Holding (Core + Comment) vs SPY (indépendant, holding propre)
-  const digitGroup = data.subActivities.filter((s) => s.key !== 'spy');
+  // Split aligné sur la Conso :
+  //  - Digit Solution (Core) = Digit + Comment + SPY Jan/Fév (mêmes règles que pcGroupIntercosCompute)
+  //  - SPY isolé = à partir de Mars, suivi séparément
+  //  - Comment/Trust = intégré dans Core, pas de remontée propre → masqué ici
+  const digitGroup = data.subActivities.filter((s) => s.key !== 'spy' && s.transferRate > 0);
   const spy = data.subActivities.find((s) => s.key === 'spy');
 
   const digitTotals = digitGroup.reduce(
@@ -204,13 +207,15 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
 
   return (
     <div>
-      <h2 className="digit-section-title">Remontées Holding Digit — Split par activité</h2>
+      <h2 className="digit-section-title">Remontées Holding Digit — Aligné Conso</h2>
       <p style={{ color: D.textSecondary, marginTop: -8, marginBottom: 20, fontSize: '0.9rem' }}>
-        Suivi des 90% de marge nette à remonter à la <strong>Holding Digit</strong>, ventilé entre{' '}
-        <strong>Digit Core</strong> et <strong>Comment/Trust</strong>. <strong>SPY</strong> est une entité
-        indépendante (holding propre) affichée à part à titre informatif. Cumul Janvier → {upToLabel}. Imputation
-        FIFO : les encaissements couvrent en priorité les mois les plus anciens.
+        Suivi des 90% de marge nette à remonter à la <strong>Holding Digit</strong> selon la règle Prime Circle :{' '}
+        <strong>Digit Solution (Core)</strong> agrège Digit + Comment/Trust (tous mois) + SPY (Jan/Fév, phase
+        MaxScale). <strong>SPY</strong> est isolé à partir de Mars (holding propre) et affiché à part. Cumul
+        Janvier → {upToLabel}. Imputation FIFO : les encaissements couvrent en priorité les mois les plus anciens.
+        Mêmes chiffres que le dashboard consolidé.
       </p>
+
 
       {/* Cartes balance — Holding Digit (Core + Comment) */}
       <div className="digit-kpi-grid" style={{ marginBottom: 24 }}>
@@ -235,7 +240,7 @@ export function DigitHoldingTransfersTab({ selectedMonth }: Props) {
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total à remonter (Holding Digit)</div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fmt(digitTotals.expected)}</div>
-          <div style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 2 }}>Core + Comment</div>
+          <div style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 2 }}>Digit + Comment + SPY Jan/Fév</div>
         </div>
         <div>
           <div style={{ fontSize: '0.78rem', opacity: 0.8 }}>Total remonté</div>
