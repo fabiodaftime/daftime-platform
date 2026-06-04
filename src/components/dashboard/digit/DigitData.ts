@@ -1,12 +1,13 @@
 // Digit Dashboard Data - Multi-Month Support
 
-export type DigitMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
+export type DigitMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 
 export const DIGIT_AVAILABLE_MONTHS = [
   { id: 'jan-2026' as DigitMonthId, label: 'Janvier 2026' },
   { id: 'feb-2026' as DigitMonthId, label: 'Février 2026' },
   { id: 'mar-2026' as DigitMonthId, label: 'Mars 2026' },
   { id: 'apr-2026' as DigitMonthId, label: 'Avril 2026' },
+  { id: 'may-2026' as DigitMonthId, label: 'Mai 2026' },
 ];
 
 export const D = {
