@@ -201,34 +201,35 @@ export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
   {
     month: 'MARS 2026',
     revenue: 921486,
-    actual: { coaches: 150714, marketing: 226633, it: 14601, stripe: 61887, admin: 115310, autres: 140097 },
+    actual: { coaches: 165714, marketing: 226633, it: 14601, stripe: 61887, admin: 115310, autres: 140097 },
     commentType: 'critical',
     commentTitle: '💬 Commentaires Mars:',
     comments: [
       '⚠️ Bad Debt 139.4k AED comptabilisé ce mois — créance irrécouvrable, à investiguer.',
       '⚠️ Masse salariale élevée (94k) + Coach-Consultant 81k.',
-      '⚠️ Marge EBITDA ~23% — pénalisée par le Bad Debt et l\'admin.',
+      '🔧 Retraitement call 18/05 : +15k AED Coaches (provision Yazid — closing Mars, payé en Mai à création de sa structure).',
+      '⚠️ Marge EBITDA ~21% — pénalisée par le Bad Debt, l\'admin et la provision Yazid.',
     ],
   },
   {
     month: 'AVRIL 2026',
     revenue: 933471,
-    actual: { coaches: 145547, marketing: 231928, it: 8442, stripe: 46861, admin: 64167, autres: -83 },
+    actual: { coaches: 160547, marketing: 231928, it: 8442, stripe: 46861, admin: 64167, autres: -83 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Avril:',
     comments: [
-      '✅ Meilleur mois 2026 en marge : CA 933 k AED, marge EBITDA ~47%.',
+      '🔧 Retraitement call 18/05 : +15k AED Coaches (provision Yazid — closing Avril, payé en Mai à création de sa structure).',
+      '✅ Meilleur mois 2026 en marge : CA 933 k AED, marge EBITDA ~46%.',
     ],
   },
 ];
 
 // Synthèse YTD 2026 (Jan-Avr) calculée depuis MONTHLY_COSTS_2026
-// Rev = 663 317 + 788 857 + 921 486 + 933 471 = 3 307 131 AED
-// EBITDA = 307 045 + 235 117 + 212 244 + 436 609 = 1 191 015 AED
+// Inclut la provision Yazid +15k Mars + 15k Avril (retraitement call 18/05)
 export const YTD_2026 = {
   months: 4,
   caTotal: 663317 + 788857 + 921486 + 933471,
-  netProfit: 307045 + 235117 + 212244 + 436609,
+  netProfit: 307045 + 235117 + (212244 - 15000) + (436609 - 15000),
 };
 
 
