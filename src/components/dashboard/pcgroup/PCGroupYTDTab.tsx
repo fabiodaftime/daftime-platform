@@ -8,24 +8,28 @@ export function PCGroupYTDTab({ data }: Props) {
 
   const hasMar = Boolean((ytdEntityTotal as any).mar);
   const hasAvr = Boolean((ytdEntityTotal as any).avr);
-  const monthsCount = 2 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0);
+  const hasMai = Boolean((ytdEntityTotal as any).mai);
+  const monthsCount = 2 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0) + (hasMai ? 1 : 0);
   const colSpan = monthsCount + 2; // label + months + ytd
-  const titleSuffix = hasAvr
-    ? 'Janvier / Février / Mars / Avril / YTD 2026'
-    : hasMar
-      ? 'Janvier / Février / Mars / YTD 2026'
-      : 'Janvier / Février / YTD 2026';
+  const titleSuffix = hasMai
+    ? 'Janvier / Février / Mars / Avril / Mai / YTD 2026'
+    : hasAvr
+      ? 'Janvier / Février / Mars / Avril / YTD 2026'
+      : hasMar
+        ? 'Janvier / Février / Mars / YTD 2026'
+        : 'Janvier / Février / YTD 2026';
 
   // Mois courant = dernier mois renseigné
-  const currentKey: 'jan' | 'feb' | 'mar' | 'avr' = hasAvr ? 'avr' : hasMar ? 'mar' : 'feb';
-  const currentLabel = { jan: 'Janvier', feb: 'Février', mar: 'Mars', avr: 'Avril' }[currentKey];
+  type MKey = 'jan' | 'feb' | 'mar' | 'avr' | 'mai';
+  const currentKey: MKey = hasMai ? 'mai' : hasAvr ? 'avr' : hasMar ? 'mar' : 'feb';
+  const currentLabel = { jan: 'Janvier', feb: 'Février', mar: 'Mars', avr: 'Avril', mai: 'Mai' }[currentKey];
   const HL_BG = 'rgba(212, 168, 85, 0.12)';
   const HL_BORDER = '2px solid var(--pcg-gold)';
-  const hlCell = (key: 'jan' | 'feb' | 'mar' | 'avr', extra: React.CSSProperties = {}): React.CSSProperties =>
+  const hlCell = (key: MKey, extra: React.CSSProperties = {}): React.CSSProperties =>
     key === currentKey
       ? { background: HL_BG, borderLeft: HL_BORDER, borderRight: HL_BORDER, ...extra }
       : extra;
-  const hlHeader = (key: 'jan' | 'feb' | 'mar' | 'avr'): React.CSSProperties =>
+  const hlHeader = (key: MKey): React.CSSProperties =>
     key === currentKey
       ? {
           textAlign: 'right',
@@ -43,6 +47,7 @@ export function PCGroupYTDTab({ data }: Props) {
       <td style={hlCell('feb', { textAlign: 'right', color: color ?? undefined })}>{row.feb ?? '—'}</td>
       {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: color ?? undefined })}>{row.mar ?? '—'}</td>}
       {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: color ?? undefined })}>{row.avr ?? '—'}</td>}
+      {hasMai && <td style={hlCell('mai', { textAlign: 'right', color: color ?? undefined })}>{row.mai ?? '—'}</td>}
     </>
   );
 
