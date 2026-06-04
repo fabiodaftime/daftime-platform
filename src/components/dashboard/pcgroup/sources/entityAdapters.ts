@@ -22,7 +22,7 @@ import { getDigitMonthData, type DigitMonthId } from '../../digit/DigitData';
 import { DIGIT_NUMERIC_FACTS } from './digitNumericFacts';
 import { getEntityInput } from '@/lib/entityInputs/store';
 
-export type PCGSourceMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
+export type PCGSourceMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 
 export interface EntityFacts {
   // Common
