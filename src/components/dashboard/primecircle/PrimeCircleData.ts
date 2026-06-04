@@ -615,8 +615,8 @@ const mayData: PCMonthData = {
     productProviderDetail: 'COGS implicites (TO 56 780 − marge brute 43 570)',
     advertising: 5893,
     advertisingDetail: 'Facebook Ads Mai 2026',
-    salesCommission: 4458,
-    salesCommissionDetail: 'Commission Sales Mai 2026 — montant confirmé 4 457,61 USD',
+    salesCommission: 4458, // Commission Sales Mai 2026 — montant confirmé 4 457,61 USD
+
     bankFees: 50,
     // OpEx Mai (6 765 USD) reclassées en charges Holding — Tools, Travel, Lunch,
     // Event, Transport, etc. Voir pcgroup/manual/2026-05.ts + restatementHistory.
