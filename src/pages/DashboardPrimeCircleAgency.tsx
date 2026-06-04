@@ -26,7 +26,9 @@ const baseTabs = [
 
 export default function DashboardPrimeCircleAgency() {
   const [tab, setTab] = useState("overview");
-  const [selectedMonth, setSelectedMonth] = useState<PCAMonthId>('apr-2026');
+  const [selectedMonth, setSelectedMonth] = useState<PCAMonthId>(
+    (PCA_AVAILABLE_MONTHS[PCA_AVAILABLE_MONTHS.length - 1]?.id as PCAMonthId) ?? 'apr-2026',
+  );
   const navigate = useNavigate();
   const { isSuperAdmin } = useAuth();
 

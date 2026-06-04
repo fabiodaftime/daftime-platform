@@ -6,11 +6,13 @@ import { PrimeCircleCostsSection } from '@/components/dashboard/primecircle/Prim
 import { PrimeCircleCharts } from '@/components/dashboard/primecircle/PrimeCircleCharts';
 import { PrimeCircleStatusGrid } from '@/components/dashboard/primecircle/PrimeCircleStatusGrid';
 import { PrimeCircleTable } from '@/components/dashboard/primecircle/PrimeCircleTable';
-import { getPCMonthData, type PCMonthId } from '@/components/dashboard/primecircle/PrimeCircleData';
+import { getPCMonthData, PC_AVAILABLE_MONTHS, type PCMonthId } from '@/components/dashboard/primecircle/PrimeCircleData';
 import './DashboardPrimeCircle.css';
 
 export default function DashboardPrimeCircle() {
-  const [selectedMonth, setSelectedMonth] = useState<PCMonthId>('apr-2026');
+  const [selectedMonth, setSelectedMonth] = useState<PCMonthId>(
+    (PC_AVAILABLE_MONTHS[PC_AVAILABLE_MONTHS.length - 1]?.id as PCMonthId) ?? 'apr-2026',
+  );
   const data = getPCMonthData(selectedMonth);
 
   return (
