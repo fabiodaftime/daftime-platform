@@ -656,6 +656,15 @@ const mayData: PCAMonthData = {
     { label: 'Données partielles Mai', desc: 'Top-line uniquement (gross/net/PCA share). Détails clients, top spenders et Blink en attente du fichier complet.', severity: 'medium', icon: '⏳' },
     { label: 'Marge Nette record 87.3%', desc: '+9.9 pts vs Avril grâce à la forte baisse des charges (-34%).', severity: 'low', icon: '📈' },
   ],
+  waterfallRows: [
+    { l: 'GROSS REVENUE', v: 69797, prev: 58853, bg: 'greenSoft', b: true },
+    { l: 'Ads (Facebook)', v: -5893, prev: -5719, bg: null, b: false },
+    { l: 'Autres charges opérationnelles', v: -2948, prev: -7594, bg: null, b: false },
+    { l: 'TOTAL EXPENSES', v: -8841, prev: -13313, bg: 'redSoft', b: true },
+    { l: 'NET REVENUE', v: 60956, prev: 45541, bg: 'primarySoft', b: true },
+    { l: 'PCA Share (50%)', v: 30478, prev: 22770, bg: 'purpleSoft', b: true },
+    { l: 'PC Retained (50%)', v: 30478, prev: 22770, bg: 'accentSoft', b: true },
+  ],
   monthlyTrend: [
     ...aprData.monthlyTrend,
     { month: 'May-26', gross: 69797, net: 60956, expenses: 8841, media: 1520000, ccMedia: 0, clMedia: 0, newClients: 0, renewed: 0, upgraded: 0, trial: 0 },
