@@ -521,11 +521,122 @@ const aprData: PCMonthData = {
   },
 };
 
+// ===== MAY 2026 ===== (source: Banking_Customers_2025-2026_VF, mai 2026)
+// Headline réel (TO 56 780 $, marge brute par ligne 43 570 $, 42 clients).
+// Opex non-COGS (Ads, Commissions, Bank fees) estimés au prorata d'Avril faute
+// de fichier opex transmis pour Mai → drapeau "données partielles".
+const mayTransactions: Transaction[] = [
+  { name: "Flo 33 6 71 60 59 08", service: "itin", status: "In progress", turnover: 500, margin: 335 },
+  { name: "facondoprofitads", service: "amex", status: "To start", turnover: 2000, margin: 2000 },
+  { name: "julian sailley", service: "itin", status: "In progress", turnover: 250, margin: 90 },
+  { name: "rocco 41 78 300 5545", service: "1 llc + physical adress + bank", status: "Closed", turnover: 3400, margin: 2350 },
+  { name: "marco_isellforyou", service: "2 llc + 2 itin", status: "In progress", turnover: 3000, margin: 2170 },
+  { name: "33775855440 tanguy", service: "llc", status: "Closed", turnover: 300, margin: 52 },
+  { name: "33781208048 nico", service: "slash + sokin", status: "Closed", turnover: 1500, margin: 1500 },
+  { name: "sultan09999", service: "1 slash + llc", status: "Closed", turnover: 1500, margin: 1250 },
+  { name: "anurag", service: "airwallex us", status: "In progress", turnover: 400, margin: 400 },
+  { name: "64278722056 andrew kim", service: "itin", status: "In progress", turnover: 500, margin: 335 },
+  { name: "33683928769 sam", service: "1 slash + itin", status: "In progress", turnover: 1500, margin: 1300 },
+  { name: "33698462900 Mathis", service: "llc + physical adress + bank + itin", status: "In progress", turnover: 3050, margin: 1800 },
+  { name: "Sahib98s", service: "hk company + airwallex hk", status: "Closed", turnover: 2500, margin: 1700 },
+  { name: "Mihail sido renko", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "Pierre-Alexandre-Ayache", service: "ein", status: "Closed", turnover: 500, margin: 390 },
+  { name: "rafa", service: "llc", status: "Closed", turnover: 580, margin: 380 },
+  { name: "Mihail sido renko", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "Mathiassecom", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "fortunatofranco", service: "llc + physical adress", status: "Closed", turnover: 2000, margin: 750 },
+  { name: "cosworld96", service: "slash", status: "Closed", turnover: 600, margin: 600 },
+  { name: "skooldam", service: "llc", status: "Closed", turnover: 750, margin: 250 },
+  { name: "Xavi", service: "aspire", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "33683928769 sam", service: "itin", status: "In progress", turnover: 400, margin: 230 },
+  { name: "sultan09999", service: "slash", status: "Closed", turnover: 700, margin: 700 },
+  { name: "tataneeeee", service: "slash + physical adress", status: "Closed", turnover: 3000, margin: 1900 },
+  { name: "Jupelo", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "theroheet", service: "llc", status: "Closed", turnover: 700, margin: 450 },
+  { name: "tren guy", service: "llc", status: "Closed", turnover: 750, margin: 250 },
+  { name: "nigga bob", service: "slash", status: "Closed", turnover: 700, margin: 700 },
+  { name: "Art M", service: "slash", status: "Closed", turnover: 750, margin: 750 },
+  { name: "rekllc", service: "aspire + llc", status: "In progress", turnover: 1750, margin: 1500 },
+  { name: "oluwaadaniel", service: "slash + llc", status: "In progress", turnover: 1500, margin: 1250 },
+  { name: "nigga bob", service: "slash", status: "Closed", turnover: 700, margin: 700 },
+  { name: "s44psn", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "Teddy_niobe", service: "revolut business + llc", status: "In progress", turnover: 1500, margin: 1250 },
+  { name: "leonecom", service: "slash", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "noccebusiness", service: "llc", status: "Closed", turnover: 1000, margin: 750 },
+  { name: "js1234js", service: "physical adress", status: "Closed", turnover: 2000, margin: 1200 },
+  { name: "thereal_poly", service: "slash + llc", status: "Closed", turnover: 1000, margin: 1000 },
+  { name: "33781555988 danila", service: "itin", status: "In progress", turnover: 500, margin: 338 },
+  { name: "33622166042 vvv", service: "3 llc + 4 slash", status: "In progress", turnover: 4500, margin: 4000 },
+  { name: "ju1234567890123456", service: "5 slash", status: "Closed", turnover: 2500, margin: 2500 },
+];
+
+const mayData: PCMonthData = {
+  monthId: 'may-2026',
+  monthLabel: 'May 2026',
+  transactions: mayTransactions,
+  kpis: {
+    totalCustomers: 42,
+    totalTurnover: 56780,
+    netProfit: 32664,        // estimé : marge brute 43 570 − opex prorata Avril 10 906
+    netMarginRate: 57.5,
+    completedServices: 28,
+    inProgressServices: 13,
+    cancelledServices: 0,
+    avgPerCustomer: 1352,
+  },
+  m1Comparison: {
+    prevMonthLabel: 'Avr',
+    customers: { prev: 50, cur: 42, diff: -8, pct: -16.0 },
+    turnover: { prev: 70875, cur: 56780, diff: -14095, pct: -19.9 },
+    netProfit: { prev: 38536, cur: 32664, diff: -5872, pct: -15.2, direction: 'negative' },
+    completed: { prev: 41, cur: 28, diff: -13, pct: -31.7 },
+  },
+  ytdData: {
+    customers: 235,
+    turnover: 309267,
+    netProfit: 162363,
+    netMarginRate: 52.5,
+    costs: 146904,
+    costsPct: 47.5,
+    avgPerMonth: 61853,
+  },
+  monthlyComparison: [
+    { month: 'January 2026', customers: 39, turnover: 53112, totalCosts: 12591, netProfit: 40521, netMarginRate: 76.3, varProfit: null },
+    { month: 'February 2026', customers: 53, turnover: 73500, totalCosts: 52464, netProfit: 21036, netMarginRate: 28.6, varProfit: -48.1, varProfitDirection: 'negative' },
+    { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
+    { month: 'March 2026', customers: 51, turnover: 55000, totalCosts: 25394, netProfit: 29606, netMarginRate: 53.8, varProfit: 40.7, varProfitDirection: 'positive' },
+    { month: 'April 2026', customers: 50, turnover: 70875, totalCosts: 32339, netProfit: 38536, netMarginRate: 54.4, varProfit: 30.2, varProfitDirection: 'positive' },
+    { month: 'May 2026 (prov.)', customers: 42, turnover: 56780, totalCosts: 24116, netProfit: 32664, netMarginRate: 57.5, varProfit: -15.2, varProfitDirection: 'negative' },
+  ],
+  costs: {
+    productProviderCosts: 13210,
+    productProviderDetail: 'COGS implicites (TO − marge brute par ligne)',
+    advertising: 6320,
+    advertisingDetail: 'Estimé prorata Avril — fichier opex Mai non transmis',
+    salesCommission: 4299,
+    bankFees: 287,
+    total: 24116,
+  },
+  serviceCategories: [
+    { name: 'LLC Services', value: 12010 },
+    { name: 'Slash', value: 11200 },
+    { name: 'Physical Addr.', value: 8000 },
+    { name: 'Combos LLC+Addr/Slash', value: 13500 },
+    { name: 'ITIN / Tax', value: 4500 },
+    { name: 'Other (aspire, hk, amex, ein, airwallex)', value: 7570 },
+  ],
+  statusData: {
+    completed: { count: 28, amount: 35430 },
+    inProgress: { count: 13, amount: 19350 },
+  },
+};
+
 const monthDataMap: Record<PCMonthId, PCMonthData> = {
   'jan-2026': janData,
   'feb-2026': febData,
   'mar-2026': marData,
   'apr-2026': aprData,
+  'may-2026': mayData,
 };
 
 export function getPCMonthData(monthId: PCMonthId): PCMonthData {
