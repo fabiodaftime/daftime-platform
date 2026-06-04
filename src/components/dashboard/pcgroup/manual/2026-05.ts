@@ -11,7 +11,7 @@ const MAY_2026: ManualMonthFile = {
   extras: {
     spy: { ca: 0, margeNette: 0, charges: 0, marginPct: 0, deals: 0 },
     comment: { ca: 489, margeNette: 280, charges: 209, marginPct: 57.3, deals: 20 },
-    commentWarning: 'CA en légère hausse vs Avril (+11.7%). SPY : aucune donnée transmise pour Mai.',
+    commentWarning: 'CA en légère hausse vs Avril (+11.7%). SPY : 0 confirmé pour Mai (Récap_Finance).',
     holding: {
       fraisTotal: 10838,
       fraisDetail: [
