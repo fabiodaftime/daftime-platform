@@ -629,23 +629,151 @@ const aprData: PCAMonthData = {
   ],
 };
 
+// =============================================================================
+// HELPER : buildMonthData — auto-mapping des champs structurés
+// =============================================================================
+// Objectif : éviter d'oublier de mettre à jour waterfallRows / monthlyTrend /
+// blinkRows à chaque nouveau mois. On fournit uniquement les inputs business
+// (gross, ads, autres charges, mediaSpend, paiements Blink…) et le helper
+// dérive automatiquement :
+//   • les KPIs top-line (net, pcaShare, expenseRatio, marginPct)
+//   • le P&L Waterfall (GROSS → Ads → Autres → TOTAL → NET → PCA Share → PC Retained)
+//   • l'append à monthlyTrend
+//   • la nouvelle colonne du tableau Suivi Blink + recalcul de la colonne Cumule
+//   • la comparaison vs mois précédent (prev*)
+// -----------------------------------------------------------------------------
+export interface PCAMonthInputs {
+  monthId: PCAMonthId;
+  monthLabel: string;        // "Mai 2026"
+  monthShort: string;        // "MAI 2026"
+  trendKey: string;          // "May-26" — clé courte affichée dans les charts/blink
+  // Top-line P&L
+  gross: number;
+  ads: number;               // charges publicitaires (Facebook Ads…)
+  otherOpex: number;         // toutes les autres charges opérationnelles agrégées
+  // Volumes
+  transactions: number;
+  mediaSpend: number;
+  ccMedia: number;
+  clMedia: number;
+  adAccounts: number;
+  clientsActifs?: number;
+  totalEncaisse?: number;
+  // Lifecycle clients (pour Transactions — Évolution mensuelle)
+  newClients: number;
+  renewed: number;
+  upgraded: number;
+  trial: number;
+  // Suivi Blink — paiements effectifs faits ce mois
+  benefitPaidByPCA?: number; // versement Blink Benefit (0 si non payé)
+  mediaClPaidByPCA?: number; // versement Blink Media CL (0 si non payé)
+}
+
+function buildMonthData(prev: PCAMonthData, i: PCAMonthInputs, overrides: Partial<PCAMonthData> = {}): PCAMonthData {
+  const expenses = i.ads + i.otherOpex;
+  const net = i.gross - expenses;
+  const pcaShare = Math.round(net / 2);
+  const expenseRatio = +(expenses / i.gross * 100).toFixed(1);
+  const marginPct = +(net / i.gross * 100).toFixed(1);
+
+  // ── Waterfall ──────────────────────────────────────────
+  const prevWf = (l: string) => prev.waterfallRows.find(r => r.l === l)?.v ?? 0;
+  const waterfallRows = [
+    { l: 'GROSS REVENUE', v: i.gross, prev: prev.gross, bg: 'greenSoft', b: true },
+    { l: 'Ads (Facebook)', v: -i.ads, prev: prevWf('Ads (Facebook)') || -prev.expenses, bg: null, b: false },
+    { l: 'Autres charges opérationnelles', v: -i.otherOpex, prev: prevWf('Autres charges opérationnelles'), bg: null, b: false },
+    { l: 'TOTAL EXPENSES', v: -expenses, prev: -prev.expenses, bg: 'redSoft', b: true },
+    { l: 'NET REVENUE', v: net, prev: prev.net, bg: 'primarySoft', b: true },
+    { l: 'PCA Share (50%)', v: pcaShare, prev: prev.pcaShare, bg: 'purpleSoft', b: true },
+    { l: 'PC Retained (50%)', v: pcaShare, prev: prev.pcaShare, bg: 'accentSoft', b: true },
+  ];
+
+  // ── Monthly Trend (append) ─────────────────────────────
+  const monthlyTrend = [
+    ...prev.monthlyTrend,
+    { month: i.trendKey, gross: i.gross, net, expenses, media: i.mediaSpend,
+      ccMedia: i.ccMedia, clMedia: i.clMedia,
+      newClients: i.newClients, renewed: i.renewed, upgraded: i.upgraded, trial: i.trial },
+  ];
+
+  // ── Blink : ajoute une colonne avant "Cumule" et recalcule les cumuls ─────
+  const benefitPaid = i.benefitPaidByPCA ?? 0;
+  const mediaClPaid = i.mediaClPaidByPCA ?? 0;
+  const blinkHeaders = [...prev.blinkHeaders.slice(0, -1), i.trendKey, 'Cumule'];
+
+  const extendRow = (label: string, newVal: number, cumulMode: 'sum' | 'carry' | 'replace' = 'sum') => {
+    const row = prev.blinkRows.find(r => r.l === label);
+    if (!row) return null;
+    const monthly = row.v.slice(0, -1); // valeurs mensuelles sans cumule
+    monthly.push(newVal);
+    let cumule: number;
+    if (cumulMode === 'sum') cumule = monthly.reduce((a, b) => a + b, 0);
+    else if (cumulMode === 'replace') cumule = newVal;
+    else cumule = (row.v[row.v.length - 1] || 0) + newVal; // carry: ajoute au cumule existant
+    return { ...row, v: [...monthly, cumule] };
+  };
+
+  const benefitDue = pcaShare - benefitPaid;
+  const mediaClDue = i.clMedia - mediaClPaid;
+
+  const blinkRows = [
+    extendRow('Revenu Net', net),
+    extendRow('PCA Share (50%)', pcaShare),
+    extendRow('Benefit a payer', benefitDue, 'replace'),
+    extendRow('Paye par PCA sur Benefit', benefitPaid),
+    extendRow('Solde Benefit mensuel', benefitDue, 'replace'),
+    extendRow('Solde Benefit du (cumule)', benefitDue, 'carry'),
+    extendRow('Media CL a payer', i.clMedia),
+    extendRow('Paye par PCA sur Media', mediaClPaid),
+    extendRow('Solde Media mensuel', mediaClDue, 'replace'),
+    extendRow('Solde Media du (cumule)', mediaClDue, 'carry'),
+    extendRow('Total Cumule du a Blink', 0, 'replace'),
+  ].filter(Boolean) as PCAMonthData['blinkRows'];
+  // Recalcule total cumulé = solde benefit cumulé + solde media cumulé
+  const benefitCumul = blinkRows.find(r => r.l === 'Solde Benefit du (cumule)')?.v.slice(-1)[0] ?? 0;
+  const mediaCumul = blinkRows.find(r => r.l === 'Solde Media du (cumule)')?.v.slice(-1)[0] ?? 0;
+  const totalRow = blinkRows.find(r => r.l === 'Total Cumule du a Blink');
+  if (totalRow) totalRow.v[totalRow.v.length - 1] = benefitCumul + mediaCumul;
+
+  return {
+    ...prev,
+    monthId: i.monthId, monthLabel: i.monthLabel, monthShort: i.monthShort,
+    gross: i.gross, expenses, net, pcaShare,
+    transactions: i.transactions, mediaSpend: i.mediaSpend,
+    clientsActifs: i.clientsActifs ?? 0, totalEncaisse: i.totalEncaisse ?? 0,
+    adAccounts: i.adAccounts, marginPct, expenseRatio,
+    prevGross: prev.gross, prevExpenses: prev.expenses, prevNet: prev.net, prevPcaShare: prev.pcaShare,
+    prevTransactions: prev.transactions, prevMediaSpend: prev.mediaSpend,
+    ytdGross: prev.ytdGross + i.gross,
+    ytdExpenses: prev.ytdExpenses + expenses,
+    ytdNet: prev.ytdNet + net,
+    ytdPcaShare: prev.ytdPcaShare + pcaShare,
+    waterfallRows, monthlyTrend, blinkHeaders, blinkRows,
+    ...overrides,
+  };
+}
+
 // ===== MAY 2026 DATA =====
-// Source : Manual_Final_Prime_Circle_Working (Mai 2026 - données partielles).
-// ⚠️ Données partielles : seuls les agrégats top-line sont remontés. Les détails
-// (clients, top spenders, blink, breakdowns) reprennent une structure héritée
-// d'Avril et seront mis à jour à la prochaine clôture mensuelle.
-const mayData: PCAMonthData = {
-  ...aprData,
+// Source : Manual_Final_Prime_Circle_Working (Mai 2026) + relevé banking Mai.
+// ⚠️ Données partielles : les détails clients/top spenders/breakdowns
+// reprennent la structure d'Avril (à mettre à jour à la prochaine clôture).
+const mayData: PCAMonthData = buildMonthData(aprData, {
   monthId: 'may-2026',
   monthLabel: 'Mai 2026',
   monthShort: 'MAI 2026',
-  gross: 69797, expenses: 8841, net: 60956, pcaShare: 30478,
-  transactions: 67, mediaSpend: 1520000, clientsActifs: 0, totalEncaisse: 0, adAccounts: 102,
-  marginPct: 87.3,
-  prevGross: 58853, prevExpenses: 13313, prevNet: 45541, prevPcaShare: 22770,
-  prevTransactions: 184, prevMediaSpend: 1629485,
-  ytdNet: 171815, ytdPcaShare: 85907, ytdGross: 226121, ytdExpenses: 54307,
-  expenseRatio: 12.7,
+  trendKey: 'May-26',
+  gross: 69797,
+  ads: 5893,         // Facebook Ads Mai (confirmé client)
+  otherOpex: 2948,   // reste des charges opérationnelles Mai
+  transactions: 67,
+  mediaSpend: 1520000,
+  ccMedia: 1520000,
+  clMedia: 0,        // pas de media CL en Mai
+  adAccounts: 102,
+  newClients: 67, renewed: 0, upgraded: 0, trial: 0,
+  benefitPaidByPCA: 0,  // Mai non encore payé
+  mediaClPaidByPCA: 0,
+}, {
   riskKPIs: [
     { l: 'Marge Nette', v: '87.3%', s: 'vs 77.4% en Avril (+9.9 pts)', c: C.greenText },
     { l: 'Charges', v: '$8.8K', s: '-34% vs Avril ($13.3K)', c: C.greenText },
@@ -656,34 +784,8 @@ const mayData: PCAMonthData = {
     { label: 'Données partielles Mai', desc: 'Top-line uniquement (gross/net/PCA share). Détails clients, top spenders et Blink en attente du fichier complet.', severity: 'medium', icon: '⏳' },
     { label: 'Marge Nette record 87.3%', desc: '+9.9 pts vs Avril grâce à la forte baisse des charges (-34%).', severity: 'low', icon: '📈' },
   ],
-  waterfallRows: [
-    { l: 'GROSS REVENUE', v: 69797, prev: 58853, bg: 'greenSoft', b: true },
-    { l: 'Ads (Facebook)', v: -5893, prev: -5719, bg: null, b: false },
-    { l: 'Autres charges opérationnelles', v: -2948, prev: -7594, bg: null, b: false },
-    { l: 'TOTAL EXPENSES', v: -8841, prev: -13313, bg: 'redSoft', b: true },
-    { l: 'NET REVENUE', v: 60956, prev: 45541, bg: 'primarySoft', b: true },
-    { l: 'PCA Share (50%)', v: 30478, prev: 22770, bg: 'purpleSoft', b: true },
-    { l: 'PC Retained (50%)', v: 30478, prev: 22770, bg: 'accentSoft', b: true },
-  ],
-  monthlyTrend: [
-    ...aprData.monthlyTrend,
-    { month: 'May-26', gross: 69797, net: 60956, expenses: 8841, media: 1520000, ccMedia: 1520000, clMedia: 0, newClients: 67, renewed: 0, upgraded: 0, trial: 0 },
-  ],
-  blinkHeaders: ["", "Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Cumule"],
-  blinkRows: [
-    { l: "Revenu Net", v: [8648, 26778, 29892, 45541, 60956, 171815], bg: null, b: true, sep: false },
-    { l: "PCA Share (50%)", v: [4324, 13389, 14946, 22770, 30478, 85907], bg: null, b: false, sep: true },
-    { l: "Benefit a payer", v: [4324, 13389, 14946, 22770, 30478, 0], bg: null, b: true, sep: false },
-    { l: "Paye par PCA sur Benefit", v: [4324, 13389, 14946, 0, 0, 0], bg: "greenSoft", b: false, sep: false },
-    { l: "Solde Benefit mensuel", v: [0, 0, 0, 22770, 30478, 0], bg: null, b: false, sep: false },
-    { l: "Solde Benefit du (cumule)", v: [0, 0, 0, 0, 0, 53248], bg: "redSoft", b: true, sep: true },
-    { l: "Media CL a payer", v: [21009, 210984, 161343, 43125, 0, 0], bg: null, b: false, sep: false },
-    { l: "Paye par PCA sur Media", v: [21009, 210984, 161343, 24827, 0, 0], bg: "greenSoft", b: false, sep: false },
-    { l: "Solde Media mensuel", v: [0, 0, 0, 18298, 0, 0], bg: null, b: false, sep: false },
-    { l: "Solde Media du (cumule)", v: [0, 0, 0, 0, 0, 18298], bg: "redSoft", b: true, sep: true },
-    { l: "Total Cumule du a Blink", v: [0, 0, 0, 0, 0, 71546], bg: "primarySoft", b: true, sep: false },
-  ],
-};
+});
+
 
 const monthDataMap: Record<PCAMonthId, PCAMonthData> = {
   'jan-2026': janData,
