@@ -577,8 +577,8 @@ const mayData: PCMonthData = {
   kpis: {
     totalCustomers: 42,
     totalTurnover: 56780,
-    netProfit: 34569,        // 56 780 − COGS 13 210 − ADS 0 − Sales comm 8 714 − Bank 287
-    netMarginRate: 60.9,
+    netProfit: 30050,        // 56 780 − COGS 13 210 − ADS 5 957 − Sales comm 7 523 − Bank 50
+    netMarginRate: 52.9,
     completedServices: 28,
     inProgressServices: 13,
     cancelledServices: 0,
@@ -588,16 +588,16 @@ const mayData: PCMonthData = {
     prevMonthLabel: 'Avr',
     customers: { prev: 50, cur: 42, diff: -8, pct: -16.0 },
     turnover: { prev: 70875, cur: 56780, diff: -14095, pct: -19.9 },
-    netProfit: { prev: 38536, cur: 34569, diff: -3967, pct: -10.3, direction: 'negative' },
+    netProfit: { prev: 38536, cur: 30050, diff: -8486, pct: -22.0, direction: 'negative' },
     completed: { prev: 41, cur: 28, diff: -13, pct: -31.7 },
   },
   ytdData: {
     customers: 235,
     turnover: 309267,
-    netProfit: 164268,
-    netMarginRate: 53.1,
-    costs: 144999,
-    costsPct: 46.9,
+    netProfit: 159749,
+    netMarginRate: 51.7,
+    costs: 149518,
+    costsPct: 48.3,
     avgPerMonth: 61853,
   },
   monthlyComparison: [
@@ -606,17 +606,18 @@ const mayData: PCMonthData = {
     { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
     { month: 'March 2026', customers: 51, turnover: 55000, totalCosts: 25394, netProfit: 29606, netMarginRate: 53.8, varProfit: 40.7, varProfitDirection: 'positive' },
     { month: 'April 2026', customers: 50, turnover: 70875, totalCosts: 32339, netProfit: 38536, netMarginRate: 54.4, varProfit: 30.2, varProfitDirection: 'positive' },
-    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 22211, netProfit: 34569, netMarginRate: 60.9, varProfit: -10.3, varProfitDirection: 'negative' },
+    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 26730, netProfit: 30050, netMarginRate: 52.9, varProfit: -22.0, varProfitDirection: 'negative' },
   ],
   costs: {
     productProviderCosts: 13210,
     productProviderDetail: 'COGS implicites (TO 56 780 − marge brute 43 570)',
-    advertising: 0,
-    advertisingDetail: 'ADS Mai = 0 (case vide dans Banking_Customers_2026)',
-    salesCommission: 8714,
-    bankFees: 287,
-    total: 22211,
+    advertising: 5957,
+    advertisingDetail: 'Facebook Ads Mai 2026 — 12 charges Slash Credit Statement (11×527 + 159.67)',
+    salesCommission: 7523,
+    bankFees: 50,
+    total: 26740,
   },
+
 
   serviceCategories: [
     { name: 'LLC Services', value: 12010 },
