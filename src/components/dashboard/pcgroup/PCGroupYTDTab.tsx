@@ -197,6 +197,7 @@ export function PCGroupYTDTab({ data }: Props) {
                   <td style={hlCell('feb', { textAlign: 'right', color: '#EF4444' })}>{reservesEntityTotal.feb ? `-${reservesEntityTotal.feb}` : '—'}</td>
                   {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).mar ? `-${(reservesEntityTotal as any).mar}` : '—'}</td>}
                   {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).avr ? `-${(reservesEntityTotal as any).avr}` : '—'}</td>}
+                  {hasMai && <td style={hlCell('mai', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).mai ? `-${(reservesEntityTotal as any).mai}` : '—'}</td>}
                   <td style={{ textAlign: 'right', color: '#EF4444' }}>-{reservesEntityTotal.ytd}</td>
                 </tr>
                 <tr style={{ fontWeight: 600 }}>
@@ -205,6 +206,7 @@ export function PCGroupYTDTab({ data }: Props) {
                   <td style={hlCell('feb', { textAlign: 'right', color: '#10B981' })}>{calcRemontee(ytdEntityTotal.feb || '', reservesEntityTotal.feb || '')}</td>
                   {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).mar || '', (reservesEntityTotal as any).mar || '')}</td>}
                   {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).avr || '', (reservesEntityTotal as any).avr || '')}</td>}
+                  {hasMai && <td style={hlCell('mai', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).mai || '', (reservesEntityTotal as any).mai || '')}</td>}
                   <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.ytd, reservesEntityTotal.ytd)}</td>
                 </tr>
               </tbody>
