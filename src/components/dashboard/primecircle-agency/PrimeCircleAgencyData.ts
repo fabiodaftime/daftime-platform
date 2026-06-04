@@ -667,7 +667,7 @@ const mayData: PCAMonthData = {
   ],
   monthlyTrend: [
     ...aprData.monthlyTrend,
-    { month: 'May-26', gross: 69797, net: 60956, expenses: 8841, media: 1520000, ccMedia: 0, clMedia: 0, newClients: 0, renewed: 0, upgraded: 0, trial: 0 },
+    { month: 'May-26', gross: 69797, net: 60956, expenses: 8841, media: 1520000, ccMedia: 1520000, clMedia: 0, newClients: 67, renewed: 0, upgraded: 0, trial: 0 },
   ],
 };
 
