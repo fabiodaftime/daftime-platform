@@ -1,6 +1,6 @@
 // Prime Circle Group - Consolidated Dashboard Data - Multi-Month
 
-export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
+export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 
 // Canonical labels per month id.
 const PCG_MONTH_LABELS: Record<MonthId, string> = {
@@ -8,6 +8,7 @@ const PCG_MONTH_LABELS: Record<MonthId, string> = {
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
   'apr-2026': 'Avril 2026',
+  'may-2026': 'Mai 2026 (partiel)',
 };
 
 // PC_GROUP_AVAILABLE_MONTHS is computed dynamically as the INTERSECTION of
