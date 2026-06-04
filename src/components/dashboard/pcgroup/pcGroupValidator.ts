@@ -18,12 +18,13 @@ import {
 import { MANUAL_ENTITIES } from './manualEntities';
 import { computeConsolidatedFacts, diagnoseMonth } from './pcGroupAggregator';
 
-const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
 const MONTH_LABELS: Record<PCGSourceMonthId, string> = {
   'jan-2026': 'Janvier 2026',
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
   'apr-2026': 'Avril 2026',
+  'may-2026': 'Mai 2026',
 };
 
 // Expected consolidated totals frozen from the legacy PCGroupData.ts blocks.

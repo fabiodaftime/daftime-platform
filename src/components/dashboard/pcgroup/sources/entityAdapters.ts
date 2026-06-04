@@ -100,7 +100,7 @@ export function digitFacts(month: PCGSourceMonthId): EntityFacts | null {
 }
 
 // ---------- AVAILABLE MONTHS = intersection of the three ----------
-const ALL_MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const ALL_MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
 
 export function getAvailableSourceMonths(): PCGSourceMonthId[] {
   return ALL_MONTHS.filter(

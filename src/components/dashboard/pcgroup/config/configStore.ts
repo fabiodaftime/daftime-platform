@@ -26,8 +26,9 @@ const DEFAULT_CONFIG: PCGroupConfig = {
     { id: 'd-feb', month_id: 'feb-2026', label: 'Février 2026', short_label: 'fév', year: 2026, month_num: 2, is_active: true, display_order: 2 },
     { id: 'd-mar', month_id: 'mar-2026', label: 'Mars 2026',    short_label: 'mar', year: 2026, month_num: 3, is_active: true, display_order: 3 },
     { id: 'd-apr', month_id: 'apr-2026', label: 'Avril 2026',   short_label: 'avr', year: 2026, month_num: 4, is_active: true, display_order: 4 },
+    { id: 'd-may', month_id: 'may-2026', label: 'Mai 2026',     short_label: 'mai', year: 2026, month_num: 5, is_active: true, display_order: 5 },
   ],
-  rules: ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'].map((m, i) => ({
+  rules: ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'].map((m, i) => ({
     id: `d-rule-${i}`,
     month_id: m,
     reserves_pct: 10,
@@ -46,6 +47,8 @@ const DEFAULT_CONFIG: PCGroupConfig = {
     { id: 'd-mf6', month_id: 'mar-2026', entity_code: 'comment', ca:   861, charges:   158, contribution:  703, margin_pct: 81.6, deals: 20, warning: 'Rebond significatif vs Février. Marge nette excellente à 81.6%.' },
     { id: 'd-mf7', month_id: 'apr-2026', entity_code: 'spy',     ca: 38450, charges: 35352, contribution: 3098, margin_pct:  8.1, deals: 5,  warning: null },
     { id: 'd-mf8', month_id: 'apr-2026', entity_code: 'comment', ca:   438, charges:   174, contribution:  264, margin_pct: 60.3, deals: 20, warning: 'Activité résiduelle. CA quasi nul vs Mars.' },
+    { id: 'd-mf9',  month_id: 'may-2026', entity_code: 'spy',     ca:     0, charges:     0, contribution:    0, margin_pct:  0,   deals: 0,  warning: 'Aucune donnée transmise pour Mai (entité indépendante).' },
+    { id: 'd-mf10', month_id: 'may-2026', entity_code: 'comment', ca:   489, charges:   209, contribution:  280, margin_pct: 57.3, deals: 20, warning: 'CA en légère hausse vs Avril (+11.7%).' },
   ],
   holdingFacts: [
     { id: 'd-h1', month_id: 'jan-2026', frais_total:  7060, frais_detail: [
@@ -69,6 +72,13 @@ const DEFAULT_CONFIG: PCGroupConfig = {
       { label: 'Frais Paddel (non remboursés)', amount: 80 },
     ], apport_maxence: 0 },
     { id: 'd-h4', month_id: 'apr-2026', frais_total:  8298, frais_detail: [
+      { label: 'CFO + Compta Groupe', amount: 3430 },
+      { label: 'AI Agent', amount: 2000 },
+      { label: 'Salaire Fixe Sales', amount: 2000 },
+      { label: 'Tools', amount: 780 },
+      { label: 'Frais Bancaires', amount: 88 },
+    ], apport_maxence: 0 },
+    { id: 'd-h5', month_id: 'may-2026', frais_total:  8298, frais_detail: [
       { label: 'CFO + Compta Groupe', amount: 3430 },
       { label: 'AI Agent', amount: 2000 },
       { label: 'Salaire Fixe Sales', amount: 2000 },

@@ -55,4 +55,5 @@ export const SUPPORTED_MONTHS = [
   { id: 'feb-2026', label: 'Février 2026' },
   { id: 'mar-2026', label: 'Mars 2026' },
   { id: 'apr-2026', label: 'Avril 2026' },
+  { id: 'may-2026', label: 'Mai 2026' },
 ] as const;

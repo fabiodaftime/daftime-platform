@@ -14,18 +14,20 @@ const MAXSCALE_MONTHS: PCGSourceMonthId[] = ['jan-2026', 'feb-2026'];
 const DG_PHASE_FROM = 'mar-2026' as PCGSourceMonthId;
 const TRANSFER_RATE = 0.9;
 
-const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
 const MONTH_SHORT: Record<PCGSourceMonthId, string> = {
   'jan-2026': 'Jan',
   'feb-2026': 'Fév',
   'mar-2026': 'Mars',
   'apr-2026': 'Avril',
+  'may-2026': 'Mai',
 };
 const MONTH_LONG: Record<PCGSourceMonthId, string> = {
   'jan-2026': 'Janvier 2026',
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
   'apr-2026': 'Avril 2026',
+  'may-2026': 'Mai 2026',
 };
 
 const usd = (n: number) => fmtUSD(Math.round(n));

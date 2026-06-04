@@ -133,9 +133,10 @@ const MONTH_LABELS: Record<PCGSourceMonthId, string> = {
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
   'apr-2026': 'Avril 2026',
+  'may-2026': 'Mai 2026',
 };
 
-const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const MONTH_ORDER: PCGSourceMonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
 
 export function computeYTD(uptoMonth: PCGSourceMonthId): YTDFacts {
   const idx = MONTH_ORDER.indexOf(uptoMonth);
