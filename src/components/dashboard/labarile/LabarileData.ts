@@ -201,23 +201,25 @@ export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
   {
     month: 'MARS 2026',
     revenue: 921486,
-    actual: { coaches: 150714, marketing: 226633, it: 14601, stripe: 61887, admin: 115310, autres: 140097 },
+    actual: { coaches: 165714, marketing: 226633, it: 14601, stripe: 61887, admin: 115310, autres: 140097 },
     commentType: 'critical',
     commentTitle: '💬 Commentaires Mars:',
     comments: [
       '⚠️ Bad Debt 139.4k AED comptabilisé ce mois — créance irrécouvrable, à investiguer.',
       '⚠️ Masse salariale élevée (94k) + Coach-Consultant 81k.',
-      '⚠️ Marge EBITDA ~23% — pénalisée par le Bad Debt et l\'admin.',
+      '🔧 Retraitement call 18/05 : +15k AED Coaches (provision Yazid — closing Mars, payé en Mai à création de sa structure).',
+      '⚠️ Marge EBITDA ~21% — pénalisée par le Bad Debt, l\'admin et la provision Yazid.',
     ],
   },
   {
     month: 'AVRIL 2026',
     revenue: 933471,
-    actual: { coaches: 145547, marketing: 231928, it: 8442, stripe: 46861, admin: 64167, autres: -83 },
+    actual: { coaches: 160547, marketing: 231928, it: 8442, stripe: 46861, admin: 64167, autres: -83 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Avril:',
     comments: [
-      '✅ Meilleur mois 2026 en marge : CA 933 k AED, marge EBITDA ~47%.',
+      '🔧 Retraitement call 18/05 : +15k AED Coaches (provision Yazid — closing Avril, payé en Mai à création de sa structure).',
+      '✅ Meilleur mois 2026 en marge : CA 933 k AED, marge EBITDA ~46%.',
     ],
   },
 ];
