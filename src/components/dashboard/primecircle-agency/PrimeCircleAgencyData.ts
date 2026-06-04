@@ -629,11 +629,45 @@ const aprData: PCAMonthData = {
   ],
 };
 
+// ===== MAY 2026 DATA =====
+// Source : Manual_Final_Prime_Circle_Working (Mai 2026 - données partielles).
+// ⚠️ Données partielles : seuls les agrégats top-line sont remontés. Les détails
+// (clients, top spenders, blink, breakdowns) reprennent une structure héritée
+// d'Avril et seront mis à jour à la prochaine clôture mensuelle.
+const mayData: PCAMonthData = {
+  ...aprData,
+  monthId: 'may-2026',
+  monthLabel: 'Mai 2026',
+  monthShort: 'MAI 2026',
+  gross: 69797, expenses: 8841, net: 60956, pcaShare: 30478,
+  transactions: 67, mediaSpend: 1520000, clientsActifs: 0, totalEncaisse: 0, adAccounts: 102,
+  marginPct: 87.3,
+  prevGross: 58853, prevExpenses: 13313, prevNet: 45541, prevPcaShare: 22770,
+  prevTransactions: 184, prevMediaSpend: 1629485,
+  ytdNet: 171815, ytdPcaShare: 85907, ytdGross: 226121, ytdExpenses: 54307,
+  expenseRatio: 12.7,
+  riskKPIs: [
+    { l: 'Marge Nette', v: '87.3%', s: 'vs 77.4% en Avril (+9.9 pts)', c: C.greenText },
+    { l: 'Charges', v: '$8.8K', s: '-34% vs Avril ($13.3K)', c: C.greenText },
+    { l: 'Données détaillées', v: 'Partielles', s: 'En attente du détail Blink/clients Mai', c: C.orangeText },
+    { l: 'PCA Share (50%)', v: '$30.5K', s: '+34% vs Avril ($22.8K)', c: C.greenText },
+  ],
+  risks: [
+    { label: 'Données partielles Mai', desc: 'Top-line uniquement (gross/net/PCA share). Détails clients, top spenders et Blink en attente du fichier complet.', severity: 'medium', icon: '⏳' },
+    { label: 'Marge Nette record 87.3%', desc: '+9.9 pts vs Avril grâce à la forte baisse des charges (-34%).', severity: 'low', icon: '📈' },
+  ],
+  monthlyTrend: [
+    ...aprData.monthlyTrend,
+    { month: 'May-26', gross: 69797, net: 60956, expenses: 8841, media: 1520000, ccMedia: 0, clMedia: 0, newClients: 0, renewed: 0, upgraded: 0, trial: 0 },
+  ],
+};
+
 const monthDataMap: Record<PCAMonthId, PCAMonthData> = {
   'jan-2026': janData,
   'feb-2026': febData,
   'mar-2026': marData,
   'apr-2026': aprData,
+  'may-2026': mayData,
 };
 
 export function getPCAMonthData(monthId: PCAMonthId): PCAMonthData {
