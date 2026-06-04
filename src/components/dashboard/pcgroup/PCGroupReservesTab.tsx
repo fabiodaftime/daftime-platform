@@ -4,6 +4,10 @@ interface Props { data: PCGroupMonthData; }
 
 export function PCGroupReservesTab({ data }: Props) {
   const { reservesHero, reservesEntityTable, reservesEntityTotal, reservesCards } = data;
+  const total = reservesEntityTotal as any;
+  const hasMar = Boolean(total.mar) || reservesEntityTable.some((r: any) => r.mar);
+  const hasAvr = Boolean(total.avr) || reservesEntityTable.some((r: any) => r.avr);
+  const hasMai = Boolean(total.mai) || reservesEntityTable.some((r: any) => r.mai);
 
   return (
     <div>
@@ -27,14 +31,30 @@ export function PCGroupReservesTab({ data }: Props) {
         <div className="pcg-section-body">
           <table className="pcg-comparison-table">
             <thead>
-              <tr><th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th><th>Cumul YTD</th></tr>
+              <tr>
+                <th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th>
+                {hasMar && <th>Réserve Mars</th>}
+                {hasAvr && <th>Réserve Avril</th>}
+                {hasMai && <th>Réserve Mai</th>}
+                <th>Cumul YTD</th>
+              </tr>
             </thead>
             <tbody>
-              {reservesEntityTable.map((row, i) => (
-                <tr key={i}><td>{row.entity}</td><td>{row.jan}</td><td>{row.feb}</td><td>{row.ytd}</td></tr>
+              {reservesEntityTable.map((row: any, i) => (
+                <tr key={i}>
+                  <td>{row.entity}</td><td>{row.jan ?? '—'}</td><td>{row.feb ?? '—'}</td>
+                  {hasMar && <td>{row.mar ?? '—'}</td>}
+                  {hasAvr && <td>{row.avr ?? '—'}</td>}
+                  {hasMai && <td>{row.mai ?? '—'}</td>}
+                  <td>{row.ytd}</td>
+                </tr>
               ))}
               <tr className="pcg-comparison-total">
-                <td>{reservesEntityTotal.entity}</td><td>{reservesEntityTotal.jan}</td><td>{reservesEntityTotal.feb}</td><td>{reservesEntityTotal.ytd}</td>
+                <td>{total.entity}</td><td>{total.jan ?? '—'}</td><td>{total.feb ?? '—'}</td>
+                {hasMar && <td>{total.mar ?? '—'}</td>}
+                {hasAvr && <td>{total.avr ?? '—'}</td>}
+                {hasMai && <td>{total.mai ?? '—'}</td>}
+                <td>{total.ytd}</td>
               </tr>
             </tbody>
           </table>

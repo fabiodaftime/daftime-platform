@@ -113,17 +113,25 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
         const total = overviewComparisonTotal as PCGOverviewComparisonRow;
         const hasMar = Boolean(total.mar) || rows.some((r) => Boolean(r.mar));
         const hasAvr = Boolean(total.avr) || rows.some((r) => Boolean(r.avr));
+        const hasMai = Boolean(total.mai) || rows.some((r) => Boolean(r.mai));
         const hasYtd = Boolean(total.ytd) || rows.some((r) => Boolean(r.ytd));
-        const variationLabel = hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
-        const title = hasAvr
-          ? '📊 Comparatif Janvier / Février / Mars / Avril 2026'
-          : hasMar
-            ? '📊 Comparatif Janvier / Février / Mars 2026'
-            : '📊 Comparatif Janvier vs Février 2026';
+        const variationLabel = hasMai
+          ? ' (Avril→Mai)'
+          : hasAvr
+            ? ' (Mars→Avril)'
+            : hasMar ? ' (Fév→Mars)' : '';
+        const title = hasMai
+          ? '📊 Comparatif Janvier / Février / Mars / Avril / Mai 2026'
+          : hasAvr
+            ? '📊 Comparatif Janvier / Février / Mars / Avril 2026'
+            : hasMar
+              ? '📊 Comparatif Janvier / Février / Mars 2026'
+              : '📊 Comparatif Janvier vs Février 2026';
         const mappingHeaders = [
           'Entité', 'Janvier', 'Février',
           ...(hasMar ? ['Mars'] : []),
           ...(hasAvr ? ['Avril'] : []),
+          ...(hasMai ? ['Mai'] : []),
           `Variation${variationLabel}`,
           ...(hasYtd ? ['YTD'] : []),
         ];
@@ -143,6 +151,7 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
                     <th>Entité</th><th>Janvier</th><th>Février</th>
                     {hasMar && <th>Mars</th>}
                     {hasAvr && <th>Avril</th>}
+                    {hasMai && <th>Mai</th>}
                     <th>Variation{variationLabel}</th>
                     {hasYtd && <th>YTD</th>}
                   </tr>
@@ -155,6 +164,7 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
                       <td>{cell(row.feb)}</td>
                       {hasMar && <td>{cell(row.mar)}</td>}
                       {hasAvr && <td>{cell(row.avr)}</td>}
+                      {hasMai && <td>{cell(row.mai)}</td>}
                       <td className={`pcg-var-${row.varType}`}>{cell(row.variation)}</td>
                       {hasYtd && <td>{cell(row.ytd)}</td>}
                     </tr>
@@ -165,6 +175,7 @@ export function PCGroupOverviewTab({ data, entityRoutes, monthId, entitiesCount 
                     <td>{cell(total.feb)}</td>
                     {hasMar && <td>{cell(total.mar)}</td>}
                     {hasAvr && <td>{cell(total.avr)}</td>}
+                    {hasMai && <td>{cell(total.mai)}</td>}
                     <td className={`pcg-var-${total.varType}`}>{cell(total.variation)}</td>
                     {hasYtd && <td>{cell(total.ytd)}</td>}
                   </tr>

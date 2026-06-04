@@ -35,17 +35,21 @@ export function PCGroupStructuringTab({ data, entityRoutes }: Props) {
       {structuringComparison && (() => {
         const rows = structuringComparison as PCGComparisonRow[];
         const hasMar = rows.some((r) => Boolean(r.mar));
-        const hasAvr = rows.some((r) => Boolean((r as any).avr));
+        const hasAvr = rows.some((r) => Boolean(r.avr));
+        const hasMai = rows.some((r) => Boolean(r.mai));
         const hasYtd = rows.some((r) => Boolean(r.ytd));
-        const variationLabel = hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
-        const titleSuffix = hasAvr
-          ? 'Janvier / Février / Mars / Avril 2026'
-          : hasMar
-            ? 'Janvier / Février / Mars 2026'
-            : 'M-1';
+        const variationLabel = hasMai ? ' (Avril→Mai)' : hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
+        const titleSuffix = hasMai
+          ? 'Janvier / Février / Mars / Avril / Mai 2026'
+          : hasAvr
+            ? 'Janvier / Février / Mars / Avril 2026'
+            : hasMar
+              ? 'Janvier / Février / Mars 2026'
+              : 'M-1';
         const headers = ['Indicateur', 'Janvier', 'Février',
           ...(hasMar ? ['Mars'] : []),
           ...(hasAvr ? ['Avril'] : []),
+          ...(hasMai ? ['Mai'] : []),
           `Variation${variationLabel}`,
           ...(hasYtd ? ['YTD'] : [])];
         return (
@@ -56,10 +60,11 @@ export function PCGroupStructuringTab({ data, entityRoutes }: Props) {
             rows={rows.map((r) => {
               const cells = [r.indicator, cell(r.jan), cell(r.feb),
                 ...(hasMar ? [cell(r.mar)] : []),
-                ...(hasAvr ? [cell((r as any).avr)] : []),
+                ...(hasAvr ? [cell(r.avr)] : []),
+                ...(hasMai ? [cell(r.mai)] : []),
                 cell(r.variation),
                 ...(hasYtd ? [cell(r.ytd)] : [])];
-              return { cells, varIndex: 3 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0), varType: r.varType };
+              return { cells, varIndex: 3 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0) + (hasMai ? 1 : 0), varType: r.varType };
             })}
           />
         );

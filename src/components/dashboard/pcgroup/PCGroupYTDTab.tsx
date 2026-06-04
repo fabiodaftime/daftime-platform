@@ -8,24 +8,28 @@ export function PCGroupYTDTab({ data }: Props) {
 
   const hasMar = Boolean((ytdEntityTotal as any).mar);
   const hasAvr = Boolean((ytdEntityTotal as any).avr);
-  const monthsCount = 2 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0);
+  const hasMai = Boolean((ytdEntityTotal as any).mai);
+  const monthsCount = 2 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0) + (hasMai ? 1 : 0);
   const colSpan = monthsCount + 2; // label + months + ytd
-  const titleSuffix = hasAvr
-    ? 'Janvier / Février / Mars / Avril / YTD 2026'
-    : hasMar
-      ? 'Janvier / Février / Mars / YTD 2026'
-      : 'Janvier / Février / YTD 2026';
+  const titleSuffix = hasMai
+    ? 'Janvier / Février / Mars / Avril / Mai / YTD 2026'
+    : hasAvr
+      ? 'Janvier / Février / Mars / Avril / YTD 2026'
+      : hasMar
+        ? 'Janvier / Février / Mars / YTD 2026'
+        : 'Janvier / Février / YTD 2026';
 
   // Mois courant = dernier mois renseigné
-  const currentKey: 'jan' | 'feb' | 'mar' | 'avr' = hasAvr ? 'avr' : hasMar ? 'mar' : 'feb';
-  const currentLabel = { jan: 'Janvier', feb: 'Février', mar: 'Mars', avr: 'Avril' }[currentKey];
+  type MKey = 'jan' | 'feb' | 'mar' | 'avr' | 'mai';
+  const currentKey: MKey = hasMai ? 'mai' : hasAvr ? 'avr' : hasMar ? 'mar' : 'feb';
+  const currentLabel = { jan: 'Janvier', feb: 'Février', mar: 'Mars', avr: 'Avril', mai: 'Mai' }[currentKey];
   const HL_BG = 'rgba(212, 168, 85, 0.12)';
   const HL_BORDER = '2px solid var(--pcg-gold)';
-  const hlCell = (key: 'jan' | 'feb' | 'mar' | 'avr', extra: React.CSSProperties = {}): React.CSSProperties =>
+  const hlCell = (key: MKey, extra: React.CSSProperties = {}): React.CSSProperties =>
     key === currentKey
       ? { background: HL_BG, borderLeft: HL_BORDER, borderRight: HL_BORDER, ...extra }
       : extra;
-  const hlHeader = (key: 'jan' | 'feb' | 'mar' | 'avr'): React.CSSProperties =>
+  const hlHeader = (key: MKey): React.CSSProperties =>
     key === currentKey
       ? {
           textAlign: 'right',
@@ -43,6 +47,7 @@ export function PCGroupYTDTab({ data }: Props) {
       <td style={hlCell('feb', { textAlign: 'right', color: color ?? undefined })}>{row.feb ?? '—'}</td>
       {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: color ?? undefined })}>{row.mar ?? '—'}</td>}
       {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: color ?? undefined })}>{row.avr ?? '—'}</td>}
+      {hasMai && <td style={hlCell('mai', { textAlign: 'right', color: color ?? undefined })}>{row.mai ?? '—'}</td>}
     </>
   );
 
@@ -160,6 +165,7 @@ export function PCGroupYTDTab({ data }: Props) {
                   <th style={hlHeader('feb')}>Février</th>
                   {hasMar && <th style={hlHeader('mar')}>Mars</th>}
                   {hasAvr && <th style={hlHeader('avr')}>Avril</th>}
+                  {hasMai && <th style={hlHeader('mai')}>Mai</th>}
                   <th style={{ textAlign: 'right' }}>YTD 2026</th>
                 </tr>
               </thead>
@@ -191,6 +197,7 @@ export function PCGroupYTDTab({ data }: Props) {
                   <td style={hlCell('feb', { textAlign: 'right', color: '#EF4444' })}>{reservesEntityTotal.feb ? `-${reservesEntityTotal.feb}` : '—'}</td>
                   {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).mar ? `-${(reservesEntityTotal as any).mar}` : '—'}</td>}
                   {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).avr ? `-${(reservesEntityTotal as any).avr}` : '—'}</td>}
+                  {hasMai && <td style={hlCell('mai', { textAlign: 'right', color: '#EF4444' })}>{(reservesEntityTotal as any).mai ? `-${(reservesEntityTotal as any).mai}` : '—'}</td>}
                   <td style={{ textAlign: 'right', color: '#EF4444' }}>-{reservesEntityTotal.ytd}</td>
                 </tr>
                 <tr style={{ fontWeight: 600 }}>
@@ -199,6 +206,7 @@ export function PCGroupYTDTab({ data }: Props) {
                   <td style={hlCell('feb', { textAlign: 'right', color: '#10B981' })}>{calcRemontee(ytdEntityTotal.feb || '', reservesEntityTotal.feb || '')}</td>
                   {hasMar && <td style={hlCell('mar', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).mar || '', (reservesEntityTotal as any).mar || '')}</td>}
                   {hasAvr && <td style={hlCell('avr', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).avr || '', (reservesEntityTotal as any).avr || '')}</td>}
+                  {hasMai && <td style={hlCell('mai', { textAlign: 'right', color: '#10B981' })}>{calcRemontee((ytdEntityTotal as any).mai || '', (reservesEntityTotal as any).mai || '')}</td>}
                   <td style={{ textAlign: 'right', color: '#10B981' }}>{calcRemontee(ytdEntityTotal.ytd, reservesEntityTotal.ytd)}</td>
                 </tr>
               </tbody>
@@ -224,6 +232,7 @@ export function PCGroupYTDTab({ data }: Props) {
                     <th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th>
                     {hasMar && <th>Réserve Mars</th>}
                     {hasAvr && <th>Réserve Avril</th>}
+                    {hasMai && <th>Réserve Mai</th>}
                     <th>Cumul YTD</th>
                   </tr>
                 </thead>
@@ -233,6 +242,7 @@ export function PCGroupYTDTab({ data }: Props) {
                       <td>{row.entity}</td><td>{row.jan ?? '—'}</td><td>{row.feb ?? '—'}</td>
                       {hasMar && <td>{row.mar ?? '—'}</td>}
                       {hasAvr && <td>{row.avr ?? '—'}</td>}
+                      {hasMai && <td>{row.mai ?? '—'}</td>}
                       <td>{row.ytd}</td>
                     </tr>
                   ))}
@@ -240,6 +250,7 @@ export function PCGroupYTDTab({ data }: Props) {
                     <td>{reservesEntityTotal.entity}</td><td>{reservesEntityTotal.jan ?? '—'}</td><td>{reservesEntityTotal.feb ?? '—'}</td>
                     {hasMar && <td>{(reservesEntityTotal as any).mar ?? '—'}</td>}
                     {hasAvr && <td>{(reservesEntityTotal as any).avr ?? '—'}</td>}
+                    {hasMai && <td>{(reservesEntityTotal as any).mai ?? '—'}</td>}
                     <td>{reservesEntityTotal.ytd}</td>
                   </tr>
                 </tbody>
