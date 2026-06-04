@@ -13,10 +13,9 @@ const MAY_2026: ManualMonthFile = {
     comment: { ca: 489, margeNette: 280, charges: 209, marginPct: 57.3, deals: 20 },
     commentWarning: 'CA en légère hausse vs Avril (+11.7%). SPY : 0 confirmé pour Mai (Récap_Finance).',
     holding: {
-      fraisTotal: 10838,
+      fraisTotal: 8838,
       fraisDetail: [
         { label: 'CFO + Compta Groupe', amount: 3430 },
-        { label: 'AI Agent', amount: 2000 },
         { label: 'Salaire Fixe Sales', amount: 2000 },
         { label: 'Tools', amount: 780 },
         { label: 'Travel Expenses', amount: 2486 },
