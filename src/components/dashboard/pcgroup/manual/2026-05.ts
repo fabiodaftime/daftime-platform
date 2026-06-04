@@ -1,7 +1,9 @@
 // Source de vérité — Mai 2026.
-// SPY : aucune donnée transmise (entité indépendante — à compléter).
+// SPY : 0 confirmé (Récap_Finance marque 0 pour mai).
 // Comment/Trust : reflète DigitData MAY overviewProducts.
 // Frais holding Mai : base récurrente + Travel 2486 + Bank Fees 56 + Oh My Desk 86.
+// Intercos mai : encaissés début mai (183 500 + 146 800 AED) — déjà
+// enregistrés dans le suivi des remontées d'Avril (note "mai 2026").
 import type { ManualMonthFile } from './types';
 
 const MAY_2026: ManualMonthFile = {
