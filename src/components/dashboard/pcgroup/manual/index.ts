@@ -12,8 +12,9 @@ import JAN_2026 from './2026-01';
 import FEB_2026 from './2026-02';
 import MAR_2026 from './2026-03';
 import APR_2026 from './2026-04';
+import MAY_2026 from './2026-05';
 
-const MONTH_FILES: ManualMonthFile[] = [JAN_2026, FEB_2026, MAR_2026, APR_2026];
+const MONTH_FILES: ManualMonthFile[] = [JAN_2026, FEB_2026, MAR_2026, APR_2026, MAY_2026];
 
 export const MANUAL_ENTITIES: Partial<Record<PCGSourceMonthId, ManualMonthExtras>> =
   Object.fromEntries(MONTH_FILES.map((f) => [f.monthId, f.extras])) as Partial<
