@@ -1,6 +1,6 @@
 // Prime Circle Group - Consolidated Dashboard Data - Multi-Month
 
-export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
+export type MonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 
 // Canonical labels per month id.
 const PCG_MONTH_LABELS: Record<MonthId, string> = {
@@ -8,6 +8,7 @@ const PCG_MONTH_LABELS: Record<MonthId, string> = {
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
   'apr-2026': 'Avril 2026',
+  'may-2026': 'Mai 2026 (partiel)',
 };
 
 // PC_GROUP_AVAILABLE_MONTHS is computed dynamically as the INTERSECTION of
@@ -1046,6 +1047,14 @@ const APR_2026 = {
   footerLabel: 'Avril 2026',
 };
 
+// ============ MAY 2026 (scaffold partiel — entity tabs hérités d'Avril ;
+// KPIs/YTD/Holding sont recalculés à partir des sources mises à jour). =========
+const MAY_2026 = {
+  ...MAR_2026,
+  monthLabel: 'Mai 2026 (partiel)',
+  footerLabel: 'Mai 2026 (partiel)',
+};
+
 export function getMonthData(month: MonthId): PCGroupMonthData {
   const base =
     month === 'jan-2026'
@@ -1054,7 +1063,9 @@ export function getMonthData(month: MonthId): PCGroupMonthData {
         ? (MAR_2026 as PCGroupMonthData)
         : month === 'apr-2026'
           ? (APR_2026 as PCGroupMonthData)
-          : FEB_2026;
+          : month === 'may-2026'
+            ? (MAY_2026 as PCGroupMonthData)
+            : FEB_2026;
   return applyComputedOverlay(month, base);
 }
 
@@ -1066,7 +1077,7 @@ export { agencyFacts, structuringFacts, digitFacts, getAvailableSourceMonths } f
 import { getAvailableSourceMonths as _getAvailable } from './sources/entityAdapters';
 import { MANUAL_ENTITIES } from './manualEntities';
 
-const ALL_MONTH_KEYS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const ALL_MONTH_KEYS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
 
 export interface PCGroupAvailableMonth {
   id: MonthId;

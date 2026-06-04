@@ -398,18 +398,20 @@ import { fmtUSDk } from './pcGroupFormatters';
 import { computeIntercos } from './pcGroupIntercosCompute';
 import type { PCGroupMonthData, PCGComparisonRow, PCGOverviewComparisonRow, MonthId } from './PCGroupData';
 
-const BUILD_MONTH_KEYS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026'];
+const BUILD_MONTH_KEYS: MonthId[] = ['jan-2026', 'feb-2026', 'mar-2026', 'apr-2026', 'may-2026'];
 const BUILD_MONTH_SHORT: Record<MonthId, string> = {
   'jan-2026': 'Janvier',
   'feb-2026': 'Février',
   'mar-2026': 'Mars',
   'apr-2026': 'Avril',
+  'may-2026': 'Mai',
 };
-const BUILD_MONTH_KEY: Record<MonthId, 'jan' | 'feb' | 'mar' | 'avr'> = {
+const BUILD_MONTH_KEY: Record<MonthId, 'jan' | 'feb' | 'mar' | 'avr' | 'mai'> = {
   'jan-2026': 'jan',
   'feb-2026': 'feb',
   'mar-2026': 'mar',
   'apr-2026': 'avr',
+  'may-2026': 'mai',
 };
 
 const BUILD_ENTITY_META = [
