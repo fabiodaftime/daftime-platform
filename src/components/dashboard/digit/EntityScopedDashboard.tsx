@@ -22,7 +22,9 @@ type TabId = 'overview' | 'ytd' | 'revenue' | 'holding';
 export function EntityScopedDashboard({ scope, entityId }: Props) {
   const navigate = useNavigate();
   const meta = ENTITY_META[scope];
-  const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>('apr-2026');
+  const [selectedMonth, setSelectedMonth] = useState<DigitMonthId>(
+    (DIGIT_AVAILABLE_MONTHS[DIGIT_AVAILABLE_MONTHS.length - 1]?.id as DigitMonthId) ?? 'apr-2026',
+  );
   const [tab, setTab] = useState<TabId>('overview');
 
   const slice = useMemo(() => getEntityMonthSlice(scope, selectedMonth), [scope, selectedMonth]);
