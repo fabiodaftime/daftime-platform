@@ -232,6 +232,7 @@ export function PCGroupYTDTab({ data }: Props) {
                     <th>Entité</th><th>Réserve Jan</th><th>Réserve Fév</th>
                     {hasMar && <th>Réserve Mars</th>}
                     {hasAvr && <th>Réserve Avril</th>}
+                    {hasMai && <th>Réserve Mai</th>}
                     <th>Cumul YTD</th>
                   </tr>
                 </thead>
@@ -241,6 +242,7 @@ export function PCGroupYTDTab({ data }: Props) {
                       <td>{row.entity}</td><td>{row.jan ?? '—'}</td><td>{row.feb ?? '—'}</td>
                       {hasMar && <td>{row.mar ?? '—'}</td>}
                       {hasAvr && <td>{row.avr ?? '—'}</td>}
+                      {hasMai && <td>{row.mai ?? '—'}</td>}
                       <td>{row.ytd}</td>
                     </tr>
                   ))}
@@ -248,6 +250,7 @@ export function PCGroupYTDTab({ data }: Props) {
                     <td>{reservesEntityTotal.entity}</td><td>{reservesEntityTotal.jan ?? '—'}</td><td>{reservesEntityTotal.feb ?? '—'}</td>
                     {hasMar && <td>{(reservesEntityTotal as any).mar ?? '—'}</td>}
                     {hasAvr && <td>{(reservesEntityTotal as any).avr ?? '—'}</td>}
+                    {hasMai && <td>{(reservesEntityTotal as any).mai ?? '—'}</td>}
                     <td>{reservesEntityTotal.ytd}</td>
                   </tr>
                 </tbody>
