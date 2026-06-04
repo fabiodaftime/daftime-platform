@@ -663,8 +663,8 @@ const DIGIT_APR = {
 
 // ============ MAY 2026 ============
 // Source: 🟪 Recap_Finance_2026 (9).xlsx — feuille DATA bloc "May 2026" (lignes 247-305).
-// SPY : aucune data dans le fichier Digit (PAS DE DATA) — SPY est une entité indépendante
-// qui remonte son CA séparément ; affichage à 0 en attendant la transmission de Mai.
+// SPY : à partir de Mai 2026, l'activité SPY est intégrée directement dans Digit Solution
+// (plus de remontée séparée). Les chiffres Core incluent désormais SPY.
 const DIGIT_MAY = {
   monthLabel: 'Mai 2026',
   overviewKPIs: [
