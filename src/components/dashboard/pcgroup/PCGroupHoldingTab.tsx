@@ -24,20 +24,26 @@ export function PCGroupHoldingTab({ data }: Props) {
         const rows = holdingComparison as PCGComparisonRow[];
         const hasMar = rows.some((r) => Boolean(r.mar));
         const hasAvr = rows.some((r) => Boolean(r.avr));
+        const hasMai = rows.some((r) => Boolean((r as any).mai));
         const hasYtd = rows.some((r) => Boolean(r.ytd));
-        const variationLabel = hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
+        const variationLabel = hasMai
+          ? ' (Avril→Mai)'
+          : hasAvr ? ' (Mars→Avril)' : hasMar ? ' (Fév→Mars)' : '';
         const headers = [
           'Indicateur', 'Janvier', 'Février',
           ...(hasMar ? ['Mars'] : []),
           ...(hasAvr ? ['Avril'] : []),
+          ...(hasMai ? ['Mai'] : []),
           `Variation${variationLabel}`,
           ...(hasYtd ? ['YTD'] : []),
         ];
-        const titleSuffix = hasAvr
-          ? 'Janvier → Avril Holding'
-          : hasMar
-            ? 'Janvier / Février / Mars Holding'
-            : 'M-1 Holding';
+        const titleSuffix = hasMai
+          ? 'Janvier → Mai Holding'
+          : hasAvr
+            ? 'Janvier → Avril Holding'
+            : hasMar
+              ? 'Janvier / Février / Mars Holding'
+              : 'M-1 Holding';
         return (
           <PCGroupComparisonTable
             title={`📊 Comparatif ${titleSuffix}`}
@@ -48,10 +54,11 @@ export function PCGroupHoldingTab({ data }: Props) {
                 r.indicator, cell(r.jan), cell(r.feb),
                 ...(hasMar ? [cell(r.mar)] : []),
                 ...(hasAvr ? [cell(r.avr)] : []),
+                ...(hasMai ? [cell((r as any).mai)] : []),
                 cell(r.variation),
                 ...(hasYtd ? [cell(r.ytd)] : []),
               ];
-              return { cells, varIndex: 3 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0), varType: r.varType };
+              return { cells, varIndex: 3 + (hasMar ? 1 : 0) + (hasAvr ? 1 : 0) + (hasMai ? 1 : 0), varType: r.varType };
             })}
           />
         );
