@@ -167,6 +167,7 @@ export const MONTH_LABELS: Record<PCGSourceMonthId, string> = {
   'feb-2026': 'Février 2026',
   'mar-2026': 'Mars 2026',
   'apr-2026': 'Avril 2026',
+  'may-2026': 'Mai 2026',
 };
 
 export function formatRestatementValue(v: number, unit: RestatementUnit): string {
