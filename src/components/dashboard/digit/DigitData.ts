@@ -663,8 +663,8 @@ const DIGIT_APR = {
 
 // ============ MAY 2026 ============
 // Source: 🟪 Recap_Finance_2026 (9).xlsx — feuille DATA bloc "May 2026" (lignes 247-305).
-// SPY : à partir de Mai 2026, l'activité SPY est intégrée directement dans Digit Solution
-// (plus de remontée séparée). Les chiffres Core incluent désormais SPY.
+// SPY : la donnée source agrège Digit + SPY, mais SUR NOS DASHBOARDS SPY est toujours
+// affichée comme entité séparée. Pour Mai, SPY = N/A (donnée non transmise séparément).
 const DIGIT_MAY = {
   monthLabel: 'Mai 2026',
   overviewKPIs: [
@@ -674,15 +674,15 @@ const DIGIT_MAY = {
     { label: "Taux de Marge", value: "29.3%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core + SPY)", value: "$102,920", sub: "Marge $30,039 (29.2%) • SPY intégré", type: "primary", chg: "-8.9%" },
-    { label: "SPY", value: "Intégré", sub: "Inclus dans Digit Solution depuis Mai", type: "success", chg: null as string | null },
+    { label: "Digit Solution (Core)", value: "$102,920", sub: "Marge $30,039 (29.2%)", type: "primary", chg: "-8.9%" },
+    { label: "SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "success", chg: null as string | null },
     { label: "Comment/Trust", value: "$489", sub: "Marge $280 (57.3%)", type: "warning", chg: "+11.7%" },
   ],
   overviewChartData: { labels: ['Avril', 'Mai'], ca: [151889, 103409], marge: [45709, 30319] },
   comparisonM1: [
     { label: "CA Avril", value: "$151,889", sub: "313 deals", type: "primary" },
     { label: "Marge Avril", value: "$45,709", sub: "30.1% du CA", type: "success" },
-    { label: "Évolution CA", value: "-31.9%", sub: "-$48,480", type: "warning" },
+    { label: "Évolution CA", value: "-31.9%", sub: "-$48,480 (hors SPY)", type: "warning" },
     { label: "Évolution Marge", value: "-33.7%", sub: "-$15,390", type: "warning" },
   ] as any[] | null,
   costsKPIs: [
@@ -721,10 +721,10 @@ const DIGIT_MAY = {
   ],
   ctCostsTotal: "$280",
   revenueGlobalKPIs: [
-    { label: "Digit Solution (incl. SPY)", value: "$102,920", sub: "350 deals • 99.5% du CA total", type: "primary" },
-    { label: "SPY", value: "Intégré", sub: "Inclus dans Digit Solution depuis Mai", type: "success" },
-    { label: "Comment/Trust", value: "$489", sub: "0.5% du CA total", type: "warning" },
-    { label: "CA Total", value: "$103,409", sub: "Core (incl. SPY) + Comment", type: "accent" },
+    { label: "Digit Solution", value: "$102,920", sub: "350 deals • 99.5% du CA hors SPY", type: "primary" },
+    { label: "SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "success" },
+    { label: "Comment/Trust", value: "$489", sub: "0.5% du CA hors SPY", type: "warning" },
+    { label: "CA Total (hors SPY)", value: "$103,409", sub: "Core + Comment", type: "accent" },
   ],
   revenueDetailKPIs: [
     { label: "Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "primary" },
@@ -738,13 +738,13 @@ const DIGIT_MAY = {
   revenueKPIs: [
     { label: "CA Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "primary" },
     { label: "CA Ad Account", value: "$16,467", sub: "68 deals • $242/deal", type: "success" },
-    { label: "CA SPY", value: "Intégré", sub: "Inclus dans Digit Solution", type: "accent" },
-    { label: "CA Comment/Trust", value: "$489", sub: "0.5% du CA total", type: "warning" },
+    { label: "CA SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "accent" },
+    { label: "CA Comment/Trust", value: "$489", sub: "0.5% du CA hors SPY", type: "warning" },
   ],
   revenueComparison: {
     setup: "$87,142 (Avr) → $80,701 (Mai) = -7.4%",
     ad: "$18,772 (Avr) → $16,467 (Mai) = -12.3%",
-    spy: "$38,450 (Avr, séparé) → intégré dans Digit Solution (Mai)",
+    spy: "$38,450 (Avr) → N/A (Mai) — donnée non transmise",
     ct: "$438 (Avr) → $489 (Mai) = +11.7%",
     page: "$1,617 (Avr) → $1,184 (Mai) = -26.8%",
     bm: "$3,000 (Avr) → $1,719 (Mai) = -42.7%",
@@ -755,24 +755,24 @@ const DIGIT_MAY = {
     { name: "Comment/Trust", value: 489 },
   ],
   digitCoreKPIs: [
-    { label: "CA Global", value: "$102,920", sub: "350 deals (Setup + Ad Account, SPY intégré)", type: "primary" },
+    { label: "CA Global", value: "$102,920", sub: "350 deals (Setup + Ad Account)", type: "primary" },
     { label: "Company Margin", value: "$30,039", sub: "29.2% du CA", type: "success" },
     { label: "Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "accent" },
     { label: "Ad Account", value: "$16,467", sub: "68 deals • $242/deal", type: "warning" },
   ],
   spyKPIs: [
-    { label: "SPY", value: "Intégré", sub: "Inclus dans Digit Solution depuis Mai 2026", type: "success", chg: null as string | null },
-    { label: "Marge SPY", value: "—", sub: "Plus de remontée séparée", type: "accent" },
+    { label: "CA SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "warning", chg: null as string | null },
+    { label: "Marge SPY", value: "N/A", sub: "Entité reportée séparément", type: "warning" },
   ],
-  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559", mar: "$37,350", marMarge: "$3,470", apr: "$38,450", aprMarge: "$3,098", may: "Intégré", mayMarge: "Intégré" } as any,
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559", mar: "$37,350", marMarge: "$3,470", apr: "$38,450", aprMarge: "$3,098", may: "N/A", mayMarge: "N/A" } as any,
   ctKPIs: [
     { label: "CA Comment/Trust", value: "$489", sub: "", type: "warning", chg: "+11.7%" },
     { label: "Marge", value: "$280", sub: "57.3% du CA CT", type: "warning" },
   ],
-  ctAlert: "SPY : à partir de Mai 2026, l'activité SPY est intégrée dans Digit Solution (plus de remontée séparée)." as string | null,
-  // YTD (Jan→Mai) — SPY séparé Jan→Avr puis intégré dans Digit Solution à partir de Mai
+  ctAlert: "SPY : donnée non transmise pour Mai 2026 — SPY reste reportée séparément sur nos dashboards (remontée à venir)." as string | null,
+  // YTD (Jan→Mai) — SPY toujours reporté séparément ; Mai SPY = N/A (non transmis)
   ytdMainKPIs: [
-    { label: "CA Total YTD", value: "$698,141", sub: "5 mois • 1,389 deals" },
+    { label: "CA Total YTD", value: "$698,141", sub: "5 mois • 1,389 deals (SPY Mai exclu)" },
     { label: "Marge Totale YTD", value: "$230,800", sub: "33.1% du CA" },
     { label: "Taux de Marge Moyen", value: "33.1%", sub: "Performance globale YTD" },
     { label: "Ticket Moyen YTD", value: "$503", sub: "Sur 1,389 deals" },
@@ -782,11 +782,11 @@ const DIGIT_MAY = {
     { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
     { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,832", type: "accent" },
     { label: "Avril 2026", value: "$151,889", sub: "CA • 313 deals • Marge $45,709", type: "warning" },
-    { label: "Mai 2026", value: "$103,409", sub: "CA • 350 deals • Marge $30,319 (SPY intégré)", type: "primary" },
+    { label: "Mai 2026", value: "$103,409", sub: "CA • 350 deals • Marge $30,319 (hors SPY)", type: "primary" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$573,358", sub: "Marge $213,291 (37.2%) • SPY intégré dès Mai", type: "primary" },
-    { label: "SPY (séparé Jan→Avr)", value: "$119,850", sub: "Marge $13,390 — intégré dans Digit dès Mai", type: "success" },
+    { label: "Digit Solution", value: "$573,358", sub: "Marge $213,291 (37.2%)", type: "primary" },
+    { label: "SPY", value: "$119,850", sub: "Marge $13,390 (Jan→Avr, Mai N/A)", type: "success" },
     { label: "Comment/Trust", value: "$4,934", sub: "Marge $3,918", type: "warning" },
   ],
   ytdEvolutionData: [
@@ -802,14 +802,14 @@ const DIGIT_MAY = {
     { name: "Comment/Trust", value: 4934 },
   ],
   evolutionKPIs: [
-    { label: "CA Total Growth", value: "-31.9%", sub: "-$48,480", detail: "Avr: $151,889 → Mai: $103,409 (SPY intégré)", type: "warning" },
+    { label: "CA Total Growth", value: "-31.9%", sub: "-$48,480", detail: "Avr: $151,889 → Mai: $103,409 (hors SPY)", type: "warning" },
     { label: "Margin Growth", value: "-33.7%", sub: "-$15,390", detail: "Avr: $45,709 → Mai: $30,319", type: "warning" },
     { label: "Deals Evolution", value: "+11.8%", sub: "+37 deals", detail: "Avr: 313 → Mai: 350", type: "success" },
     { label: "Ticket Moyen Growth", value: "-39.2%", sub: "-$190", detail: "Avr: $485 → Mai: $295", type: "warning" },
   ],
   evolutionProductKPIs: [
-    { label: "Digit Solution", value: "-8.9%", sub: "-$10,081", detail: "Avr: $113,001 → Mai: $102,920 (SPY intégré)", type: "warning" },
-    { label: "SPY", value: "Intégré", sub: "Plus de remontée séparée dès Mai", detail: "Avr: $38,450 (séparé) → Mai: intégré Digit", type: "success" },
+    { label: "Digit Solution", value: "-8.9%", sub: "-$10,081", detail: "Avr: $113,001 → Mai: $102,920", type: "warning" },
+    { label: "SPY Growth", value: "N/A", sub: "Donnée non transmise", detail: "Avr: $38,450 → Mai: N/A", type: "warning" },
     { label: "Comment/Trust", value: "+11.7%", sub: "+$51", detail: "Avr: $438 → Mai: $489", type: "success" },
   ],
   evolutionChartData: [-31.9, -33.7, 11.8, -8.9, 0, 11.7],
@@ -817,14 +817,14 @@ const DIGIT_MAY = {
     positives: [
       "Volume deals +11.8% (+37 deals, total 350) — record du Q2",
       "Comment/Trust en reprise (+11.7%)",
-      "SPY désormais intégré dans Digit Solution (pilotage unifié)",
     ],
     warnings: [
-      "CA Digit Solution -8.9% (-$10,081) sur Mai (SPY intégré)",
+      "CA Core -8.9% (-$10,081) sur Mai",
       "Marge en forte baisse (-33.7%)",
       "Ticket moyen au plus bas ($295 vs $485 en Avril)",
+      "SPY : donnée non transmise pour Mai (entité reportée séparément)",
     ],
-    conclusion: "Mois plus difficile sur Digit Solution (érosion ticket moyen malgré volume). SPY est désormais intégré dans Digit Solution — pilotage unifié à partir de Mai 2026.",
+    conclusion: "Mois plus difficile sur le Core (érosion ticket moyen malgré volume). SPY reste reportée séparément — à compléter dès remontée de la donnée Mai.",
   },
 };
 
