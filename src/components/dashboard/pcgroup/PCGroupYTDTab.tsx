@@ -165,6 +165,7 @@ export function PCGroupYTDTab({ data }: Props) {
                   <th style={hlHeader('feb')}>Février</th>
                   {hasMar && <th style={hlHeader('mar')}>Mars</th>}
                   {hasAvr && <th style={hlHeader('avr')}>Avril</th>}
+                  {hasMai && <th style={hlHeader('mai')}>Mai</th>}
                   <th style={{ textAlign: 'right' }}>YTD 2026</th>
                 </tr>
               </thead>
