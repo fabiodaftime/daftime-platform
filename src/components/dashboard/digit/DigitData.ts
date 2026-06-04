@@ -674,15 +674,15 @@ const DIGIT_MAY = {
     { label: "Taux de Marge", value: "29.3%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core)", value: "$102,920", sub: "Marge $30,039 (29.2%)", type: "primary", chg: "-8.9%" },
-    { label: "SPY", value: "N/A", sub: "Données non transmises", type: "success", chg: null as string | null },
+    { label: "Digit Solution (Core + SPY)", value: "$102,920", sub: "Marge $30,039 (29.2%) • SPY intégré", type: "primary", chg: "-8.9%" },
+    { label: "SPY", value: "Intégré", sub: "Inclus dans Digit Solution depuis Mai", type: "success", chg: null as string | null },
     { label: "Comment/Trust", value: "$489", sub: "Marge $280 (57.3%)", type: "warning", chg: "+11.7%" },
   ],
   overviewChartData: { labels: ['Avril', 'Mai'], ca: [151889, 103409], marge: [45709, 30319] },
   comparisonM1: [
     { label: "CA Avril", value: "$151,889", sub: "313 deals", type: "primary" },
     { label: "Marge Avril", value: "$45,709", sub: "30.1% du CA", type: "success" },
-    { label: "Évolution CA", value: "-31.9%", sub: "-$48,480 (hors SPY)", type: "warning" },
+    { label: "Évolution CA", value: "-31.9%", sub: "-$48,480", type: "warning" },
     { label: "Évolution Marge", value: "-33.7%", sub: "-$15,390", type: "warning" },
   ] as any[] | null,
   costsKPIs: [
