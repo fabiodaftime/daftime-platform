@@ -27,13 +27,14 @@ export const pctChg = (cur: number, prev: number) => {
 };
 
 // ===== MONTH TYPES =====
-export type PCAMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
+export type PCAMonthId = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 
 export const PCA_AVAILABLE_MONTHS = [
   { id: 'jan-2026', label: 'Janvier 2026' },
   { id: 'feb-2026', label: 'Février 2026' },
   { id: 'mar-2026', label: 'Mars 2026' },
   { id: 'apr-2026', label: 'Avril 2026' },
+  { id: 'may-2026', label: 'Mai 2026' },
 ];
 
 export interface PCAMonthData {
