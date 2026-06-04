@@ -721,10 +721,10 @@ const DIGIT_MAY = {
   ],
   ctCostsTotal: "$280",
   revenueGlobalKPIs: [
-    { label: "Digit Solution (incl. SPY)", value: "$102,920", sub: "350 deals • 99.5% du CA total", type: "primary" },
-    { label: "SPY", value: "Intégré", sub: "Inclus dans Digit Solution depuis Mai", type: "success" },
-    { label: "Comment/Trust", value: "$489", sub: "0.5% du CA total", type: "warning" },
-    { label: "CA Total", value: "$103,409", sub: "Core (incl. SPY) + Comment", type: "accent" },
+    { label: "Digit Solution", value: "$102,920", sub: "350 deals • 99.5% du CA hors SPY", type: "primary" },
+    { label: "SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "success" },
+    { label: "Comment/Trust", value: "$489", sub: "0.5% du CA hors SPY", type: "warning" },
+    { label: "CA Total (hors SPY)", value: "$103,409", sub: "Core + Comment", type: "accent" },
   ],
   revenueDetailKPIs: [
     { label: "Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "primary" },
@@ -738,13 +738,13 @@ const DIGIT_MAY = {
   revenueKPIs: [
     { label: "CA Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "primary" },
     { label: "CA Ad Account", value: "$16,467", sub: "68 deals • $242/deal", type: "success" },
-    { label: "CA SPY", value: "Intégré", sub: "Inclus dans Digit Solution", type: "accent" },
-    { label: "CA Comment/Trust", value: "$489", sub: "0.5% du CA total", type: "warning" },
+    { label: "CA SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "accent" },
+    { label: "CA Comment/Trust", value: "$489", sub: "0.5% du CA hors SPY", type: "warning" },
   ],
   revenueComparison: {
     setup: "$87,142 (Avr) → $80,701 (Mai) = -7.4%",
     ad: "$18,772 (Avr) → $16,467 (Mai) = -12.3%",
-    spy: "$38,450 (Avr, séparé) → intégré dans Digit Solution (Mai)",
+    spy: "$38,450 (Avr) → N/A (Mai) — donnée non transmise",
     ct: "$438 (Avr) → $489 (Mai) = +11.7%",
     page: "$1,617 (Avr) → $1,184 (Mai) = -26.8%",
     bm: "$3,000 (Avr) → $1,719 (Mai) = -42.7%",
@@ -755,21 +755,21 @@ const DIGIT_MAY = {
     { name: "Comment/Trust", value: 489 },
   ],
   digitCoreKPIs: [
-    { label: "CA Global", value: "$102,920", sub: "350 deals (Setup + Ad Account, SPY intégré)", type: "primary" },
+    { label: "CA Global", value: "$102,920", sub: "350 deals (Setup + Ad Account)", type: "primary" },
     { label: "Company Margin", value: "$30,039", sub: "29.2% du CA", type: "success" },
     { label: "Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "accent" },
     { label: "Ad Account", value: "$16,467", sub: "68 deals • $242/deal", type: "warning" },
   ],
   spyKPIs: [
-    { label: "SPY", value: "Intégré", sub: "Inclus dans Digit Solution depuis Mai 2026", type: "success", chg: null as string | null },
-    { label: "Marge SPY", value: "—", sub: "Plus de remontée séparée", type: "accent" },
+    { label: "CA SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "warning", chg: null as string | null },
+    { label: "Marge SPY", value: "N/A", sub: "Entité reportée séparément", type: "warning" },
   ],
-  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559", mar: "$37,350", marMarge: "$3,470", apr: "$38,450", aprMarge: "$3,098", may: "Intégré", mayMarge: "Intégré" } as any,
+  spyDetail: { jan: "$16,750", janMarge: "$3,263", feb: "$27,300", febMarge: "$3,559", mar: "$37,350", marMarge: "$3,470", apr: "$38,450", aprMarge: "$3,098", may: "N/A", mayMarge: "N/A" } as any,
   ctKPIs: [
     { label: "CA Comment/Trust", value: "$489", sub: "", type: "warning", chg: "+11.7%" },
     { label: "Marge", value: "$280", sub: "57.3% du CA CT", type: "warning" },
   ],
-  ctAlert: "SPY : à partir de Mai 2026, l'activité SPY est intégrée dans Digit Solution (plus de remontée séparée)." as string | null,
+  ctAlert: "SPY : donnée non transmise pour Mai 2026 — SPY reste reportée séparément sur nos dashboards (remontée à venir)." as string | null,
   // YTD (Jan→Mai) — SPY séparé Jan→Avr puis intégré dans Digit Solution à partir de Mai
   ytdMainKPIs: [
     { label: "CA Total YTD", value: "$698,141", sub: "5 mois • 1,389 deals" },
