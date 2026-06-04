@@ -6,7 +6,7 @@
 
 import type { EntityFacts } from './entityAdapters';
 
-type Month = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026';
+type Month = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 
 export const DIGIT_NUMERIC_FACTS: Record<Month, EntityFacts> = {
   'jan-2026': {
@@ -34,13 +34,20 @@ export const DIGIT_NUMERIC_FACTS: Record<Month, EntityFacts> = {
     ticketMoyen: 418,
   },
   'apr-2026': {
-    // Digit "Core" only — SPY/Comment isolés dans MANUAL_ENTITIES.
-    // Source: DigitData APR overviewProducts → "Digit Solution (Core)" $113,001 / Marge $42,347 (37.5%)
     ca: 113001,
     margeNette: 42347,
     charges: 70654,
     marginPct: 37.5,
     deals: 313,
     ticketMoyen: 485,
+  },
+  'may-2026': {
+    // Source: DigitData MAY overviewProducts → "Digit Solution (Core)" $102,920 / Marge $30,039 (29.2%)
+    ca: 102920,
+    margeNette: 30039,
+    charges: 72881,
+    marginPct: 29.2,
+    deals: 350,
+    ticketMoyen: 294,
   },
 };
