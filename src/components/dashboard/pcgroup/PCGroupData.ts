@@ -39,6 +39,7 @@ export interface PCGComparisonRow {
   feb?: string;
   mar?: string;
   avr?: string;
+  mai?: string;
   ytd?: string;
   variation?: string;
   varType?: PCGVarType;
@@ -50,6 +51,7 @@ export interface PCGOverviewComparisonRow {
   feb?: string;
   mar?: string;
   avr?: string;
+  mai?: string;
   ytd?: string;
   variation?: string;
   varType?: PCGVarType;
