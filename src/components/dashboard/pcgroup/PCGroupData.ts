@@ -1047,12 +1047,13 @@ const APR_2026 = {
   footerLabel: 'Avril 2026',
 };
 
-// ============ MAY 2026 (scaffold partiel — entity tabs hérités d'Avril ;
-// KPIs/YTD/Holding sont recalculés à partir des sources mises à jour). =========
+// ============ MAY 2026 (entity tabs hérités d'Avril ; KPIs/YTD/Holding
+// recalculés à partir des sources mises à jour — SPY=0 confirmé, intercos
+// mai déjà encaissés début mai (183 500 + 146 800 AED, tracés sur Avril)). ====
 const MAY_2026 = {
   ...MAR_2026,
-  monthLabel: 'Mai 2026 (partiel)',
-  footerLabel: 'Mai 2026 (partiel)',
+  monthLabel: 'Mai 2026',
+  footerLabel: 'Mai 2026',
 };
 
 export function getMonthData(month: MonthId): PCGroupMonthData {
