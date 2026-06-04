@@ -167,71 +167,68 @@ export const MONTHLY_COSTS: MonthlyCostData[] = [
   },
 ];
 
-// Actuals mensuels Jan-Avr 2026 (source: P&L Zoho LLE FZCO, AED)
+// Actuals mensuels Jan-Avr 2026 (source: P&L Zoho LLE FZCO, AED — fichier juin 2026)
 // Mapping comptes → catégories:
-//  Coaches = Coach + Coach-Consultant + Closer Sales commission + Consultant Expense
+//  Coaches = Coach-Consultant + Closer Sales commission
 //  Marketing = Advertising + Media Buying + Video Editing + Podcast + Event venue
-//  IT = IT & Internet + Online tools & Software + Telephone
+//  IT = IT & Internet + Online tools & Software + Telephone + Skool fee
 //  Stripe = Stripe fees + Paypal Fees + Bank Fees
 //  Admin = Accounting & Audit + Salaries + Office Supplies + Travel + Meals + Automobile
-//  Autres = Bad Debt
+//  Autres = Bad Debt + Exchange Gain/Loss + OSS Local Trader agent
 export const MONTHLY_COSTS_2026: MonthlyCostData[] = [
   {
     month: 'JANVIER 2026',
-    revenue: 703339,
-    actual: { coaches: 82348, marketing: 178383, it: 16923, stripe: 35448, admin: 43618, autres: 0 },
+    revenue: 663317,
+    actual: { coaches: 62676, marketing: 178383, it: 16923, stripe: 35448, admin: 63290, autres: -448 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Janvier:',
     comments: [
-      '✅ Marge EBITDA ~49% — au-dessus de la bande cible 40-45%.',
+      '✅ Marge EBITDA ~46% — au-dessus de la bande cible 40-45%.',
     ],
   },
   {
     month: 'FÉVRIER 2026',
-    revenue: 877940,
-    actual: { coaches: 224652, marketing: 212407, it: 17517, stripe: 49370, admin: 47031, autres: 0 },
+    revenue: 788857,
+    actual: { coaches: 222652, marketing: 212407, it: 17517, stripe: 49370, admin: 55079, autres: -3285 },
     commentType: 'warning',
     commentTitle: '💬 Commentaires Février:',
     comments: [
       '⚠️ Hausse charges expliquée : événement Paris + immersion villa + paiements intervenants.',
       '⚠️ Cycle annuel des outils IT facturé sur février (impact ponctuel).',
-      '⚠️ Paiement 15k AED à Yazid initialement différé, comptabilisé en février.',
-      '📌 Marge EBITDA ~37% — sous la bande cible 40-45% (mois exceptionnel).',
+      '📌 Marge EBITDA ~30% — sous la bande cible 40-45% (mois exceptionnel).',
     ],
   },
   {
     month: 'MARS 2026',
-    revenue: 1024972,
-    actual: { coaches: 179880, marketing: 263372, it: 14238, stripe: 62063, admin: 118769, autres: 139433 },
+    revenue: 921486,
+    actual: { coaches: 150714, marketing: 226633, it: 14601, stripe: 61887, admin: 115310, autres: 140097 },
     commentType: 'critical',
     commentTitle: '💬 Commentaires Mars:',
     comments: [
-      '🔄 CA régularisé par Anissa : les 10 premiers jours (avant sync Stripe↔Zoho du 11/03) sont désormais intégrés (~+358k AED vs version précédente).',
       '⚠️ Bad Debt 139.4k AED comptabilisé ce mois — créance irrécouvrable, à investiguer.',
-      "➕ Provision Yazid (closer) +15k AED : Yazid a demandé de ne pas être payé mars+avril (création de sa structure), payé 30k en mai. Charge réattribuée au mois d'origine (cf. call 18/05/2026).",
-      '⚠️ Marge EBITDA ~24% — pénalisée par le Bad Debt, la masse salariale et la provision closer différée.',
+      '⚠️ Masse salariale élevée (94k) + Coach-Consultant 81k.',
+      '⚠️ Marge EBITDA ~23% — pénalisée par le Bad Debt et l\'admin.',
     ],
   },
   {
     month: 'AVRIL 2026',
-    revenue: 1038364,
-    actual: { coaches: 150926, marketing: 232280, it: 7858, stripe: 46861, admin: 64167, autres: 0 },
+    revenue: 933471,
+    actual: { coaches: 145547, marketing: 231928, it: 8442, stripe: 46861, admin: 64167, autres: -83 },
     commentType: 'success',
     commentTitle: '💬 Commentaires Avril:',
     comments: [
-      '✅ Meilleur mois 2026 : CA 1 038 k AED, marge EBITDA ~52% après réintégration provision closer.',
-      "➕ Provision Yazid (closer) +15k AED : différé payé en mai, réattribué au mois d'origine (cf. call 18/05/2026).",
+      '✅ Meilleur mois 2026 en marge : CA 933 k AED, marge EBITDA ~47%.',
     ],
   },
 ];
 
 // Synthèse YTD 2026 (Jan-Avr) calculée depuis MONTHLY_COSTS_2026
-// Rev = 703 339 + 877 940 + 1 024 972 + 1 038 364 = 3 644 615 AED
-// EBITDA = 346 619 + 326 963 + 247 217 + 536 272 = 1 457 071 AED (après provisions Yazid Mars+Avril)
+// Rev = 663 317 + 788 857 + 921 486 + 933 471 = 3 307 131 AED
+// EBITDA = 307 045 + 235 117 + 212 244 + 436 609 = 1 191 015 AED
 export const YTD_2026 = {
   months: 4,
-  caTotal: 703339 + 877940 + 1024972 + 1038364,
-  netProfit: 346619 + 326963 + 247217 + 536272,
+  caTotal: 663317 + 788857 + 921486 + 933471,
+  netProfit: 307045 + 235117 + 212244 + 436609,
 };
 
 
