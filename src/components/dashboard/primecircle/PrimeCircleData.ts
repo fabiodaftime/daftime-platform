@@ -579,8 +579,8 @@ const mayData: PCMonthData = {
   kpis: {
     totalCustomers: 42,
     totalTurnover: 56780,
-    netProfit: 30092,        // 56 780 − COGS 13 210 − ADS 5 893 − Sales comm 7 535 − Bank 50
-    netMarginRate: 53.0,
+    netProfit: 23327,        // 56 780 − Total costs 33 453
+    netMarginRate: 41.1,
     completedServices: 28,
     inProgressServices: 13,
     cancelledServices: 0,
@@ -590,16 +590,16 @@ const mayData: PCMonthData = {
     prevMonthLabel: 'Avr',
     customers: { prev: 50, cur: 42, diff: -8, pct: -16.0 },
     turnover: { prev: 70875, cur: 56780, diff: -14095, pct: -19.9 },
-    netProfit: { prev: 38536, cur: 30092, diff: -8444, pct: -21.9, direction: 'negative' },
+    netProfit: { prev: 38536, cur: 23327, diff: -15209, pct: -39.5, direction: 'negative' },
     completed: { prev: 41, cur: 28, diff: -13, pct: -31.7 },
   },
   ytdData: {
     customers: 235,
     turnover: 309267,
-    netProfit: 159791,
-    netMarginRate: 51.7,
-    costs: 149476,
-    costsPct: 48.3,
+    netProfit: 153026,
+    netMarginRate: 49.5,
+    costs: 156241,
+    costsPct: 50.5,
     avgPerMonth: 61853,
   },
   monthlyComparison: [
@@ -608,7 +608,7 @@ const mayData: PCMonthData = {
     { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
     { month: 'March 2026', customers: 51, turnover: 55000, totalCosts: 25394, netProfit: 29606, netMarginRate: 53.8, varProfit: 40.7, varProfitDirection: 'positive' },
     { month: 'April 2026', customers: 50, turnover: 70875, totalCosts: 32339, netProfit: 38536, netMarginRate: 54.4, varProfit: 30.2, varProfitDirection: 'positive' },
-    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 26688, netProfit: 30092, netMarginRate: 53.0, varProfit: -21.9, varProfitDirection: 'negative' },
+    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 33453, netProfit: 23327, netMarginRate: 41.1, varProfit: -39.5, varProfitDirection: 'negative' },
   ],
   costs: {
     productProviderCosts: 13210,
@@ -617,7 +617,18 @@ const mayData: PCMonthData = {
     advertisingDetail: 'Facebook Ads Mai 2026 — montant confirmé client',
     salesCommission: 7535,
     bankFees: 50,
-    total: 26688,
+    operatingExpenses: 6765,
+    operatingExpensesBreakdown: [
+      { label: 'Tools (SaaS / IA / LinkedIn)', value: 1588 },
+      { label: 'Global Expense (April Intl + FL Consulting)', value: 1471 },
+      { label: 'Travel (Booking, Holafly, Inflight)', value: 1016 },
+      { label: 'Event (Mamo Deluxe Digital Adv)', value: 917 },
+      { label: 'Tools & Office (Amazon, Canva, Captions.ai…)', value: 883 },
+      { label: 'Lunch', value: 568 },
+      { label: 'Transport (Careem)', value: 253 },
+      { label: 'Marketing Tools (Replit)', value: 70 },
+    ],
+    total: 33453,
   },
 
 
