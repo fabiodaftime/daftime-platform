@@ -797,7 +797,7 @@ const MAR_2026 = {
   ],
   agencyRisks: [
     { label: 'Marge Nette', value: '64.4%', detail: 'vs 69.8% Fév', severity: 'success' },
-    { label: 'Cumul dû à Blink', value: '$0', detail: 'Régularisé (Benefit + Media payés)', severity: 'success' },
+    { label: 'Cumul dû à Blink', value: '$108,866', detail: 'Benefit $14.9K + Media $93.9K (payé début Avril)', severity: 'warning' },
     { label: 'CL Exposure', value: '$139.9K', detail: 'media avancé Mars', severity: 'warning' },
   ],
 
