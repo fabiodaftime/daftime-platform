@@ -78,6 +78,13 @@ const DEFAULT_CONFIG: PCGroupConfig = {
       { label: 'Tools', amount: 780 },
       { label: 'Frais Bancaires', amount: 88 },
     ], apport_maxence: 0 },
+    { id: 'd-h5', month_id: 'may-2026', frais_total:  8298, frais_detail: [
+      { label: 'CFO + Compta Groupe', amount: 3430 },
+      { label: 'AI Agent', amount: 2000 },
+      { label: 'Salaire Fixe Sales', amount: 2000 },
+      { label: 'Tools', amount: 780 },
+      { label: 'Frais Bancaires', amount: 88 },
+    ], apport_maxence: 0 },
   ],
   intercosCash: [
     { id: 'd-c1',  month_id: 'jan-2026', entity_code: 'structuring', amount_received: 20000 },
