@@ -5,10 +5,10 @@ export const ACTUALS = {
   revenue: [491.3, 438.4, 375.5]
 };
 
-// Actuals Jan-Apr 2026 (source: P&L Zoho LLE Educational Services FZCO, AED — révision Anissa post-call 18/05/2026)
+// Actuals Jan-Apr 2026 (source: P&L Zoho LLE Educational Services FZCO, AED — mise à jour Anissa juin 2026)
 export const ACTUALS_2026 = {
   months: ['Jan 26', 'Fév 26', 'Mar 26', 'Avr 26'],
-  revenue: [703.3, 877.9, 1025.0, 1038.4],
+  revenue: [663.3, 788.9, 921.5, 933.5],
 };
 
 // Bande cible de marge EBITDA après retraitement des écritures (doublons + TVA d'Anissa)
