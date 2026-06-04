@@ -579,8 +579,8 @@ const mayData: PCMonthData = {
   kpis: {
     totalCustomers: 42,
     totalTurnover: 56780,
-    netProfit: 30092,        // 56 780 − Total costs 26 688 (OpEx 6 765 reclassées en Holding)
-    netMarginRate: 53.0,
+    netProfit: 33169,        // 56 780 − Total costs 23 611 (OpEx 6 765 reclassées en Holding ; commission Sales corrigée à 4 458)
+    netMarginRate: 58.4,
     completedServices: 28,
     inProgressServices: 13,
     cancelledServices: 0,
@@ -590,16 +590,16 @@ const mayData: PCMonthData = {
     prevMonthLabel: 'Avr',
     customers: { prev: 50, cur: 42, diff: -8, pct: -16.0 },
     turnover: { prev: 70875, cur: 56780, diff: -14095, pct: -19.9 },
-    netProfit: { prev: 38536, cur: 30092, diff: -8444, pct: -21.9, direction: 'negative' },
+    netProfit: { prev: 38536, cur: 33169, diff: -5367, pct: -13.9, direction: 'negative' },
     completed: { prev: 41, cur: 28, diff: -13, pct: -31.7 },
   },
   ytdData: {
     customers: 235,
     turnover: 309267,
-    netProfit: 159791,
-    netMarginRate: 51.7,
-    costs: 149476,
-    costsPct: 48.3,
+    netProfit: 162868,
+    netMarginRate: 52.7,
+    costs: 146399,
+    costsPct: 47.3,
     avgPerMonth: 61853,
   },
   monthlyComparison: [
@@ -608,18 +608,19 @@ const mayData: PCMonthData = {
     { month: 'Feb (excl. AWD)', customers: 53, turnover: 73500, totalCosts: 24065, netProfit: 49435, netMarginRate: 67.3, varProfit: 22.0, varProfitDirection: 'positive', isExclRow: true },
     { month: 'March 2026', customers: 51, turnover: 55000, totalCosts: 25394, netProfit: 29606, netMarginRate: 53.8, varProfit: 40.7, varProfitDirection: 'positive' },
     { month: 'April 2026', customers: 50, turnover: 70875, totalCosts: 32339, netProfit: 38536, netMarginRate: 54.4, varProfit: 30.2, varProfitDirection: 'positive' },
-    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 26688, netProfit: 30092, netMarginRate: 53.0, varProfit: -21.9, varProfitDirection: 'negative' },
+    { month: 'May 2026', customers: 42, turnover: 56780, totalCosts: 23611, netProfit: 33169, netMarginRate: 58.4, varProfit: -13.9, varProfitDirection: 'negative' },
   ],
   costs: {
     productProviderCosts: 13210,
     productProviderDetail: 'COGS implicites (TO 56 780 − marge brute 43 570)',
     advertising: 5893,
     advertisingDetail: 'Facebook Ads Mai 2026',
-    salesCommission: 7535,
+    salesCommission: 4458, // Commission Sales Mai 2026 — montant confirmé 4 457,61 USD
+
     bankFees: 50,
     // OpEx Mai (6 765 USD) reclassées en charges Holding — Tools, Travel, Lunch,
     // Event, Transport, etc. Voir pcgroup/manual/2026-05.ts + restatementHistory.
-    total: 26688,
+    total: 23611,
   },
 
 
