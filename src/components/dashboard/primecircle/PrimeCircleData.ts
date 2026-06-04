@@ -72,6 +72,8 @@ export interface PCMonthData {
     serviceCosts?: number;
     referralCommission?: number;
     events?: number;
+    operatingExpenses?: number;
+    operatingExpensesBreakdown?: { label: string; value: number }[];
     total: number;
     recurringTotal?: number;
   };
