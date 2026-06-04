@@ -134,6 +134,26 @@ export const RESTATEMENT_HISTORY: RestatementEntry[] = [
       { label: 'YTD Expenses PCA', delta: -45 },
     ],
   },
+
+  // ===== Restatement May 2026 Structuring — Reclass OpEx → Holding =====
+  {
+    id: 'pcs-may-2026-opex-reclass-v1',
+    monthId: 'may-2026',
+    entity: 'structuring',
+    kpi: 'Total Costs',
+    oldValue: 33453,
+    newValue: 26688,
+    unit: 'usd',
+    restatedOn: '2026-06-04',
+    reason: "OpEx Mai (Tools, Travel, Lunch, Event, Transport, Global Expense, Marketing Tools) requalifiées en charges Holding — n'appartiennent pas à l'activité Structuring.",
+    source: 'Revue Closing Mai 2026',
+    cascadeImpacts: [
+      { label: 'Structuring Net Profit Mai', delta: 6765 },
+      { label: 'Structuring Net Margin Mai', delta: 11.9, unit: 'pct' },
+      { label: 'Frais Holding Mai', delta: 6765 },
+      { label: 'YTD Structuring Net Profit', delta: 6765 },
+    ],
+  },
 ];
 
 // ------------------------------------------------------------
