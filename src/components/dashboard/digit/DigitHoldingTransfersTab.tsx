@@ -17,7 +17,9 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
   partial: { bg: D.orangeSoft, color: D.orangeText, label: '◐ Partiel' },
   pending: { bg: D.redSoft, color: D.redText, label: '○ Dû' },
   overpaid: { bg: D.greenSoft, color: D.greenText, label: '↑ Avance' },
+  bundled: { bg: '#EEF2FF', color: '#4338CA', label: '⤵ Inclus Core' },
 };
+
 
 function BalanceCard({ s, fmt }: { s: SubActivitySummary; fmt: (n: number) => string }) {
   const rate = s.recoveryRate;
