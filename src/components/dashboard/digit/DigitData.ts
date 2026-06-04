@@ -770,9 +770,9 @@ const DIGIT_MAY = {
     { label: "Marge", value: "$280", sub: "57.3% du CA CT", type: "warning" },
   ],
   ctAlert: "SPY : donnée non transmise pour Mai 2026 — SPY reste reportée séparément sur nos dashboards (remontée à venir)." as string | null,
-  // YTD (Jan→Mai) — SPY séparé Jan→Avr puis intégré dans Digit Solution à partir de Mai
+  // YTD (Jan→Mai) — SPY toujours reporté séparément ; Mai SPY = N/A (non transmis)
   ytdMainKPIs: [
-    { label: "CA Total YTD", value: "$698,141", sub: "5 mois • 1,389 deals" },
+    { label: "CA Total YTD", value: "$698,141", sub: "5 mois • 1,389 deals (SPY Mai exclu)" },
     { label: "Marge Totale YTD", value: "$230,800", sub: "33.1% du CA" },
     { label: "Taux de Marge Moyen", value: "33.1%", sub: "Performance globale YTD" },
     { label: "Ticket Moyen YTD", value: "$503", sub: "Sur 1,389 deals" },
@@ -782,11 +782,11 @@ const DIGIT_MAY = {
     { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
     { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,832", type: "accent" },
     { label: "Avril 2026", value: "$151,889", sub: "CA • 313 deals • Marge $45,709", type: "warning" },
-    { label: "Mai 2026", value: "$103,409", sub: "CA • 350 deals • Marge $30,319 (SPY intégré)", type: "primary" },
+    { label: "Mai 2026", value: "$103,409", sub: "CA • 350 deals • Marge $30,319 (hors SPY)", type: "primary" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$573,358", sub: "Marge $213,291 (37.2%) • SPY intégré dès Mai", type: "primary" },
-    { label: "SPY (séparé Jan→Avr)", value: "$119,850", sub: "Marge $13,390 — intégré dans Digit dès Mai", type: "success" },
+    { label: "Digit Solution", value: "$573,358", sub: "Marge $213,291 (37.2%)", type: "primary" },
+    { label: "SPY", value: "$119,850", sub: "Marge $13,390 (Jan→Avr, Mai N/A)", type: "success" },
     { label: "Comment/Trust", value: "$4,934", sub: "Marge $3,918", type: "warning" },
   ],
   ytdEvolutionData: [
@@ -802,14 +802,14 @@ const DIGIT_MAY = {
     { name: "Comment/Trust", value: 4934 },
   ],
   evolutionKPIs: [
-    { label: "CA Total Growth", value: "-31.9%", sub: "-$48,480", detail: "Avr: $151,889 → Mai: $103,409 (SPY intégré)", type: "warning" },
+    { label: "CA Total Growth", value: "-31.9%", sub: "-$48,480", detail: "Avr: $151,889 → Mai: $103,409 (hors SPY)", type: "warning" },
     { label: "Margin Growth", value: "-33.7%", sub: "-$15,390", detail: "Avr: $45,709 → Mai: $30,319", type: "warning" },
     { label: "Deals Evolution", value: "+11.8%", sub: "+37 deals", detail: "Avr: 313 → Mai: 350", type: "success" },
     { label: "Ticket Moyen Growth", value: "-39.2%", sub: "-$190", detail: "Avr: $485 → Mai: $295", type: "warning" },
   ],
   evolutionProductKPIs: [
-    { label: "Digit Solution", value: "-8.9%", sub: "-$10,081", detail: "Avr: $113,001 → Mai: $102,920 (SPY intégré)", type: "warning" },
-    { label: "SPY", value: "Intégré", sub: "Plus de remontée séparée dès Mai", detail: "Avr: $38,450 (séparé) → Mai: intégré Digit", type: "success" },
+    { label: "Digit Solution", value: "-8.9%", sub: "-$10,081", detail: "Avr: $113,001 → Mai: $102,920", type: "warning" },
+    { label: "SPY Growth", value: "N/A", sub: "Donnée non transmise", detail: "Avr: $38,450 → Mai: N/A", type: "warning" },
     { label: "Comment/Trust", value: "+11.7%", sub: "+$51", detail: "Avr: $438 → Mai: $489", type: "success" },
   ],
   evolutionChartData: [-31.9, -33.7, 11.8, -8.9, 0, 11.7],
@@ -817,14 +817,14 @@ const DIGIT_MAY = {
     positives: [
       "Volume deals +11.8% (+37 deals, total 350) — record du Q2",
       "Comment/Trust en reprise (+11.7%)",
-      "SPY désormais intégré dans Digit Solution (pilotage unifié)",
     ],
     warnings: [
-      "CA Digit Solution -8.9% (-$10,081) sur Mai (SPY intégré)",
+      "CA Core -8.9% (-$10,081) sur Mai",
       "Marge en forte baisse (-33.7%)",
       "Ticket moyen au plus bas ($295 vs $485 en Avril)",
+      "SPY : donnée non transmise pour Mai (entité reportée séparément)",
     ],
-    conclusion: "Mois plus difficile sur Digit Solution (érosion ticket moyen malgré volume). SPY est désormais intégré dans Digit Solution — pilotage unifié à partir de Mai 2026.",
+    conclusion: "Mois plus difficile sur le Core (érosion ticket moyen malgré volume). SPY reste reportée séparément — à compléter dès remontée de la donnée Mai.",
   },
 };
 
