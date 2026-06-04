@@ -129,6 +129,25 @@ export function PrimeCircleCostsSection({ data }: Props) {
             </div>
           )}
 
+          {costs.operatingExpenses != null && costs.operatingExpenses > 0 && (
+            <div className="pc-expense-row">
+              <div className="pc-expense-label">
+                <div className="pc-expense-icon">💼</div>
+                <div>
+                  <span>Operating Expenses (Card UAE)</span>
+                  {costs.operatingExpensesBreakdown && costs.operatingExpensesBreakdown.length > 0 && (
+                    <div style={{ fontSize: '10px', color: '#8899A6', marginTop: '4px', lineHeight: '1.5' }}>
+                      {costs.operatingExpensesBreakdown.map((b, i) => (
+                        <div key={i}>• {b.label}: ${b.value.toLocaleString()}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="pc-expense-amount negative">-{formatCurrency(costs.operatingExpenses)}</div>
+            </div>
+          )}
+
           <div className="pc-expense-row total">
             <div className="pc-expense-label">
               <strong>TOTAL COSTS</strong>
