@@ -11,19 +11,20 @@ type Month = 'jan-2026' | 'feb-2026' | 'mar-2026' | 'apr-2026' | 'may-2026';
 export const DIGIT_NUMERIC_FACTS: Record<Month, EntityFacts> = {
   'jan-2026': {
     ca: 114649,
-    margeNette: 40198,
-    charges: 74451,
-    marginPct: 35.1,
+    margeNette: 41198,
+    charges: 73451,
+    marginPct: 35.9,
     deals: 267,
     ticketMoyen: 429,
   },
   'feb-2026': {
+    // Recap_Finance_2026 (10) — corrections COO Digit : Setup deals 170→233, Core Marge +$1k, Comment CA/Marge réactualisés
     ca: 122330,
-    margeNette: 43249,
-    charges: 79081,
-    marginPct: 35.4,
-    deals: 213,
-    ticketMoyen: 574,
+    margeNette: 44249,
+    charges: 78081,
+    marginPct: 36.2,
+    deals: 276,
+    ticketMoyen: 443,
   },
   'mar-2026': {
     ca: 120458,
@@ -35,17 +36,17 @@ export const DIGIT_NUMERIC_FACTS: Record<Month, EntityFacts> = {
   },
   'apr-2026': {
     ca: 113001,
-    margeNette: 42347,
-    charges: 70654,
-    marginPct: 37.5,
+    margeNette: 42223,
+    charges: 70778,
+    marginPct: 37.4,
     deals: 313,
     ticketMoyen: 485,
   },
   'may-2026': {
-    // Source: DigitData MAY overviewProducts → "Digit Solution (Core)" $102,920 / Marge $30,039 (29.2%)
+    // Source: Recap_Finance_2026 (10) — Core Marge ajustée à $30,016
     ca: 102920,
-    margeNette: 30039,
-    charges: 72881,
+    margeNette: 30016,
+    charges: 72904,
     marginPct: 29.2,
     deals: 350,
     ticketMoyen: 294,
