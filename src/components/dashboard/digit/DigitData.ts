@@ -41,12 +41,12 @@ const DIGIT_JAN = {
   monthLabel: 'Janvier 2026',
   overviewKPIs: [
     { label: "CA Total", value: "$134,212", sub: "225 deals • Ticket moyen $596", type: "primary" },
-    { label: "Marge Totale", value: "$45,992", sub: "34.3% du CA", type: "success" },
+    { label: "Marge Totale", value: "$46,992", sub: "35.0% du CA", type: "success" },
     { label: "Deals Janvier", value: "225", sub: "165 Setup • 41 Ad Account", type: "warning" },
-    { label: "Taux de Marge", value: "34.3%", sub: "Performance globale", type: "accent" },
+    { label: "Taux de Marge", value: "35.0%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core)", value: "$114,649", sub: "Marge $40,198 (35.1%)", type: "primary", chg: null as string | null },
+    { label: "Digit Solution (Core)", value: "$114,649", sub: "Marge $41,198 (35.9%)", type: "primary", chg: null as string | null },
     { label: "SPY", value: "$16,750", sub: "Marge $3,262", type: "success", chg: null as string | null },
     { label: "Comment/Trust", value: "$2,813", sub: "Marge $2,531", type: "warning", chg: null as string | null },
   ],
