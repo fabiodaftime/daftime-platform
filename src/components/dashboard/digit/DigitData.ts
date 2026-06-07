@@ -141,22 +141,22 @@ const DIGIT_JAN = {
 const DIGIT_FEB = {
   monthLabel: 'Février 2026',
   overviewKPIs: [
-    { label: "CA Total", value: "$149,963", sub: "213 deals • Ticket moyen $704", type: "primary" },
-    { label: "Marge Totale", value: "$46,948", sub: "31.3% du CA", type: "success" },
-    { label: "Deals Février", value: "213", sub: "170 Setup • 43 Ad Account", type: "warning" },
-    { label: "Taux de Marge", value: "31.3%", sub: "Performance globale", type: "accent" },
+    { label: "CA Total", value: "$150,266", sub: "276 deals • Ticket moyen $544", type: "primary" },
+    { label: "Marge Totale", value: "$48,220", sub: "32.1% du CA", type: "success" },
+    { label: "Deals Février", value: "276", sub: "233 Setup • 43 Ad Account", type: "warning" },
+    { label: "Taux de Marge", value: "32.1%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core)", value: "$122,330", sub: "Marge $43,249 (35.4%)", type: "primary", chg: "+6.7%" },
+    { label: "Digit Solution (Core)", value: "$122,330", sub: "Marge $44,249 (36.2%)", type: "primary", chg: "+6.7%" },
     { label: "SPY", value: "$27,300", sub: "Marge $3,559", type: "success", chg: "+63.0%" },
-    { label: "Comment/Trust", value: "$333", sub: "Marge $140", type: "warning", chg: "-88.2%" },
+    { label: "Comment/Trust", value: "$636", sub: "Marge $412", type: "warning", chg: "-77.4%" },
   ],
-  overviewChartData: { labels: ['Janvier', 'Février'], ca: [134212, 149963], marge: [45992, 46948] },
+  overviewChartData: { labels: ['Janvier', 'Février'], ca: [134212, 150266], marge: [46992, 48220] },
   comparisonM1: [
     { label: "CA Janvier", value: "$134,212", sub: "225 deals", type: "primary" },
-    { label: "Marge Janvier", value: "$45,992", sub: "34.3% du CA", type: "success" },
-    { label: "Évolution CA", value: "+11.7%", sub: "+$15,751", type: "success" },
-    { label: "Évolution Marge", value: "+2.1%", sub: "+$955", type: "success" },
+    { label: "Marge Janvier", value: "$46,992", sub: "35.0% du CA", type: "success" },
+    { label: "Évolution CA", value: "+12.0%", sub: "+$16,054", type: "success" },
+    { label: "Évolution Marge", value: "+2.6%", sub: "+$1,228", type: "success" },
   ] as any[] | null,
   // Costs tab
   costsKPIs: [
