@@ -588,7 +588,7 @@ const DIGIT_APR = {
   // Products tab
   digitCoreKPIs: [
     { label: "CA Global", value: "$113,001", sub: "313 deals (Setup + Ad Account)", type: "primary" },
-    { label: "Company Margin", value: "$42,223", sub: "37.4% du CA", type: "success" },
+    { label: "Company Margin", value: "$42,347", sub: "37.5% du CA", type: "success" },
     { label: "Setup", value: "$87,142", sub: "265 deals • $329/deal", type: "accent" },
     { label: "Ad Account", value: "$18,772", sub: "48 deals • $391/deal", type: "warning" },
   ],
