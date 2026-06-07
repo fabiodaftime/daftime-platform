@@ -483,21 +483,21 @@ const DIGIT_APR = {
   monthLabel: 'Avril 2026',
   overviewKPIs: [
     { label: "CA Total", value: "$151,889", sub: "313 deals • Ticket moyen $485", type: "primary" },
-    { label: "Marge Totale", value: "$45,709", sub: "30.1% du CA", type: "success" },
+    { label: "Marge Totale", value: "$45,585", sub: "30.0% du CA", type: "success" },
     { label: "Deals Avril", value: "313", sub: "265 Setup • 48 Ad Account", type: "warning" },
-    { label: "Taux de Marge", value: "30.1%", sub: "Performance globale", type: "accent" },
+    { label: "Taux de Marge", value: "30.0%", sub: "Performance globale", type: "accent" },
   ],
   overviewProducts: [
-    { label: "Digit Solution (Core)", value: "$113,001", sub: "Marge $42,347 (37.5%)", type: "primary", chg: "-6.2%" },
+    { label: "Digit Solution (Core)", value: "$113,001", sub: "Marge $42,223 (37.4%)", type: "primary", chg: "-6.2%" },
     { label: "SPY", value: "$38,450", sub: "Marge $3,098", type: "success", chg: "+2.9%" },
     { label: "Comment/Trust", value: "$438", sub: "Marge $264", type: "warning", chg: "-49.1%" },
   ],
-  overviewChartData: { labels: ['Mars', 'Avril'], ca: [158668, 151889], marge: [61832, 45709] },
+  overviewChartData: { labels: ['Mars', 'Avril'], ca: [158668, 151889], marge: [61832, 45585] },
   comparisonM1: [
     { label: "CA Mars", value: "$158,668", sub: "288 deals", type: "primary" },
     { label: "Marge Mars", value: "$61,832", sub: "39.0% du CA", type: "success" },
     { label: "Évolution CA", value: "-4.3%", sub: "-$6,779", type: "warning" },
-    { label: "Évolution Marge", value: "-26.1%", sub: "-$16,123", type: "warning" },
+    { label: "Évolution Marge", value: "-26.3%", sub: "-$16,247", type: "warning" },
   ] as any[] | null,
   // Costs tab
   costsKPIs: [
