@@ -634,7 +634,7 @@ const DIGIT_APR = {
   // Evolution MoM tab (Avril vs Mars)
   evolutionKPIs: [
     { label: "CA Total Growth", value: "-4.3%", sub: "-$6,779", detail: "Mar: $158,668 → Avr: $151,889", type: "warning" },
-    { label: "Margin Growth", value: "-26.1%", sub: "-$16,123", detail: "Mar: $61,832 → Avr: $45,709", type: "warning" },
+    { label: "Margin Growth", value: "-26.3%", sub: "-$16,247", detail: "Mar: $61,832 → Avr: $45,585", type: "warning" },
     { label: "Deals Evolution", value: "+8.7%", sub: "+25 deals", detail: "Mar: 288 → Avr: 313", type: "success" },
     { label: "Ticket Moyen Growth", value: "-12.0%", sub: "-$66", detail: "Mar: $551 → Avr: $485", type: "accent" },
   ],
