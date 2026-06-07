@@ -588,7 +588,7 @@ const DIGIT_APR = {
   // Products tab
   digitCoreKPIs: [
     { label: "CA Global", value: "$113,001", sub: "313 deals (Setup + Ad Account)", type: "primary" },
-    { label: "Company Margin", value: "$42,347", sub: "37.5% du CA", type: "success" },
+    { label: "Company Margin", value: "$42,223", sub: "37.4% du CA", type: "success" },
     { label: "Setup", value: "$87,142", sub: "265 deals • $329/deal", type: "accent" },
     { label: "Ad Account", value: "$18,772", sub: "48 deals • $391/deal", type: "warning" },
   ],
@@ -604,32 +604,32 @@ const DIGIT_APR = {
   ctAlert: "Comment/Trust en repli marqué (-49.1% vs Mars). À surveiller." as string | null,
   // YTD tab (Jan + Fév + Mars + Avril)
   ytdMainKPIs: [
-    { label: "CA Total YTD", value: "$594,732", sub: "4 mois • 1,039 deals" },
-    { label: "Marge Totale YTD", value: "$200,481", sub: "33.7% du CA" },
-    { label: "Taux de Marge Moyen", value: "33.7%", sub: "Performance globale YTD" },
-    { label: "Ticket Moyen YTD", value: "$572", sub: "Sur 1,039 deals" },
+    { label: "CA Total YTD", value: "$595,035", sub: "4 mois • 1,102 deals" },
+    { label: "Marge Totale YTD", value: "$202,629", sub: "34.1% du CA" },
+    { label: "Taux de Marge Moyen", value: "34.1%", sub: "Performance globale YTD" },
+    { label: "Ticket Moyen YTD", value: "$540", sub: "Sur 1,102 deals" },
   ],
   ytdMonthlyKPIs: [
-    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $45,992", type: "primary" },
-    { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
+    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $46,992", type: "primary" },
+    { label: "Février 2026", value: "$150,266", sub: "CA • 276 deals • Marge $48,220", type: "success" },
     { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,832", type: "accent" },
-    { label: "Avril 2026", value: "$151,889", sub: "CA • 313 deals • Marge $45,709", type: "warning" },
+    { label: "Avril 2026", value: "$151,889", sub: "CA • 313 deals • Marge $45,585", type: "warning" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$470,438", sub: "Marge $183,252 (38.9%)", type: "primary" },
+    { label: "Digit Solution", value: "$470,438", sub: "Marge $185,329 (39.4%)", type: "primary" },
     { label: "SPY", value: "$119,850", sub: "Marge $13,390", type: "success" },
-    { label: "Comment/Trust", value: "$4,445", sub: "Marge $3,638", type: "warning" },
+    { label: "Comment/Trust", value: "$4,748", sub: "Marge $3,910", type: "warning" },
   ],
   ytdEvolutionData: [
-    { name: "Janvier", ca: 134212, marge: 45992 },
-    { name: "Février", ca: 149963, marge: 46948 },
+    { name: "Janvier", ca: 134212, marge: 46992 },
+    { name: "Février", ca: 150266, marge: 48220 },
     { name: "Mars", ca: 158668, marge: 61832 },
-    { name: "Avril", ca: 151889, marge: 45709 },
+    { name: "Avril", ca: 151889, marge: 45585 },
   ],
   ytdProductDistribution: [
     { name: "Digit Solution", value: 470438 },
     { name: "SPY", value: 119850 },
-    { name: "Comment/Trust", value: 4445 },
+    { name: "Comment/Trust", value: 4748 },
   ],
   // Evolution MoM tab (Avril vs Mars)
   evolutionKPIs: [
