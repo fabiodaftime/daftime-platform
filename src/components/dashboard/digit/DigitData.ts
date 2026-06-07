@@ -95,7 +95,7 @@ const DIGIT_JAN = {
   // Products tab
   digitCoreKPIs: [
     { label: "CA Global", value: "$114,649", sub: "267 deals (Setup + Ad Account)", type: "primary" },
-    { label: "Company Margin", value: "$40,198", sub: "35.1% du CA", type: "success" },
+    { label: "Company Margin", value: "$41,198", sub: "35.9% du CA", type: "success" },
     { label: "Setup", value: "$77,409", sub: "233 deals • $332/deal", type: "accent" },
     { label: "Ad Account", value: "$27,305", sub: "34 deals • $803/deal", type: "warning" },
   ],
@@ -112,19 +112,19 @@ const DIGIT_JAN = {
   // YTD tab
   ytdMainKPIs: [
     { label: "CA Total YTD", value: "$134,212", sub: "1 mois • 225 deals" },
-    { label: "Marge Totale YTD", value: "$45,992", sub: "34.3% du CA" },
-    { label: "Taux de Marge Moyen", value: "34.3%", sub: "Performance globale YTD" },
+    { label: "Marge Totale YTD", value: "$46,992", sub: "35.0% du CA" },
+    { label: "Taux de Marge Moyen", value: "35.0%", sub: "Performance globale YTD" },
     { label: "Ticket Moyen YTD", value: "$596", sub: "Sur 225 deals" },
   ],
   ytdMonthlyKPIs: [
-    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $45,992", type: "primary" },
+    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $46,992", type: "primary" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$114,649", sub: "Marge $40,198 (35.1%)", type: "primary" },
+    { label: "Digit Solution", value: "$114,649", sub: "Marge $41,198 (35.9%)", type: "primary" },
     { label: "SPY", value: "$16,750", sub: "Marge $3,262", type: "success" },
     { label: "Comment/Trust", value: "$2,813", sub: "Marge $2,531", type: "warning" },
   ],
-  ytdEvolutionData: [{ name: "Janvier", ca: 134212, marge: 45992 }],
+  ytdEvolutionData: [{ name: "Janvier", ca: 134212, marge: 46992 }],
   ytdProductDistribution: [
     { name: "Digit Solution", value: 114649 },
     { name: "SPY", value: 16750 },
