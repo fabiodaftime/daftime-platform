@@ -422,45 +422,45 @@ const DIGIT_MAR = {
   ctAlert: null as string | null,
   // YTD tab
   ytdMainKPIs: [
-    { label: "CA Total YTD", value: "$443,146", sub: "3 mois • 789 deals" },
-    { label: "Marge Totale YTD", value: "$157,044", sub: "35.4% du CA" },
-    { label: "Taux de Marge Moyen", value: "35.4%", sub: "Performance globale YTD" },
-    { label: "Ticket Moyen YTD", value: "$562", sub: "Sur 789 deals" },
+    { label: "CA Total YTD", value: "$442,843", sub: "3 mois • 726 deals" },
+    { label: "Marge Totale YTD", value: "$154,772", sub: "35.0% du CA" },
+    { label: "Taux de Marge Moyen", value: "35.0%", sub: "Performance globale YTD" },
+    { label: "Ticket Moyen YTD", value: "$610", sub: "Sur 726 deals" },
   ],
   ytdMonthlyKPIs: [
-    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $46,992", type: "primary" },
-    { label: "Février 2026", value: "$150,266", sub: "CA • 276 deals • Marge $48,220", type: "success" },
+    { label: "Janvier 2026", value: "$134,212", sub: "CA • 225 deals • Marge $45,992", type: "primary" },
+    { label: "Février 2026", value: "$149,963", sub: "CA • 213 deals • Marge $46,948", type: "success" },
     { label: "Mars 2026", value: "$158,668", sub: "CA • 288 deals • Marge $61,832", type: "accent" },
-    { label: "Moyenne Mensuelle Q1", value: "$147,715", sub: "CA moyen • 263 deals/mois", type: "warning" },
+    { label: "Moyenne Mensuelle Q1", value: "$147,614", sub: "CA moyen • 242 deals/mois", type: "warning" },
   ],
   ytdProductKPIs: [
-    { label: "Digit Solution", value: "$357,437", sub: "Marge $143,106 (40.0%)", type: "primary" },
+    { label: "Digit Solution", value: "$357,437", sub: "Marge $141,106 (39.5%)", type: "primary" },
     { label: "SPY", value: "$81,400", sub: "Marge $10,292", type: "success" },
-    { label: "Comment/Trust", value: "$4,310", sub: "Marge $3,646", type: "warning" },
+    { label: "Comment/Trust", value: "$4,007", sub: "Marge $3,374", type: "warning" },
   ],
   ytdEvolutionData: [
-    { name: "Janvier", ca: 134212, marge: 46992 },
-    { name: "Février", ca: 150266, marge: 48220 },
+    { name: "Janvier", ca: 134212, marge: 45992 },
+    { name: "Février", ca: 149963, marge: 46948 },
     { name: "Mars", ca: 158668, marge: 61832 },
   ],
   ytdProductDistribution: [
     { name: "Digit Solution", value: 357437 },
     { name: "SPY", value: 81400 },
-    { name: "Comment/Trust", value: 4310 },
+    { name: "Comment/Trust", value: 4007 },
   ],
   // Evolution MoM tab
   evolutionKPIs: [
-    { label: "CA Total Growth", value: "+5.6%", sub: "+$8,402", detail: "Fév: $150,266 → Mar: $158,668", type: "primary" },
-    { label: "Margin Growth", value: "+28.2%", sub: "+$13,612", detail: "Fév: $48,220 → Mar: $61,832", type: "success" },
-    { label: "Deals Evolution", value: "+4.3%", sub: "+12 deals", detail: "Fév: 276 → Mar: 288", type: "success" },
-    { label: "Ticket Moyen Growth", value: "+1.3%", sub: "+$7", detail: "Fév: $544 → Mar: $551", type: "accent" },
+    { label: "CA Total Growth", value: "+5.8%", sub: "+$8,705", detail: "Fév: $149,963 → Mar: $158,668", type: "primary" },
+    { label: "Margin Growth", value: "+31.7%", sub: "+$14,884", detail: "Fév: $46,948 → Mar: $61,832", type: "success" },
+    { label: "Deals Evolution", value: "+35.2%", sub: "+75 deals", detail: "Fév: 213 → Mar: 288", type: "warning" },
+    { label: "Ticket Moyen Growth", value: "-21.7%", sub: "-$153", detail: "Fév: $704 → Mar: $551", type: "accent" },
   ],
   evolutionProductKPIs: [
     { label: "Digit Solution", value: "-1.5%", sub: "-$1,872", detail: "Fév: $122,330 → Mar: $120,458", type: "primary" },
     { label: "SPY Growth", value: "+36.8%", sub: "+$10,050 🚀", detail: "Fév: $27,300 → Mar: $37,350", type: "success" },
-    { label: "Comment/Trust", value: "+35.4%", sub: "+$225 🚀", detail: "Fév: $636 → Mar: $861", type: "success" },
+    { label: "Comment/Trust", value: "+158.6%", sub: "+$528 🚀", detail: "Fév: $333 → Mar: $861", type: "success" },
   ],
-  evolutionChartData: [5.6, 28.2, 4.3, -1.5, 36.8, 35.4],
+  evolutionChartData: [5.8, 31.7, 35.2, -1.5, 36.8, 158.6],
   evolutionInsights: {
     positives: [
       "CA en hausse de 5.8% (+$8,705)",
