@@ -756,7 +756,7 @@ const DIGIT_MAY = {
   ],
   digitCoreKPIs: [
     { label: "CA Global", value: "$102,920", sub: "350 deals (Setup + Ad Account)", type: "primary" },
-    { label: "Company Margin", value: "$30,039", sub: "29.2% du CA", type: "success" },
+    { label: "Company Margin", value: "$30,016", sub: "29.2% du CA", type: "success" },
     { label: "Setup", value: "$80,701", sub: "282 deals • $286/deal", type: "accent" },
     { label: "Ad Account", value: "$16,467", sub: "68 deals • $242/deal", type: "warning" },
   ],
