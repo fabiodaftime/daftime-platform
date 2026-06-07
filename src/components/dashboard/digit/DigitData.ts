@@ -678,12 +678,12 @@ const DIGIT_MAY = {
     { label: "SPY", value: "N/A", sub: "Donnée non transmise pour Mai", type: "success", chg: null as string | null },
     { label: "Comment/Trust", value: "$489", sub: "Marge $280 (57.3%)", type: "warning", chg: "+11.7%" },
   ],
-  overviewChartData: { labels: ['Avril', 'Mai'], ca: [151889, 103409], marge: [45585, 30296] },
+  overviewChartData: { labels: ['Avril', 'Mai'], ca: [151889, 103409], marge: [45709, 30296] },
   comparisonM1: [
     { label: "CA Avril", value: "$151,889", sub: "313 deals", type: "primary" },
-    { label: "Marge Avril", value: "$45,585", sub: "30.0% du CA", type: "success" },
+    { label: "Marge Avril", value: "$45,709", sub: "30.1% du CA", type: "success" },
     { label: "Évolution CA", value: "-31.9%", sub: "-$48,480 (hors SPY)", type: "warning" },
-    { label: "Évolution Marge", value: "-33.5%", sub: "-$15,289", type: "warning" },
+    { label: "Évolution Marge", value: "-33.7%", sub: "-$15,413", type: "warning" },
   ] as any[] | null,
   costsKPIs: [
     { label: "Provider Cost", value: "$28,583", sub: "27.8% du CA Core", type: "primary" },
