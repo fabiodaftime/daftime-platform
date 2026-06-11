@@ -20,8 +20,8 @@ export default function DashboardAmpfora() {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour
         </Button>
-        <div style={{ fontWeight: 600, color: '#1A1D56' }}>
-          Ampfora Real Estate — Valorisation du portefeuille
+        <div style={{ fontWeight: 600, color: '#0A1628', letterSpacing: 2, textTransform: 'uppercase', fontSize: 13 }}>
+          Ampfora Real Estate · Valorisation du portefeuille
         </div>
       </div>
       <iframe
