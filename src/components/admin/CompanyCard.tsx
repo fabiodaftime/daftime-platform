@@ -61,6 +61,7 @@ export function CompanyCard({
                 if (layoutType === 'nexus_test') route = `/dashboard-nexus/${id}`;
                 if (layoutType === 'hotel_x') route = `/dashboard-hotel-x/${id}`;
                 if (layoutType === 'skalis') route = `/dashboard-skalis/${id}`;
+                if (layoutType === 'ampfora') route = `/dashboard-ampfora/${id}`;
                 console.log('[CompanyCard] Navigating:', { id, layoutType, route });
                 navigate(route);
               }}
