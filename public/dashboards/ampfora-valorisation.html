@@ -24,12 +24,12 @@ header .accent{position:absolute;right:-30px;top:-40px;width:240px;height:240px;
 .brand{display:flex;align-items:center;gap:14px}
 .brand svg{flex:none}
 .brand .word{font-size:26px;font-weight:700;letter-spacing:.5px}
-.brand .base{font-size:9.5px;letter-spacing:3px;color:#C9CADF;font-weight:500;margin-top:2px}
+.brand .base{font-size:9.5px;letter-spacing:3px;color:#C9BFA8;font-weight:500;margin-top:2px}
 .headline{margin-top:18px;display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 26px}
 .headline h1{font-size:21px;font-weight:600}
-.headline .sub{font-size:12.5px;color:#C9CADF}
+.headline .sub{font-size:12.5px;color:#C9BFA8}
 .confbar{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;font-size:11px}
-.confbar span{border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:3px 12px;color:#E8E9F3}
+.confbar span{border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:3px 12px;color:#F5F0E8}
 .confbar span.y{background:var(--jaune);color:var(--bleu);border-color:var(--jaune);font-weight:600}
 /* ---------- Shell : sidebar + main ---------- */
 .shell{display:flex;align-items:flex-start;min-height:calc(100vh - 180px)}
@@ -61,8 +61,8 @@ p.note{font-size:12px;color:var(--muted);margin:8px 0}
 .kpi .val{font-size:24px;font-weight:700;margin-top:4px}
 .kpi .det{font-size:11.5px;color:var(--muted);margin-top:3px}
 .kpi.hl{background:var(--bleu);color:#fff;border-color:var(--bleu)}
-.kpi.hl .lbl{color:#C9CADF}
-.kpi.hl .det{color:#C9CADF}
+.kpi.hl .lbl{color:#C9BFA8}
+.kpi.hl .det{color:#C9BFA8}
 .kpi.hl .val em{font-style:normal;color:var(--jaune)}
 /* ---------- Badges ---------- */
 .b{display:inline-block;font-size:10px;font-weight:600;border-radius:4px;padding:1px 7px;vertical-align:middle;letter-spacing:.3px}
@@ -85,17 +85,17 @@ th{background:var(--bleu);color:#fff;font-weight:500;text-align:left;padding:8px
 th.r,td.r{text-align:right}
 td{padding:7px 10px;border-bottom:1px solid var(--border)}
 tr.tot td{font-weight:700;background:var(--bleu-soft);border-top:2px solid var(--bleu)}
-tr.sub td{font-weight:600;background:#F2F3F9}
+tr.sub td{font-weight:600;background:#F5F0E8}
 td .src{display:block;font-size:10px;color:var(--muted)}
 /* ---------- Alert / callout ---------- */
 .callout{border-left:4px solid var(--jaune);background:#FDFDEF;border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;font-size:12.5px}
 .callout.blue{border-left-color:var(--bleu);background:var(--bleu-soft)}
 .callout b{font-weight:600}
 .disclaimer{font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:36px;padding-top:14px}
-footer{background:var(--bleu);color:#C9CADF;font-size:11.5px;padding:18px 36px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer{background:var(--bleu);color:#C9BFA8;font-size:11.5px;padding:18px 36px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 footer b{color:#fff}
-.lbl-tip{background:#1A1D56;color:#fff;border:none;border-radius:4px;font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;padding:2px 7px;box-shadow:0 1px 4px rgba(26,29,86,.3)}
-.lbl-tip::before{border-top-color:#1A1D56}
+.lbl-tip{background:#0A1628;color:#fff;border:none;border-radius:4px;font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;padding:2px 7px;box-shadow:0 1px 4px rgba(10,22,40,.3)}
+.lbl-tip::before{border-top-color:#0A1628}
 .subnav{display:flex;gap:10px;margin:16px 0 4px;flex-wrap:wrap}
 .subnav button{font-family:inherit;font-size:13px;font-weight:600;padding:9px 20px;border-radius:8px;border:1.5px solid var(--bleu);background:#fff;color:var(--bleu);cursor:pointer}
 .subnav button:hover{background:var(--bleu-soft)}
@@ -986,7 +986,7 @@ footer b{color:#fff}
   .dr-files li .ext{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:4px;background:var(--bleu-soft);color:var(--bleu);text-transform:uppercase}
   .dr-files li .ext.pdf{background:#FDECEC;color:#B23A3A}
   .dr-files li .ext.xlsx,.dr-files li .ext.xls,.dr-files li .ext.csv{background:#E6F4EA;color:#1E7E4A}
-  .dr-files li .ext.docx,.dr-files li .ext.doc{background:#E4ECF9;color:#1F3A8A}
+  .dr-files li .ext.docx,.dr-files li .ext.doc{background:#EAE2D2;color:#1F2B41}
   .dr-files li .ext.jpg,.dr-files li .ext.jpeg,.dr-files li .ext.png,.dr-files li .ext.heic{background:#FBFAE0;color:#6E6C00}
   .dr-files li .ext.html{background:#FFF3E2;color:#9A6B00}
   .dr-files li .sz{color:var(--muted);font-size:11.5px;min-width:70px;text-align:right}
@@ -1081,9 +1081,9 @@ const DATA = {
           {n:"Marqués de Toca", c:[40.4106,-3.6976], d:"Calle del Marqués de Toca, Antón Martín (localisation présumée)<br>~9 unités + local · Investi 4 832 K€ · Valeur centrale 4 800 K€"},
           {n:"Huertas 52", c:[40.4136,-3.6962], d:"Calle de las Huertas 52, Barrio de las Letras<br>6 unités + O Bistro · Investi 4 767 K€ · Valeur centrale 4 225 K€"}] }
 };
-const BLEU="#1A1D56", BLEU80="#34376E", BLEU50="#7B7EA8", JAUNE="#D6D303", SOFT="#C9CADF", POS="#1E7E4A", NEG="#B23A3A";
+const BLEU="#0A1628", BLEU80="#1F2B41", BLEU50="#A89A78", JAUNE="#D4A855", SOFT="#C9BFA8", POS="#1E7E4A", NEG="#B23A3A";
 Chart.defaults.font.family="'Poppins',sans-serif";
-Chart.defaults.color="#5C5F87";
+Chart.defaults.color="#6B6B6B";
 Chart.defaults.font.size=11;
 const eur=v=>v==null?"n.d.":v.toLocaleString('fr-FR');
 
@@ -1114,8 +1114,8 @@ function mkMap(el, assets, center, zoom){
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
     attribution:'© OpenStreetMap'}).addTo(m);
   assets.forEach(a=>{
-    const mk=L.circleMarker(a.c,{radius:a.ref?7:11,color:a.ref?'#7B7EA8':'#1A1D56',weight:2,
-      fillColor:a.ref?'#C9CADF':'#D6D303',fillOpacity:.95}).addTo(m);
+    const mk=L.circleMarker(a.c,{radius:a.ref?7:11,color:a.ref?'#A89A78':'#0A1628',weight:2,
+      fillColor:a.ref?'#C9BFA8':'#D4A855',fillOpacity:.95}).addTo(m);
     mk.bindPopup('<b style="font-family:Poppins">'+a.n+'</b><br><span style="font-size:11px">'+a.d+'</span>');
     mk.bindTooltip(a.n,{permanent:true,direction:'top',offset:[0,-10],className:'lbl-tip'});
   });
@@ -1129,7 +1129,7 @@ function initMaps(){
 
 /* Doughnut investi */
 new Chart(chInvesti,{type:'doughnut',data:{labels:DATA.assets,
-  datasets:[{data:DATA.investi,backgroundColor:[BLEU,BLEU80,JAUNE,"#9C9A02",SOFT],borderWidth:2,borderColor:"#fff"}]},
+  datasets:[{data:DATA.investi,backgroundColor:[BLEU,BLEU80,JAUNE,"#A07F35",SOFT],borderWidth:2,borderColor:"#fff"}]},
   options:{plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>` ${c.label} : ${eur(c.parsed)} K€ (${(c.parsed/207.93).toFixed(1)} %)`}}},cutout:'55%'}});
 
 /* Investi vs valo */
@@ -1153,7 +1153,7 @@ if (typeof chRange !== 'undefined' && chRange) {
   const centData=[...DATA.valoC,19656];
   const invData=[...DATA.investi,20793];
   new Chart(chRange,{type:'bar',data:{labels:rangeLabels,datasets:[
-    {label:'Fourchette basse-haute',data:rangeData,backgroundColor:"#E2E4EF",borderColor:BLEU50,borderWidth:1,borderSkipped:false,barPercentage:.55},
+    {label:'Fourchette basse-haute',data:rangeData,backgroundColor:"#EAE2D2",borderColor:BLEU50,borderWidth:1,borderSkipped:false,barPercentage:.55},
     {label:'Central',data:centData,type:'scatter',pointStyle:'line',pointRadius:26,pointBorderWidth:4,pointBorderColor:JAUNE},
     {label:'Investi',data:invData,type:'scatter',pointStyle:'rectRot',pointRadius:6,pointBackgroundColor:BLEU,pointBorderColor:BLEU}]},
     options:{indexAxis:'y',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>{
@@ -1188,14 +1188,14 @@ new Chart(chPassi,{type:'bar',data:{labels:DATA.passi.mois,datasets:[
 new Chart(chCouts,{type:'bar',data:{labels:["Tesoro 7","M. de Toca","Huertas 52"],
   datasets:DATA.esCouts.cats.map((c,i)=>({label:c,
     data:[DATA.esCouts.tesoro[i],DATA.esCouts.mdt[i],DATA.esCouts.huertas[i]],
-    backgroundColor:[BLEU,"#54577F",BLEU80,JAUNE,"#9C9A02",SOFT,"#B9BBD4"][i],stack:'s'}))},
+    backgroundColor:[BLEU,"#5A4F38",BLEU80,JAUNE,"#A07F35",SOFT,"#D9CDB3"][i],stack:'s'}))},
   options:{indexAxis:'y',plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},
   scales:{x:{stacked:true,ticks:{callback:v=>eur(v)}},y:{stacked:true}}}});
 
 /* Yields par actif */
 new Chart(chYield,{type:'bar',data:{labels:DATA.yields.labels,
   datasets:[{label:'Yield brut (%)',data:DATA.yields.vals,
-    backgroundColor:[BLEU,BLEU80,SOFT,JAUNE,SOFT,"#9C9A02"]}]},
+    backgroundColor:[BLEU,BLEU80,SOFT,JAUNE,SOFT,"#A07F35"]}]},
   options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y} % - CA / capital investi`}}},
   scales:{y:{ticks:{callback:v=>v+' %'}}}}});
 
@@ -1208,7 +1208,7 @@ new Chart(chOcc,{type:'line',data:{labels:DATA.passi.mois,datasets:[
 /* Charges externes 2024 */
 new Chart(chChExt,{type:'doughnut',data:{labels:DATA.chExt.labels,
   datasets:[{data:DATA.chExt.vals,borderWidth:2,borderColor:'#fff',
-    backgroundColor:[BLEU,"#B23A3A",BLEU80,"#54577F",BLEU50,"#9C9A02",JAUNE,SOFT,"#B9BBD4"]}]},
+    backgroundColor:[BLEU,"#B23A3A",BLEU80,"#5A4F38",BLEU50,"#A07F35",JAUNE,SOFT,"#D9CDB3"]}]},
   options:{plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:10}}},
     tooltip:{callbacks:{label:c=>` ${c.label} : ${eur(c.parsed)} € (${(c.parsed/4465.94).toFixed(1)} %)`}}},cutout:'55%'}});
 
