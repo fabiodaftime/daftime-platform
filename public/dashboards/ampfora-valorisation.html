@@ -997,6 +997,58 @@ footer b{color:#fff}
   </div>
 </section>
 
+<!-- ================= DATA ROOM ================= -->
+<section class="tab" id="dataroom">
+  <h2>Data room sécurisée</h2>
+  <div class="h2sub">Inventaire complet des pièces transmises — Forshent Real Estate (France) &amp; Oxygen Madrid Estates (Espagne)</div>
+
+  <div class="callout blue" style="margin-top:14px">
+    <b>Documents consultables dans la data room sécurisée Daftime — accès sur demande.</b>
+    Aucun téléchargement direct depuis ce tableau. Pour obtenir un accès lecture, contacter l'équipe Daftime Advisory.
+  </div>
+
+  <div class="kpis" id="drKpis">
+    <div class="kpi hl"><div class="lbl">Total documents</div><div class="val"><em id="drTotal">471</em></div><div class="det">Inventaire au <span id="drDate">2026-06-11</span></div></div>
+    <div class="kpi"><div class="lbl">France — Forshent</div><div class="val" id="drFR">245</div><div class="det">cat. 01_FRANCE_FORSHENT</div></div>
+    <div class="kpi"><div class="lbl">Espagne — Oxygen</div><div class="val" id="drES">219</div><div class="det">cat. 02_ESPAGNE_OXYGEN</div></div>
+    <div class="kpi"><div class="lbl">Dashboards &amp; charte</div><div class="val" id="drDB">7</div><div class="det">cat. 00_DASHBOARDS_ET_CHARTE</div></div>
+  </div>
+
+  <div class="card" style="padding:14px 18px">
+    <input id="drSearch" type="search" placeholder="Rechercher un fichier ou un dossier (insensible aux accents et à la casse)..."
+      style="width:100%;font-family:inherit;font-size:13px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;outline:none;color:var(--bleu);background:#fff"
+      oninput="drRender()">
+    <div id="drStats" style="font-size:11.5px;color:var(--muted);margin-top:8px"></div>
+  </div>
+
+  <div id="drSections"></div>
+</section>
+
+<style>
+  .dr-section{margin-top:22px}
+  .dr-section h3{font-size:15px;font-weight:600;color:var(--bleu);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+  .dr-section h3 .ct{font-size:11px;font-weight:500;color:var(--muted);background:var(--bleu-soft);padding:2px 9px;border-radius:12px}
+  details.dr-folder{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:8px 0;overflow:hidden}
+  details.dr-folder>summary{cursor:pointer;padding:11px 16px;font-weight:600;font-size:13px;color:var(--bleu);list-style:none;display:flex;align-items:center;justify-content:space-between;background:#fff;transition:background .15s}
+  details.dr-folder>summary::-webkit-details-marker{display:none}
+  details.dr-folder>summary:hover{background:var(--bleu-soft)}
+  details.dr-folder>summary::before{content:"▸";display:inline-block;margin-right:10px;color:var(--jaune);font-size:11px;transition:transform .15s}
+  details.dr-folder[open]>summary::before{transform:rotate(90deg)}
+  details.dr-folder>summary .ct{font-size:11px;font-weight:500;color:var(--muted);background:var(--bleu-soft);padding:2px 9px;border-radius:12px;margin-left:auto}
+  .dr-files{list-style:none;padding:4px 0;margin:0;border-top:1px solid var(--border)}
+  .dr-files li{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 38px;font-size:12.5px;border-bottom:1px solid #F2EFE8}
+  .dr-files li:last-child{border-bottom:none}
+  .dr-files li .nm{flex:1;color:#2A3344;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dr-files li .ext{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:4px;background:var(--bleu-soft);color:var(--bleu);text-transform:uppercase}
+  .dr-files li .ext.pdf{background:#FDECEC;color:#B23A3A}
+  .dr-files li .ext.xlsx,.dr-files li .ext.xls,.dr-files li .ext.csv{background:#E6F4EA;color:#1E7E4A}
+  .dr-files li .ext.docx,.dr-files li .ext.doc{background:#E4ECF9;color:#1F3A8A}
+  .dr-files li .ext.jpg,.dr-files li .ext.jpeg,.dr-files li .ext.png,.dr-files li .ext.heic{background:#FBFAE0;color:#6E6C00}
+  .dr-files li .ext.html{background:#FFF3E2;color:#9A6B00}
+  .dr-files li .sz{color:var(--muted);font-size:11.5px;min-width:70px;text-align:right}
+  .dr-empty{padding:18px;text-align:center;color:var(--muted);font-size:12.5px}
+</style>
+
 <!-- ================= METHODO ================= -->
 <section class="tab" id="methodo">
   <h2>Méthodologie &amp; traçabilité</h2>
