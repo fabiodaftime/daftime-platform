@@ -1084,19 +1084,21 @@ new Chart(chCA,{type:'bar',data:{labels:DATA.ca.years,datasets:[
   options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>` ${c.dataset.label} : ${c.parsed.y==null?'non documenté':eur(c.parsed.y)+' K€'}`}}},
   scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v+' K€'}}}}});
 
-/* Fourchettes valorisation */
-const rangeLabels=[...DATA.assets,"GROUPE"];
-const rangeData=DATA.valoB.map((b,i)=>[b,DATA.valoH[i]]).concat([[14113,23781]]);
-const centData=[...DATA.valoC,19656];
-const invData=[...DATA.investi,20793];
-new Chart(chRange,{type:'bar',data:{labels:rangeLabels,datasets:[
-  {label:'Fourchette basse-haute',data:rangeData,backgroundColor:"#E2E4EF",borderColor:BLEU50,borderWidth:1,borderSkipped:false,barPercentage:.55},
-  {label:'Central',data:centData,type:'scatter',pointStyle:'line',pointRadius:26,pointBorderWidth:4,pointBorderColor:JAUNE},
-  {label:'Investi',data:invData,type:'scatter',pointStyle:'rectRot',pointRadius:6,pointBackgroundColor:BLEU,pointBorderColor:BLEU}]},
-  options:{indexAxis:'y',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>{
-    if(c.datasetIndex===0)return ` Fourchette : ${eur(c.raw[0])} – ${eur(c.raw[1])} K€`;
-    return ` ${c.dataset.label} : ${eur(c.parsed.x)} K€`;}}}},
-  scales:{x:{ticks:{callback:v=>eur(v)}}}}});
+/* Fourchettes valorisation — désactivé (canvas retiré dans le nouveau scénario S1-S4) */
+if (typeof chRange !== 'undefined' && chRange) {
+  const rangeLabels=[...DATA.assets,"GROUPE"];
+  const rangeData=DATA.valoB.map((b,i)=>[b,DATA.valoH[i]]).concat([[14113,23781]]);
+  const centData=[...DATA.valoC,19656];
+  const invData=[...DATA.investi,20793];
+  new Chart(chRange,{type:'bar',data:{labels:rangeLabels,datasets:[
+    {label:'Fourchette basse-haute',data:rangeData,backgroundColor:"#E2E4EF",borderColor:BLEU50,borderWidth:1,borderSkipped:false,barPercentage:.55},
+    {label:'Central',data:centData,type:'scatter',pointStyle:'line',pointRadius:26,pointBorderWidth:4,pointBorderColor:JAUNE},
+    {label:'Investi',data:invData,type:'scatter',pointStyle:'rectRot',pointRadius:6,pointBackgroundColor:BLEU,pointBorderColor:BLEU}]},
+    options:{indexAxis:'y',plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>{
+      if(c.datasetIndex===0)return ` Fourchette : ${eur(c.raw[0])} – ${eur(c.raw[1])} K€`;
+      return ` ${c.dataset.label} : ${eur(c.parsed.x)} K€`;}}}},
+    scales:{x:{ticks:{callback:v=>eur(v)}}}}});
+}
 
 /* Passiflores mensuel */
 new Chart(chPassi,{type:'bar',data:{labels:DATA.passi.mois,datasets:[
