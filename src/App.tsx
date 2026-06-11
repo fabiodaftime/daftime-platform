@@ -26,6 +26,7 @@ import DashboardPCGroup from "./pages/DashboardPCGroup";
 import DashboardNexus from "./pages/DashboardNexus";
 import DashboardHotelX from "./pages/DashboardHotelX";
 import DashboardSkalis from "./pages/DashboardSkalis";
+import DashboardAmpfora from "./pages/DashboardAmpfora";
 import CompanyForm from "./pages/CompanyForm";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPCGroupDiagnostics from "./pages/AdminPCGroupDiagnostics";
@@ -190,6 +191,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <DashboardSkalis />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard-ampfora/:id" 
+              element={
+                <ProtectedRoute>
+                  <DashboardAmpfora />
                 </ProtectedRoute>
               } 
             />
