@@ -1161,6 +1161,22 @@ if (typeof chRange !== 'undefined' && chRange) {
     scales:{x:{ticks:{callback:v=>eur(v)}}}}});
 }
 
+/* Projet aux investisseurs */
+const projetYears=['2026','2027','2028','2029','2030'];
+if (typeof chProjetCA !== 'undefined' && chProjetCA) {
+  new Chart(chProjetCA,{type:'bar',data:{labels:projetYears,datasets:[
+    {label:'CA locatif',data:[314,700,1050,1250,1400],backgroundColor:BLEU,borderRadius:4},
+    {label:'NOI',data:[170,280,420,525,595],backgroundColor:JAUNE,borderRadius:4}]},
+    options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v+' K€'}}}}});
+}
+if (typeof chProjetValo !== 'undefined' && chProjetValo) {
+  new Chart(chProjetValo,{type:'line',data:{labels:projetYears,datasets:[
+    {label:'Valorisation rendement (M€)',data:[4.3,7.0,10.5,13.1,14.9],borderColor:JAUNE,backgroundColor:'rgba(212,168,85,0.15)',borderWidth:3,fill:true,tension:.35,pointRadius:5,pointBackgroundColor:JAUNE},
+    {label:'Capital investi (M€)',data:[15.4,15.4,15.4,15.4,15.4],borderColor:BLEU,borderWidth:2,borderDash:[6,4],fill:false,pointRadius:0}]},
+    options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v+' M€'}}}}});
+}
+
+
 /* Passiflores mensuel */
 new Chart(chPassi,{type:'bar',data:{labels:DATA.passi.mois,datasets:[
   {label:'2025',data:DATA.passi.y2025,backgroundColor:SOFT},
