@@ -149,6 +149,7 @@ footer b{color:#fff}
   <button data-t="compta">Comptabilité</button>
   <button data-t="marche">Marché &amp; Références</button>
   <button data-t="questions">Questions &amp; docs</button>
+  <button data-t="dataroom">Data room</button>
   <button data-t="methodo">Méthodologie &amp; Sources</button>
 </nav>
 
@@ -996,6 +997,58 @@ footer b{color:#fff}
   </div>
 </section>
 
+<!-- ================= DATA ROOM ================= -->
+<section class="tab" id="dataroom">
+  <h2>Data room sécurisée</h2>
+  <div class="h2sub">Inventaire complet des pièces transmises — Forshent Real Estate (France) &amp; Oxygen Madrid Estates (Espagne)</div>
+
+  <div class="callout blue" style="margin-top:14px">
+    <b>Documents consultables dans la data room sécurisée Daftime — accès sur demande.</b>
+    Aucun téléchargement direct depuis ce tableau. Pour obtenir un accès lecture, contacter l'équipe Daftime Advisory.
+  </div>
+
+  <div class="kpis" id="drKpis">
+    <div class="kpi hl"><div class="lbl">Total documents</div><div class="val"><em id="drTotal">471</em></div><div class="det">Inventaire au <span id="drDate">2026-06-11</span></div></div>
+    <div class="kpi"><div class="lbl">France — Forshent</div><div class="val" id="drFR">245</div><div class="det">cat. 01_FRANCE_FORSHENT</div></div>
+    <div class="kpi"><div class="lbl">Espagne — Oxygen</div><div class="val" id="drES">219</div><div class="det">cat. 02_ESPAGNE_OXYGEN</div></div>
+    <div class="kpi"><div class="lbl">Dashboards &amp; charte</div><div class="val" id="drDB">7</div><div class="det">cat. 00_DASHBOARDS_ET_CHARTE</div></div>
+  </div>
+
+  <div class="card" style="padding:14px 18px">
+    <input id="drSearch" type="search" placeholder="Rechercher un fichier ou un dossier (insensible aux accents et à la casse)..."
+      style="width:100%;font-family:inherit;font-size:13px;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;outline:none;color:var(--bleu);background:#fff"
+      oninput="drRender()">
+    <div id="drStats" style="font-size:11.5px;color:var(--muted);margin-top:8px"></div>
+  </div>
+
+  <div id="drSections"></div>
+</section>
+
+<style>
+  .dr-section{margin-top:22px}
+  .dr-section h3{font-size:15px;font-weight:600;color:var(--bleu);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+  .dr-section h3 .ct{font-size:11px;font-weight:500;color:var(--muted);background:var(--bleu-soft);padding:2px 9px;border-radius:12px}
+  details.dr-folder{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:8px 0;overflow:hidden}
+  details.dr-folder>summary{cursor:pointer;padding:11px 16px;font-weight:600;font-size:13px;color:var(--bleu);list-style:none;display:flex;align-items:center;justify-content:space-between;background:#fff;transition:background .15s}
+  details.dr-folder>summary::-webkit-details-marker{display:none}
+  details.dr-folder>summary:hover{background:var(--bleu-soft)}
+  details.dr-folder>summary::before{content:"▸";display:inline-block;margin-right:10px;color:var(--jaune);font-size:11px;transition:transform .15s}
+  details.dr-folder[open]>summary::before{transform:rotate(90deg)}
+  details.dr-folder>summary .ct{font-size:11px;font-weight:500;color:var(--muted);background:var(--bleu-soft);padding:2px 9px;border-radius:12px;margin-left:auto}
+  .dr-files{list-style:none;padding:4px 0;margin:0;border-top:1px solid var(--border)}
+  .dr-files li{display:flex;align-items:center;gap:10px;padding:7px 18px 7px 38px;font-size:12.5px;border-bottom:1px solid #F2EFE8}
+  .dr-files li:last-child{border-bottom:none}
+  .dr-files li .nm{flex:1;color:#2A3344;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dr-files li .ext{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:4px;background:var(--bleu-soft);color:var(--bleu);text-transform:uppercase}
+  .dr-files li .ext.pdf{background:#FDECEC;color:#B23A3A}
+  .dr-files li .ext.xlsx,.dr-files li .ext.xls,.dr-files li .ext.csv{background:#E6F4EA;color:#1E7E4A}
+  .dr-files li .ext.docx,.dr-files li .ext.doc{background:#E4ECF9;color:#1F3A8A}
+  .dr-files li .ext.jpg,.dr-files li .ext.jpeg,.dr-files li .ext.png,.dr-files li .ext.heic{background:#FBFAE0;color:#6E6C00}
+  .dr-files li .ext.html{background:#FFF3E2;color:#9A6B00}
+  .dr-files li .sz{color:var(--muted);font-size:11.5px;min-width:70px;text-align:right}
+  .dr-empty{padding:18px;text-align:center;color:var(--muted);font-size:12.5px}
+</style>
+
 <!-- ================= METHODO ================= -->
 <section class="tab" id="methodo">
   <h2>Méthodologie &amp; traçabilité</h2>
@@ -1216,6 +1269,68 @@ new Chart(chESQ1,{type:'bar',data:{labels:["Tesoro 7","M. de Toca","Huertas 52"]
   {label:'Revenus Q1 2026',data:DATA.esQ1.rev,backgroundColor:BLEU},
   {label:'Net locatif Q1 2026',data:DATA.esQ1.net,backgroundColor:JAUNE}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v+' K€'}}}}});
+
+/* ============ DATA ROOM ============ */
+(function(){
+  var DR={items:[],total:0,generated:''};
+  var loaded=false, loading=false;
+  function norm(s){return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+  function fmtSize(kb){if(kb>=1024)return (kb/1024).toFixed(1).replace('.',',')+' Mo'; return kb+' Ko';}
+  function ext(f){var m=/\.([a-z0-9]+)$/i.exec(f); return m?m[1].toLowerCase():'';}
+  function sectionLabel(c){
+    if(c==='01_FRANCE_FORSHENT')return 'France — Forshent Real Estate';
+    if(c==='02_ESPAGNE_OXYGEN')return 'Espagne — Oxygen Madrid Estates';
+    if(c==='00_DASHBOARDS_ET_CHARTE')return 'Dashboards &amp; charte graphique';
+    return c;
+  }
+  function esc(s){return (s||'').toString().replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+  window.drRender=function(){
+    if(!loaded){return;}
+    var q=norm(document.getElementById('drSearch').value.trim());
+    var cats=['01_FRANCE_FORSHENT','02_ESPAGNE_OXYGEN','00_DASHBOARDS_ET_CHARTE'];
+    var totalShown=0, html='';
+    cats.forEach(function(cat){
+      var inCat=DR.items.filter(function(it){return it.cat===cat;});
+      var filt=q?inCat.filter(function(it){return norm(it.file).indexOf(q)>=0 || norm(it.folder).indexOf(q)>=0;}):inCat;
+      totalShown+=filt.length;
+      // group by folder
+      var fmap={}; filt.forEach(function(it){(fmap[it.folder]=fmap[it.folder]||[]).push(it);});
+      var folders=Object.keys(fmap).sort(function(a,b){return a.localeCompare(b,'fr');});
+      html+='<div class="dr-section"><h3>'+sectionLabel(cat)+' <span class="ct">'+filt.length+' / '+inCat.length+' doc.</span></h3>';
+      if(folders.length===0){html+='<div class="card dr-empty">Aucun document ne correspond à la recherche.</div></div>';return;}
+      folders.forEach(function(fold,idx){
+        var files=fmap[fold].slice().sort(function(a,b){return a.file.localeCompare(b.file,'fr');});
+        var openAttr=(q && filt.length<=60)?' open':'';
+        html+='<details class="dr-folder"'+openAttr+'><summary><span>'+esc(fold)+'</span><span class="ct">'+files.length+' doc.</span></summary><ul class="dr-files">';
+        files.forEach(function(it){
+          var e=ext(it.file);
+          html+='<li><span class="ext '+esc(e)+'">'+esc(e||'fic')+'</span><span class="nm" title="'+esc(it.file)+'">'+esc(it.file)+'</span><span class="sz">'+fmtSize(it.kb)+'</span></li>';
+        });
+        html+='</ul></details>';
+      });
+      html+='</div>';
+    });
+    document.getElementById('drSections').innerHTML=html;
+    document.getElementById('drStats').textContent=(q?totalShown+' document(s) affiché(s) sur ':'')+DR.total+' documents inventoriés · Édition '+DR.generated;
+  };
+  function load(){
+    if(loaded||loading)return; loading=true;
+    fetch('/dashboards/dataroom_inventaire.json').then(function(r){return r.json();}).then(function(j){
+      DR.items=j.items||[]; DR.total=j.total||DR.items.length; DR.generated=j.generated||'';
+      document.getElementById('drTotal').textContent=DR.total;
+      document.getElementById('drDate').textContent=DR.generated;
+      var c={};DR.items.forEach(function(it){c[it.cat]=(c[it.cat]||0)+1;});
+      document.getElementById('drFR').textContent=c['01_FRANCE_FORSHENT']||0;
+      document.getElementById('drES').textContent=c['02_ESPAGNE_OXYGEN']||0;
+      document.getElementById('drDB').textContent=c['00_DASHBOARDS_ET_CHARTE']||0;
+      loaded=true; loading=false; window.drRender();
+    }).catch(function(){loading=false;document.getElementById('drSections').innerHTML='<div class="card dr-empty">Inventaire indisponible.</div>';});
+  }
+  // Lazy load when tab opens
+  document.querySelectorAll('nav button[data-t="dataroom"]').forEach(function(b){b.addEventListener('click',load);});
+  // If already on tab via deep link
+  if(document.getElementById('dataroom') && document.getElementById('dataroom').classList.contains('active')){load();}
+})();
 </script>
 </main>
 </div>
