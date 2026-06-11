@@ -35,6 +35,7 @@ import AdminEntityInputs from "./pages/AdminEntityInputs";
 import AdminDataSources from "./pages/AdminDataSources";
 import AdminCsvImport from "./pages/AdminCsvImport";
 import AdminLabarileImport from "./pages/AdminLabarileImport";
+import AdminDataroomUpload from "./pages/AdminDataroomUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
