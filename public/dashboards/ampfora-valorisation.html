@@ -1126,7 +1126,7 @@ new Chart(chInvesti,{type:'doughnut',data:{labels:DATA.assets,
 /* Investi vs valo */
 new Chart(chInvVal,{type:'bar',data:{labels:DATA.assets,datasets:[
   {label:'Investi',data:DATA.investi,backgroundColor:BLEU},
-  {label:'Valeur centrale',data:DATA.valoC,backgroundColor:JAUNE}]},
+  {label:'Valeur retenue',data:DATA.valoC,backgroundColor:JAUNE}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>eur(v)}}}}});
 
 /* CA stacked */
