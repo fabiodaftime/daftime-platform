@@ -202,120 +202,110 @@ footer b{color:#fff}
 </section>
 <!-- ================= VALORISATION ================= -->
 <section class="tab" id="valo">
-  <h2>Valorisation — 4 scénarios</h2>
-  <div class="h2sub">Sélectionnez un scénario · S1 Espagne marché · S2 France loyers Airbnb · S3 Globale FR+ES · S4 Espagne rendements futurs</div>
+  <h2>Valorisation — lecture immeuble par immeuble</h2>
+  <div class="h2sub">Pour chaque actif : trois lectures (valeur de marché comparables · valeur rendement sur loyers réels · valeur retenue), puis totaux pays, puis agrégat groupe.</div>
 
-  <div class="subnav" id="valoSubnav">
-    <button data-s="s1" class="active">S1 · Espagne · Valeur de marché</button>
-    <button data-s="s2">S2 · France · Loyers Airbnb (CT)</button>
-    <button data-s="s3">S3 · Valorisation globale</button>
-    <button data-s="s4">S4 · Espagne · Rendements futurs</button>
+  <div class="callout blue">
+    <b>Méthode :</b> (a) <b>Valeur de marché</b> = comparables €/m² du micro-marché ; (b) <b>Valeur rendement</b> = capitalisation du NOI réel ou cible au taux de marché local ; (c) <b>Valeur retenue</b> = lecture pondérée Daftime (moyenne ou borne basse selon fiabilité). Valeurs hors droits / hors frais, en K€.
   </div>
 
-  <!-- ===== S1 — Espagne valeur de marché ===== -->
-  <div class="sub active" id="s1">
-    <h3>Scénario 1 — Espagne · Valeur de marché des actifs</h3>
-    <p class="note">Méthode : comparables marché Madrid (Calle Huertas, Barrio Letras, Centro) pour Tesoro 7 et Huertas 52, capitalisation du NOI réel pour Marqués de Toca. Valeurs hors droits / hors frais.</p>
+  <!-- ============ FRANCE ============ -->
+  <h3>France — Forshent Real Estate</h3>
 
-    <div class="kpis">
-      <div class="kpi"><div class="lbl">Capital investi Espagne</div><div class="val">15,4 M€</div><div class="det">FACTS au 31/03/2026 <span class="b doc">Documenté</span></div></div>
-      <div class="kpi"><div class="lbl">Valeur basse</div><div class="val">10,0 M€</div><div class="det">Hypothèses prudentes</div></div>
-      <div class="kpi hl"><div class="lbl">Valeur centrale</div><div class="val"><em>14,5 M€</em></div><div class="det">Scénario retenu</div></div>
-      <div class="kpi"><div class="lbl">Valeur haute</div><div class="val">17,3 M€</div><div class="det">Stabilisation complète</div></div>
-      <div class="kpi"><div class="lbl">Écart vs investi</div><div class="val neg">−0,9 M€</div><div class="det">Sur scénario central</div></div>
-    </div>
-
+  <!-- Passiflore -->
+  <div class="card">
+    <h3>Passiflore — Beausoleil (32-34 rue des Martyrs de la Résistance)</h3>
     <table>
-      <tr><th>Actif</th><th>Méthode</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th class="r">Investi</th><th class="r">Écart</th><th>Fiabilité</th></tr>
-      <tr><td><b>Marqués de Toca</b> + Espacio</td><td>Capitalisation NOI 169 K€ à 4 % / 3,5 % / 3 %</td><td class="r">4 200</td><td class="r"><b>4 800</b></td><td class="r">5 600</td><td class="r">4 832</td><td class="r neg">−32</td><td><span class="b calc">Calculé</span></td></tr>
-      <tr><td><b>Tesoro 7</b> + O Bistro</td><td>Cap NOI 95 K€ à 3,5 % (basse) · Coût de remplacement (centrale/haute)</td><td class="r">2 700</td><td class="r"><b>5 500</b></td><td class="r">6 000</td><td class="r">5 814</td><td class="r neg">−314</td><td><span class="b hyp">Hypothèse</span></td></tr>
-      <tr><td><b>Huertas 52</b> + O Bistro</td><td>Comparables ~550 m² × 6 150 / 7 500 / 8 500 €/m² + bistro</td><td class="r">3 075</td><td class="r"><b>4 225</b></td><td class="r">5 725</td><td class="r">4 767</td><td class="r neg">−542</td><td><span class="b hyp">Hypothèse</span></td></tr>
-      <tr class="tot"><td colspan="2">TOTAL ESPAGNE — Valeur de marché</td><td class="r">9 975</td><td class="r">14 525</td><td class="r">17 325</td><td class="r">15 413</td><td class="r neg">−888</td><td></td></tr>
+      <tr><th>Lecture</th><th>Méthode &amp; paramètres</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th>Fiabilité</th></tr>
+      <tr><td><b>① Valeur de marché</b></td><td>288,75 m² × 7 380 €/m² (comparables Beausoleil DVF/observatoires)</td><td class="r">1 588</td><td class="r"><b>2 131</b></td><td class="r">2 656</td><td><span class="b doc">Documenté</span></td></tr>
+      <tr><td><b>② Valeur rendement</b></td><td>Capitalisation NOI 2025 = 198 K€ à 6 % (fourchette 5,5–7 %)</td><td class="r">2 830</td><td class="r"><b>3 300</b></td><td class="r">3 600</td><td><span class="b calc">Calculé</span></td></tr>
+      <tr class="tot"><td><b>③ Valeur retenue</b></td><td>Moyenne des deux lectures — plancher bancaire = murs</td><td class="r"></td><td class="r"><b>2 700</b></td><td class="r"></td><td><span class="b calc">Daftime</span></td></tr>
     </table>
-
-    <div class="callout">
-      <b>Lecture :</b> les 3 immeubles madrilènes ont été acquis entre 2023 et 2026 ; la valeur de marché actuelle est proche du coût d'acquisition. La création de valeur reste à venir : stabilisation Tesoro 7 / Huertas 52, sécurisation des licences VUT (moratoire Centro depuis avril 2024), récupération TVA 531 K€.
-    </div>
+    <div class="callout"><b>Commentaire :</b> l'exploitation Airbnb crée <b>+1,2 M€</b> de valeur au-delà des murs (écart rendement vs marché). Prudence YTD 2026 <span class="neg">−19,9 %</span> (base mai 2025 exceptionnelle — GP F1). Les murs constituent le <b>plancher bancaire</b> ; la lecture retenue privilégie la moyenne pondérée.</div>
   </div>
 
-  <!-- ===== S2 — France loyers Airbnb ===== -->
-  <div class="sub" id="s2">
-    <h3>Scénario 2 — France · Capitalisation des loyers Airbnb (courte durée)</h3>
-    <p class="note">Méthode : capitalisation de l'EBITDA d'exploitation 2024 (12 unités courte durée — Passiflore Beausoleil + Vista Mare Cap d'Ail) selon taux de rendement de marché courte durée Côte d'Azur.</p>
-
-    <div class="kpis">
-      <div class="kpi"><div class="lbl">CA locatif 2024</div><div class="val">666 K€</div><div class="det">12 unités courte durée <span class="b doc">Documenté</span></div></div>
-      <div class="kpi"><div class="lbl">EBITDA 2024</div><div class="val">213 K€</div><div class="det">Marge 32 %</div></div>
-      <div class="kpi"><div class="lbl">Valeur basse (6,5 %)</div><div class="val">3,28 M€</div><div class="det">Rendement prudent</div></div>
-      <div class="kpi hl"><div class="lbl">Valeur centrale (5,5 %)</div><div class="val"><em>3,87 M€</em></div><div class="det">Marché courte durée CA</div></div>
-      <div class="kpi"><div class="lbl">Valeur haute (4,5 %)</div><div class="val">4,73 M€</div><div class="det">Premium emplacement</div></div>
-    </div>
-
+  <!-- Vista Mare -->
+  <div class="card">
+    <h3>Vista Mare — Cap d'Ail (30 av. du Trois Septembre)</h3>
     <table>
-      <tr><th>Hypothèse rendement</th><th class="r">EBITDA capitalisé</th><th class="r">Valeur (M€)</th><th>Commentaire</th></tr>
-      <tr><td>6,5 % — Basse</td><td class="r">213 / 6,5 %</td><td class="r"><b>3 277</b></td><td>Yield prudent, sensibilité saisonnalité</td></tr>
-      <tr class="sub"><td>5,5 % — Centrale</td><td class="r">213 / 5,5 %</td><td class="r"><b>3 873</b></td><td>Référence marché Beausoleil / Cap d'Ail courte durée</td></tr>
-      <tr><td>4,5 % — Haute</td><td class="r">213 / 4,5 %</td><td class="r"><b>4 733</b></td><td>Emplacement premium + portefeuille stabilisé</td></tr>
-      <tr class="tot"><td>Investi France (mémo)</td><td class="r"></td><td class="r">5 380</td><td>Comparaison coût de revient</td></tr>
+      <tr><th>Lecture</th><th>Méthode &amp; paramètres</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th>Fiabilité</th></tr>
+      <tr><td><b>① Valeur de marché</b></td><td>JHP 2 550 K€ · projet promoteur 3 800 K€ · découpe RDJ à 11 600 €/m²</td><td class="r">2 550</td><td class="r"><b>3 000</b></td><td class="r">3 800</td><td><span class="b doc">Documenté</span></td></tr>
+      <tr><td><b>② Valeur rendement</b></td><td>NOI stabilisé 131 K€ à 6 % (2 180 K€) + RDJ 1 100 K€</td><td class="r">2 900</td><td class="r"><b>3 280</b></td><td class="r">3 600</td><td><span class="b calc">Calculé</span></td></tr>
+      <tr class="tot"><td><b>③ Valeur retenue</b></td><td>Convergence des deux lectures — découpe RDJ comme levier n°1</td><td class="r"></td><td class="r"><b>3 100</b></td><td class="r"></td><td><span class="b calc">Daftime</span></td></tr>
     </table>
-
-    <div class="callout">
-      <b>Note :</b> cette approche valorise <b>l'activité d'exploitation Airbnb</b> et non le foncier seul. Différence vs approche comparables m² (Synthèse) : ici la valeur dépend du maintien du modèle CT (TLD / réglementation locale Beausoleil-Monaco). Sensibilité forte au YTD 2026 Passiflores <span class="neg">−19,9 %</span> (base mai 2025 exceptionnelle — GP F1).
-    </div>
+    <div class="callout"><b>Commentaire :</b> les deux lectures convergent (écart &lt; 10 %). <b>Découpe &gt; bloc</b> = levier n°1 de création de valeur (RDJ à 11 600 €/m² vs 7 530 €/m² en bloc). <b>Statut de l'acte RDJ à confirmer</b> avant intégration définitive.</div>
   </div>
 
-  <!-- ===== S3 — Valorisation globale ===== -->
-  <div class="sub" id="s3">
-    <h3>Scénario 3 — Valorisation globale du groupe (S1 + S2)</h3>
-    <p class="note">Agrégation : Espagne à la valeur de marché des actifs (S1) + France capitalisée sur loyers Airbnb (S2). Approche cohérente avec un acheteur opérateur cherchant un portefeuille « clé en main ».</p>
+  <!-- Total France -->
+  <table>
+    <tr><th>TOTAL FRANCE</th><th class="r">Valeur marché (centrale)</th><th class="r">Valeur rendement</th><th class="r">Valeur retenue</th></tr>
+    <tr class="tot"><td><b>Passiflore + Vista Mare</b></td><td class="r">5 131</td><td class="r">6 580</td><td class="r"><b>5 800</b></td></tr>
+  </table>
+  <div class="callout"><b>Commentaire France :</b> la lecture retenue (5 800 K€) se positionne entre marché des murs (5 131) et capitalisation des loyers (6 580). Elle reflète la dualité du portefeuille FR : actif foncier prime (Cap d'Ail) + exploitation courte durée mature (12 unités, EBITDA 32 %).</div>
 
-    <div class="kpis">
-      <div class="kpi"><div class="lbl">Capital investi groupe</div><div class="val">20,8 M€</div><div class="det">FR 5,4 + ES 15,4 M€</div></div>
-      <div class="kpi"><div class="lbl">Valeur basse</div><div class="val">13,25 M€</div><div class="det">FR 3,28 + ES 9,98 M€</div></div>
-      <div class="kpi hl"><div class="lbl">Valeur centrale</div><div class="val"><em>18,40 M€</em></div><div class="det">FR 3,87 + ES 14,53 M€</div></div>
-      <div class="kpi"><div class="lbl">Valeur haute</div><div class="val">22,06 M€</div><div class="det">FR 4,73 + ES 17,33 M€</div></div>
-      <div class="kpi"><div class="lbl">Écart vs investi</div><div class="val neg">−2,4 M€</div><div class="det">Scénario central</div></div>
-    </div>
+  <!-- ============ ESPAGNE ============ -->
+  <h3 style="margin-top:28px">Espagne — Oxygen Madrid Estates (lectures rendements futurs)</h3>
 
+  <!-- Marqués de Toca -->
+  <div class="card">
+    <h3>Marqués de Toca — Madrid (Antón Martín / Lavapiés)</h3>
     <table>
-      <tr><th>Pôle</th><th>Méthode</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th class="r">Investi</th><th class="r">Écart central</th></tr>
-      <tr><td><span class="pill">FR</span> France — Forshent SAS</td><td>Cap. EBITDA Airbnb 213 K€ (S2)</td><td class="r">3 277</td><td class="r"><b>3 873</b></td><td class="r">4 733</td><td class="r">5 380</td><td class="r neg">−1 507</td></tr>
-      <tr><td><span class="pill">ES</span> Espagne — Oxygen Madrid</td><td>Valeur de marché des actifs (S1)</td><td class="r">9 975</td><td class="r"><b>14 525</b></td><td class="r">17 325</td><td class="r">15 413</td><td class="r neg">−888</td></tr>
-      <tr class="tot"><td colspan="2">TOTAL GROUPE</td><td class="r">13 252</td><td class="r">18 398</td><td class="r">22 058</td><td class="r">20 793</td><td class="r neg">−2 395</td></tr>
+      <tr><th>Lecture</th><th>Méthode &amp; paramètres</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th>Fiabilité</th></tr>
+      <tr><td><b>① Valeur de marché</b></td><td>Comparables Centro — surfaces officielles en cours</td><td class="r" colspan="3"><span class="b hyp">Incoming — en attente d'éléments</span></td><td><span class="b hyp">Hyp.</span></td></tr>
+      <tr><td><b>② Valeur rendement</b></td><td>NOI réel 2025 = 175 K€ à 3,5 % (24 mois de loyers documentés)</td><td class="r">4 200</td><td class="r"><b>4 800</b></td><td class="r">5 600</td><td><span class="b doc">Documenté</span></td></tr>
+      <tr class="tot"><td><b>③ Valeur retenue</b></td><td>Lecture rendement centrale — actif ES le plus fiable</td><td class="r"></td><td class="r"><b>4 800</b></td><td class="r"></td><td><span class="b calc">Daftime</span></td></tr>
     </table>
-
-    <div class="callout blue">
-      <b>Synthèse globale :</b> valeur centrale ≈ <b>18,4 M€</b> pour 20,8 M€ investis (−12 %). Le delta reflète la jeunesse du portefeuille ES (acquisitions 2023-2026, en montée en charge) et la sensibilité du modèle FR à la réglementation courte durée. La cible 2027 (stabilisation Tesoro/Huertas + sécurisation VUT + 4 unités MDT) se situe à <b>22–24 M€</b>.
-    </div>
+    <div class="callout"><b>Commentaire :</b> actif ES <b>le plus fiable</b> du portefeuille — 24 mois de loyers réels, NOI documenté. Potentiel <b>+4 unités</b> additionnelles ; sensibilité forte aux licences VUT (réglementation Centro).</div>
   </div>
 
-  <!-- ===== S4 — Espagne rendements futurs ===== -->
-  <div class="sub" id="s4">
-    <h3>Scénario 4 — Espagne · Valorisation sur rendements futurs</h3>
-
-    <div class="card" style="text-align:center;padding:48px 24px;background:linear-gradient(135deg, #FFFFFF 0%, #F5F0E8 100%);border:1.5px dashed var(--jaune)">
-      <div style="font-size:42px;margin-bottom:12px">⏳</div>
-      <h3 style="font-size:18px;margin-bottom:8px">Incoming — en attente d'éléments</h3>
-      <p style="font-size:13px;color:var(--muted);max-width:560px;margin:0 auto">
-        Ce scénario valorisera Oxygen Madrid sur la base des <b>rendements futurs projetés</b> (DCF / capitalisation NOI stabilisé) une fois les éléments suivants reçus.
-      </p>
-    </div>
-
-    <h3>Éléments en attente</h3>
+  <!-- Tesoro 7 -->
+  <div class="card">
+    <h3>Tesoro 7 — Madrid (Malasaña-Universidad)</h3>
     <table>
-      <tr><th>Élément</th><th>Source attendue</th><th>Statut</th></tr>
-      <tr><td>Comptes annuels Oxygen Madrid 2024 &amp; 2025</td><td>FACTS / Registro Mercantil</td><td><span class="b hyp">En attente</span></td></tr>
-      <tr><td>Surfaces officielles Tesoro 7 &amp; Marqués de Toca</td><td>Nota simple / cadastre</td><td><span class="b hyp">En attente</span></td></tr>
-      <tr><td>Business plan 3-5 ans par actif (NOI projeté)</td><td>Direction Oxygen Madrid</td><td><span class="b hyp">En attente</span></td></tr>
-      <tr><td>Licences VUT par unité (Madrid Centro)</td><td>Ayuntamiento de Madrid</td><td><span class="b hyp">En attente</span></td></tr>
-      <tr><td>Calendrier de stabilisation (montée en TO / ADR cible)</td><td>Direction Oxygen Madrid</td><td><span class="b hyp">En attente</span></td></tr>
-      <tr><td>Hypothèses Capex résiduels &amp; OPEX cibles</td><td>Direction Oxygen Madrid</td><td><span class="b hyp">En attente</span></td></tr>
+      <tr><th>Lecture</th><th>Méthode &amp; paramètres</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th>Fiabilité</th></tr>
+      <tr><td><b>① Valeur de marché</b></td><td>Comparables Malasaña — surfaces officielles à obtenir</td><td class="r" colspan="3"><span class="b hyp">Incoming — en attente d'éléments</span></td><td><span class="b hyp">Hyp.</span></td></tr>
+      <tr><td><b>② Valeur rendement</b></td><td>Plancher = 2 700 K€ (NOI plancher à 3,5 %) · stabilisé en attente du plan locatif</td><td class="r">2 700</td><td class="r"><span class="b hyp">Incoming</span></td><td class="r">—</td><td><span class="b hyp">Hyp.</span></td></tr>
+      <tr class="tot"><td><b>③ Valeur retenue (provisoire)</b></td><td>Coût de revient hors TVA — à fiabiliser</td><td class="r"></td><td class="r"><b>5 500*</b></td><td class="r"></td><td><span class="b hyp">Provisoire</span></td></tr>
     </table>
-
-    <div class="callout">
-      <b>Méthodologie cible :</b> DCF 7-10 ans sur cash-flows nets par actif + valeur terminale (Gordon-Shapiro ou multiple de sortie sur NOI stabilisé). Taux d'actualisation indicatif : 6,5 - 8,5 % selon profil de risque (VUT sécurisée ou non).
-    </div>
+    <div class="callout"><b>Commentaire :</b> écart de <b>2,8 M€</b> entre plancher rendement (2 700) et coût hors TVA (5 500) = <b>enjeu n°1 de fiabilisation</b> du portefeuille ES. Plan locatif stabilisé attendu pour valider la valeur retenue.</div>
   </div>
+
+  <!-- Huertas 52 -->
+  <div class="card">
+    <h3>Huertas 52 — Madrid (Barrio de las Letras)</h3>
+    <table>
+      <tr><th>Lecture</th><th>Méthode &amp; paramètres</th><th class="r">Basse</th><th class="r">Centrale</th><th class="r">Haute</th><th>Fiabilité</th></tr>
+      <tr><td><b>① Valeur de marché</b></td><td>~550 m² hyp. × 7 500 €/m² (Barrio de las Letras, fourchette 5 600–10 400)</td><td class="r">3 075</td><td class="r"><b>4 225</b></td><td class="r">5 725</td><td><span class="b hyp">Hyp.</span></td></tr>
+      <tr><td><b>② Valeur rendement</b></td><td>NOI cible 2027 = 145 K€ à 3,5 %</td><td class="r">3 700</td><td class="r"><b>4 100</b></td><td class="r">4 600</td><td><span class="b calc">Calculé</span></td></tr>
+      <tr class="tot"><td><b>③ Valeur retenue</b></td><td>Lecture pondérée — montée en charge rapide</td><td class="r"></td><td class="r"><b>4 200</b></td><td class="r"></td><td><span class="b calc">Daftime</span></td></tr>
+    </table>
+    <div class="callout"><b>Commentaire :</b> montée en charge rapide (exploitation démarrée janv. 2026). <b>Surfaces officielles et licences VUT</b> à lever pour fiabiliser la lecture marché.</div>
+  </div>
+
+  <!-- Total Espagne -->
+  <table>
+    <tr><th>TOTAL ESPAGNE</th><th class="r">Valeur marché</th><th class="r">Valeur rendement</th><th class="r">Valeur retenue</th></tr>
+    <tr class="tot"><td><b>M. de Toca + Tesoro 7 + Huertas 52</b></td><td class="r"><span class="b hyp">Incoming partiel</span></td><td class="r">11 600 (hors Tesoro stabilisé)</td><td class="r"><b>14 500</b></td></tr>
+  </table>
+  <div class="callout"><b>Commentaire Espagne :</b> portefeuille jeune (acquisitions 2023-2026) — la valeur retenue (14,5 M€) reste calée sur le coût d'acquisition pour Tesoro 7 (faute d'éléments stabilisés). La fiabilisation passe par les surfaces officielles, le plan locatif Tesoro et la sécurisation des licences VUT.</div>
+
+  <!-- ============ GROUPE ============ -->
+  <h3 style="margin-top:28px">TOTAL GROUPE — synthèse trois lectures</h3>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Valeur basse</div><div class="val">14,1 M€</div><div class="det">Bornes basses cumulées</div></div>
+    <div class="kpi hl"><div class="lbl">Valeur retenue</div><div class="val"><em>20,3 M€</em></div><div class="det">FR 5,8 + ES 14,5 M€</div></div>
+    <div class="kpi"><div class="lbl">Valeur haute</div><div class="val">23,8 M€</div><div class="det">Bornes hautes cumulées</div></div>
+    <div class="kpi"><div class="lbl">Capital investi</div><div class="val">20,8 M€</div><div class="det">FR 5,4 + ES 15,4 M€</div></div>
+    <div class="kpi"><div class="lbl">Écart vs investi</div><div class="val neg">−0,5 M€</div><div class="det">Sur valeur retenue (−2,4 %)</div></div>
+  </div>
+
+  <table>
+    <tr><th>Pôle</th><th class="r">Valeur basse</th><th class="r">Valeur retenue</th><th class="r">Valeur haute</th><th class="r">Investi</th><th class="r">Écart retenue</th></tr>
+    <tr><td><span class="pill">FR</span> France — Forshent</td><td class="r">4 138</td><td class="r"><b>5 800</b></td><td class="r">6 256</td><td class="r">5 380</td><td class="r pos">+420</td></tr>
+    <tr><td><span class="pill">ES</span> Espagne — Oxygen Madrid</td><td class="r">9 975</td><td class="r"><b>14 500</b></td><td class="r">17 525</td><td class="r">15 413</td><td class="r neg">−913</td></tr>
+    <tr class="tot"><td><b>GROUPE</b></td><td class="r">14 113</td><td class="r"><b>20 300</b></td><td class="r">23 781</td><td class="r">20 793</td><td class="r neg">−493</td></tr>
+  </table>
+  <div class="callout blue"><b>Commentaire groupe :</b> valeur retenue <b>20,3 M€</b> ≈ capital investi (20,8 M€, écart −0,5 M€ soit −2,4 %). La création de valeur attendue se matérialisera par : (i) découpe RDJ Vista Mare, (ii) stabilisation Tesoro 7 (enjeu 2,8 M€), (iii) sécurisation des licences VUT Madrid Centro, (iv) montée en charge Huertas 52.</div>
 </section>
 
 <!-- ================= PROJET INVESTISSEURS ================= -->
