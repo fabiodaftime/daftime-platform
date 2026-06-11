@@ -120,6 +120,42 @@ export type Database = {
           },
         ]
       }
+      dataroom_documents: {
+        Row: {
+          cat: string
+          created_at: string
+          file: string
+          folder: string
+          id: string
+          kb: number
+          storage_path: string | null
+          updated_at: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          cat: string
+          created_at?: string
+          file: string
+          folder: string
+          id?: string
+          kb?: number
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          cat?: string
+          created_at?: string
+          file?: string
+          folder?: string
+          id?: string
+          kb?: number
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+        }
+        Relationships: []
+      }
       entity_data_mappings: {
         Row: {
           auto_sync: boolean
