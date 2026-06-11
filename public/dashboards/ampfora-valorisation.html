@@ -141,6 +141,7 @@ footer b{color:#fff}
   <div class="navlabel">Navigation</div>
   <button data-t="synthese" class="active">Synthèse Groupe</button>
   <button data-t="valo">Valorisation</button>
+  <button data-t="projet">Projet aux investisseurs</button>
   <button data-t="kpi">KPI</button>
   <button data-t="carte">Carte des actifs</button>
   <button data-t="france">France — Forshent</button>
@@ -312,6 +313,66 @@ footer b{color:#fff}
     <div class="callout">
       <b>Méthodologie cible :</b> DCF 7-10 ans sur cash-flows nets par actif + valeur terminale (Gordon-Shapiro ou multiple de sortie sur NOI stabilisé). Taux d'actualisation indicatif : 6,5 - 8,5 % selon profil de risque (VUT sécurisée ou non).
     </div>
+  </div>
+</section>
+
+<!-- ================= PROJET INVESTISSEURS ================= -->
+<section class="tab" id="projet">
+  <h2>Projet aux investisseurs · Réplication du modèle France en Espagne</h2>
+  <div class="h2sub">Trajectoire de rendement &amp; valorisation Oxygen Madrid à 3-5 ans · Application progressive du modèle d'exploitation Forshent (courte durée, marge EBITDA 32 %+)</div>
+
+  <div class="callout blue">
+    <b>Thèse d'investissement :</b> les 3 immeubles madrilènes (Tesoro 7, Marqués de Toca, Huertas 52 — 18 appts + 3 locaux pour 15,4 M€ investis) sont en phase de <b>montée en charge</b>. L'application graduelle du modèle d'exploitation éprouvé en France — courte durée premium, marge EBITDA 32 %, CA moyen 55 K€/unité — permet de viser une multiplication du rendement net par <b>3,5×</b> d'ici 2030 et une valeur d'actif à <b>22-24 M€</b>.
+  </div>
+
+  <h3>Benchmark : le modèle France comme référence</h3>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">FR · CA / unité 2024</div><div class="val">55 K€</div><div class="det">666 K€ ÷ 12 unités <span class="b doc">Documenté</span></div></div>
+    <div class="kpi"><div class="lbl">FR · Marge EBITDA</div><div class="val">32 %</div><div class="det">213 K€ EBITDA / 666 K€</div></div>
+    <div class="kpi"><div class="lbl">ES · CA / unité 2026 ann.</div><div class="val">~17 K€</div><div class="det">314 K€ ÷ 18 appts <span class="b calc">Calculé</span></div></div>
+    <div class="kpi hl"><div class="lbl">Gap à combler</div><div class="val"><em>×3,2</em></div><div class="det">CA/unité ES → niveau FR</div></div>
+  </div>
+
+  <h3>Trajectoire projetée Espagne (2026 → 2030)</h3>
+  <table>
+    <tr><th>Année</th><th>Phase</th><th class="r">CA locatif</th><th class="r">CA / unité</th><th class="r">Marge EBITDA</th><th class="r">NOI</th><th class="r">Yield s/ investi</th><th class="r">Valeur (cap 4 %)</th></tr>
+    <tr><td><b>2026</b></td><td>Démarrage Tesoro + Huertas</td><td class="r">314 K€</td><td class="r">17 K€</td><td class="r">22 %</td><td class="r">170 K€</td><td class="r">1,1 %</td><td class="r"><b>4,3 M€</b></td></tr>
+    <tr><td><b>2027</b></td><td>Stabilisation 12 mois pleins</td><td class="r">700 K€</td><td class="r">39 K€</td><td class="r">28 %</td><td class="r">280 K€</td><td class="r">1,8 %</td><td class="r"><b>7,0 M€</b></td></tr>
+    <tr><td><b>2028</b></td><td>Licences VUT + montée TO</td><td class="r">1 050 K€</td><td class="r">49 K€</td><td class="r">32 %</td><td class="r">420 K€</td><td class="r">2,7 %</td><td class="r"><b>10,5 M€</b></td></tr>
+    <tr><td><b>2029</b></td><td>Modèle FR appliqué</td><td class="r">1 250 K€</td><td class="r">58 K€</td><td class="r">34 %</td><td class="r">525 K€</td><td class="r">3,4 %</td><td class="r"><b>13,1 M€</b></td></tr>
+    <tr class="tot"><td><b>2030</b></td><td>Maturité opérationnelle</td><td class="r">1 400 K€</td><td class="r">65 K€</td><td class="r">35 %</td><td class="r">595 K€</td><td class="r">3,9 %</td><td class="r">14,9 M€</td></tr>
+  </table>
+  <p class="note">Hypothèses : 18 appts en exploitation + 3 locaux commerciaux (loyers fixes). Taux de capitalisation 4 % cohérent avec marché Madrid Centro prime CT. Valeurs hors droits / hors frais.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>Évolution du CA &amp; NOI projetés (K€)</h3>
+      <div class="chartbox"><canvas id="chProjetCA"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Trajectoire de valorisation (M€)</h3>
+      <div class="chartbox"><canvas id="chProjetValo"></canvas></div>
+    </div>
+  </div>
+
+  <h3>Leviers de création de valeur</h3>
+  <div class="grid3">
+    <div class="card"><h3>① Réplication opérationnelle</h3><p style="font-size:12.5px">Déploiement à Madrid des SOP courte durée Forshent : pricing dynamique (algorithme RM), check-in autonome, ménage industrialisé. Cible : <b>TO 78 %</b>, <b>ADR 180-220 €</b> (vs 130 € actuel), <b>marge EBITDA 32-35 %</b>.</p></div>
+    <div class="card"><h3>② Sécurisation licences VUT</h3><p style="font-size:12.5px">Obtention des 18 licences VUT Centro (moratoire en cours). Chaque licence sécurisée vaut <b>+15 à 25 K€/unité</b> en valeur d'actif (valorisation au-dessus du foncier nu).</p></div>
+    <div class="card"><h3>③ Optimisation fiscale &amp; financière</h3><p style="font-size:12.5px">Récupération TVA <b>531 K€</b>, structuration dette Espagne (LTV cible 50 % = 7 M€ de levier), optimisation IS (régime SOCIMI à étudier au-delà de 8 M€ de NOI).</p></div>
+  </div>
+
+  <h3>Retour investisseur projeté</h3>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Capital engagé</div><div class="val">15,4 M€</div><div class="det">Investi cumulé au 31/03/2026</div></div>
+    <div class="kpi"><div class="lbl">Valeur cible 2029 (3 ans)</div><div class="val pos">13,1 M€</div><div class="det">Cap. NOI · scénario rendement</div></div>
+    <div class="kpi hl"><div class="lbl">Valeur cible 2030 (5 ans)</div><div class="val"><em>14,9 M€</em></div><div class="det">+ upside marché 17-20 M€</div></div>
+    <div class="kpi"><div class="lbl">Cash-flow cumulé 5 ans</div><div class="val pos">~2,0 M€</div><div class="det">NOI cumulés 2026-2030</div></div>
+    <div class="kpi"><div class="lbl">TRI projet (5 ans)</div><div class="val pos">~9 %</div><div class="det">Sur scénario central, hors levier</div></div>
+  </div>
+
+  <div class="callout">
+    <b>Note méthodologique :</b> projection établie sur la base du modèle FR appliqué à Madrid Centro. Sensibilités principales : <b>(i)</b> obtention licences VUT — sans licences, marge EBITDA plafonnée à 18-22 % (location longue durée), <b>(ii)</b> calendrier de stabilisation Tesoro 7 / Huertas 52, <b>(iii)</b> tenue ADR Madrid (saisonnalité moins marquée qu'à Beausoleil mais concurrence intense). Une mise à jour annuelle de cette trajectoire est intégrée au reporting CFO Advisory Daftime.
   </div>
 </section>
 <!-- ================= KPI ================= -->
@@ -1099,6 +1160,22 @@ if (typeof chRange !== 'undefined' && chRange) {
       return ` ${c.dataset.label} : ${eur(c.parsed.x)} K€`;}}}},
     scales:{x:{ticks:{callback:v=>eur(v)}}}}});
 }
+
+/* Projet aux investisseurs */
+const projetYears=['2026','2027','2028','2029','2030'];
+if (typeof chProjetCA !== 'undefined' && chProjetCA) {
+  new Chart(chProjetCA,{type:'bar',data:{labels:projetYears,datasets:[
+    {label:'CA locatif',data:[314,700,1050,1250,1400],backgroundColor:BLEU,borderRadius:4},
+    {label:'NOI',data:[170,280,420,525,595],backgroundColor:JAUNE,borderRadius:4}]},
+    options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v+' K€'}}}}});
+}
+if (typeof chProjetValo !== 'undefined' && chProjetValo) {
+  new Chart(chProjetValo,{type:'line',data:{labels:projetYears,datasets:[
+    {label:'Valorisation rendement (M€)',data:[4.3,7.0,10.5,13.1,14.9],borderColor:JAUNE,backgroundColor:'rgba(212,168,85,0.15)',borderWidth:3,fill:true,tension:.35,pointRadius:5,pointBackgroundColor:JAUNE},
+    {label:'Capital investi (M€)',data:[15.4,15.4,15.4,15.4,15.4],borderColor:BLEU,borderWidth:2,borderDash:[6,4],fill:false,pointRadius:0}]},
+    options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v+' M€'}}}}});
+}
+
 
 /* Passiflores mensuel */
 new Chart(chPassi,{type:'bar',data:{labels:DATA.passi.mois,datasets:[
