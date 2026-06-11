@@ -1269,6 +1269,68 @@ new Chart(chESQ1,{type:'bar',data:{labels:["Tesoro 7","M. de Toca","Huertas 52"]
   {label:'Revenus Q1 2026',data:DATA.esQ1.rev,backgroundColor:BLEU},
   {label:'Net locatif Q1 2026',data:DATA.esQ1.net,backgroundColor:JAUNE}]},
   options:{plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v+' K€'}}}}});
+
+/* ============ DATA ROOM ============ */
+(function(){
+  var DR={items:[],total:0,generated:''};
+  var loaded=false, loading=false;
+  function norm(s){return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+  function fmtSize(kb){if(kb>=1024)return (kb/1024).toFixed(1).replace('.',',')+' Mo'; return kb+' Ko';}
+  function ext(f){var m=/\.([a-z0-9]+)$/i.exec(f); return m?m[1].toLowerCase():'';}
+  function sectionLabel(c){
+    if(c==='01_FRANCE_FORSHENT')return 'France — Forshent Real Estate';
+    if(c==='02_ESPAGNE_OXYGEN')return 'Espagne — Oxygen Madrid Estates';
+    if(c==='00_DASHBOARDS_ET_CHARTE')return 'Dashboards &amp; charte graphique';
+    return c;
+  }
+  function esc(s){return (s||'').toString().replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+  window.drRender=function(){
+    if(!loaded){return;}
+    var q=norm(document.getElementById('drSearch').value.trim());
+    var cats=['01_FRANCE_FORSHENT','02_ESPAGNE_OXYGEN','00_DASHBOARDS_ET_CHARTE'];
+    var totalShown=0, html='';
+    cats.forEach(function(cat){
+      var inCat=DR.items.filter(function(it){return it.cat===cat;});
+      var filt=q?inCat.filter(function(it){return norm(it.file).indexOf(q)>=0 || norm(it.folder).indexOf(q)>=0;}):inCat;
+      totalShown+=filt.length;
+      // group by folder
+      var fmap={}; filt.forEach(function(it){(fmap[it.folder]=fmap[it.folder]||[]).push(it);});
+      var folders=Object.keys(fmap).sort(function(a,b){return a.localeCompare(b,'fr');});
+      html+='<div class="dr-section"><h3>'+sectionLabel(cat)+' <span class="ct">'+filt.length+' / '+inCat.length+' doc.</span></h3>';
+      if(folders.length===0){html+='<div class="card dr-empty">Aucun document ne correspond à la recherche.</div></div>';return;}
+      folders.forEach(function(fold,idx){
+        var files=fmap[fold].slice().sort(function(a,b){return a.file.localeCompare(b.file,'fr');});
+        var openAttr=(q && filt.length<=60)?' open':'';
+        html+='<details class="dr-folder"'+openAttr+'><summary><span>'+esc(fold)+'</span><span class="ct">'+files.length+' doc.</span></summary><ul class="dr-files">';
+        files.forEach(function(it){
+          var e=ext(it.file);
+          html+='<li><span class="ext '+esc(e)+'">'+esc(e||'fic')+'</span><span class="nm" title="'+esc(it.file)+'">'+esc(it.file)+'</span><span class="sz">'+fmtSize(it.kb)+'</span></li>';
+        });
+        html+='</ul></details>';
+      });
+      html+='</div>';
+    });
+    document.getElementById('drSections').innerHTML=html;
+    document.getElementById('drStats').textContent=(q?totalShown+' document(s) affiché(s) sur ':'')+DR.total+' documents inventoriés · Édition '+DR.generated;
+  };
+  function load(){
+    if(loaded||loading)return; loading=true;
+    fetch('/dashboards/dataroom_inventaire.json').then(function(r){return r.json();}).then(function(j){
+      DR.items=j.items||[]; DR.total=j.total||DR.items.length; DR.generated=j.generated||'';
+      document.getElementById('drTotal').textContent=DR.total;
+      document.getElementById('drDate').textContent=DR.generated;
+      var c={};DR.items.forEach(function(it){c[it.cat]=(c[it.cat]||0)+1;});
+      document.getElementById('drFR').textContent=c['01_FRANCE_FORSHENT']||0;
+      document.getElementById('drES').textContent=c['02_ESPAGNE_OXYGEN']||0;
+      document.getElementById('drDB').textContent=c['00_DASHBOARDS_ET_CHARTE']||0;
+      loaded=true; loading=false; window.drRender();
+    }).catch(function(){loading=false;document.getElementById('drSections').innerHTML='<div class="card dr-empty">Inventaire indisponible.</div>';});
+  }
+  // Lazy load when tab opens
+  document.querySelectorAll('nav button[data-t="dataroom"]').forEach(function(b){b.addEventListener('click',load);});
+  // If already on tab via deep link
+  if(document.getElementById('dataroom') && document.getElementById('dataroom').classList.contains('active')){load();}
+})();
 </script>
 </main>
 </div>
