@@ -267,6 +267,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/admin/dataroom-upload"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminDataroomUpload />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
