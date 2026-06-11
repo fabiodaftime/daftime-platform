@@ -1383,6 +1383,7 @@ export type Database = {
         | "nexus_test"
         | "hotel_x"
         | "skalis"
+        | "ampfora"
       revision_anomaly_severity: "low" | "medium" | "high" | "blocking"
       revision_anomaly_status: "open" | "in_progress" | "resolved" | "accepted"
       revision_checklist_status: "todo" | "done" | "na" | "anomaly"
@@ -1543,6 +1544,7 @@ export const Constants = {
         "nexus_test",
         "hotel_x",
         "skalis",
+        "ampfora",
       ],
       revision_anomaly_severity: ["low", "medium", "high", "blocking"],
       revision_anomaly_status: ["open", "in_progress", "resolved", "accepted"],

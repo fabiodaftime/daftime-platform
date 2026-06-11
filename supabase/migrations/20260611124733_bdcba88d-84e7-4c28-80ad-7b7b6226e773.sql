@@ -1,0 +1,1 @@
+ALTER TYPE public.dashboard_layout ADD VALUE IF NOT EXISTS 'ampfora';
