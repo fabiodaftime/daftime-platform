@@ -158,7 +158,8 @@ export default {
         "slide-in-right": "slide-in-right 0.3s ease-out",
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Poppins', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif'],
         mono: ['Roboto Mono', 'monospace'],
         playfair: ['Playfair Display', 'serif'],
         bebas: ['Bebas Neue', 'sans-serif'],

@@ -6,39 +6,38 @@
 
 @layer base {
   :root {
-    /* Base colors - Daftime beige/cream */
-    --background: 35 33% 95%;
-    --foreground: 220 50% 10%;
+    /* Charte Daftime officielle : #1A1D56 (navy) · #D6D303 (jaune) · #FFFFFF */
+    --background: 240 25% 99%;
+    --foreground: 237 45% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 50% 10%;
+    --card-foreground: 237 45% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 50% 10%;
+    --popover-foreground: 237 45% 18%;
 
-    /* Primary: Deep navy blue (Daftime dark) */
-    --primary: 220 60% 12%;
-    --primary-foreground: 40 50% 95%;
+    /* Primary : bleu nuit Daftime #1A1D56 */
+    --primary: 237 54% 22%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Lighter beige */
-    --secondary: 35 25% 90%;
-    --secondary-foreground: 220 50% 15%;
+    --secondary: 240 22% 96%;
+    --secondary-foreground: 237 54% 22%;
 
-    --muted: 35 20% 92%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 240 22% 96%;
+    --muted-foreground: 237 12% 45%;
 
-    /* Accent: Daftime Gold */
-    --accent: 40 55% 55%;
-    --accent-foreground: 220 60% 10%;
+    /* Accent : jaune chartreuse Daftime #D6D303 */
+    --accent: 59 97% 43%;
+    --accent-foreground: 237 54% 22%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 20% 85%;
-    --input: 35 20% 85%;
-    --ring: 40 55% 55%;
+    --border: 240 16% 90%;
+    --input: 240 16% 90%;
+    --ring: 237 54% 22%;
 
-    --radius: 0.5rem;
+    --radius: 0.6rem;
 
     /* Financial Dashboard specific - Daftime dark theme */
     --dashboard-bg: 220 55% 10%;
@@ -164,7 +163,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
