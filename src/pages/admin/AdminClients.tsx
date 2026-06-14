@@ -27,7 +27,7 @@ export default function AdminClients() {
   const load = async () => {
     setLoading(true);
     const [{ data: c }, { data: at }] = await Promise.all([
-      supabase.from('clients' as any).select('*').order('created_at', { ascending: false }),
+      supabase.from('clients' as any).select('*').is('legacy_company_id', null).order('created_at', { ascending: false }),
       supabase.from('activity_types' as any).select('*').eq('is_active', true).order('name'),
     ]);
     setClients((c as any[]) ?? []);

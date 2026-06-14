@@ -39,6 +39,7 @@ export default function AdminHome() {
     supabase
       .from('clients' as any)
       .select('id, name, currency')
+      .is('legacy_company_id', null) // clients génériques uniquement (pas les coquilles liées au legacy)
       .order('created_at', { ascending: false })
       .then(({ data }) => setGenericClients((data as any[]) ?? []));
   }, []);
