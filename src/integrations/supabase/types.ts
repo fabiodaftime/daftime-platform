@@ -10,10 +10,159 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          client_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_types: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          activity_type_id: string | null
+          created_at: string
+          currency: string
+          fiscal_year_start: number
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          requires_supervision: boolean
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type_id?: string | null
+          created_at?: string
+          currency?: string
+          fiscal_year_start?: number
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          requires_supervision?: boolean
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type_id?: string | null
+          created_at?: string
+          currency?: string
+          fiscal_year_start?: number
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          requires_supervision?: boolean
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_activity_type_id_fkey"
+            columns: ["activity_type_id"]
+            isOneToOne: false
+            referencedRelation: "activity_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string
@@ -46,6 +195,54 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      contexts: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          data: Json
+          id: string
+          is_current: boolean
+          source_file_id: string | null
+          version: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          id?: string
+          is_current?: boolean
+          source_file_id?: string | null
+          version?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          id?: string
+          is_current?: boolean
+          source_file_id?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contexts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contexts_source_file_id_fkey"
+            columns: ["source_file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dashboard_comments: {
         Row: {
@@ -116,6 +313,104 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          dashboard_id: string
+          from_status: Database["public"]["Enums"]["dashboard_status"] | null
+          id: string
+          note: string | null
+          to_status: Database["public"]["Enums"]["dashboard_status"]
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          dashboard_id: string
+          from_status?: Database["public"]["Enums"]["dashboard_status"] | null
+          id?: string
+          note?: string | null
+          to_status: Database["public"]["Enums"]["dashboard_status"]
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          dashboard_id?: string
+          from_status?: Database["public"]["Enums"]["dashboard_status"] | null
+          id?: string
+          note?: string | null
+          to_status?: Database["public"]["Enums"]["dashboard_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_status_history_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboards: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          data_json: Json
+          html: string | null
+          id: string
+          is_current: boolean
+          period: string
+          standardized_data_id: string | null
+          status: Database["public"]["Enums"]["dashboard_status"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          data_json?: Json
+          html?: string | null
+          id?: string
+          is_current?: boolean
+          period: string
+          standardized_data_id?: string | null
+          status?: Database["public"]["Enums"]["dashboard_status"]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_json?: Json
+          html?: string | null
+          id?: string
+          is_current?: boolean
+          period?: string
+          standardized_data_id?: string | null
+          status?: Database["public"]["Enums"]["dashboard_status"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboards_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dashboards_standardized_data_id_fkey"
+            columns: ["standardized_data_id"]
+            isOneToOne: false
+            referencedRelation: "standardized_data"
             referencedColumns: ["id"]
           },
         ]
@@ -305,6 +600,53 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      files: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          kind: string | null
+          original_name: string | null
+          period: string | null
+          status: Database["public"]["Enums"]["file_status"]
+          storage_path: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          kind?: string | null
+          original_name?: string | null
+          period?: string | null
+          status?: Database["public"]["Enums"]["file_status"]
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          kind?: string | null
+          original_name?: string | null
+          period?: string | null
+          status?: Database["public"]["Enums"]["file_status"]
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       labarile_monthly_pl: {
         Row: {
@@ -1347,8 +1689,66 @@ export type Database = {
         }
         Relationships: []
       }
+      standardized_data: {
+        Row: {
+          activity_type_id: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          data: Json
+          id: string
+          is_current: boolean
+          missing_items: Json
+          period: string
+          source: Database["public"]["Enums"]["data_source"]
+          version: number
+        }
+        Insert: {
+          activity_type_id?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          id?: string
+          is_current?: boolean
+          missing_items?: Json
+          period: string
+          source?: Database["public"]["Enums"]["data_source"]
+          version?: number
+        }
+        Update: {
+          activity_type_id?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          id?: string
+          is_current?: boolean
+          missing_items?: Json
+          period?: string
+          source?: Database["public"]["Enums"]["data_source"]
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standardized_data_activity_type_id_fkey"
+            columns: ["activity_type_id"]
+            isOneToOne: false
+            referencedRelation: "activity_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standardized_data_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
+          client_id: string | null
           company_id: string | null
           created_at: string
           id: string
@@ -1356,6 +1756,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          client_id?: string | null
           company_id?: string | null
           created_at?: string
           id?: string
@@ -1363,6 +1764,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          client_id?: string | null
           company_id?: string | null
           created_at?: string
           id?: string
@@ -1370,6 +1772,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_roles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_roles_company_id_fkey"
             columns: ["company_id"]
@@ -1384,6 +1793,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_client_access: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_company_access: {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
@@ -1399,10 +1812,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_manager: { Args: { _user_id: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "super_admin" | "client_admin" | "client_viewer"
+      app_role:
+        | "super_admin"
+        | "client_admin"
+        | "client_viewer"
+        | "admin"
+        | "manager"
+        | "collaborateur"
+        | "client"
       dashboard_layout:
         | "cw_partners"
         | "bocuse"
@@ -1420,6 +1843,15 @@ export type Database = {
         | "hotel_x"
         | "skalis"
         | "ampfora"
+      dashboard_status:
+        | "a_traiter"
+        | "draft_ia"
+        | "revue"
+        | "valide"
+        | "supervision"
+        | "publie"
+      data_source: "ai" | "manual"
+      file_status: "uploaded" | "processing" | "processed" | "error"
       revision_anomaly_severity: "low" | "medium" | "high" | "blocking"
       revision_anomaly_status: "open" | "in_progress" | "resolved" | "accepted"
       revision_checklist_status: "todo" | "done" | "na" | "anomaly"
@@ -1561,9 +1993,20 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
-      app_role: ["super_admin", "client_admin", "client_viewer"],
+      app_role: [
+        "super_admin",
+        "client_admin",
+        "client_viewer",
+        "admin",
+        "manager",
+        "collaborateur",
+        "client",
+      ],
       dashboard_layout: [
         "cw_partners",
         "bocuse",
@@ -1582,6 +2025,16 @@ export const Constants = {
         "skalis",
         "ampfora",
       ],
+      dashboard_status: [
+        "a_traiter",
+        "draft_ia",
+        "revue",
+        "valide",
+        "supervision",
+        "publie",
+      ],
+      data_source: ["ai", "manual"],
+      file_status: ["uploaded", "processing", "processed", "error"],
       revision_anomaly_severity: ["low", "medium", "high", "blocking"],
       revision_anomaly_status: ["open", "in_progress", "resolved", "accepted"],
       revision_checklist_status: ["todo", "done", "na", "anomaly"],
