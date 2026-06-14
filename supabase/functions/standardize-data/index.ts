@@ -8,7 +8,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
-import * as XLSX from "https://esm.sh/xlsx@0.18.5";
+import { readClientFiles } from "../_shared/readFiles.ts";
 
 const SYSTEM = (activity: string) => `Tu es un analyste financier qui standardise les données mensuelles d'un client.
 Type d'activité du client : "${activity}".
@@ -53,32 +53,7 @@ Deno.serve(async (req) => {
     const { data: files } = await admin
       .from("files").select("*").eq("client_id", client_id).eq("period", period);
 
-    const docs: { name: string; content: string }[] = [];
-    for (const f of files ?? []) {
-      if (!f.storage_path) continue;
-      const { data: blob } = await admin.storage.from("client-files").download(f.storage_path);
-      if (!blob) continue;
-      const name = String(f.original_name ?? f.id);
-      const lower = name.toLowerCase();
-      let content = "";
-      try {
-        if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
-          // Excel → CSV (une section par feuille)
-          const buf = new Uint8Array(await blob.arrayBuffer());
-          const wb = XLSX.read(buf, { type: "array" });
-          content = wb.SheetNames
-            .map((sn) => `# Feuille: ${sn}\n${XLSX.utils.sheet_to_csv(wb.Sheets[sn])}`)
-            .join("\n\n");
-        } else if (/\.(csv|tsv|txt|md|json)$/.test(lower)) {
-          content = await blob.text();
-        } else {
-          content = "(format non pris en charge — fournir un CSV, un Excel ou du texte)";
-        }
-      } catch (e) {
-        content = `(erreur de lecture: ${e instanceof Error ? e.message : String(e)})`;
-      }
-      docs.push({ name, content: content.slice(0, 50_000) });
-    }
+    const docs = await readClientFiles(admin, files ?? []);
 
     const activity = (client as { activity_types?: { slug?: string } }).activity_types?.slug ?? "inconnu";
     const userContent =

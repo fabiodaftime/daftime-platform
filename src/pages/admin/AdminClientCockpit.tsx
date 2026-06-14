@@ -9,6 +9,7 @@ import { ArrowLeft, FileUp, Wand2, LayoutDashboard, BookOpen, Palette } from 'lu
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { DashboardChat } from '@/components/generic/DashboardChat';
+import { AssistantChat } from '@/components/generic/AssistantChat';
 import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS } from '@/lib/genericApi';
 
 const BUCKET = 'client-files';
@@ -206,6 +207,17 @@ export default function AdminClientCockpit() {
             </div>
           )}
           <StandardizedTableEditor value={editData} onChange={setEditData} />
+          <div className="mt-4">
+            <div className="text-xs text-muted-foreground mb-1">Affiner avec l'IA</div>
+            <AssistantChat
+              placeholder="Ex : « le CA de mars ne sera pas dispo », « ajoute une ligne marge brute = 5000 », « regroupe les charges »…"
+              onSend={async (message, history) => {
+                const res = await invokeFn<{ summary: string }>('chat-standardize', { client_id: id, period, message, history });
+                await loadStandardized();
+                return res.summary || 'Données mises à jour.';
+              }}
+            />
+          </div>
         </Section>
 
         <Section icon={<LayoutDashboard className="w-4 h-4" />} title="Dashboard"
