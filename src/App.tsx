@@ -38,6 +38,7 @@ import AdminLabarileImport from "./pages/AdminLabarileImport";
 import AdminDataroomUpload from "./pages/AdminDataroomUpload";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminClientCockpit from "./pages/admin/AdminClientCockpit";
+import ClientSpace from "./pages/ClientSpace";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -290,6 +291,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminClientCockpit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/client/:id"
+              element={
+                <ProtectedRoute>
+                  <ClientSpace />
                 </ProtectedRoute>
               }
             />

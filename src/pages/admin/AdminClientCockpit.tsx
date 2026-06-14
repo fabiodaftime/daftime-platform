@@ -5,13 +5,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileUp, Wand2, LayoutDashboard, BookOpen, Palette } from 'lucide-react';
+import { ArrowLeft, FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye } from 'lucide-react';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { DashboardChat } from '@/components/generic/DashboardChat';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
-import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS } from '@/lib/genericApi';
+import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 
 const BUCKET = 'client-files';
 
@@ -144,8 +144,15 @@ export default function AdminClientCockpit() {
   const changeStatus = (to: string) => run('status', async () => {
     await supabase.from('dashboards' as any).update({ status: to }).eq('id', dash.id);
     await supabase.from('dashboard_status_history' as any).insert({ dashboard_id: dash.id, from_status: dash.status, to_status: to, changed_by: user?.id ?? null });
+    if (to === 'publie') await logActivity(id!, 'dashboard_published', { entity_type: 'dashboard', entity_id: dash.id });
     await loadDashboard();
   });
+
+  const removeClient = async () => {
+    if (!confirm(`Supprimer définitivement « ${client.name} » et tout son contenu ? Action irréversible.`)) return;
+    try { await deleteClient(id!); navigate('/admin/clients'); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  };
 
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
@@ -160,6 +167,12 @@ export default function AdminClientCockpit() {
             <ArrowLeft className="w-4 h-4 mr-2" /> Clients
           </Button>
           <span className="font-semibold flex-1">{client.name}</span>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/client/${id}`)} className="text-primary-foreground hover:bg-primary-foreground/10">
+            <Eye className="w-4 h-4 mr-1" /> Aperçu client
+          </Button>
+          <Button variant="ghost" size="sm" onClick={removeClient} className="text-primary-foreground hover:bg-primary-foreground/10" title="Supprimer le client">
+            <Trash2 className="w-4 h-4" />
+          </Button>
           <label className="text-sm flex items-center gap-2">
             Mois
             <input type="month" value={period.slice(0, 7)} onChange={(e) => setPeriod(`${e.target.value}-01`)}

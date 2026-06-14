@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { deleteClient } from '@/lib/genericApi';
 
 function slugify(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -48,6 +49,13 @@ export default function AdminClients() {
     setCreating(false);
     if (error) { setError(error.message); return; }
     navigate(`/admin/clients/${(data as any).id}`);
+  };
+
+  const removeClient = async (c: any) => {
+    if (!confirm(`Supprimer définitivement « ${c.name} » et tout son contenu ?`)) return;
+    setError(null);
+    try { await deleteClient(c.id); await load(); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
   return (
@@ -102,11 +110,15 @@ export default function AdminClients() {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
               {clients.map((c) => (
-                <button key={c.id} onClick={() => navigate(`/admin/clients/${c.id}`)}
-                  className="text-left border rounded-lg p-4 hover:border-primary transition">
-                  <div className="font-medium">{c.name}</div>
-                  <div className="text-xs text-muted-foreground">{c.currency}{c.requires_supervision ? ' · supervision' : ''}</div>
-                </button>
+                <div key={c.id} className="border rounded-lg p-4 hover:border-primary transition flex items-start justify-between gap-2">
+                  <button onClick={() => navigate(`/admin/clients/${c.id}`)} className="text-left flex-1">
+                    <div className="font-medium">{c.name}</div>
+                    <div className="text-xs text-muted-foreground">{c.currency}{c.requires_supervision ? ' · supervision' : ''}</div>
+                  </button>
+                  <button onClick={() => removeClient(c)} title="Supprimer" className="text-muted-foreground hover:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               ))}
             </div>
           )}

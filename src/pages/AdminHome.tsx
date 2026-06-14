@@ -24,6 +24,7 @@ interface CompanyWithKPIs {
 
 export default function AdminHome() {
   const [companies, setCompanies] = useState<CompanyWithKPIs[]>([]);
+  const [genericClients, setGenericClients] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const { user, signOut, isSuperAdmin } = useAuth();
@@ -32,6 +33,14 @@ export default function AdminHome() {
 
   useEffect(() => {
     fetchCompaniesWithKPIs();
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from('clients' as any)
+      .select('id, name, currency')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setGenericClients((data as any[]) ?? []));
   }, []);
 
   const fetchCompaniesWithKPIs = async () => {
@@ -191,6 +200,28 @@ export default function AdminHome() {
             )}
           </div>
         </div>
+
+        {/* Clients génériques (nouveau modèle / pipeline IA) */}
+        {isSuperAdmin && genericClients.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">Clients — nouveau modèle (pipeline IA)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {genericClients.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => navigate(`/admin/clients/${c.id}`)}
+                  className="text-left border rounded-lg p-4 hover:border-primary transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{c.name}</span>
+                    <span className="text-[10px] uppercase tracking-wide bg-primary/10 text-primary px-1.5 py-0.5 rounded">IA</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">{c.currency}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Companies grid */}
         {loading ? (
