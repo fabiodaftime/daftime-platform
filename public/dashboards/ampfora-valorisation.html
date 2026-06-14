@@ -1220,13 +1220,13 @@ new Chart(chESQ1,{type:'bar',data:{labels:["Tesoro 7","M. de Toca","Huertas 52"]
 
 /* ============ DATA ROOM (Supabase backed) ============ */
 (function(){
-  var SUPA_URL='https://ylfatlhfpwmbcdzobpkx.supabase.co';
-  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsZmF0bGhmcHdtYmNkem9icGt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MTA0MDgsImV4cCI6MjA4MzI4NjQwOH0.xy8SgbdZwTIpjHopH8fN7RU8SnDn1czVSxAIoz8n_UM';
+  var SUPA_URL='https://emsixhbnlvnhpfleecln.supabase.co';
+  var SUPA_ANON='sb_publishable_7bbv-4WXQcahL1mGnQtXaQ_MwBndKfa';
   var BUCKET='dataroom';
   var sb=null;
   function getClient(){
     if(sb||!window.supabase)return sb;
-    sb=window.supabase.createClient(SUPA_URL,SUPA_ANON,{auth:{persistSession:true,storageKey:'sb-ylfatlhfpwmbcdzobpkx-auth-token'}});
+    sb=window.supabase.createClient(SUPA_URL,SUPA_ANON,{auth:{persistSession:true,storageKey:'sb-emsixhbnlvnhpfleecln-auth-token'}});
     return sb;
   }
   var DR={items:[]};
