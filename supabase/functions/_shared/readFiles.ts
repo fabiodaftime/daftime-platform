@@ -29,7 +29,7 @@ export async function readClientFiles(
     } catch (e) {
       content = `(erreur de lecture: ${e instanceof Error ? e.message : String(e)})`;
     }
-    docs.push({ name, content: content.slice(0, 50_000) });
+    docs.push({ name, content: content.slice(0, 20_000) });
   }
   return docs;
 }

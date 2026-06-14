@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     ];
 
     const { text: out, usage } = await callAnthropic({
-      model: MODELS.quality,
+      model: MODELS.fast, // Sonnet : rapide et fiable pour régénérer le HTML dans la limite de durée
       system: SYSTEM,
       messages,
       max_tokens: 16000,

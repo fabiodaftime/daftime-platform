@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       `DONNÉES STANDARDISÉES (source de vérité):\n${JSON.stringify(sd.data, null, 2)}`;
 
     const { text: out, usage } = await callAnthropic({
-      model: MODELS.quality,
+      model: MODELS.fast, // Sonnet : rapide et fiable (Opus dépasse la limite de durée des edge functions sur un gros HTML)
       system: SYSTEM,
       messages: [{ role: "user", content: userContent }],
       max_tokens: 16000,
