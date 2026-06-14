@@ -48,6 +48,12 @@ export async function callAnthropic(opts: {
   return { text, usage: data.usage };
 }
 
+// Retire d'éventuelles balises de code ```html ... ``` autour d'une sortie HTML brute.
+export function stripCodeFences(s: string): string {
+  const m = s.match(/```(?:html)?\s*([\s\S]*?)```/i);
+  return (m ? m[1] : s).trim();
+}
+
 // Récupère le 1er objet JSON d'une sortie modèle (gère les fences ```json).
 export function extractJson<T = Record<string, unknown>>(s: string): T {
   const fenced = s.match(/```(?:json)?\s*([\s\S]*?)```/i);

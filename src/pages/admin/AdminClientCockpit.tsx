@@ -10,6 +10,7 @@ import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { DashboardChat } from '@/components/generic/DashboardChat';
 import { AssistantChat } from '@/components/generic/AssistantChat';
+import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
 import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS } from '@/lib/genericApi';
 
 const BUCKET = 'client-files';
@@ -200,12 +201,15 @@ export default function AdminClientCockpit() {
             <Button size="sm" variant="outline" onClick={standardize} disabled={busy === 'standardize'}>{busy === 'standardize' ? 'IA…' : 'Standardiser (IA)'}</Button>
             <Button size="sm" onClick={saveStandardized} disabled={busy === 'save-sd' || !sd}>Enregistrer</Button>
           </div>}>
-          {missing.length > 0 && (
-            <div className="mb-3 border border-amber-400 bg-amber-50 rounded-md p-3 text-sm">
-              <div className="font-medium text-amber-800">Pièces manquantes signalées par l'IA :</div>
-              <ul className="list-disc ml-5 text-amber-900">{missing.map((m, i) => <li key={i}>{m}</li>)}</ul>
-            </div>
-          )}
+          <MissingItemsTable
+            items={missing}
+            busy={busy === 'answer-missing'}
+            onSubmit={(qa) => run('answer-missing', async () => {
+              const msg = 'Réponses aux pièces manquantes :\n' + qa.map((x) => `- ${x.question}\n  → ${x.answer}`).join('\n');
+              await invokeFn('chat-standardize', { client_id: id, period, message: msg });
+              await loadStandardized();
+            })}
+          />
           <StandardizedTableEditor value={editData} onChange={setEditData} />
           <div className="mt-4">
             <div className="text-xs text-muted-foreground mb-1">Affiner avec l'IA</div>

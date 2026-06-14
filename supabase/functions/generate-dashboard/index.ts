@@ -5,7 +5,7 @@
 
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
-import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
+import { callAnthropic, stripCodeFences, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 
 const SYSTEM = `Tu génères un DASHBOARD financier mensuel sous forme d'un fichier HTML autonome.
@@ -16,8 +16,7 @@ EXIGENCES :
 - N'invente aucun chiffre : utilise STRICTEMENT les données fournies. Si une métrique manque, ne l'affiche pas (ou indique "n/d").
 - AFFICHAGE DES DONNÉES (IMPORTANT) : affiche TOUTES les sections des données sous forme de tableaux lisibles (colonnes Libellé / Valeur / Unité) ET des cartes KPI pour les chiffres clés. Les valeurs doivent rester visibles même si Chart.js ne se charge pas (les graphiques sont un complément, pas le seul rendu). DASHBOARD_DATA doit contenir EXACTEMENT les données fournies (mêmes sections/rows/valeurs).
 - CHARTE GRAPHIQUE : respecte STRICTEMENT les tokens de design fournis (couleurs déclarées en variables CSS dans :root, polices heading/body, ambiance de style). Si aucun token n'est fourni, applique un style sobre par défaut.
-- Réponds UNIQUEMENT avec un objet JSON valide : { "html": "<!doctype html>...", "data_json": { ... } }
-  où data_json est l'objet injecté dans DASHBOARD_DATA.`;
+- Réponds UNIQUEMENT avec le document HTML COMPLET (commence par <!doctype html>, finit par </html>), SANS JSON ni texte autour.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -50,13 +49,13 @@ Deno.serve(async (req) => {
       messages: [{ role: "user", content: userContent }],
       max_tokens: 16000,
     });
-    const parsed = extractJson<{ html?: string; data_json?: unknown }>(out);
-    if (!parsed.html) return json({ error: "le modèle n'a pas renvoyé de HTML" }, 502);
+    const html = stripCodeFences(out);
+    if (html.length < 50 || !html.includes("<")) return json({ error: "le modèle n'a pas renvoyé de HTML valide" }, 502);
 
     const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
       standardized_data_id: sd.id,
-      html: parsed.html,
-      data_json: parsed.data_json ?? {},
+      html,
+      data_json: sd.data ?? {},
       status: "draft_ia",
       created_by: user.id,
     });

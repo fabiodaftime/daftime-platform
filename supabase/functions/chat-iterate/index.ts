@@ -5,14 +5,14 @@
 
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
-import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
+import { callAnthropic, stripCodeFences, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 
 const SYSTEM = `Tu modifies un dashboard financier HTML existant selon l'instruction de l'utilisateur.
 Tu reçois le HTML actuel et les données (DASHBOARD_DATA). Applique la demande en gardant un HTML autonome valide (Chart.js via CDN).
 RÈGLES :
 - N'invente aucun chiffre ; ne modifie les données que si l'utilisateur le demande explicitement.
-- Réponds UNIQUEMENT avec un objet JSON valide : { "html": "...", "data_json": { ... }, "summary": "résumé des changements" }`;
+- Réponds UNIQUEMENT avec le document HTML COMPLET mis à jour (commence par <!doctype html>, finit par </html>), SANS JSON ni texte autour.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -50,17 +50,18 @@ Deno.serve(async (req) => {
       messages,
       max_tokens: 16000,
     });
-    const parsed = extractJson<{ html?: string; data_json?: unknown; summary?: string }>(out);
+    const html = stripCodeFences(out);
+    if (html.length < 50 || !html.includes("<")) return json({ error: "réponse HTML invalide" }, 502);
 
     const saved = await insertVersion(admin, "dashboards", { client_id: dash.client_id, period: dash.period }, {
       standardized_data_id: dash.standardized_data_id,
-      html: parsed.html ?? dash.html,
-      data_json: parsed.data_json ?? dash.data_json,
+      html,
+      data_json: dash.data_json ?? {},
       status: dash.status,
       created_by: user.id,
     });
 
-    return json({ ok: true, dashboard: saved, summary: parsed.summary ?? "", usage });
+    return json({ ok: true, dashboard: saved, summary: "Dashboard mis à jour.", usage });
   } catch (e) {
     console.error("chat-iterate:", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
