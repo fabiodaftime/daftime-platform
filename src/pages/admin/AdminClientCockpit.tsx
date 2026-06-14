@@ -100,6 +100,12 @@ export default function AdminClientCockpit() {
     await loadFiles();
   });
 
+  const deleteFile = (f: any) => run('files', async () => {
+    if (f.storage_path) await supabase.storage.from(BUCKET).remove([f.storage_path]);
+    await supabase.from('files' as any).delete().eq('id', f.id);
+    await loadFiles();
+  });
+
   const standardize = () => run('standardize', async () => {
     await invokeFn('standardize-data', { client_id: id, period });
     await loadStandardized();
@@ -177,7 +183,14 @@ export default function AdminClientCockpit() {
             </span>
           </label>
           <ul className="mt-3 text-sm space-y-1">
-            {files.map((f) => <li key={f.id} className="text-muted-foreground">• {f.original_name} <span className="text-xs">({f.status})</span></li>)}
+            {files.map((f) => (
+              <li key={f.id} className="flex items-center gap-2 text-muted-foreground">
+                <span className="flex-1">• {f.original_name} <span className="text-xs">({f.status})</span></span>
+                <button className="text-xs underline hover:text-destructive" onClick={() => deleteFile(f)} disabled={busy === 'files'}>
+                  Supprimer
+                </button>
+              </li>
+            ))}
           </ul>
         </Section>
 
