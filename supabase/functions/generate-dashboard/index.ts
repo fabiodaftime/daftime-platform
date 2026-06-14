@@ -14,6 +14,7 @@ EXIGENCES :
 - Graphiques via Chart.js chargé par CDN (https://cdn.jsdelivr.net/npm/chart.js).
 - SÉPARE les données du rendu : déclare "const DASHBOARD_DATA = ...;" puis construis le DOM/charts à partir de cette constante.
 - N'invente aucun chiffre : utilise STRICTEMENT les données fournies. Si une métrique manque, ne l'affiche pas (ou indique "n/d").
+- AFFICHAGE DES DONNÉES (IMPORTANT) : affiche TOUTES les sections des données sous forme de tableaux lisibles (colonnes Libellé / Valeur / Unité) ET des cartes KPI pour les chiffres clés. Les valeurs doivent rester visibles même si Chart.js ne se charge pas (les graphiques sont un complément, pas le seul rendu). DASHBOARD_DATA doit contenir EXACTEMENT les données fournies (mêmes sections/rows/valeurs).
 - CHARTE GRAPHIQUE : respecte STRICTEMENT les tokens de design fournis (couleurs déclarées en variables CSS dans :root, polices heading/body, ambiance de style). Si aucun token n'est fourni, applique un style sobre par défaut.
 - Réponds UNIQUEMENT avec un objet JSON valide : { "html": "<!doctype html>...", "data_json": { ... } }
   où data_json est l'objet injecté dans DASHBOARD_DATA.`;
