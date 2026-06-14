@@ -2,12 +2,12 @@
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
-// Paliers de modèle. NB : Opus exige un palier de débit élevé (l'org est actuellement
-// limitée à ~4000 tokens de sortie/minute sur Opus → 429). On reste donc sur Sonnet
-// partout tant que le palier Anthropic n'est pas relevé (ajout de crédits).
+// Paliers de modèle : Sonnet pour l'extraction/standardisation (éco), Opus pour la
+// génération de dashboard / chat / analyse de charte (qualité). Le palier Anthropic
+// de l'org a été relevé → Opus de nouveau disponible.
 export const MODELS = {
   fast: "claude-sonnet-4-6",
-  quality: "claude-sonnet-4-6",
+  quality: "claude-opus-4-8",
 } as const;
 
 export interface AnthropicMessage {
