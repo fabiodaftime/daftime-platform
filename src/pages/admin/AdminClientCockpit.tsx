@@ -82,6 +82,18 @@ export default function AdminClientCockpit() {
   useEffect(() => { loadClient(); loadContext(); }, [loadClient, loadContext]);
   useEffect(() => { loadFiles(); loadStandardized(); loadDashboard(); }, [loadFiles, loadStandardized, loadDashboard]);
 
+  // À l'ouverture d'un client, se placer sur le dernier mois travaillé (dashboard, sinon données).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: d } = await supabase.from('dashboards' as any).select('period').eq('client_id', id).order('period', { ascending: false }).limit(1).maybeSingle();
+      if (!cancelled && (d as any)?.period) { setPeriod((d as any).period); return; }
+      const { data: s } = await supabase.from('standardized_data' as any).select('period').eq('client_id', id).order('period', { ascending: false }).limit(1).maybeSingle();
+      if (!cancelled && (s as any)?.period) setPeriod((s as any).period);
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
+
   // --- actions ---
   const extractContext = () => run('context', async () => {
     if (!contextText.trim()) throw new Error('Collez du texte de contexte (ou importez un .txt/.md).');
@@ -157,6 +169,9 @@ export default function AdminClientCockpit() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+        <p className="text-xs text-muted-foreground">
+          💾 Tout est enregistré automatiquement. Tu peux fermer et revenir plus tard pour finaliser — pense à sélectionner le bon mois.
+        </p>
         {error && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
         <Section icon={<Palette className="w-4 h-4" />} title="Charte graphique">
