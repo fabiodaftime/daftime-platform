@@ -30,11 +30,14 @@ Deno.serve(async (req) => {
     const { data: dash } = await admin.from("dashboards").select("*").eq("id", dashboard_id).maybeSingle();
     if (!dash) return json({ error: "dashboard introuvable" }, 404);
 
+    const { data: client } = await admin.from("clients").select("brand").eq("id", dash.client_id).maybeSingle();
+
     const messages: AnthropicMessage[] = [
       ...history,
       {
         role: "user",
         content:
+          `CHARTE GRAPHIQUE (à respecter):\n${JSON.stringify(client?.brand ?? {}, null, 2)}\n\n` +
           `HTML ACTUEL:\n${dash.html ?? ""}\n\n` +
           `DONNÉES ACTUELLES:\n${JSON.stringify(dash.data_json ?? {}, null, 2)}\n\n` +
           `INSTRUCTION:\n${message}`,

@@ -10,7 +10,7 @@ export const MODELS = {
 
 export interface AnthropicMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | unknown[]; // texte simple, ou blocs (image/document/text) pour le multimodal
 }
 
 export async function callAnthropic(opts: {

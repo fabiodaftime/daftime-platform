@@ -16,7 +16,16 @@ RÈGLES ABSOLUES :
 - N'invente JAMAIS un chiffre. Si une donnée nécessaire est absente ou ambiguë, NE la devine pas.
 - Toute information manquante doit être listée dans "missing_items" (libellé clair de ce qu'il faut demander au client).
 - Réponds UNIQUEMENT avec un objet JSON valide, sans texte autour.
-Format attendu : { "data": { ...données standardisées... }, "missing_items": [ "..." ] }`;
+Format attendu (STRICT, structure tabulaire) :
+{
+  "data": {
+    "sections": [
+      { "key": "pnl", "label": "Compte de résultat",
+        "rows": [ { "label": "Chiffre d'affaires", "value": 12000, "unit": "EUR" } ] }
+    ]
+  },
+  "missing_items": [ "ce qu'il faut demander au client" ]
+}`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

@@ -36,6 +36,8 @@ import AdminDataSources from "./pages/AdminDataSources";
 import AdminCsvImport from "./pages/AdminCsvImport";
 import AdminLabarileImport from "./pages/AdminLabarileImport";
 import AdminDataroomUpload from "./pages/AdminDataroomUpload";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminClientCockpit from "./pages/admin/AdminClientCockpit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -272,6 +274,22 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminDataroomUpload />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/clients"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminClients />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/clients/:id"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminClientCockpit />
                 </ProtectedRoute>
               }
             />

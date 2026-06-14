@@ -14,6 +14,7 @@ EXIGENCES :
 - Graphiques via Chart.js chargé par CDN (https://cdn.jsdelivr.net/npm/chart.js).
 - SÉPARE les données du rendu : déclare "const DASHBOARD_DATA = ...;" puis construis le DOM/charts à partir de cette constante.
 - N'invente aucun chiffre : utilise STRICTEMENT les données fournies. Si une métrique manque, ne l'affiche pas (ou indique "n/d").
+- CHARTE GRAPHIQUE : respecte STRICTEMENT les tokens de design fournis (couleurs déclarées en variables CSS dans :root, polices heading/body, ambiance de style). Si aucun token n'est fourni, applique un style sobre par défaut.
 - Réponds UNIQUEMENT avec un objet JSON valide : { "html": "<!doctype html>...", "data_json": { ... } }
   où data_json est l'objet injecté dans DASHBOARD_DATA.`;
 
@@ -35,10 +36,11 @@ Deno.serve(async (req) => {
       : await sdQuery.eq("is_current", true).maybeSingle();
     if (!sd) return json({ error: "aucune donnée standardisée pour ce client/mois (lance d'abord standardize-data)" }, 404);
 
-    const { data: client } = await admin.from("clients").select("name, currency").eq("id", client_id).maybeSingle();
+    const { data: client } = await admin.from("clients").select("name, currency, brand").eq("id", client_id).maybeSingle();
 
     const userContent =
       `Client : ${client?.name ?? client_id} — Devise : ${client?.currency ?? "?"} — Mois : ${period}\n\n` +
+      `CHARTE GRAPHIQUE (tokens de design à appliquer):\n${JSON.stringify(client?.brand ?? {}, null, 2)}\n\n` +
       `DONNÉES STANDARDISÉES (source de vérité):\n${JSON.stringify(sd.data, null, 2)}`;
 
     const { text: out, usage } = await callAnthropic({
