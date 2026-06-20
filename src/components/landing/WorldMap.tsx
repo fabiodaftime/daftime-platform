@@ -14,9 +14,14 @@ const CITIES = [
 ].map((c) => ({ ...c, ...project(c.lat, c.lon) }));
 
 export function WorldMap() {
-  const paris = CITIES[0];
-  const arc = (a: typeof CITIES[number], b: typeof CITIES[number]) =>
-    `M${a.x},${a.y} Q${(a.x + b.x) / 2},${Math.min(a.y, b.y) - 12} ${b.x},${b.y}`;
+  type C = typeof CITIES[number];
+  const arcUp = (a: C, b: C) => `M${a.x},${a.y} Q${(a.x + b.x) / 2},${Math.min(a.y, b.y) - 12} ${b.x},${b.y}`;
+  const arcDown = (a: C, b: C) => `M${a.x},${a.y} Q${(a.x + b.x) / 2},${Math.max(a.y, b.y) + 12} ${b.x},${b.y}`;
+  const ARCS = [
+    arcUp(CITIES[0], CITIES[1]),   // Paris – Lisbonne
+    arcUp(CITIES[0], CITIES[2]),   // Paris – Dubaï
+    arcDown(CITIES[1], CITIES[2]), // Lisbonne – Dubaï (incurvé vers le bas)
+  ];
 
   return (
     <svg
@@ -37,11 +42,11 @@ export function WorldMap() {
         ))}
       </g>
 
-      {/* Arcs de liaison depuis Paris */}
-      {CITIES.slice(1).map((c) => (
+      {/* Arcs de liaison entre les 3 implantations */}
+      {ARCS.map((d, i) => (
         <path
-          key={c.name}
-          d={arc(paris, c)}
+          key={i}
+          d={d}
           className="stroke-accent"
           fill="none"
           strokeWidth={0.7}

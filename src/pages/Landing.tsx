@@ -25,12 +25,13 @@ export default function Landing() {
       {/* Barre de navigation */}
       <header className="sticky top-0 z-30 bg-white border-b">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center leading-none">
             {/* cadre qui rogne la marge blanche du logo en hauteur */}
             <div className="h-8 overflow-hidden flex items-center justify-center">
               <img src={daftimeLogo} alt="Daftime Advisory" className="h-24 w-auto" />
             </div>
-            <div className="h-px w-10 bg-primary/40" />
+            {/* trait au milieu, à distance égale du logo et de « Advisory » */}
+            <div className="h-px w-10 bg-primary/40 my-2" />
             <span className="text-[10px] tracking-[0.4em] uppercase text-primary font-bold leading-none">Advisory</span>
           </div>
         </div>
