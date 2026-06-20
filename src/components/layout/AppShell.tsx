@@ -33,7 +33,7 @@ export function AppShell({
               <ArrowLeft className="w-4 h-4" />
             </Button>
           )}
-          <img src={daftimeLogoWhite} alt="Daftime" className="h-7 w-auto shrink-0" />
+          <img src={daftimeLogoWhite} alt="Daftime" className="h-9 w-auto shrink-0" />
           {title && (
             <div className="font-medium text-sm md:text-base border-l border-white/20 pl-3 truncate">{title}</div>
           )}

@@ -19,8 +19,8 @@ export default function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Barre de navigation */}
       <header className="sticky top-0 z-30 backdrop-blur bg-background/80 border-b">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <img src={daftimeLogo} alt="Daftime Advisory" className="h-12 w-auto rounded-md" />
+        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+          <img src={daftimeLogo} alt="Daftime Advisory" className="h-16 w-auto rounded-md" />
           <Button onClick={() => navigate('/auth')} className="h-10">
             Connexion <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
