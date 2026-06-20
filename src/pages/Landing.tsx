@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
-import daftimeLogo from '@/assets/daftime-logo.jpg';
+import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import { WorldMap } from '@/components/landing/WorldMap';
 
 // Calendrier Cal.com (relié au Google Calendar), thémé Daftime via les réglages Cal.com.
@@ -26,12 +26,9 @@ export default function Landing() {
       <header className="sticky top-0 z-30 bg-white border-b">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-center">
           <div className="flex flex-col items-center leading-none">
-            {/* cadre qui rogne la marge blanche du logo en hauteur */}
-            <div className="h-8 overflow-hidden flex items-center justify-center">
-              <img src={daftimeLogo} alt="Daftime Advisory" className="h-24 w-auto" />
-            </div>
-            {/* trait au milieu, à distance égale du logo et de « Advisory » */}
-            <div className="h-px w-10 bg-primary/40 my-2" />
+            <img src={daftimeLogo} alt="Daftime Advisory" className="h-8 w-auto" />
+            {/* trait central : distances égales (logo détouré, sans fond blanc) */}
+            <div className="h-px w-10 bg-primary/40 my-1.5" />
             <span className="text-[10px] tracking-[0.4em] uppercase text-primary font-bold leading-none">Advisory</span>
           </div>
         </div>
