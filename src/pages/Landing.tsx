@@ -26,7 +26,7 @@ export default function Landing() {
       <header className="sticky top-0 z-30 bg-white border-b">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-center">
           <div className="flex flex-col items-center leading-none">
-            <img src={daftimeLogo} alt="Daftime Advisory" className="h-8 w-auto" />
+            <img src={daftimeLogo} alt="Daftime Advisory" className="h-[22px] w-auto" />
             {/* trait central : distances égales (logo détouré, sans fond blanc) */}
             <div className="h-px w-10 bg-primary/40 my-1.5" />
             <span className="text-[10px] tracking-[0.4em] uppercase text-primary font-bold leading-none">Advisory</span>
