@@ -1,7 +1,10 @@
 // Landing page publique Daftime — première page à l'arrivée sur le site (visiteur non connecté).
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Users, LineChart, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck } from 'lucide-react';
+
+// TODO: remplacer par ton lien de prise de RDV Google Calendar (Appointment schedule).
+const BOOKING_URL = 'https://calendar.app.google/';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 import { WorldMap } from '@/components/landing/WorldMap';
@@ -44,11 +47,11 @@ export default function Landing() {
           Daftime Advisory réunit l'accompagnement de professionnels du conseil et des dashboards clairs, pour transformer vos chiffres en décisions.
         </p>
         <div className="flex flex-wrap gap-3 mt-8 justify-center">
-          <Button onClick={() => navigate('/auth')} className="h-12 px-6 text-base">
-            Accéder à mon espace <ArrowRight className="w-4 h-4 ml-1.5" />
+          <Button onClick={() => window.open(BOOKING_URL, '_blank', 'noopener')} className="h-12 px-6 text-base">
+            <CalendarCheck className="w-4 h-4 mr-2" /> Prendre rendez-vous gratuitement
           </Button>
           <Button variant="outline" onClick={() => navigate('/auth')} className="h-12 px-6 text-base">
-            Se connecter
+            Accéder à mon espace <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>
       </section>
@@ -72,13 +75,13 @@ export default function Landing() {
       <section className="bg-primary text-primary-foreground relative overflow-hidden">
         <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-accent/10 blur-3xl" />
         <div className="max-w-6xl mx-auto px-6 py-16 relative flex flex-col items-center text-center gap-6">
-          <Lock className="w-8 h-8 text-accent" />
-          <h2 className="text-2xl sm:text-3xl font-semibold">Prêt à piloter votre activité ?</h2>
+          <CalendarCheck className="w-8 h-8 text-accent" />
+          <h2 className="text-2xl sm:text-3xl font-semibold">Discutons de votre accompagnement</h2>
           <p className="text-primary-foreground/70 max-w-lg">
-            Connectez-vous à votre espace pour consulter vos dashboards et déposer vos documents.
+            Échangez gratuitement avec un expert Daftime pour découvrir comment piloter votre activité plus sereinement.
           </p>
-          <Button onClick={() => navigate('/auth')} variant="secondary" className="h-12 px-6 text-base">
-            Connexion <ArrowRight className="w-4 h-4 ml-1.5" />
+          <Button onClick={() => window.open(BOOKING_URL, '_blank', 'noopener')} variant="secondary" className="h-12 px-6 text-base">
+            Prendre rendez-vous gratuitement <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>
       </section>
