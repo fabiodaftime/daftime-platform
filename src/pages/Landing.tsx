@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X } from 'lucide-react';
 
-// Plage de rendez-vous Google Calendar, intégrée inline via ?gv=true.
-const SCHEDULE_URL = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1IdMGjYaqTXeqmLpOctocCH_JUdj4LYKndwaY4cHW-FE8VcSVdpUH_rKjATLbG8GRtmMivr5YP?gv=true';
+// Calendrier Cal.com (relié au Google Calendar), thémé Daftime via les réglages Cal.com.
+const SCHEDULE_URL = 'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min?embed=true&theme=light';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 import { WorldMap } from '@/components/landing/WorldMap';
