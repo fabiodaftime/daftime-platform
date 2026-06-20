@@ -7,8 +7,8 @@ import {
   ShoppingBag, Building2, GraduationCap, Cloud, UtensilsCrossed, Briefcase, Network, Rocket, Megaphone,
 } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
-import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import { WorldMap } from '@/components/landing/WorldMap';
+import { BrandLockup } from '@/components/layout/BrandLockup';
 
 // Calendrier Cal.com (relié au Google Calendar), thémé Daftime via les réglages Cal.com.
 const SCHEDULE_URL = 'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min?embed=true&theme=light';
@@ -40,12 +40,7 @@ export default function Landing() {
       {/* Barre de navigation */}
       <header className="sticky top-0 z-30 bg-white border-b">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-center">
-          <div className="flex flex-col items-center leading-none">
-            <img src={daftimeLogo} alt="Daftime Advisory" className="h-[22px] w-auto" />
-            {/* trait central : distances égales (logo détouré, sans fond blanc) */}
-            <div className="h-px w-10 bg-primary/40 my-1.5" />
-            <span className="text-[10px] tracking-[0.4em] uppercase text-primary font-bold leading-none">Advisory</span>
-          </div>
+          <BrandLockup />
         </div>
       </header>
 
