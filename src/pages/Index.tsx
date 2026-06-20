@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import AdminHome from './AdminHome';
+import Landing from './Landing';
 
 const STAFF_ROLES = ['admin', 'manager', 'collaborateur', 'super_admin'];
 
@@ -38,7 +39,7 @@ const Index = () => {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Landing />;
   if (clientId) return <Navigate to={`/client/${clientId}`} replace />;
   return <AdminHome />;
 };
