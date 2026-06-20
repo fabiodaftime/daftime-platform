@@ -1,26 +1,30 @@
 // Carte du monde "soft" en pointillés (grille terre/mer équirectangulaire 30x14)
 // avec les 3 implantations Daftime placées par lat/long. Purement décoratif.
 
-// 1 = terre, 0 = mer. 30 colonnes (lon -180..180), 14 lignes (lat 90..-90).
+// 1 = terre, 0 = mer. 40 colonnes (lon -180..180), 18 lignes (lat 90..-90).
 const GRID = [
-  '000000000000000000000000000000',
-  '001111111001110011011111111111',
-  '011111111101100111011111111111',
-  '001111111100001111111111111111',
-  '000011111000001111111111111111',
-  '000000111000001111111111111111',
-  '000000001111101111110111111100',
-  '000000000111100111110000111100',
-  '000000000111000011110000111100',
-  '000000000011100001100000111100',
-  '000000000011000000000000011000',
-  '000000000010000000000000000000',
-  '000000000000000000000000000000',
-  '000000000000000000000000000000',
+  '0000000000000000000000000000000000000000',
+  '0000111111000011111000110000011111111111',
+  '0111111111111011100111111111111111111111',
+  '0111111111111000000111111111111111111111',
+  '0011111111111000000111111111111111111111',
+  '0001111111110000000111111111111111111111',
+  '0000011111100000000111111111111111111000',
+  '0000000000111111101111111100111111110000',
+  '0000000000011111101111111100110111110000',
+  '0000000000011111100111111000000011110000',
+  '0000000000011111100011111000000001111100',
+  '0000000000001111000011110000000011111000',
+  '0000000000011100000001100000000001110000',
+  '0000000000011000000000000000000000000000',
+  '0000000000010000000000000000000000000000',
+  '0000000000000000000000000000000000000000',
+  '0000000000000000000000000000000000000000',
+  '0000000000000000000000000000000000000000',
 ];
 
-const COLS = 30;
-const ROWS = 14;
+const COLS = 40;
+const ROWS = 18;
 
 // lat/long -> coordonnées de la grille (centre de cellule)
 function project(lat: number, lon: number) {
@@ -51,7 +55,7 @@ export function WorldMap() {
     `M${a.x},${a.y} Q${(a.x + b.x) / 2},${Math.min(a.y, b.y) - 1.2} ${b.x},${b.y}`;
 
   return (
-    <svg viewBox="0 0 30 14" className="w-full h-auto" role="img" aria-label="Implantations Daftime : Paris, Dubaï, Lisbonne">
+    <svg viewBox="0 0 40 18" className="w-full h-auto" role="img" aria-label="Implantations Daftime : Paris, Dubaï, Lisbonne">
       {/* fond pointillé des continents */}
       {dots.map(([x, y], i) => (
         <circle key={i} cx={x} cy={y} r={0.15} className="fill-primary" opacity={0.18} />
@@ -73,7 +77,7 @@ export function WorldMap() {
             x={c.x + ((c as any).dx ?? 0)} y={c.y + (c.dy ?? 0)}
             textAnchor={c.anchor as any}
             className="fill-foreground font-semibold"
-            fontSize={0.7}
+            fontSize={0.85}
           >
             {c.name}
           </text>

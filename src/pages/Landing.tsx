@@ -1,15 +1,15 @@
 // Landing page publique Daftime — première page à l'arrivée sur le site (visiteur non connecté).
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, LineChart, FileText, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowRight, Users, LineChart, ShieldCheck, Lock } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 import { WorldMap } from '@/components/landing/WorldMap';
 
 const FEATURES = [
-  { icon: LineChart, title: 'Pilotage financier', desc: 'Vos indicateurs clés suivis mois après mois, sans tableur à maintenir.' },
-  { icon: FileText, title: 'Reporting & dashboards', desc: 'Des dashboards clairs et à votre image, prêts à présenter.' },
-  { icon: ShieldCheck, title: 'Espace client sécurisé', desc: 'Déposez vos documents et consultez vos rapports en toute confidentialité.' },
+  { icon: Users, title: "Accompagnement d'experts", desc: 'Des professionnels du conseil financier à vos côtés au quotidien.' },
+  { icon: LineChart, title: 'Une vision claire', desc: 'Des dashboards lisibles qui transforment vos chiffres en décisions.' },
+  { icon: ShieldCheck, title: 'Espace sécurisé', desc: 'Déposez vos documents et consultez vos rapports en toute confiance.' },
 ];
 
 export default function Landing() {
@@ -38,14 +38,14 @@ export default function Landing() {
         </div>
 
         <h1 className="mt-10 text-4xl sm:text-5xl font-semibold leading-[1.1] tracking-tight">
-          Pilotez votre activité<br />en toute{' '}
+          Des experts et de la vision,<br />pour{' '}
           <span className="relative whitespace-nowrap">
-            clarté
+            piloter
             <span className="absolute left-0 -bottom-1 w-full h-2 bg-accent/40 -z-10" />
-          </span>
+          </span>{' '}votre activité
         </h1>
         <p className="text-lg text-muted-foreground mt-6 max-w-xl mx-auto">
-          Daftime Advisory transforme vos chiffres en dashboards clairs et actionnables, pour des décisions éclairées au quotidien.
+          Daftime Advisory réunit l'accompagnement de professionnels du conseil et des dashboards clairs, pour transformer vos chiffres en décisions.
         </p>
         <div className="flex flex-wrap gap-3 mt-8 justify-center">
           <Button onClick={() => navigate('/auth')} className="h-12 px-6 text-base">
