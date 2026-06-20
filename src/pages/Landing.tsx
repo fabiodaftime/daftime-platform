@@ -2,7 +2,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X } from 'lucide-react';
+import {
+  ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X,
+  ShoppingBag, Building2, GraduationCap, Cloud, UtensilsCrossed, Briefcase, Network, Rocket,
+} from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import { WorldMap } from '@/components/landing/WorldMap';
@@ -14,6 +17,17 @@ const FEATURES = [
   { icon: Users, title: "Accompagnement d'experts", desc: 'Des professionnels du conseil financier à vos côtés au quotidien.' },
   { icon: LineChart, title: 'Une vision claire', desc: 'Des dashboards lisibles qui transforment vos chiffres en décisions.' },
   { icon: ShieldCheck, title: 'Espace sécurisé', desc: 'Déposez vos documents et consultez vos rapports en toute confiance.' },
+];
+
+const SECTORS = [
+  { icon: ShoppingBag, label: 'E-commerce' },
+  { icon: Building2, label: 'Immobilier' },
+  { icon: GraduationCap, label: 'Formation' },
+  { icon: Cloud, label: 'SaaS & Tech' },
+  { icon: UtensilsCrossed, label: 'Restauration & Hôtellerie' },
+  { icon: Briefcase, label: 'Conseil & Services' },
+  { icon: Network, label: 'Holdings & Groupes' },
+  { icon: Rocket, label: 'Startups' },
 ];
 
 export default function Landing() {
@@ -70,6 +84,27 @@ export default function Landing() {
               </div>
               <h3 className="font-semibold text-lg">{f.title}</h3>
               <p className="text-muted-foreground text-sm mt-2">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Secteurs d'expertise */}
+      <section className="max-w-6xl mx-auto px-6 py-16 text-center">
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Une expertise multi-secteurs</h2>
+        <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+          Nous accompagnons des entreprises de profils variés, avec des indicateurs adaptés à chaque métier.
+        </p>
+        <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {SECTORS.map((s) => (
+            <div
+              key={s.label}
+              className="rounded-xl border bg-card p-5 flex flex-col items-center gap-3 transition hover:shadow-md hover:border-primary/30"
+            >
+              <div className="w-11 h-11 rounded-xl bg-accent/15 text-primary flex items-center justify-center">
+                <s.icon className="w-5 h-5" />
+              </div>
+              <span className="font-medium text-sm">{s.label}</span>
             </div>
           ))}
         </div>
