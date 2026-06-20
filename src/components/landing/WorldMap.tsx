@@ -36,10 +36,15 @@ const CITIES = [
 ].map((c) => ({ ...c, ...project(c.lat, c.lon) }));
 
 export function WorldMap() {
+  // Sous-échantillonnage du masque pour densifier les points (sans changer la forme).
+  const STEP = 0.5;
   const dots: Array<[number, number]> = [];
-  GRID.forEach((row, r) => {
-    for (let c = 0; c < row.length; c++) if (row[c] === '1') dots.push([c + 0.5, r + 0.5]);
-  });
+  for (let y = 0; y < ROWS; y += STEP) {
+    for (let x = 0; x < COLS; x += STEP) {
+      const row = GRID[Math.floor(y)];
+      if (row && row[Math.floor(x)] === '1') dots.push([x + STEP / 2, y + STEP / 2]);
+    }
+  }
 
   const paris = CITIES[0];
   const arc = (a: typeof CITIES[number], b: typeof CITIES[number]) =>
@@ -49,7 +54,7 @@ export function WorldMap() {
     <svg viewBox="0 0 30 14" className="w-full h-auto" role="img" aria-label="Implantations Daftime : Paris, Dubaï, Lisbonne">
       {/* fond pointillé des continents */}
       {dots.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={0.26} className="fill-primary" opacity={0.16} />
+        <circle key={i} cx={x} cy={y} r={0.15} className="fill-primary" opacity={0.18} />
       ))}
 
       {/* arcs de liaison depuis Paris */}
