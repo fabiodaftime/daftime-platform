@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, LineChart, ShieldCheck, Sparkles, FileText, TrendingUp, Lock } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
+import { WorldMap } from '@/components/landing/WorldMap';
 
 const FEATURES = [
   { icon: LineChart, title: 'Pilotage financier', desc: 'Vos indicateurs clés suivis mois après mois, sans tableur à maintenir.' },
@@ -19,7 +20,7 @@ export default function Landing() {
       {/* Barre de navigation */}
       <header className="sticky top-0 z-30 backdrop-blur bg-background/80 border-b">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <img src={daftimeLogo} alt="Daftime Advisory" className="h-9 w-auto rounded" />
+          <img src={daftimeLogo} alt="Daftime Advisory" className="h-12 w-auto rounded-md" />
           <Button onClick={() => navigate('/auth')} className="h-10">
             Connexion <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
@@ -87,6 +88,20 @@ export default function Landing() {
               <p className="text-muted-foreground text-sm mt-2">{f.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Implantations */}
+      <section className="max-w-6xl mx-auto px-6 py-20 text-center">
+        <div className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-accent/15 text-foreground mb-4">
+          Implantations
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-semibold">Présents à Paris, Dubaï &amp; Lisbonne</h2>
+        <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
+          Une expertise locale, un accompagnement international.
+        </p>
+        <div className="mt-12 max-w-3xl mx-auto">
+          <WorldMap />
         </div>
       </section>
 
