@@ -51,8 +51,14 @@ export function WorldMap() {
       ))}
 
       {/* Villes */}
-      {CITIES.map((c) => (
-        <g key={c.name}>
+      {CITIES.map((c, i) => (
+        <g key={c.name} className="cursor-pointer">
+          <title>{`Daftime — ${c.name}`}</title>
+          {/* ping radar animé (touche vivante), décalé par ville */}
+          <circle cx={c.x} cy={c.y} r={1.7} className="fill-accent">
+            <animate attributeName="r" values="1.7;9" dur="2.4s" begin={`${i * 0.8}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.5;0" dur="2.4s" begin={`${i * 0.8}s`} repeatCount="indefinite" />
+          </circle>
           <circle cx={c.x} cy={c.y} r={3.4} className="fill-accent" opacity={0.22} />
           <circle cx={c.x} cy={c.y} r={1.7} className="fill-accent" />
           <circle cx={c.x} cy={c.y} r={0.7} className="fill-primary" />

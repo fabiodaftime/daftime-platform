@@ -31,7 +31,7 @@ export default function Landing() {
               <img src={daftimeLogo} alt="Daftime Advisory" className="h-24 w-auto" />
             </div>
             <div className="h-px w-10 bg-primary/40" />
-            <span className="text-[10px] tracking-[0.4em] uppercase text-primary/70 leading-none">Advisory</span>
+            <span className="text-[10px] tracking-[0.4em] uppercase text-primary font-bold leading-none">Advisory</span>
           </div>
         </div>
       </header>
