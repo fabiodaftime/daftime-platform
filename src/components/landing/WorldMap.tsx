@@ -4,7 +4,7 @@ import { LAND_PATHS } from './landPaths';
 
 // Projection équirectangulaire : viewBox 360 (lon) x 180 (lat), origine en haut-gauche.
 function project(lat: number, lon: number) {
-  return { x: lon + 180, y: 90 - lat };
+  return { x: lon + 180, y: (90 - lat) * 1.2 };
 }
 
 const CITIES = [
@@ -20,7 +20,7 @@ export function WorldMap() {
 
   return (
     <svg
-      viewBox="0 4 360 146"
+      viewBox="0 6 360 172"
       className="w-full h-auto"
       role="img"
       aria-label="Implantations Daftime : Paris, Dubaï, Lisbonne"
