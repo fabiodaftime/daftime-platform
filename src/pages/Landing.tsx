@@ -1,10 +1,11 @@
 // Landing page publique Daftime — première page à l'arrivée sur le site (visiteur non connecté).
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck } from 'lucide-react';
+import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X } from 'lucide-react';
 
-// TODO: remplacer par ton lien de prise de RDV Google Calendar (Appointment schedule).
-const BOOKING_URL = 'https://calendar.app.google/';
+// Plage de rendez-vous Google Calendar, intégrée inline via ?gv=true.
+const SCHEDULE_URL = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1IdMGjYaqTXeqmLpOctocCH_JUdj4LYKndwaY4cHW-FE8VcSVdpUH_rKjATLbG8GRtmMivr5YP?gv=true';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 import { WorldMap } from '@/components/landing/WorldMap';
@@ -17,6 +18,7 @@ const FEATURES = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -47,7 +49,7 @@ export default function Landing() {
           Daftime Advisory réunit l'accompagnement de professionnels du conseil et des dashboards clairs, pour transformer vos chiffres en décisions.
         </p>
         <div className="flex flex-wrap gap-3 mt-8 justify-center">
-          <Button onClick={() => window.open(BOOKING_URL, '_blank', 'noopener')} className="h-12 px-6 text-base">
+          <Button onClick={() => setBookingOpen(true)} className="h-12 px-6 text-base">
             <CalendarCheck className="w-4 h-4 mr-2" /> Prendre rendez-vous gratuitement
           </Button>
           <Button variant="outline" onClick={() => navigate('/auth')} className="h-12 px-6 text-base">
@@ -80,7 +82,7 @@ export default function Landing() {
           <p className="text-primary-foreground/70 max-w-lg">
             Échangez gratuitement avec un expert Daftime pour découvrir comment piloter votre activité plus sereinement.
           </p>
-          <Button onClick={() => window.open(BOOKING_URL, '_blank', 'noopener')} variant="secondary" className="h-12 px-6 text-base">
+          <Button onClick={() => setBookingOpen(true)} variant="secondary" className="h-12 px-6 text-base">
             Prendre rendez-vous gratuitement <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </div>
@@ -93,6 +95,28 @@ export default function Landing() {
           <p className="text-sm">© 2026 Daftime Advisory. Tous droits réservés.</p>
         </div>
       </footer>
+
+      {/* Modale de prise de rendez-vous (planning Google Calendar intégré) */}
+      {bookingOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setBookingOpen(false)}
+        >
+          <div
+            className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setBookingOpen(false)}
+              aria-label="Fermer"
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 border flex items-center justify-center hover:bg-muted"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <iframe src={SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
