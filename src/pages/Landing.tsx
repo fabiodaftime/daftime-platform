@@ -9,9 +9,7 @@ import {
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { WorldMap } from '@/components/landing/WorldMap';
 import { BrandLockup } from '@/components/layout/BrandLockup';
-
-// Calendrier Cal.com (relié au Google Calendar), thémé Daftime via les réglages Cal.com.
-const SCHEDULE_URL = 'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min?embed=true&theme=light';
+import { BOOKING_SCHEDULE_URL } from '@/lib/config';
 
 const FEATURES = [
   { icon: Users, title: "Accompagnement d'experts", desc: 'Des professionnels du conseil financier à vos côtés au quotidien.' },
@@ -146,7 +144,7 @@ export default function Landing() {
             >
               <X className="w-4 h-4" />
             </button>
-            <iframe src={SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
+            <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
           </div>
         </div>
       )}
