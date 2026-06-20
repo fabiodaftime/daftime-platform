@@ -28,11 +28,7 @@ export default function Landing() {
       </header>
 
       {/* Hero — la carte en premier */}
-      <section className="max-w-5xl mx-auto px-6 pt-10 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-accent/15 text-foreground mb-6">
-          Paris · Dubaï · Lisbonne
-        </div>
-
+      <section className="max-w-5xl mx-auto px-6 pt-12 pb-16 text-center">
         <div className="max-w-4xl mx-auto">
           <WorldMap />
         </div>
