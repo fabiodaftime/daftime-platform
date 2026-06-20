@@ -20,9 +20,9 @@ export default function Landing() {
       {/* Barre de navigation */}
       <header className="sticky top-0 z-30 backdrop-blur bg-background/80 border-b">
         <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-center">
-          {/* cadre qui rogne la marge blanche du logo via un léger zoom */}
-          <div className="h-14 overflow-hidden flex items-center justify-center">
-            <img src={daftimeLogo} alt="Daftime Advisory" className="h-14 w-auto scale-[1.6] origin-center" />
+          {/* cadre plus court que le logo : rogne la marge blanche en HAUTEUR (pas la largeur) */}
+          <div className="h-12 overflow-hidden flex items-center justify-center">
+            <img src={daftimeLogo} alt="Daftime Advisory" className="h-24 w-auto" />
           </div>
         </div>
       </header>
