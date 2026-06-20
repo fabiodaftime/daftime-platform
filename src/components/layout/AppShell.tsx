@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut } from 'lucide-react';
-import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
+import daftimeLogo from '@/assets/daftime-logo-trans.png';
 
 export function AppShell({
   title,
@@ -33,7 +33,7 @@ export function AppShell({
               <ArrowLeft className="w-4 h-4" />
             </Button>
           )}
-          <img src={daftimeLogoWhite} alt="Daftime" className="h-9 w-auto shrink-0" />
+          <img src={daftimeLogo} alt="Daftime" className="h-[22px] w-auto brightness-0 invert shrink-0" />
           {title && (
             <div className="font-medium text-sm md:text-base border-l border-white/20 pl-3 truncate">{title}</div>
           )}
