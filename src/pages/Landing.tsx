@@ -19,7 +19,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Barre de navigation */}
       <header className="sticky top-0 z-30 backdrop-blur bg-background/80 border-b">
-        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-center">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-center">
           {/* cadre plus court que le logo : rogne la marge blanche en HAUTEUR (pas la largeur) */}
           <div className="h-8 overflow-hidden flex items-center justify-center">
             <img src={daftimeLogo} alt="Daftime Advisory" className="h-24 w-auto" />
