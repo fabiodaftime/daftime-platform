@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X,
-  ShoppingBag, Building2, GraduationCap, Cloud, UtensilsCrossed, Briefcase, Network, Rocket,
+  ShoppingBag, Building2, GraduationCap, Cloud, UtensilsCrossed, Briefcase, Network, Rocket, Megaphone,
 } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
@@ -28,6 +28,7 @@ const SECTORS = [
   { icon: Briefcase, label: 'Conseil & Services' },
   { icon: Network, label: 'Holdings & Groupes' },
   { icon: Rocket, label: 'Startups' },
+  { icon: Megaphone, label: 'Agences & Médias' },
 ];
 
 export default function Landing() {
@@ -95,7 +96,7 @@ export default function Landing() {
         <p className="text-muted-foreground mt-3 max-w-xl mx-auto">
           Nous accompagnons des entreprises de profils variés, avec des indicateurs adaptés à chaque métier.
         </p>
-        <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="mt-10 grid grid-cols-2 sm:grid-cols-3 gap-4">
           {SECTORS.map((s) => (
             <div
               key={s.label}
