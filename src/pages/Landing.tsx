@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X } from 'lucide-react';
-
-// Calendrier Cal.com (relié au Google Calendar), thémé Daftime via les réglages Cal.com.
-const SCHEDULE_URL = 'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min?embed=true&theme=light';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import daftimeLogo from '@/assets/daftime-logo.jpg';
 import { WorldMap } from '@/components/landing/WorldMap';
+
+// Calendrier Cal.com (relié au Google Calendar), thémé Daftime via les réglages Cal.com.
+const SCHEDULE_URL = 'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min?embed=true&theme=light';
 
 const FEATURES = [
   { icon: Users, title: "Accompagnement d'experts", desc: 'Des professionnels du conseil financier à vos côtés au quotidien.' },
@@ -66,7 +66,7 @@ export default function Landing() {
       <section className="bg-secondary/40 border-y">
         <div className="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-3 gap-6">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-xl bg-card border p-6">
+            <div key={f.title} className="rounded-xl bg-card border p-6 transition hover:shadow-md hover:border-primary/30">
               <div className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mb-4">
                 <f.icon className="w-5 h-5" />
               </div>
@@ -82,12 +82,12 @@ export default function Landing() {
         <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-accent/10 blur-3xl" />
         <div className="max-w-6xl mx-auto px-6 py-16 relative flex flex-col items-center text-center gap-6">
           <CalendarCheck className="w-8 h-8 text-accent" />
-          <h2 className="text-2xl sm:text-3xl font-semibold">Discutons de votre accompagnement</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Discutons de votre accompagnement</h2>
           <p className="text-primary-foreground/70 max-w-lg">
             Échangez gratuitement avec un expert Daftime pour découvrir comment piloter votre activité plus sereinement.
           </p>
           <Button onClick={() => setBookingOpen(true)} variant="secondary" className="h-12 px-6 text-base">
-            Prendre rendez-vous gratuitement <ArrowRight className="w-4 h-4 ml-1.5" />
+            <CalendarCheck className="w-4 h-4 mr-2" /> Prendre rendez-vous gratuitement
           </Button>
         </div>
       </section>
