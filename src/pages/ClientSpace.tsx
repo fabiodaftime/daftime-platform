@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
-  FileBarChart2, ArrowRight,
+  FileBarChart2, ArrowRight, TrendingUp,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
@@ -78,6 +78,44 @@ function Sparkline({ values }: { values: (number | null)[] }) {
     <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-7 mt-2">
       <polyline points={pts} fill="none" className="stroke-accent" strokeWidth={2} vectorEffect="non-scaling-stroke" />
     </svg>
+  );
+}
+
+function shortMonth(period: string): string {
+  try { return new Date(period).toLocaleDateString('fr-FR', { month: 'short' }); } catch { return period; }
+}
+
+// Évolution mensuelle CA / résultat net (barres). Ne s'affiche qu'à partir de 2 mois.
+function MonthlyTrend({ series, currency }: {
+  series: Array<{ period: string; values: Record<string, number | null> }>;
+  currency: string;
+}) {
+  const pts = series.filter((s) => s.values.ca != null);
+  if (pts.length < 2) return null;
+  const max = Math.max(...pts.flatMap((s) => [s.values.ca ?? 0, s.values.net ?? 0]), 1);
+  return (
+    <div className="rounded-xl border bg-card p-5">
+      <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
+        <h2 className="font-semibold flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" /> Évolution mensuelle</h2>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-primary" /> CA</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-accent" /> Résultat net</span>
+        </div>
+      </div>
+      <div className="flex items-end gap-4 h-40 mt-4">
+        {pts.map((s) => (
+          <div key={s.period} className="flex-1 flex flex-col items-center gap-2 min-w-0">
+            <div className="flex-1 w-full flex items-end justify-center gap-1.5">
+              <div className="w-3.5 rounded-t bg-primary" style={{ height: `${Math.max(((s.values.ca ?? 0) / max) * 100, 2)}%` }}
+                title={`CA : ${fmtMoney(s.values.ca ?? 0, currency)}`} />
+              <div className="w-3.5 rounded-t bg-accent" style={{ height: `${Math.max(((s.values.net ?? 0) / max) * 100, 2)}%` }}
+                title={`Résultat net : ${fmtMoney(s.values.net ?? 0, currency)}`} />
+            </div>
+            <span className="text-[11px] text-muted-foreground capitalize">{shortMonth(s.period)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -300,6 +338,40 @@ export default function ClientSpace() {
     </div>
   ) : null;
 
+  // Synthèse du mois (bandeau + ratios) à partir du dashboard courant.
+  const dj = dash?.data_json;
+  const sCA = findMetric(dj, ['chiffre d', 'chiffre affaires', 'ca total', 'revenue', 'sales']);
+  const sNet = findMetric(dj, ['resultat net', 'net profit', 'net income']);
+  const sBrute = findMetric(dj, ['marge brute', 'gross margin', 'gross profit']);
+  const sCharges = findMetric(dj, ['charges d exploitation', 'operating expenses']);
+  const pct = (num: number | null, den: number | null) =>
+    num != null && den != null && den !== 0 ? `${((num / den) * 100).toFixed(1)} %` : null;
+  const ratios = [
+    { label: 'Marge nette', value: pct(sNet, sCA) },
+    { label: 'Marge brute', value: pct(sBrute, sCA) },
+    { label: 'Poids des charges', value: pct(sCharges, sCA) },
+  ].filter((r) => r.value);
+  const headline = sNet != null && sCA != null
+    ? `Résultat net de ${fmtMoney(sNet, client.currency)}${pct(sNet, sCA) ? ` — soit ${pct(sNet, sCA)} du chiffre d'affaires` : ''}.`
+    : null;
+  const synthesisBand = dash && (headline || ratios.length > 0) ? (
+    <div className="rounded-xl border bg-secondary/40 p-5">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">Votre situation</div>
+      <div className="text-lg font-semibold capitalize mt-0.5">{periodLabel(period)}</div>
+      {headline && <p className="text-sm text-foreground/80 mt-1">{headline}</p>}
+      {ratios.length > 0 && (
+        <div className="flex flex-wrap gap-x-8 gap-y-3 mt-4">
+          {ratios.map((r) => (
+            <div key={r.label}>
+              <div className="text-xl font-semibold tabular-nums">{r.value}</div>
+              <div className="text-xs text-muted-foreground">{r.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  ) : null;
+
   const MonthBar = (
     <div className="flex flex-wrap items-center gap-3">
       <Button variant="outline" size="icon" onClick={() => setPeriod(shiftPeriod(period, -1))} aria-label="Mois précédent">
@@ -398,7 +470,9 @@ export default function ClientSpace() {
 
             {tab === 'accueil' && (
               <div className="space-y-4">
+                {synthesisBand}
                 {kpiBlock}
+                <MonthlyTrend series={series} currency={client.currency} />
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Chat synthétique */}
                   <div className="lg:col-span-2 rounded-xl border bg-card p-5 flex flex-col">
