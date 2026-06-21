@@ -10,6 +10,13 @@ import { Eye, ExternalLink, Save } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
 
+const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+const CATEGORIES = [
+  { key: 'production', label: 'Production (réel)' },
+  { key: 'test', label: 'Test / fictif' },
+  { key: 'ponctuel', label: 'Ponctuel' },
+];
+
 export default function AdminClientSettings() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -41,6 +48,9 @@ export default function AdminClientSettings() {
       advisor_id: (c as any)?.advisor_id ?? '',
       requires_supervision: !!(c as any)?.requires_supervision,
       logo_url: (c as any)?.logo_url ?? '',
+      category: (c as any)?.category ?? 'production',
+      cadence: (c as any)?.cadence ?? 'monthly',
+      cadence_months: (c as any)?.cadence_months ?? [],
     });
     if ((c as any)?.legacy_company_id) {
       const { data: co } = await supabase.from('companies').select('layout_type').eq('id', (c as any).legacy_company_id).maybeSingle();
@@ -62,6 +72,9 @@ export default function AdminClientSettings() {
       advisor_id: form.advisor_id || null,
       requires_supervision: !!form.requires_supervision,
       logo_url: form.logo_url?.trim() || null,
+      category: form.category || 'production',
+      cadence: form.cadence || 'monthly',
+      cadence_months: form.cadence === 'quarterly' ? (form.cadence_months ?? []) : null,
     }).eq('id', id);
     setBusy(false);
     if (error) setError(error.message);
@@ -131,7 +144,40 @@ export default function AdminClientSettings() {
               <Label>Logo (URL)</Label>
               <Input value={form.logo_url} onChange={(e) => set('logo_url', e.target.value)} placeholder="https://…" />
             </div>
+            <div className="space-y-1.5">
+              <Label>Catégorie</Label>
+              <select className="w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.category} onChange={(e) => set('category', e.target.value)}>
+                {CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cadence de production</Label>
+              <select className="w-full h-10 rounded-md border bg-background px-3 text-sm" value={form.cadence} onChange={(e) => set('cadence', e.target.value)}>
+                <option value="monthly">Mensuelle</option>
+                <option value="quarterly">Trimestrielle / personnalisée</option>
+              </select>
+            </div>
           </div>
+
+          {form.cadence === 'quarterly' && (
+            <div className="space-y-2">
+              <Label>Mois de mise à jour</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {MONTHS.map((m, idx) => {
+                  const mn = idx + 1;
+                  const on = (form.cadence_months ?? []).includes(mn);
+                  return (
+                    <button key={mn} type="button"
+                      onClick={() => set('cadence_months', on ? (form.cadence_months ?? []).filter((x: number) => x !== mn) : [...(form.cadence_months ?? []), mn].sort((a: number, b: number) => a - b))}
+                      className={`px-2.5 py-1 rounded-md text-xs border transition ${on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'}`}>
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">Le client n'entre dans la production que ces mois-là (ex. trimestriel = Mar / Jun / Sep / Déc).</p>
+            </div>
+          )}
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.requires_supervision} onChange={(e) => set('requires_supervision', e.target.checked)} />

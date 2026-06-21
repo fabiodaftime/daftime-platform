@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Search, Plus, Users, Upload, Building2, ChevronRight, ChevronDown, Settings,
-  Home, Briefcase, FileCheck2, Clock, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle,
+  Home, Briefcase, FileCheck2, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
@@ -15,7 +15,15 @@ import { currentPeriod, periodLabel, STATUS_LABELS } from '@/lib/genericApi';
 interface Client {
   id: string; name: string; currency: string; location: string;
   advisor_id: string | null; legacy_company_id: string | null; activity_types?: { name?: string } | null;
+  category?: string; cadence?: string; cadence_months?: number[] | null;
 }
+
+// Filtres de la vue Clients : implantations + catégories transverses.
+const CLIENT_FILTERS = [
+  ...LOCATIONS,
+  { key: 'test', label: 'Test & fictifs', flag: '🧪' },
+  { key: 'ponctuel', label: 'Ponctuel', flag: '📌' },
+];
 
 const STATUS_STYLE: Record<string, string> = {
   a_produire: 'bg-amber-100 text-amber-700',
@@ -53,7 +61,7 @@ export default function AdminHome() {
     (async () => {
       const period = currentPeriod();
       const [{ data: cl }, { data: co }, { data: dash }, { data: sd }, { data: ad }, { data: act }] = await Promise.all([
-        supabase.from('clients' as any).select('id, name, currency, location, advisor_id, legacy_company_id, activity_types:activity_type_id(name)').order('name'),
+        supabase.from('clients' as any).select('id, name, currency, location, advisor_id, legacy_company_id, category, cadence, cadence_months, activity_types:activity_type_id(name)').order('name'),
         supabase.from('companies').select('id, layout_type'),
         supabase.from('dashboards' as any).select('client_id, status').eq('is_current', true).eq('period', period),
         supabase.from('standardized_data' as any).select('client_id, missing_items').eq('is_current', true).eq('period', period),
@@ -79,28 +87,38 @@ export default function AdminHome() {
     await supabase.from('clients' as any).update({ location }).eq('id', clientId);
   };
 
-  const countOf = (key: string) => clients.filter((c) => (c.location ?? 'dubai') === key).length;
-  const currentLoc = LOCATIONS.find((l) => l.key === loc) ?? LOCATIONS[0];
-  const group = useMemo(() => clients.filter((c) => (c.location ?? 'dubai') === loc && c.name.toLowerCase().includes(q.toLowerCase())), [clients, loc, q]);
+  const monthNum = Number(currentPeriod().slice(5, 7));
+  const isProd = (c: Client) => (c.category ?? 'production') === 'production';
+  const dueThisMonth = (c: Client) => isProd(c) && (c.cadence !== 'quarterly' || (c.cadence_months ?? []).includes(monthNum));
+  const matchesFilter = (c: Client, key: string) => {
+    if (key === 'test') return c.category === 'test';
+    if (key === 'ponctuel') return c.category === 'ponctuel';
+    return isProd(c) && (c.location ?? 'dubai') === key;
+  };
+  const countForFilter = (key: string) => clients.filter((c) => matchesFilter(c, key)).length;
+  const currentFilter = CLIENT_FILTERS.find((l) => l.key === loc) ?? CLIENT_FILTERS[0];
+  const group = useMemo(() => clients.filter((c) => matchesFilter(c, loc) && c.name.toLowerCase().includes(q.toLowerCase())), [clients, loc, q]);
 
-  const iaClients = clients.filter((c) => !c.legacy_company_id);
-  const legacyClients = clients.filter((c) => c.legacy_company_id);
-  const statusOf = (c: Client) => statusByClient[c.id] ?? 'a_produire';
-  const publishedCount = iaClients.filter((c) => statusOf(c) === 'publie').length;
-  const pendingIA = iaClients.filter((c) => statusOf(c) !== 'publie').length;
-  const missingClients = iaClients.filter((c) => (missingByClient[c.id] ?? 0) > 0).length;
-  const activeLocs = LOCATIONS.filter((l) => countOf(l.key) > 0).length;
+  const prodCount = clients.filter(isProd).length;
+  const testCount = clients.filter((c) => c.category === 'test').length;
+  const ponctCount = clients.filter((c) => c.category === 'ponctuel').length;
+
+  // Production mensuelle = clients IA, en production, dus ce mois (mensuels + trimestriels du mois).
+  const dueIA = clients.filter((c) => !c.legacy_company_id && dueThisMonth(c));
+  const publishedCount = dueIA.filter((c) => (statusByClient[c.id] ?? 'a_produire') === 'publie').length;
+  const missingClients = dueIA.filter((c) => (missingByClient[c.id] ?? 0) > 0).length;
+  const activeLocs = LOCATIONS.filter((l) => countForFilter(l.key) > 0).length;
 
   const prodCounts = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const c of iaClients) { const s = statusOf(c); m[s] = (m[s] ?? 0) + 1; }
+    for (const c of dueIA) { const s = statusByClient[c.id] ?? 'a_produire'; m[s] = (m[s] ?? 0) + 1; }
     return m;
   }, [clients, statusByClient]);
 
   const prodRows = useMemo(() => {
-    return iaClients
+    return dueIA
       .filter((c) => c.name.toLowerCase().includes(q.toLowerCase()))
-      .map((c) => ({ c, status: statusOf(c), missing: missingByClient[c.id] ?? 0, advisor: c.advisor_id ? advisorById[c.advisor_id] : null }))
+      .map((c) => ({ c, status: statusByClient[c.id] ?? 'a_produire', missing: missingByClient[c.id] ?? 0, advisor: c.advisor_id ? advisorById[c.advisor_id] : null }))
       .sort((a, b) => PROD_ORDER.indexOf(a.status) - PROD_ORDER.indexOf(b.status));
   }, [clients, statusByClient, missingByClient, advisorById, q]);
 
@@ -128,12 +146,12 @@ export default function AdminHome() {
               <ChevronDown className={`w-4 h-4 transition-transform ${open.clients ? 'rotate-180' : ''}`} />)}
             {open.clients && (
               <div className="pl-3 space-y-0.5">
-                {LOCATIONS.map((l) => {
+                {CLIENT_FILTERS.map((l) => {
                   const active = view === 'clients' && loc === l.key;
                   return (
                     <button key={l.key} onClick={() => { setView('clients'); setLoc(l.key); }}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}>
-                      <span className="text-base leading-none">{l.flag}</span> {l.label}<span className="ml-auto text-xs">{countOf(l.key)}</span>
+                      <span className="text-base leading-none">{l.flag}</span> {l.label}<span className="ml-auto text-xs">{countForFilter(l.key)}</span>
                     </button>
                   );
                 })}
@@ -167,9 +185,9 @@ export default function AdminHome() {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { icon: <Briefcase className="w-4 h-4" />, label: 'Clients', value: clients.length, sub: `${iaClients.length} IA · ${legacyClients.length} legacy` },
-                  { icon: <FileCheck2 className="w-4 h-4" />, label: 'Publiés ce mois', value: publishedCount, sub: `sur ${iaClients.length} IA` },
-                  { icon: <Clock className="w-4 h-4" />, label: 'En attente (IA)', value: pendingIA },
+                  { icon: <Briefcase className="w-4 h-4" />, label: 'Clients', value: clients.length, sub: `${prodCount} prod · ${testCount} test · ${ponctCount} ponct.` },
+                  { icon: <ClipboardList className="w-4 h-4" />, label: 'À produire ce mois', value: dueIA.length },
+                  { icon: <FileCheck2 className="w-4 h-4" />, label: 'Publiés ce mois', value: publishedCount, sub: `sur ${dueIA.length}` },
                   { icon: <AlertTriangle className="w-4 h-4" />, label: 'Pièces manquantes', value: missingClients, sub: 'clients concernés' },
                 ].map((k, i) => (
                   <div key={i} className="rounded-xl border bg-card p-4">
@@ -201,7 +219,7 @@ export default function AdminHome() {
                   <h2 className="font-semibold mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-accent" /> Répartition par implantation</h2>
                   <div className="space-y-2.5">
                     {LOCATIONS.map((l) => {
-                      const n = countOf(l.key); const w = clients.length ? (n / clients.length) * 100 : 0;
+                      const n = countForFilter(l.key); const w = prodCount ? (n / prodCount) * 100 : 0;
                       return (
                         <button key={l.key} onClick={() => { setView('clients'); setLoc(l.key); setOpen((o) => ({ ...o, clients: true })); }} className="w-full text-left group">
                           <div className="flex justify-between text-sm mb-1"><span>{l.flag} {l.label}</span><span className="tabular-nums text-muted-foreground">{n}</span></div>
@@ -276,8 +294,8 @@ export default function AdminHome() {
             <>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-xl font-semibold flex items-center gap-2"><span>{currentLoc.flag}</span> {currentLoc.label}</h1>
-                  <p className="text-sm text-muted-foreground">{countOf(loc)} client{countOf(loc) > 1 ? 's' : ''}</p>
+                  <h1 className="text-xl font-semibold flex items-center gap-2"><span>{currentFilter.flag}</span> {currentFilter.label}</h1>
+                  <p className="text-sm text-muted-foreground">{countForFilter(loc)} client{countForFilter(loc) > 1 ? 's' : ''}</p>
                 </div>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -287,7 +305,7 @@ export default function AdminHome() {
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />)}</div>
               ) : group.length === 0 ? (
-                <div className="text-center py-16 border border-dashed rounded-xl"><Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground text-sm">{q ? 'Aucun client ne correspond.' : `Aucun client à ${currentLoc.label}.`}</p></div>
+                <div className="text-center py-16 border border-dashed rounded-xl"><Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground text-sm">{q ? 'Aucun client ne correspond.' : `Aucun client dans « ${currentFilter.label} ».`}</p></div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {group.map((c) => {
@@ -299,7 +317,7 @@ export default function AdminHome() {
                             <span className="font-medium truncate">{c.name}</span>
                             <span className={`shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${legacy ? 'bg-amber-100 text-amber-700' : 'bg-primary/10 text-primary'}`}>{legacy ? 'Legacy' : 'IA'}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1 truncate">{c.activity_types?.name ?? (legacy ? 'Dashboard sur-mesure' : 'Activité non définie')} · {c.currency}</div>
+                          <div className="text-xs text-muted-foreground mt-1 truncate">{c.activity_types?.name ?? (legacy ? 'Dashboard sur-mesure' : 'Activité non définie')} · {c.currency}{c.cadence === 'quarterly' ? ' · Trimestriel' : ''}</div>
                         </button>
                         <div className="mt-3 flex items-center justify-between gap-2">
                           <select value={c.location ?? 'dubai'} onChange={(e) => changeLocation(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
