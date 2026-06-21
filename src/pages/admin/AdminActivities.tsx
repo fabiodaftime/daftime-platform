@@ -75,7 +75,8 @@ export default function AdminActivities() {
                   <td className="px-4 py-2.5 text-center">
                     <input type="checkbox" checked={a.is_active} onChange={(e) => setField(i, 'is_active', e.target.checked)} />
                   </td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                    <Button size="sm" variant="ghost" onClick={() => navigate(`/admin/activities/${a.id}`)}>Catalogue</Button>
                     <Button size="sm" variant="ghost" onClick={() => save(i)} disabled={busy === a.id}><Save className="w-4 h-4" /></Button>
                   </td>
                 </tr>

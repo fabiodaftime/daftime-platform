@@ -41,6 +41,7 @@ import AdminClientCockpit from "./pages/admin/AdminClientCockpit";
 import AdminClientSettings from "./pages/admin/AdminClientSettings";
 import AdminAdvisors from "./pages/admin/AdminAdvisors";
 import AdminActivities from "./pages/admin/AdminActivities";
+import AdminCatalog from "./pages/admin/AdminCatalog";
 import ClientSpace from "./pages/ClientSpace";
 import NotFound from "./pages/NotFound";
 
@@ -311,6 +312,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminActivities />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/activities/:id"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminCatalog />
                 </ProtectedRoute>
               }
             />

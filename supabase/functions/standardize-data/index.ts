@@ -9,7 +9,7 @@ import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
-import { getTemplate, inputLines, buildStandardized, type TemplateLine } from "../_shared/templates.ts";
+import { getCatalog, inputLines, buildStandardized, type CatalogLine } from "../_shared/templates.ts";
 import { reconcile, type FileExtract } from "../_shared/reconcile.ts";
 
 // Repères métier par type d'activité (KPIs et charges typiques). Surchargé par activity_types.config si fourni.
@@ -51,7 +51,7 @@ Format attendu (STRICT, structure tabulaire) :
 }`;
 
 // Chemin MULTI-SOURCES : on classe + extrait UN fichier à la fois, puis on réconcilie.
-const PERFILE_SYSTEM = (activity: string, lines: TemplateLine[]) => `Tu analyses UN SEUL fichier d'un client "${activity}".
+const PERFILE_SYSTEM = (activity: string, lines: CatalogLine[]) => `Tu analyses UN SEUL fichier d'un client "${activity}".
 1) IDENTIFIE le type de source (source_type) parmi : "sales_export" (export de ventes Shopify/Stripe/Amazon), "ads_dashboard" (dashboard publicitaire Meta/Google/TikTok), "bank_statement" (relevé bancaire), "invoice" (facture), "payroll" (journal de paie), "pnl" (compte de résultat / compta), "other".
 2) EXTRAIS uniquement les postes ci-dessous que CE fichier fournit réellement, pour LE MOIS (valeur numérique brute, sans symbole ni séparateur de milliers). N'invente rien ; omets ce qui n'est pas dans ce fichier.
    - Si c'est un RELEVÉ BANCAIRE : catégorise les transactions et additionne-les par poste (ventes encaissées, pub, salaires, frais de paiement, logistique…).
@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     const at = (client as { activity_types?: { slug?: string; config?: Record<string, unknown> } }).activity_types;
     const activity = at?.slug ?? "inconnu";
     const currency = (client as { currency?: string }).currency ?? "EUR";
-    const tpl = getTemplate(activity);
+    const tpl = getCatalog(at?.config);
 
     const ctxBlock = { type: "text", text: `CONTEXTE CLIENT:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\nFICHIERS DU MOIS (${docs.length}) :` };
     const fileBlocks = docs.length ? filesToContentBlocks(docs) : [{ type: "text", text: "(aucun fichier déposé pour ce mois)" }];
