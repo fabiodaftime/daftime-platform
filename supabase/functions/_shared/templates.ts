@@ -188,6 +188,7 @@ export function buildStandardized(
         label: l.label,
         value: v[l.id],
         unit: l.unit === "CUR" ? currency : (l.unit ?? ""),
+        ...(l.compute ? { derived: true } : {}),
         ...(l.total ? { type: "total" } : {}),
         ...(l.note ? { note: l.note } : {}),
         ...(sources[l.id] ? { source: sources[l.id] } : {}),

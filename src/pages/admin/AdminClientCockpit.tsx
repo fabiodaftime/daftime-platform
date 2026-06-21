@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye } from 'lucide-react';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
+import { StandardizedReview } from '@/components/generic/StandardizedReview';
 import { DashboardChat } from '@/components/generic/DashboardChat';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
@@ -136,6 +137,49 @@ export default function AdminClientCockpit() {
     await loadStandardized();
   });
 
+  // Édition d'un input (template) : maj de la valeur + marquage "manuel".
+  const setInputValue = (rowId: string, value: number | null) => {
+    setEditData((d: any) => ({
+      ...d,
+      sections: (d?.sections ?? []).map((s: any) => ({
+        ...s,
+        rows: (s.rows ?? []).map((r: any) => (r.id === rowId ? { ...r, value, confidence: 'manual', source: 'saisie manuelle' } : r)),
+      })),
+    }));
+  };
+
+  // Recalcule les dérivés + rejoue les vérifications côté serveur (formules = source unique).
+  const recompute = () => run('recompute', async () => {
+    const activity = editData?.meta?.template;
+    const inputs: Record<string, number> = {};
+    for (const s of editData?.sections ?? []) for (const r of s.rows ?? []) if (!r.derived && typeof r.value === 'number') inputs[r.id] = r.value;
+    const res = await invokeFn<{ data: any }>('template-recompute', { activity, inputs, currency: client?.currency ?? 'EUR' });
+    const oldRows: Record<string, any> = {};
+    for (const s of editData?.sections ?? []) for (const r of s.rows ?? []) oldRows[r.id] = r;
+    const newData = res.data;
+    for (const s of newData.sections ?? []) for (const r of s.rows ?? []) {
+      if (!r.derived) {
+        const old = oldRows[r.id];
+        if (old && old.value === r.value && old.confidence && old.confidence !== 'manual') { r.confidence = old.confidence; r.source = old.source; }
+        else { r.confidence = 'manual'; r.source = old?.source ?? 'saisie manuelle'; }
+      }
+    }
+    setEditData(newData);
+  });
+
+  // Valider = porte de confiance : enregistre une version marquée "validée".
+  const validate = () => run('validate', async () => {
+    const validated = { ...editData, meta: { ...(editData?.meta ?? {}), validated: true, validated_at: new Date().toISOString() } };
+    await supabase.from('standardized_data' as any).update({ is_current: false }).eq('client_id', id).eq('period', period).eq('is_current', true);
+    const { data: last } = await supabase.from('standardized_data' as any).select('version').eq('client_id', id).eq('period', period).order('version', { ascending: false }).limit(1).maybeSingle();
+    const version = (((last as any)?.version) ?? 0) + 1;
+    await supabase.from('standardized_data' as any).insert({
+      client_id: id, period, activity_type_id: client?.activity_type_id ?? null,
+      data: validated, missing_items: sd?.missing_items ?? [], source: 'validated', version, is_current: true, created_by: user?.id ?? null,
+    });
+    await loadStandardized();
+  });
+
   const generate = () => run('generate', async () => {
     await invokeFn('generate-dashboard', { client_id: id, period });
     await loadDashboard();
@@ -156,6 +200,8 @@ export default function AdminClientCockpit() {
 
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
+  const isTemplate = !!editData?.meta?.template;
+  const validated = !!editData?.meta?.validated;
 
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
@@ -225,9 +271,13 @@ export default function AdminClientCockpit() {
         </Section>
 
         <Section icon={<Wand2 className="w-4 h-4" />} title="Données standardisées"
-          action={<div className="flex gap-2">
+          action={<div className="flex items-center gap-2">
+            {validated && <span className="text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">✓ Validé</span>}
             <Button size="sm" variant="outline" onClick={standardize} disabled={busy === 'standardize'}>{busy === 'standardize' ? 'IA…' : 'Standardiser (IA)'}</Button>
-            <Button size="sm" onClick={saveStandardized} disabled={busy === 'save-sd' || !sd}>Enregistrer</Button>
+            {isTemplate && <Button size="sm" variant="outline" onClick={recompute} disabled={busy === 'recompute' || !sd}>{busy === 'recompute' ? 'Calcul…' : 'Recalculer'}</Button>}
+            {isTemplate
+              ? <Button size="sm" onClick={validate} disabled={busy === 'validate' || !sd}>{busy === 'validate' ? '…' : 'Valider'}</Button>
+              : <Button size="sm" onClick={saveStandardized} disabled={busy === 'save-sd' || !sd}>Enregistrer</Button>}
           </div>}>
           <MissingItemsTable
             items={missing}
@@ -238,7 +288,9 @@ export default function AdminClientCockpit() {
               await loadStandardized();
             })}
           />
-          <StandardizedTableEditor value={editData} onChange={setEditData} />
+          {isTemplate
+            ? <StandardizedReview data={editData} onInputChange={setInputValue} />
+            : <StandardizedTableEditor value={editData} onChange={setEditData} />}
           <div className="mt-4">
             <div className="text-xs text-muted-foreground mb-1">Affiner avec l'IA</div>
             <AssistantChat
