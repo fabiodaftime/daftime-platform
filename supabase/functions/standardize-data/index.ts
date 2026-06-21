@@ -9,6 +9,7 @@ import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
+import { getTemplate, inputLines, buildStandardized, type TemplateLine } from "../_shared/templates.ts";
 
 // Repères métier par type d'activité (KPIs et charges typiques). Surchargé par activity_types.config si fourni.
 const ACTIVITY_GUIDE: Record<string, string> = {
@@ -48,6 +49,24 @@ Format attendu (STRICT, structure tabulaire) :
   "missing_items": [ "ce qu'il faut demander au client" ]
 }`;
 
+// Chemin TEMPLATE : l'IA n'extrait QUE les postes d'entrée (le code calcule les dérivés).
+const TEMPLATE_SYSTEM = (activity: string, lines: TemplateLine[]) => `Tu es un analyste financier. Tu EXTRAIS des montants depuis les fichiers d'un client "${activity}" (PDF, images, Excel : relevés, factures, exports).
+Pour chaque poste demandé, donne sa valeur numérique pour LE MOIS (nombre brut, sans symbole de devise ni séparateur de milliers) UNIQUEMENT si elle est présente ou directement déductible des fichiers ; sinon null.
+RÈGLES :
+- N'INVENTE JAMAIS un chiffre. Ne calcule PAS les totaux, marges ou ratios (le système s'en charge) — extrais seulement les postes ci-dessous.
+- Pour chaque valeur trouvée, indique sa PROVENANCE (nom de fichier + page/feuille si possible).
+- Liste dans "missing_items" ce qu'il faut demander au client pour compléter.
+
+POSTES À EXTRAIRE :
+${lines.map((l) => `- ${l.id} : ${l.label}${l.hint ? ` (${l.hint})` : ""}`).join("\n")}
+
+Réponds UNIQUEMENT en JSON :
+{
+  "inputs": { ${lines.slice(0, 2).map((l) => `"${l.id}": 0`).join(", ")} },
+  "sources": { "${lines[0]?.id ?? "ca"}": "fichier.pdf p.1" },
+  "missing_items": [ "…" ]
+}`;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -62,7 +81,7 @@ Deno.serve(async (req) => {
 
     const { data: client } = await admin
       .from("clients")
-      .select("id, name, activity_type_id, activity_types:activity_type_id(slug, name, config)")
+      .select("id, name, currency, activity_type_id, activity_types:activity_type_id(slug, name, config)")
       .eq("id", client_id)
       .maybeSingle();
     if (!client) return json({ error: "client introuvable" }, 404);
@@ -77,28 +96,51 @@ Deno.serve(async (req) => {
 
     const at = (client as { activity_types?: { slug?: string; config?: Record<string, unknown> } }).activity_types;
     const activity = at?.slug ?? "inconnu";
-    const configGuide = at?.config && Object.keys(at.config).length ? JSON.stringify(at.config) : "";
-    const guide = [ACTIVITY_GUIDE[activity] ?? "", configGuide].filter(Boolean).join(" ");
+    const currency = (client as { currency?: string }).currency ?? "EUR";
+    const tpl = getTemplate(activity);
 
-    // Message multimodal : contexte (texte) + chaque fichier (texte, ou bloc PDF/image natif).
-    const content: unknown[] = [
-      { type: "text", text: `CONTEXTE CLIENT:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\nFICHIERS DU MOIS (${docs.length}) :` },
-      ...(docs.length ? filesToContentBlocks(docs) : [{ type: "text", text: "(aucun fichier déposé pour ce mois)" }]),
-      { type: "text", text: "Produis maintenant le JSON standardisé selon les règles." },
-    ];
+    const ctxBlock = { type: "text", text: `CONTEXTE CLIENT:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\nFICHIERS DU MOIS (${docs.length}) :` };
+    const fileBlocks = docs.length ? filesToContentBlocks(docs) : [{ type: "text", text: "(aucun fichier déposé pour ce mois)" }];
 
-    const { text: out, usage } = await callAnthropic({
-      model: MODELS.fast,
-      system: SYSTEM(activity, guide),
-      messages: [{ role: "user", content } as AnthropicMessage],
-      max_tokens: 8000,
-    });
-    const parsed = extractJson<{ data?: unknown; missing_items?: unknown[] }>(out);
+    let dataToSave: unknown;
+    let missing: unknown[];
+    let usage: unknown;
+
+    if (tpl) {
+      // TEMPLATE : l'IA extrait les inputs (+ provenance), le code calcule les dérivés et vérifie.
+      const content: unknown[] = [ctxBlock, ...fileBlocks, { type: "text", text: "Extrais maintenant les postes demandés en JSON." }];
+      const res = await callAnthropic({
+        model: MODELS.fast,
+        system: TEMPLATE_SYSTEM(activity, inputLines(tpl)),
+        messages: [{ role: "user", content } as AnthropicMessage],
+        max_tokens: 4000,
+      });
+      usage = res.usage;
+      const parsed = extractJson<{ inputs?: Record<string, number>; sources?: Record<string, string>; missing_items?: unknown[] }>(res.text);
+      const built = buildStandardized(tpl, parsed.inputs ?? {}, parsed.sources ?? {}, currency);
+      dataToSave = built.data;
+      missing = parsed.missing_items ?? [];
+    } else {
+      // GÉNÉRIQUE (activités sans template) : l'IA produit directement la structure.
+      const configGuide = at?.config && Object.keys(at.config).length ? JSON.stringify(at.config) : "";
+      const guide = [ACTIVITY_GUIDE[activity] ?? "", configGuide].filter(Boolean).join(" ");
+      const content: unknown[] = [ctxBlock, ...fileBlocks, { type: "text", text: "Produis maintenant le JSON standardisé selon les règles." }];
+      const res = await callAnthropic({
+        model: MODELS.fast,
+        system: SYSTEM(activity, guide),
+        messages: [{ role: "user", content } as AnthropicMessage],
+        max_tokens: 8000,
+      });
+      usage = res.usage;
+      const parsed = extractJson<{ data?: unknown; missing_items?: unknown[] }>(res.text);
+      dataToSave = parsed.data ?? {};
+      missing = parsed.missing_items ?? [];
+    }
 
     const saved = await insertVersion(admin, "standardized_data", { client_id, period }, {
       activity_type_id: client.activity_type_id,
-      data: parsed.data ?? {},
-      missing_items: parsed.missing_items ?? [],
+      data: dataToSave ?? {},
+      missing_items: missing ?? [],
       source: "ai",
       created_by: user.id,
     });
