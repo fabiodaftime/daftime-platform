@@ -28,6 +28,41 @@ function labelActivity(a: any): string {
   return a.action;
 }
 
+// KPIs extraits du data_json du dashboard (sections/rows), par mots-clés sur les libellés.
+const KPIS = [
+  { key: 'ca', label: "Chiffre d'affaires", keywords: ['chiffre d', 'ca total', 'chiffre affaires'] },
+  { key: 'ebitda', label: 'EBITDA', keywords: ['ebitda'] },
+  { key: 'cashflow', label: 'Trésorerie', keywords: ['cash', 'tresorerie', 'tresor'] },
+] as const;
+
+const norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function findMetric(dataJson: any, keywords: readonly string[]): number | null {
+  for (const sec of dataJson?.sections ?? []) {
+    for (const row of sec?.rows ?? []) {
+      if (typeof row?.value === 'number' && keywords.some((k) => norm(row.label).includes(k))) return row.value;
+    }
+  }
+  return null;
+}
+
+function fmtMoney(v: number, currency = 'EUR') {
+  try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v); }
+  catch { return `${Math.round(v).toLocaleString('fr-FR')} ${currency}`; }
+}
+
+function Sparkline({ values }: { values: (number | null)[] }) {
+  const nums = values.map((v) => v ?? 0);
+  if (nums.length < 2) return null;
+  const max = Math.max(...nums), min = Math.min(...nums), range = max - min || 1;
+  const pts = nums.map((v, i) => `${(i / (nums.length - 1)) * 100},${28 - ((v - min) / range) * 26}`).join(' ');
+  return (
+    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-7 mt-2">
+      <polyline points={pts} fill="none" className="stroke-accent" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
 export default function ClientSpace() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -47,6 +82,7 @@ export default function ClientSpace() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasNew, setHasNew] = useState(false); // nouveau rapport publié non encore vu
+  const [series, setSeries] = useState<Array<{ period: string; values: Record<string, number | null> }>>([]);
 
   const loadClient = useCallback(async () => {
     const { data } = await supabase.from('clients' as any)
@@ -86,7 +122,16 @@ export default function ClientSpace() {
     setActivity((data as any[]) ?? []);
   }, [id]);
 
-  useEffect(() => { loadClient(); loadAvailable(); loadActivity(); }, [loadClient, loadAvailable, loadActivity]);
+  const loadTrend = useCallback(async () => {
+    const { data } = await supabase.from('dashboards' as any).select('period, data_json')
+      .eq('client_id', id).eq('status', 'publie').eq('is_current', true).order('period', { ascending: true });
+    setSeries(((data as any[]) ?? []).map((d) => ({
+      period: d.period,
+      values: Object.fromEntries(KPIS.map((k) => [k.key, findMetric(d.data_json, k.keywords)])),
+    })));
+  }, [id]);
+
+  useEffect(() => { loadClient(); loadAvailable(); loadActivity(); loadTrend(); }, [loadClient, loadAvailable, loadActivity, loadTrend]);
   useEffect(() => { loadDashboard(); loadFiles(); }, [loadDashboard, loadFiles]);
 
   // Marque le dernier rapport comme vu quand le client le consulte.
@@ -141,6 +186,32 @@ export default function ClientSpace() {
 
   const docSlug = (client as any)?.activity_types?.slug as string | undefined;
   const requiredDocs = (docSlug && DOC_TEMPLATES[docSlug]) || DEFAULT_DOCS;
+
+  const curEntry = series.find((s) => s.period === period);
+  const prevIdx = series.findIndex((s) => s.period === period) - 1;
+  const prevEntry = prevIdx >= 0 ? series[prevIdx] : undefined;
+  const hasKpis = !!curEntry && KPIS.some((k) => curEntry.values[k.key] != null);
+  const kpiBlock = hasKpis ? (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {KPIS.map((k) => {
+        const cur = curEntry?.values[k.key] ?? null;
+        const prev = prevEntry?.values[k.key] ?? null;
+        const delta = cur != null && prev != null && prev !== 0 ? ((cur - prev) / Math.abs(prev)) * 100 : null;
+        return (
+          <div key={k.key} className="rounded-xl border bg-card p-4">
+            <div className="text-xs text-muted-foreground">{k.label}</div>
+            <div className="text-2xl font-semibold tabular-nums mt-1">{cur != null ? fmtMoney(cur, client.currency) : 'n/d'}</div>
+            {delta != null && (
+              <div className={`text-xs mt-1 ${delta >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                {delta >= 0 ? '▲' : '▼'} {Math.abs(delta).toFixed(1)}% vs mois préc.
+              </div>
+            )}
+            {k.key === 'ca' && <Sparkline values={series.map((s) => s.values.ca)} />}
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
 
   const MonthBar = (
     <div className="flex flex-wrap items-center gap-3">
@@ -239,7 +310,9 @@ export default function ClientSpace() {
             {tab !== 'activity' && MonthBar}
 
             {tab === 'dashboard' && (
-              <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
+              <div className="space-y-4">
+                {kpiBlock}
+                <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
                 <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
                   <span className="text-sm font-medium capitalize">{periodLabel(period)}</span>
                   {dash && (
@@ -257,6 +330,7 @@ export default function ClientSpace() {
                     Votre rapport pour {periodLabel(period)} est en préparation.
                   </div>
                 )}
+              </div>
               </div>
             )}
 
