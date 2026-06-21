@@ -28,6 +28,15 @@ export default function Auth() {
 
   useEffect(() => { if (user) navigate('/'); }, [user, navigate]);
 
+  // Réinitialise les bandeaux de bienvenue : ils se réafficheront après cette connexion.
+  useEffect(() => {
+    try {
+      Object.keys(sessionStorage)
+        .filter((k) => k.startsWith('daftime_welcome_'))
+        .forEach((k) => sessionStorage.removeItem(k));
+    } catch { /* ignore */ }
+  }, []);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {

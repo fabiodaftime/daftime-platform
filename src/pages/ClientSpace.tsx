@@ -9,7 +9,7 @@ import { BookingButton } from '@/components/booking/BookingButton';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
-  Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen,
+  Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR } from '@/lib/config';
@@ -33,6 +33,11 @@ export default function ClientSpace() {
   const { user } = useAuth();
 
   const [tab, setTab] = useState<(typeof NAV)[number]['key']>('dashboard');
+  // Bandeau de bienvenue : affiché une fois par session de connexion (refermable).
+  const bannerKey = `daftime_welcome_${id}`;
+  const [showBanner, setShowBanner] = useState(() => {
+    try { return !sessionStorage.getItem(bannerKey); } catch { return true; }
+  });
   const [client, setClient] = useState<any>(null);
   const [period, setPeriod] = useState(currentPeriod());
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
@@ -94,6 +99,11 @@ export default function ClientSpace() {
     } finally { setBusy(false); }
   };
 
+  const dismissBanner = () => {
+    try { sessionStorage.setItem(bannerKey, '1'); } catch { /* ignore */ }
+    setShowBanner(false);
+  };
+
   const openFullscreen = () => {
     if (!dash?.html) return;
     const url = URL.createObjectURL(new Blob([dash.html], { type: 'text/html' }));
@@ -145,18 +155,27 @@ export default function ClientSpace() {
       <div className="space-y-6">
         {error && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
-        {/* Bandeau de bienvenue */}
-        <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-6 sm:p-8 relative overflow-hidden">
-          <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-accent/10 blur-3xl" />
-          <div className="relative flex items-center gap-4">
-            {client.logo_url && <img src={client.logo_url} alt={client.name} className="h-12 w-auto rounded bg-white p-1.5" />}
-            <div>
-              <div className="text-sm text-primary-foreground/70">Bonjour 👋</div>
-              <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
-              <p className="text-sm text-primary-foreground/70 mt-0.5">Votre espace Daftime Advisory</p>
+        {/* Bandeau de bienvenue (1 fois par session, refermable) */}
+        {showBanner && (
+          <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-6 sm:p-8 relative overflow-hidden">
+            <div className="absolute -top-16 -right-10 w-56 h-56 rounded-full bg-accent/10 blur-3xl" />
+            <button
+              onClick={dismissBanner}
+              aria-label="Masquer le message"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="relative flex items-center gap-4 pr-8">
+              {client.logo_url && <img src={client.logo_url} alt={client.name} className="h-12 w-auto rounded bg-white p-1.5" />}
+              <div>
+                <div className="text-sm text-primary-foreground/70">Bonjour 👋</div>
+                <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
+                <p className="text-sm text-primary-foreground/70 mt-0.5">Votre espace Daftime Advisory</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
           {/* Sidebar : menu + conseiller */}
