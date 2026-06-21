@@ -131,9 +131,13 @@ export default function AdminHome() {
                                 className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
                                 {LOCATIONS.map((l) => <option key={l.key} value={l.key}>{l.flag} {l.label}</option>)}
                               </select>
-                              <button onClick={() => open(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">
-                                Ouvrir <ChevronRight className="w-3 h-3" />
-                              </button>
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => navigate(`/admin/clients/${c.id}/settings`)} title="Réglages"
+                                  className="p-1 text-muted-foreground hover:text-foreground"><Settings className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => open(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">
+                                  Ouvrir <ChevronRight className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
