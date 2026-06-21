@@ -9,13 +9,19 @@ export function BookingButton({
   className = '',
   variant,
   size,
+  url,
 }: {
   label?: string;
   className?: string;
   variant?: React.ComponentProps<typeof Button>['variant'];
   size?: React.ComponentProps<typeof Button>['size'];
+  url?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // Lien du conseiller si fourni (on s'assure des paramètres d'embed), sinon lien clientèle par défaut.
+  const src = url
+    ? `${url}${url.includes('?') ? '&' : '?'}embed=true&theme=light`
+    : BOOKING_ADVISOR_URL;
   return (
     <>
       <Button onClick={() => setOpen(true)} className={className} variant={variant} size={size}>
@@ -31,7 +37,7 @@ export function BookingButton({
             >
               <X className="w-4 h-4" />
             </button>
-            <iframe src={BOOKING_ADVISOR_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
+            <iframe src={src} title="Prendre rendez-vous" className="w-full h-full border-0" />
           </div>
         </div>
       )}

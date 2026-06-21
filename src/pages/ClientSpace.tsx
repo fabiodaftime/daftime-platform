@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
-  FileBarChart2, ArrowRight, TrendingUp,
+  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
@@ -257,7 +257,8 @@ export default function ClientSpace() {
 
   const loadClient = useCallback(async () => {
     const { data } = await supabase.from('clients' as any)
-      .select('id, name, currency, logo_url, activity_types:activity_type_id(slug)').eq('id', id).maybeSingle();
+      .select('id, name, currency, logo_url, activity_types:activity_type_id(slug), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
+      .eq('id', id).maybeSingle();
     setClient(data);
   }, [id]);
 
@@ -357,6 +358,12 @@ export default function ClientSpace() {
 
   const docSlug = (client as any)?.activity_types?.slug as string | undefined;
   const requiredDocs = (docSlug && DOC_TEMPLATES[docSlug]) || DEFAULT_DOCS;
+
+  const advisor = (client as any)?.advisor as
+    | { name: string; email?: string; whatsapp?: string; photo_url?: string; booking_url?: string }
+    | null | undefined;
+  const advisorInitials = (advisor?.name ?? ADVISOR.name)
+    .split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   const curEntry = series.find((s) => s.period === period);
   const prevIdx = series.findIndex((s) => s.period === period) - 1;
@@ -498,15 +505,37 @@ export default function ClientSpace() {
 
             <div className="rounded-xl border bg-card p-4">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-accent/15 text-primary flex items-center justify-center shrink-0">
-                  <Headset className="w-4 h-4" />
-                </div>
-                <div>
+                {advisor?.photo_url ? (
+                  <img src={advisor.photo_url} alt={advisor.name} className="w-10 h-10 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-accent/15 text-primary flex items-center justify-center shrink-0 font-medium text-sm">
+                    {advisorInitials}
+                  </div>
+                )}
+                <div className="min-w-0">
                   <div className="text-xs text-muted-foreground">Votre conseiller</div>
-                  <div className="font-medium text-sm leading-tight">{ADVISOR.name}</div>
+                  <div className="font-medium text-sm leading-tight truncate">{advisor?.name ?? ADVISOR.name}</div>
                 </div>
               </div>
-              <BookingButton label="Prendre rendez-vous" size="sm" className="w-full mt-3" />
+
+              {(advisor?.email || advisor?.whatsapp) && (
+                <div className="mt-3 space-y-1.5">
+                  {advisor.email && (
+                    <a href={`mailto:${advisor.email}`}
+                      className="text-xs flex items-center gap-2 text-muted-foreground hover:text-foreground transition truncate">
+                      <Mail className="w-3.5 h-3.5 shrink-0" /> <span className="truncate">{advisor.email}</span>
+                    </a>
+                  )}
+                  {advisor.whatsapp && (
+                    <a href={`https://wa.me/${advisor.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                      className="text-xs flex items-center gap-2 text-muted-foreground hover:text-foreground transition">
+                      <Phone className="w-3.5 h-3.5 shrink-0" /> WhatsApp
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <BookingButton label="Prendre rendez-vous" size="sm" className="w-full mt-3" url={advisor?.booking_url ?? undefined} />
             </div>
           </aside>
 
