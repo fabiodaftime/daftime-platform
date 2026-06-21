@@ -5,7 +5,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye } from 'lucide-react';
+import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { StandardizedReview } from '@/components/generic/StandardizedReview';
@@ -206,28 +207,27 @@ export default function AdminClientCockpit() {
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-primary text-primary-foreground py-4 px-6 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/clients')} className="text-primary-foreground hover:bg-primary-foreground/10">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Clients
+    <AppShell
+      title={client.name}
+      maxWidth="max-w-5xl"
+      onBack={() => navigate('/admin/clients')}
+      actions={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`/client/${id}`)} className="text-primary-foreground hover:bg-white/10">
+            <Eye className="w-4 h-4 mr-1" /> Aperçu
           </Button>
-          <span className="font-semibold flex-1">{client.name}</span>
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/client/${id}`)} className="text-primary-foreground hover:bg-primary-foreground/10">
-            <Eye className="w-4 h-4 mr-1" /> Aperçu client
-          </Button>
-          <Button variant="ghost" size="sm" onClick={removeClient} className="text-primary-foreground hover:bg-primary-foreground/10" title="Supprimer le client">
+          <Button variant="ghost" size="icon" onClick={removeClient} className="text-primary-foreground hover:bg-white/10" title="Supprimer le client">
             <Trash2 className="w-4 h-4" />
           </Button>
-          <label className="text-sm flex items-center gap-2">
+          <label className="hidden sm:flex text-sm items-center gap-1.5 text-primary-foreground/90">
             Mois
             <input type="month" value={period.slice(0, 7)} onChange={(e) => setPeriod(`${e.target.value}-01`)}
               className="text-foreground rounded px-2 py-1 text-sm" />
           </label>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+        </>
+      }
+    >
+      <div className="space-y-6">
         <p className="text-xs text-muted-foreground">
           💾 Tout est enregistré automatiquement. Tu peux fermer et revenir plus tard pour finaliser — pense à sélectionner le bon mois.
         </p>
@@ -335,7 +335,7 @@ export default function AdminClientCockpit() {
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />
           </Section>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

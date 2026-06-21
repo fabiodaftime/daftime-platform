@@ -5,10 +5,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CompanyCard } from '@/components/admin/CompanyCard';
-import { Plus, Search, LogOut, Building2, Users, Upload, Sparkles } from 'lucide-react';
+import { Plus, Search, Building2, Users, Upload, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import daftimeLogo from '@/assets/daftime-logo.jpg';
-import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
+import { AppShell } from '@/components/layout/AppShell';
 
 interface CompanyWithKPIs {
   id: string;
@@ -27,7 +26,7 @@ export default function AdminHome() {
   const [genericClients, setGenericClients] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const { user, signOut, isSuperAdmin } = useAuth();
+  const { isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -102,59 +101,15 @@ export default function AdminHome() {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
-
   const filteredCompanies = companies.filter(company =>
     company.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-primary-foreground py-4 px-6 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img 
-              src={daftimeLogoWhite} 
-              alt="Daftime Advisory" 
-              className="h-8 w-auto"
-            />
-            <div className="border-l border-primary-foreground/30 pl-4">
-              <p className="text-sm text-primary-foreground/70">Advisory</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-primary-foreground/70">
-              {user?.email}
-            </span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleSignOut}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Déconnexion
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Title and actions */}
+    <AppShell maxWidth="max-w-6xl">
+      {/* Title and actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            {isSuperAdmin && (
-              <img 
-                src={daftimeLogo} 
-                alt="Daftime Advisory" 
-                className="h-10 w-auto"
-              />
-            )}
             <div>
               <h2 className="text-2xl font-bold text-foreground">
                 {isSuperAdmin ? 'Mes Clients' : 'Mes Dashboards'}
@@ -289,7 +244,6 @@ export default function AdminHome() {
             })}
           </div>
         )}
-      </main>
-    </div>
+    </AppShell>
   );
 }

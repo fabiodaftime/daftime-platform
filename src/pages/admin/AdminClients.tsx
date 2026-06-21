@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { deleteClient } from '@/lib/genericApi';
+import { AppShell } from '@/components/layout/AppShell';
 
 function slugify(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -59,18 +60,8 @@ export default function AdminClients() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-primary text-primary-foreground py-4 px-6">
-        <div className="max-w-5xl mx-auto flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="text-primary-foreground hover:bg-primary-foreground/10">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Accueil
-          </Button>
-          <Sparkles className="w-5 h-5" />
-          <span className="font-semibold">Clients génériques — Pipeline IA</span>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+    <AppShell title="Clients — pipeline IA" onBack={() => navigate('/')}>
+      <div className="space-y-8">
         <section className="border rounded-lg p-5">
           <h2 className="font-semibold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Nouveau client</h2>
           <div className="grid md:grid-cols-2 gap-4">
@@ -123,7 +114,7 @@ export default function AdminClients() {
             </div>
           )}
         </section>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
