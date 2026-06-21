@@ -91,16 +91,7 @@ function MonthlyTrend({ series, currency }: {
   currency: string;
 }) {
   const pts = series.filter((s) => s.values.ca != null);
-  if (pts.length < 2) {
-    return (
-      <div className="rounded-xl border bg-card p-5">
-        <h2 className="font-semibold flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" /> Évolution mensuelle</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          Le graphique d'évolution s'affichera dès qu'au moins deux mois de rapports seront publiés.
-        </p>
-      </div>
-    );
-  }
+  if (pts.length < 2) return null;
   const max = Math.max(...pts.flatMap((s) => [s.values.ca ?? 0, s.values.net ?? 0]), 1);
   return (
     <div className="rounded-xl border bg-card p-5">
@@ -121,6 +112,52 @@ function MonthlyTrend({ series, currency }: {
                 title={`Résultat net : ${fmtMoney(s.values.net ?? 0, currency)}`} />
             </div>
             <span className="text-[11px] text-muted-foreground capitalize">{shortMonth(s.period)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Ramasse les lignes "total" du P&L (type:'total'), récursivement.
+function collectTotals(node: any, out: { label: string; value: number }[]): void {
+  if (Array.isArray(node)) { for (const x of node) collectTotals(x, out); return; }
+  if (node && typeof node === 'object') {
+    if (node.type === 'total' && typeof node.label === 'string' && typeof node.value === 'number') {
+      out.push({ label: node.label, value: node.value });
+    }
+    for (const k of Object.keys(node)) collectTotals(node[k], out);
+  }
+}
+
+// Structure du mois (1er rapport) : grands postes du P&L en barres horizontales.
+function MonthStructure({ dataJson, currency, period }: { dataJson: any; currency: string; period: string }) {
+  let bars: { label: string; value: number }[] = [];
+  collectTotals(dataJson, bars);
+  if (bars.length === 0) {
+    bars = [
+      { label: "Chiffre d'affaires", v: findMetric(dataJson, ['chiffre d', 'chiffre affaires', 'revenue', 'sales']) },
+      { label: "Résultat d'exploitation", v: findMetric(dataJson, ['ebitda', 'resultat d exploitation', 'operating profit']) },
+      { label: 'Résultat net', v: findMetric(dataJson, ['resultat net', 'net profit', 'net income']) },
+    ].filter((b) => b.v != null).map((b) => ({ label: b.label, value: b.v as number }));
+  }
+  if (bars.length === 0) return null;
+  const max = Math.max(...bars.map((b) => Math.abs(b.value)), 1);
+  return (
+    <div className="rounded-xl border bg-card p-5">
+      <h2 className="font-semibold flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" /> Structure du mois</h2>
+      <p className="text-xs text-muted-foreground mt-0.5 mb-4">Les grands postes de <span className="capitalize">{periodLabel(period)}</span></p>
+      <div className="space-y-3">
+        {bars.map((b) => (
+          <div key={b.label}>
+            <div className="flex justify-between items-baseline text-sm mb-1 gap-2">
+              <span className="truncate">{b.label}</span>
+              <span className="tabular-nums font-medium shrink-0">{fmtMoney(b.value, currency)}</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className={`h-full rounded-full ${b.value >= 0 ? 'bg-primary' : 'bg-red-400'}`}
+                style={{ width: `${Math.max((Math.abs(b.value) / max) * 100, 2)}%` }} />
+            </div>
           </div>
         ))}
       </div>
@@ -481,7 +518,9 @@ export default function ClientSpace() {
               <div className="space-y-4">
                 {synthesisBand}
                 {kpiBlock}
-                <MonthlyTrend series={series} currency={client.currency} />
+                {series.filter((s) => s.values.ca != null).length >= 2
+                  ? <MonthlyTrend series={series} currency={client.currency} />
+                  : <MonthStructure dataJson={dash?.data_json} currency={client.currency} period={period} />}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   {/* Chat synthétique */}
                   <div className="lg:col-span-2 rounded-xl border bg-card p-5 flex flex-col">
