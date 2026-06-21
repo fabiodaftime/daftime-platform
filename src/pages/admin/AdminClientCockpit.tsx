@@ -182,8 +182,15 @@ export default function AdminClientCockpit() {
   });
 
   const generate = () => run('generate', async () => {
+    const before = dash?.version ?? 0;
     await invokeFn('generate-dashboard', { client_id: id, period });
-    await loadDashboard();
+    // Génération Opus en tâche de fond : on attend l'apparition de la nouvelle version (jusqu'à ~3 min).
+    for (let i = 0; i < 36; i++) {
+      await new Promise((r) => setTimeout(r, 5000));
+      const { data } = await supabase.from('dashboards' as any).select('*').eq('client_id', id).eq('period', period).eq('is_current', true).maybeSingle();
+      if (data && (((data as any).version ?? 0) > before)) { setDash(data); return; }
+    }
+    setError('La génération (Opus) prend plus de temps que prévu — actualisez le mois dans un instant.');
   });
 
   const changeStatus = (to: string) => run('status', async () => {
@@ -305,7 +312,7 @@ export default function AdminClientCockpit() {
         </Section>
 
         <Section icon={<LayoutDashboard className="w-4 h-4" />} title="Dashboard"
-          action={<Button size="sm" onClick={generate} disabled={busy === 'generate' || !sd}>{busy === 'generate' ? 'Génération…' : 'Générer (IA)'}</Button>}>
+          action={<Button size="sm" onClick={generate} disabled={busy === 'generate' || !sd}>{busy === 'generate' ? 'Génération (Opus)…' : 'Générer (IA)'}</Button>}>
           {!sd && <p className="text-sm text-muted-foreground mb-3">Standardisez d'abord les données pour générer un dashboard.</p>}
           {dash ? (
             <>

@@ -119,49 +119,52 @@ Deno.serve(async (req) => {
       ? `\n\nTendance (${history.months.join(", ")}) :\n` + trend.map((t) => `- ${t.label}: ${series[t.id].map((v) => (v == null ? "n/d" : v)).join(" → ")}`).join("\n")
       : "";
 
-    let analysis: { lecture?: string; points?: string[]; vigilance?: string[] } = { lecture: "", points: [], vigilance: [] };
-    try {
-      const res = await callAnthropic({
-        model: MODELS.quality,
-        system: ANALYSIS_SYSTEM,
-        messages: [{ role: "user", content: `Client ${client?.name ?? ""} — ${period} (devise ${client?.currency ?? "EUR"}).\n\n${figuresText}${trendText}` }],
-        max_tokens: 1500,
+    // Génération (analyse + rendu Opus + sauvegarde). Exécutée en tâche de fond pour ne pas
+    // bloquer la réponse (Opus dépasse souvent la durée d'une requête edge).
+    const work = async () => {
+      let analysis: { lecture?: string; points?: string[]; vigilance?: string[] } = { lecture: "", points: [], vigilance: [] };
+      try {
+        const res = await callAnthropic({
+          model: MODELS.quality,
+          system: ANALYSIS_SYSTEM,
+          messages: [{ role: "user", content: `Client ${client?.name ?? ""} — ${period} (devise ${client?.currency ?? "EUR"}).\n\n${figuresText}${trendText}` }],
+          max_tokens: 1500,
+        });
+        analysis = extractJson(res.text);
+      } catch (e) { console.error("analysis:", e); }
+
+      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, analysis };
+
+      const userContent =
+        `Client : ${client?.name ?? client_id} — Devise : ${client?.currency ?? "?"} — Mois : ${period}\n\n` +
+        `CHARTE GRAPHIQUE (tokens de design à appliquer):\n${JSON.stringify(client?.brand ?? {}, null, 2)}\n\n` +
+        `DONNÉES (à l'exécution dans window.DASHBOARD_DATA) :\n${JSON.stringify(clientData, null, 2)}`;
+
+      const { text: out } = await callAnthropic({
+        model: MODELS.quality, // Opus : meilleure qualité de rendu (en tâche de fond pour éviter le timeout).
+        system: SYSTEM,
+        messages: [{ role: "user", content: userContent }],
+        max_tokens: 14000,
       });
-      analysis = extractJson(res.text);
-    } catch (e) { console.error("analysis:", e); }
+      let html = stripCodeFences(out);
+      if (html.length < 50 || !html.includes("<") || !html.includes("DASHBOARD_DATA")) { console.error("generate: HTML invalide/sans DASHBOARD_DATA"); return; }
+      html = injectDashboardData(html, clientData);
 
-    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, analysis };
+      const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
+        standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
+      });
+      await admin.from("dashboard_status_history").insert({
+        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré par l'IA (Opus)",
+      });
+    };
 
-    // ── Passe 2 : rendu HTML ──
-    const userContent =
-      `Client : ${client?.name ?? client_id} — Devise : ${client?.currency ?? "?"} — Mois : ${period}\n\n` +
-      `CHARTE GRAPHIQUE (tokens de design à appliquer):\n${JSON.stringify(client?.brand ?? {}, null, 2)}\n\n` +
-      `DONNÉES (à l'exécution dans window.DASHBOARD_DATA) :\n${JSON.stringify(clientData, null, 2)}`;
-
-    const { text: out, usage } = await callAnthropic({
-      model: MODELS.fast, // Sonnet : rapide/fiable pour un gros HTML (Opus dépasse la limite de durée des edge functions)
-      system: SYSTEM,
-      messages: [{ role: "user", content: userContent }],
-      max_tokens: 16000,
-    });
-    let html = stripCodeFences(out);
-    if (html.length < 50 || !html.includes("<")) return json({ error: "le modèle n'a pas renvoyé de HTML valide" }, 502);
-    if (!html.includes("DASHBOARD_DATA")) return json({ error: "le modèle n'a pas utilisé les données injectées (DASHBOARD_DATA)" }, 502);
-
-    html = injectDashboardData(html, clientData);
-
-    const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
-      standardized_data_id: sd.id,
-      html,
-      data_json: clientData,
-      status: "draft_ia",
-      created_by: user.id,
-    });
-    await admin.from("dashboard_status_history").insert({
-      dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré par l'IA",
-    });
-
-    return json({ ok: true, dashboard: saved, usage });
+    const ER = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+    if (ER && typeof ER.waitUntil === "function") {
+      ER.waitUntil(work());
+      return json({ ok: true, status: "generating" }, 202);
+    }
+    await work();
+    return json({ ok: true, status: "done" });
   } catch (e) {
     console.error("generate-dashboard:", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
