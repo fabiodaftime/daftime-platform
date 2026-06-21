@@ -28,14 +28,18 @@ const CLIENT_FILTERS = [
 const STATUS_STYLE: Record<string, string> = {
   a_produire: 'bg-amber-100 text-amber-700',
   a_traiter: 'bg-amber-100 text-amber-700',
+  en_cours: 'bg-blue-100 text-blue-700',
   draft_ia: 'bg-blue-100 text-blue-700',
   revue: 'bg-blue-100 text-blue-700',
   valide: 'bg-indigo-100 text-indigo-700',
   supervision: 'bg-indigo-100 text-indigo-700',
   publie: 'bg-emerald-100 text-emerald-700',
 };
-const statusLabel = (s: string) => (s === 'a_produire' ? 'À produire' : STATUS_LABELS[s] ?? s);
-const PROD_ORDER = ['a_produire', 'a_traiter', 'draft_ia', 'revue', 'valide', 'supervision', 'publie'];
+const LOCAL_LABELS: Record<string, string> = { a_produire: 'À produire', en_cours: 'En cours' };
+const statusLabel = (s: string) => LOCAL_LABELS[s] ?? STATUS_LABELS[s] ?? s;
+const PROD_ORDER = ['a_produire', 'a_traiter', 'en_cours', 'draft_ia', 'revue', 'valide', 'supervision', 'publie'];
+// Statuts proposés pour le suivi manuel (clients legacy).
+const LEGACY_STATUS_OPTIONS = ['a_produire', 'en_cours', 'revue', 'valide', 'publie'];
 
 function labelAct(a: any): string {
   if (a.action === 'file_uploaded') return `Document déposé${a.metadata?.name ? ` : ${a.metadata.name}` : ''}`;
@@ -48,6 +52,7 @@ export default function AdminHome() {
   const [clients, setClients] = useState<Client[]>([]);
   const [layoutByCompany, setLayoutByCompany] = useState<Record<string, string>>({});
   const [statusByClient, setStatusByClient] = useState<Record<string, string>>({});
+  const [prodStatusByClient, setProdStatusByClient] = useState<Record<string, string>>({});
   const [missingByClient, setMissingByClient] = useState<Record<string, number>>({});
   const [advisorById, setAdvisorById] = useState<Record<string, string>>({});
   const [activity, setActivity] = useState<any[]>([]);
@@ -60,10 +65,11 @@ export default function AdminHome() {
   useEffect(() => {
     (async () => {
       const period = currentPeriod();
-      const [{ data: cl }, { data: co }, { data: dash }, { data: sd }, { data: ad }, { data: act }] = await Promise.all([
+      const [{ data: cl }, { data: co }, { data: dash }, { data: ps }, { data: sd }, { data: ad }, { data: act }] = await Promise.all([
         supabase.from('clients' as any).select('id, name, currency, location, advisor_id, legacy_company_id, category, cadence, cadence_months, activity_types:activity_type_id(name)').order('name'),
         supabase.from('companies').select('id, layout_type'),
         supabase.from('dashboards' as any).select('client_id, status').eq('is_current', true).eq('period', period),
+        supabase.from('production_status' as any).select('client_id, status').eq('period', period),
         supabase.from('standardized_data' as any).select('client_id, missing_items').eq('is_current', true).eq('period', period),
         supabase.from('advisors' as any).select('id, name'),
         supabase.from('activity_log' as any).select('id, action, created_at, metadata, client_id, clients:client_id(name)').order('created_at', { ascending: false }).limit(8),
@@ -71,6 +77,7 @@ export default function AdminHome() {
       setClients((cl as any[]) ?? []);
       const cmap: Record<string, string> = {}; for (const c of ((co as any[]) ?? [])) cmap[c.id] = c.layout_type; setLayoutByCompany(cmap);
       const smap: Record<string, string> = {}; for (const d of ((dash as any[]) ?? [])) smap[d.client_id] = d.status; setStatusByClient(smap);
+      const psmap: Record<string, string> = {}; for (const p of ((ps as any[]) ?? [])) psmap[p.client_id] = p.status; setProdStatusByClient(psmap);
       const mmap: Record<string, number> = {}; for (const s of ((sd as any[]) ?? [])) mmap[s.client_id] = Array.isArray(s.missing_items) ? s.missing_items.length : 0; setMissingByClient(mmap);
       const amap: Record<string, string> = {}; for (const a of ((ad as any[]) ?? [])) amap[a.id] = a.name; setAdvisorById(amap);
       setActivity((act as any[]) ?? []);
@@ -104,23 +111,33 @@ export default function AdminHome() {
   const ponctCount = clients.filter((c) => c.category === 'ponctuel').length;
 
   // Production mensuelle = clients IA, en production, dus ce mois (mensuels + trimestriels du mois).
-  const dueIA = clients.filter((c) => !c.legacy_company_id && dueThisMonth(c));
-  const publishedCount = dueIA.filter((c) => (statusByClient[c.id] ?? 'a_produire') === 'publie').length;
-  const missingClients = dueIA.filter((c) => (missingByClient[c.id] ?? 0) > 0).length;
+  const statusFor = (c: Client) => (c.legacy_company_id ? (prodStatusByClient[c.id] ?? 'a_produire') : (statusByClient[c.id] ?? 'a_produire'));
+  const dueProd = clients.filter(dueThisMonth);
+  const publishedCount = dueProd.filter((c) => statusFor(c) === 'publie').length;
+  const missingClients = dueProd.filter((c) => (missingByClient[c.id] ?? 0) > 0).length;
   const activeLocs = LOCATIONS.filter((l) => countForFilter(l.key) > 0).length;
+
+  const setLegacyStatus = async (clientId: string, status: string) => {
+    setProdStatusByClient((m) => ({ ...m, [clientId]: status }));
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('production_status' as any).upsert(
+      { client_id: clientId, period: currentPeriod(), status, updated_by: user?.id ?? null, updated_at: new Date().toISOString() },
+      { onConflict: 'client_id,period' },
+    );
+  };
 
   const prodCounts = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const c of dueIA) { const s = statusByClient[c.id] ?? 'a_produire'; m[s] = (m[s] ?? 0) + 1; }
+    for (const c of dueProd) { const s = statusFor(c); m[s] = (m[s] ?? 0) + 1; }
     return m;
-  }, [clients, statusByClient]);
+  }, [clients, statusByClient, prodStatusByClient]);
 
   const prodRows = useMemo(() => {
-    return dueIA
+    return dueProd
       .filter((c) => c.name.toLowerCase().includes(q.toLowerCase()))
-      .map((c) => ({ c, status: statusByClient[c.id] ?? 'a_produire', missing: missingByClient[c.id] ?? 0, advisor: c.advisor_id ? advisorById[c.advisor_id] : null }))
+      .map((c) => ({ c, legacy: !!c.legacy_company_id, status: statusFor(c), missing: missingByClient[c.id] ?? 0, advisor: c.advisor_id ? advisorById[c.advisor_id] : null }))
       .sort((a, b) => PROD_ORDER.indexOf(a.status) - PROD_ORDER.indexOf(b.status));
-  }, [clients, statusByClient, missingByClient, advisorById, q]);
+  }, [clients, statusByClient, prodStatusByClient, missingByClient, advisorById, q]);
 
   const item = (active: boolean, icon: React.ReactNode, label: string, onClick: () => void, right?: React.ReactNode) => (
     <button onClick={onClick}
@@ -186,8 +203,8 @@ export default function AdminHome() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { icon: <Briefcase className="w-4 h-4" />, label: 'Clients', value: clients.length, sub: `${prodCount} prod · ${testCount} test · ${ponctCount} ponct.` },
-                  { icon: <ClipboardList className="w-4 h-4" />, label: 'À produire ce mois', value: dueIA.length },
-                  { icon: <FileCheck2 className="w-4 h-4" />, label: 'Publiés ce mois', value: publishedCount, sub: `sur ${dueIA.length}` },
+                  { icon: <ClipboardList className="w-4 h-4" />, label: 'À produire ce mois', value: dueProd.length },
+                  { icon: <FileCheck2 className="w-4 h-4" />, label: 'Publiés ce mois', value: publishedCount, sub: `sur ${dueProd.length}` },
                   { icon: <AlertTriangle className="w-4 h-4" />, label: 'Pièces manquantes', value: missingClients, sub: 'clients concernés' },
                 ].map((k, i) => (
                   <div key={i} className="rounded-xl border bg-card p-4">
@@ -254,7 +271,7 @@ export default function AdminHome() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h1 className="text-xl font-semibold">Production mensuelle</h1>
-                  <p className="text-sm text-muted-foreground capitalize">{periodLabel(currentPeriod())} · clients pipeline IA</p>
+                  <p className="text-sm text-muted-foreground"><span className="capitalize">{periodLabel(currentPeriod())}</span> · IA (auto) + legacy (manuel)</p>
                 </div>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -272,14 +289,20 @@ export default function AdminHome() {
                       <th className="px-4 py-2 text-center">Pièces</th><th className="px-4 py-2"></th>
                     </tr></thead>
                     <tbody>
-                      {prodRows.map(({ c, status, missing, advisor }) => (
+                      {prodRows.map(({ c, legacy, status, missing, advisor }) => (
                         <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-4 py-2.5 font-medium">{c.name}</td>
-                          <td className="px-4 py-2.5 hidden sm:table-cell text-muted-foreground">{c.activity_types?.name ?? '—'}</td>
+                          <td className="px-4 py-2.5 font-medium">{c.name}{legacy && <span className="ml-2 text-[10px] uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700">legacy</span>}</td>
+                          <td className="px-4 py-2.5 hidden sm:table-cell text-muted-foreground">{c.activity_types?.name ?? (legacy ? 'Sur-mesure' : '—')}</td>
                           <td className="px-4 py-2.5 hidden md:table-cell text-muted-foreground">{advisor ?? '—'}</td>
-                          <td className="px-4 py-2.5"><span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{statusLabel(status)}</span></td>
+                          <td className="px-4 py-2.5">
+                            {legacy
+                              ? <select value={status} onChange={(e) => setLegacyStatus(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
+                                  {LEGACY_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                                </select>
+                              : <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{statusLabel(status)}</span>}
+                          </td>
                           <td className="px-4 py-2.5 text-center">{missing > 0 ? <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{missing}</span> : <span className="text-muted-foreground">—</span>}</td>
-                          <td className="px-4 py-2.5 text-right"><button onClick={() => navigate(`/admin/clients/${c.id}`)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button></td>
+                          <td className="px-4 py-2.5 text-right"><button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button></td>
                         </tr>
                       ))}
                     </tbody>
