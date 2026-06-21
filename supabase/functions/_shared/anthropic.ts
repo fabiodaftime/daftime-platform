@@ -20,6 +20,7 @@ export async function callAnthropic(opts: {
   system: string;
   messages: AnthropicMessage[];
   max_tokens?: number;
+  signal?: AbortSignal;
 }): Promise<{ text: string; usage: unknown }> {
   if (!ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY manquante — la définir via `supabase secrets set ANTHROPIC_API_KEY=...`");
@@ -37,6 +38,7 @@ export async function callAnthropic(opts: {
       system: opts.system,
       messages: opts.messages,
     }),
+    signal: opts.signal,
   });
   const raw = await resp.text();
   if (!resp.ok) throw new Error(`Anthropic ${resp.status}: ${raw}`);

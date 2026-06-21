@@ -19,23 +19,30 @@ RÈGLES STRICTES :
 - Concis, factuel, en français.
 Réponds UNIQUEMENT en JSON : { "lecture": "2 à 4 phrases de synthèse", "points": ["constat chiffré", "..."], "vigilance": ["point d'attention", "..."] }`;
 
-const SYSTEM = `Tu génères un DASHBOARD financier mensuel : un fichier HTML autonome, responsive, sobre et professionnel.
+const SYSTEM = `Tu génères un DASHBOARD financier mensuel : un fichier HTML autonome, responsive, sobre et PROFESSIONNEL. Suis STRICTEMENT les règles ci-dessous — elles s'appliquent à TOUS les dashboards (cohérence).
 
-DONNÉES (RÈGLE ANTI-INVENTION) :
+DONNÉES (anti-invention) :
 - Tout est dans window.DASHBOARD_DATA (injectée séparément — NE la déclare PAS, NE code EN DUR AUCUN chiffre, lis tout depuis cette variable). Forme :
   { client, period, currency,
-    sections: [ { label, rows: [ { label, value, unit, type?, change?, change_pct? } ] } ],   // type:"total" = total à mettre en évidence ; change_pct = évolution vs mois précédent (%)
-    history: { months: [...], series: { id: [valeurs par mois] }, labels: { id: libellé } },     // pour les graphes de tendance
-    analysis: { lecture, points: [...], vigilance: [...] } }                                       // texte d'analyse déjà rédigé
-- Si une valeur est absente, ne l'affiche pas (ou "n/d").
+    sections:[{label, rows:[{label, value, unit, type?, change?, change_pct?}]}],   // type:"total" = total ; change_pct = évolution vs mois précédent (%)
+    history:{months:[...], series:{id:[valeurs/mois]}, labels:{id:libellé}},          // tendance multi-mois
+    analysis:{lecture, points:[...], vigilance:[...]} }                                // analyse déjà rédigée
+- N'affiche JAMAIS une valeur absente (ni un 0 inventé). Une section sans aucune donnée : ne l'affiche pas.
 
-RENDU :
-- En-tête : client, mois, devise.
-- Cartes KPI pour les chiffres clés présents, AVEC leur évolution (change_pct : ▲ vert si ≥ 0, ▼ rouge sinon).
-- Tableaux par section (Libellé / Valeur + variation si présente), lignes "total" mises en évidence.
-- Graphiques de TENDANCE via Chart.js (CDN https://cdn.jsdelivr.net/npm/chart.js) construits depuis history (évolution des principaux totaux sur les mois). Les valeurs restent lisibles même si Chart.js ne charge pas.
-- Section "Lecture du mois" : affiche analysis.lecture, puis analysis.points et analysis.vigilance en listes. N'AJOUTE AUCUNE recommandation au-delà de ce texte.
-- CHARTE : applique les tokens de design fournis (couleurs en variables CSS dans :root, polices) ; sinon style sobre par défaut.
+STRUCTURE (obligatoire, dans cet ordre) :
+1. En-tête : nom du client (titre), mois en toutes lettres, devise — sobre.
+2. Bandeau KPI : 3 à 6 cartes des chiffres CLÉS présents (priorité : CA/honoraires, marge brute, EBITDA, résultat net, trésorerie, + 1-2 KPIs métier). Chaque carte : libellé court, grand nombre formaté, et l'évolution change_pct (▲ vert si ≥0, ▼ rouge sinon). Jamais plus de 6 cartes.
+3. Tendance : si history.months a ≥ 2 mois, UN graphe en ligne des principaux totaux (history.series + labels). Sinon, l'omettre. Chart.js via CDN https://cdn.jsdelivr.net/npm/chart.js. Les valeurs restent lisibles même sans Chart.js.
+4. Sections détaillées : une carte par section, tableau Libellé / Valeur / Évolution. Lignes type:"total" en gras + léger fond. Colonne évolution = change_pct (▲/▼) si présent.
+5. « Lecture du mois » : analysis.lecture en intro, puis analysis.points en liste à puces, et s'il y en a, analysis.vigilance sous un sous-titre « Points de vigilance ». N'AJOUTE AUCUNE recommandation au-delà de ce texte.
+
+STYLE (sobre, pro) :
+- Contenu centré, largeur max ~960px, marges et espacements réguliers et aérés.
+- Cartes : coins arrondis (~12px), fine bordure, fond clair, ombre TRÈS légère. PAS de dégradés, d'effets criards, ni d'emojis décoratifs.
+- Couleurs : utilise les tokens de charte fournis (variables CSS dans :root : primaire, accent, fond). À défaut : fond blanc, texte gris foncé, primaire bleu-nuit sobre. Vert/rouge UNIQUEMENT pour les variations.
+- Typographie : hiérarchie claire (titre > sections > libellés) ; police de la charte si fournie, sinon system-ui ; nombres en chiffres tabulaires, alignés à droite dans les tableaux.
+- FORMAT DES NOMBRES (impératif) : formate via Intl.NumberFormat('fr-FR') — séparateur de milliers, 0 décimale pour les montants, 1 décimale pour les %, suffixe l'unité (devise, %, x, j). Jamais de nombre brut non formaté.
+- Responsive : grille de cartes qui passe à 1 colonne sur mobile.
 
 Réponds UNIQUEMENT avec le document HTML COMPLET (de <!doctype html> à </html>), SANS JSON ni texte autour.`;
 
@@ -140,12 +147,19 @@ Deno.serve(async (req) => {
         `CHARTE GRAPHIQUE (tokens de design à appliquer):\n${JSON.stringify(client?.brand ?? {}, null, 2)}\n\n` +
         `DONNÉES (à l'exécution dans window.DASHBOARD_DATA) :\n${JSON.stringify(clientData, null, 2)}`;
 
-      const { text: out } = await callAnthropic({
-        model: MODELS.quality, // Opus : meilleure qualité de rendu (en tâche de fond pour éviter le timeout).
-        system: SYSTEM,
-        messages: [{ role: "user", content: userContent }],
-        max_tokens: 14000,
-      });
+      // Rendu : Opus (qualité) avec budget de temps ; si dépassement/erreur → relais Sonnet (toujours produire un dashboard).
+      const messages = [{ role: "user", content: userContent }];
+      let out: string;
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 100_000); // ~100s pour Opus avant relais
+        try {
+          out = (await callAnthropic({ model: MODELS.quality, system: SYSTEM, messages, max_tokens: 14000, signal: ctrl.signal })).text;
+        } finally { clearTimeout(timer); }
+      } catch (e) {
+        console.warn("Opus render KO/timeout → relais Sonnet:", e instanceof Error ? e.message : String(e));
+        out = (await callAnthropic({ model: MODELS.fast, system: SYSTEM, messages, max_tokens: 14000 })).text;
+      }
       let html = stripCodeFences(out);
       if (html.length < 50 || !html.includes("<") || !html.includes("DASHBOARD_DATA")) { console.error("generate: HTML invalide/sans DASHBOARD_DATA"); return; }
       html = injectDashboardData(html, clientData);
