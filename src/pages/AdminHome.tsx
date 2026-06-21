@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Search, Plus, Users, Upload, Building2, ChevronRight, ChevronDown, Settings,
-  Home, Briefcase, FileCheck2, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle,
+  Home, Briefcase, FileCheck2, Clock, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
@@ -116,6 +116,10 @@ export default function AdminHome() {
   const publishedCount = dueProd.filter((c) => statusFor(c) === 'publie').length;
   const missingClients = dueProd.filter((c) => (missingByClient[c.id] ?? 0) > 0).length;
   const activeLocs = LOCATIONS.filter((l) => countForFilter(l.key) > 0).length;
+  const todo = dueProd
+    .filter((c) => statusFor(c) !== 'publie')
+    .sort((a, b) => PROD_ORDER.indexOf(statusFor(a)) - PROD_ORDER.indexOf(statusFor(b)))
+    .slice(0, 6);
 
   const setLegacyStatus = async (clientId: string, status: string) => {
     setProdStatusByClient((m) => ({ ...m, [clientId]: status }));
@@ -214,6 +218,26 @@ export default function AdminHome() {
                   </div>
                 ))}
               </div>
+
+              {todo.length > 0 && (
+                <div className="rounded-xl border bg-card p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-accent" /> À traiter en priorité</h2>
+                    <button onClick={() => setView('production')} className="text-xs text-primary hover:underline">Toute la production</button>
+                  </div>
+                  <ul className="divide-y">
+                    {todo.map((c) => (
+                      <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                        <span className="font-medium truncate">{c.name}{c.legacy_company_id && <span className="ml-2 text-[10px] uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700">legacy</span>}</span>
+                        <span className="flex items-center gap-2 shrink-0">
+                          <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[statusFor(c)]}`}>{statusLabel(statusFor(c))}</span>
+                          <button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="rounded-xl border bg-card p-5">

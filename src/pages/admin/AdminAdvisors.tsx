@@ -35,6 +35,17 @@ export default function AdminAdvisors() {
   const addDraft = () =>
     setAdvisors((a) => [...a, { name: '', email: '', whatsapp: '', photo_url: '', booking_url: '', _draft: true }]);
 
+  const uploadPhoto = async (i: number, file: File) => {
+    setBusy(`p${i}`); setError(null);
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('advisors').upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) { setBusy(null); setError(upErr.message); return; }
+    const url = supabase.storage.from('advisors').getPublicUrl(path).data.publicUrl;
+    setField(i, 'photo_url', url);
+    setBusy(null);
+  };
+
   const save = (i: number) => {
     const a = advisors[i];
     if (!a.name.trim()) { setError('Le nom est requis.'); return; }
@@ -78,6 +89,11 @@ export default function AdminAdvisors() {
                 <div className="font-medium">{a.name || 'Nouveau conseiller'}</div>
                 {a.id && <div className="text-xs text-muted-foreground">{counts[a.id] ?? 0} client(s) assigné(s)</div>}
               </div>
+              <label className="text-xs text-primary hover:underline cursor-pointer shrink-0">
+                {busy === `p${i}` ? 'Envoi…' : 'Changer la photo'}
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto(i, f); e.currentTarget.value = ''; }} />
+              </label>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label>Nom</Label><Input value={a.name} onChange={(e) => setField(i, 'name', e.target.value)} /></div>
