@@ -62,6 +62,10 @@ export function Conversation({
       setInput('');
       const m = data as unknown as Msg;
       setMsgs((prev) => prev.some((x) => x.id === m.id) ? prev : [...prev, m]);
+      // Notifie le conseiller sur WhatsApp (best-effort ; no-op si non configuré/non déployé).
+      if (senderKind === 'client') {
+        supabase.functions.invoke('wa-notify', { body: { message_id: m.id } }).catch(() => { /* ignore */ });
+      }
     }
   };
 
