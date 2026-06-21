@@ -91,7 +91,16 @@ function MonthlyTrend({ series, currency }: {
   currency: string;
 }) {
   const pts = series.filter((s) => s.values.ca != null);
-  if (pts.length < 2) return null;
+  if (pts.length < 2) {
+    return (
+      <div className="rounded-xl border bg-card p-5">
+        <h2 className="font-semibold flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" /> Évolution mensuelle</h2>
+        <p className="text-sm text-muted-foreground mt-2">
+          Le graphique d'évolution s'affichera dès qu'au moins deux mois de rapports seront publiés.
+        </p>
+      </div>
+    );
+  }
   const max = Math.max(...pts.flatMap((s) => [s.values.ca ?? 0, s.values.net ?? 0]), 1);
   return (
     <div className="rounded-xl border bg-card p-5">
