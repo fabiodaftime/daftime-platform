@@ -13,7 +13,7 @@ import {
   FileBarChart2, ArrowRight, TrendingUp, Mail, Phone,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
-import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
+import { ADVISOR, DEFAULT_DOCS } from '@/lib/config';
 
 const BUCKET = 'client-files';
 
@@ -257,7 +257,7 @@ export default function ClientSpace() {
 
   const loadClient = useCallback(async () => {
     const { data } = await supabase.from('clients' as any)
-      .select('id, name, currency, logo_url, activity_types:activity_type_id(slug), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
+      .select('id, name, currency, logo_url, activity_types:activity_type_id(slug, config), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
       .eq('id', id).maybeSingle();
     setClient(data);
   }, [id]);
@@ -356,8 +356,8 @@ export default function ClientSpace() {
 
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
-  const docSlug = (client as any)?.activity_types?.slug as string | undefined;
-  const requiredDocs = (docSlug && DOC_TEMPLATES[docSlug]) || DEFAULT_DOCS;
+  const cfgDocs = (client as any)?.activity_types?.config?.documents as string[] | undefined;
+  const requiredDocs = (Array.isArray(cfgDocs) && cfgDocs.length) ? cfgDocs : DEFAULT_DOCS;
 
   const advisor = (client as any)?.advisor as
     | { name: string; email?: string; whatsapp?: string; photo_url?: string; booking_url?: string }

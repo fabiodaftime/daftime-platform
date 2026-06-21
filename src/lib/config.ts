@@ -14,12 +14,6 @@ export const ADVISOR = {
   role: 'Daftime Advisory',
 };
 
-// Documents à fournir, par type d'activité (slug d'activity_types). À affiner avec toi.
-export const DOC_TEMPLATES: Record<string, string[]> = {
-  ecommerce: ['Relevé bancaire du mois', 'Export des ventes (Shopify, Stripe…)', 'Factures fournisseurs', 'Justificatifs de frais'],
-  coach: ['Relevé bancaire du mois', 'Factures émises', 'Justificatifs de dépenses'],
-  restaurant: ['Relevé bancaire du mois', 'Z de caisse', 'Factures fournisseurs', 'Bulletins de paie'],
-  holding: ['Relevés bancaires', 'Tableaux de remontées des filiales', 'Conventions / contrats'],
-  services: ['Relevé bancaire du mois', 'Factures émises', 'Justificatifs de dépenses'],
-};
+// Liste par défaut (repli) si l'activité du client n'a pas de documents définis dans sa config.
+// Les listes par activité vivent désormais dans activity_types.config.documents (éditables).
 export const DEFAULT_DOCS = ['Relevé bancaire du mois', 'Factures émises', 'Justificatifs de dépenses'];

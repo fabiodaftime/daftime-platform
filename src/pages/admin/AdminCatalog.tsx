@@ -10,7 +10,7 @@ import { AppShell } from '@/components/layout/AppShell';
 
 type Line = { id: string; label: string; section: string; unit?: string; formula?: string; total?: boolean; core?: boolean; note?: string };
 type Check = { id: string; label: string; severity: string; expr: string };
-type Cat = { slug?: string; sections: { key: string; label: string }[]; lines: Line[]; checks: Check[] };
+type Cat = { slug?: string; sections: { key: string; label: string }[]; lines: Line[]; checks: Check[]; documents?: string[] };
 
 export default function AdminCatalog() {
   const { id } = useParams<{ id: string }>();
@@ -25,8 +25,8 @@ export default function AdminCatalog() {
     const { data } = await supabase.from('activity_types' as any).select('id, slug, name, config').eq('id', id).maybeSingle();
     setAt(data);
     const cfg = (data as any)?.config;
-    if (cfg && Array.isArray(cfg.lines)) setCat({ slug: cfg.slug ?? (data as any)?.slug, sections: cfg.sections ?? [], lines: cfg.lines, checks: cfg.checks ?? [] });
-    else setCat({ slug: (data as any)?.slug, sections: [], lines: [], checks: [] });
+    if (cfg && Array.isArray(cfg.lines)) setCat({ slug: cfg.slug ?? (data as any)?.slug, sections: cfg.sections ?? [], lines: cfg.lines, checks: cfg.checks ?? [], documents: cfg.documents ?? [] });
+    else setCat({ slug: (data as any)?.slug, sections: [], lines: [], checks: [], documents: (cfg as any)?.documents ?? [] });
   }, [id]);
   useEffect(() => { load(); }, [load]);
 
@@ -37,7 +37,7 @@ export default function AdminCatalog() {
 
   const save = async () => {
     setBusy(true); setError(null);
-    const config = { slug: cat.slug ?? at?.slug, sections: cat.sections, lines: cat.lines, checks: cat.checks };
+    const config = { slug: cat.slug ?? at?.slug, sections: cat.sections, lines: cat.lines, checks: cat.checks, documents: cat.documents ?? [] };
     const { error } = await supabase.from('activity_types' as any).update({ config }).eq('id', id);
     setBusy(false);
     if (error) setError(error.message); else setSaved(true);
@@ -55,6 +55,22 @@ export default function AdminCatalog() {
         <p className="text-sm text-muted-foreground">
           Une ligne <strong>sans formule</strong> = donnée extraite des fichiers. Avec <strong>formule</strong> = calculée par le code (ex. <code>ca - cogs</code>, <code>sum(a, b, c)</code>, <code>aov / cac</code>). Unité <code>CUR</code> = devise du client. Les checks signalent une incohérence quand l'expression est fausse (ex. <code>present(ca) &amp;&amp; ca &gt; 0</code>).
         </p>
+
+        {/* Documents recommandés */}
+        <section className="rounded-xl border bg-card p-5">
+          <div className="flex items-center justify-between mb-3"><h2 className="font-semibold">Documents recommandés</h2>
+            <Button size="sm" variant="outline" onClick={() => upd({ documents: [...(cat.documents ?? []), ''] })}><Plus className="w-4 h-4 mr-1" /> Document</Button></div>
+          <p className="text-xs text-muted-foreground mb-2">Affichés au client dans « Documents à fournir ».</p>
+          <div className="space-y-2">
+            {(cat.documents ?? []).map((d, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input value={d} onChange={(e) => upd({ documents: (cat.documents ?? []).map((x, idx) => (idx === i ? e.target.value : x)) })} className="h-8 flex-1" placeholder="Relevé bancaire du mois…" />
+                <button onClick={() => upd({ documents: (cat.documents ?? []).filter((_, idx) => idx !== i) })} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {(cat.documents ?? []).length === 0 && <p className="text-sm text-muted-foreground">Aucun document — une liste générique est utilisée.</p>}
+          </div>
+        </section>
 
         {/* Sections */}
         <section className="rounded-xl border bg-card p-5">
