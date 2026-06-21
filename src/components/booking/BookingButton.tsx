@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CalendarCheck, X } from 'lucide-react';
-import { BOOKING_SCHEDULE_URL } from '@/lib/config';
+import { BOOKING_ADVISOR_URL } from '@/lib/config';
 
 export function BookingButton({
   label = 'Prendre rendez-vous',
@@ -31,7 +31,7 @@ export function BookingButton({
             >
               <X className="w-4 h-4" />
             </button>
-            <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
+            <iframe src={BOOKING_ADVISOR_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
           </div>
         </div>
       )}
