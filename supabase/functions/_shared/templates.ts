@@ -11,6 +11,7 @@ export interface TemplateLine {
   section: string;
   unit?: string;              // 'CUR' = devise client ; sinon littéral ('%', 'x', 'j', '')
   total?: boolean;            // ligne de total/sous-total (marquée type:"total")
+  core?: boolean;             // input essentiel : son absence est remontée en "pièce manquante"
   hint?: string;              // aide à l'extraction (inputs)
   note?: string;              // documentation de la formule (dérivés)
   compute?: (v: Vals) => number | null; // présent => DÉRIVÉ ; absent => INPUT
@@ -54,13 +55,13 @@ export const ECOMMERCE: ActivityTemplate = {
   ],
   lines: [
     // ── Compte de résultat (monétaire) ──
-    { id: "ca", label: "Chiffre d'affaires net", section: "pnl", unit: "CUR", hint: "Ventes nettes du mois (hors taxes, après remboursements)" },
-    { id: "cogs", label: "Coût des marchandises vendues (COGS)", section: "pnl", unit: "CUR", hint: "Coût d'achat des produits vendus sur le mois" },
+    { id: "ca", label: "Chiffre d'affaires net", section: "pnl", unit: "CUR", core: true, hint: "Ventes nettes du mois (hors taxes, après remboursements)" },
+    { id: "cogs", label: "Coût des marchandises vendues (COGS)", section: "pnl", unit: "CUR", core: true, hint: "Coût d'achat des produits vendus sur le mois" },
     { id: "marge_brute", label: "Marge brute", section: "pnl", unit: "CUR", total: true, note: "CA net − COGS", compute: (v) => sub(g(v, "ca"), g(v, "cogs")) },
     { id: "shipping_cost", label: "Logistique & expédition", section: "pnl", unit: "CUR", hint: "Préparation, transport, retours" },
     { id: "payment_fees", label: "Frais de paiement", section: "pnl", unit: "CUR", hint: "Commissions Stripe/PayPal/CB" },
     { id: "platform_fees", label: "Frais de plateforme", section: "pnl", unit: "CUR", hint: "Abonnements Shopify/outils SaaS" },
-    { id: "ads_total", label: "Dépense publicitaire totale", section: "pnl", unit: "CUR", hint: "Total média tous canaux (Meta, Google, TikTok…)" },
+    { id: "ads_total", label: "Dépense publicitaire totale", section: "pnl", unit: "CUR", core: true, hint: "Total média tous canaux (Meta, Google, TikTok…)" },
     { id: "payroll", label: "Salaires & charges", section: "pnl", unit: "CUR", hint: "Masse salariale chargée" },
     { id: "other_opex", label: "Autres charges d'exploitation", section: "pnl", unit: "CUR", hint: "Honoraires, outils, frais divers" },
     { id: "total_opex", label: "Total charges d'exploitation", section: "pnl", unit: "CUR", total: true, note: "pub + plateforme + logistique + paiement + salaires + autres", compute: (v) => sumOpt(g(v, "ads_total"), g(v, "platform_fees"), g(v, "shipping_cost"), g(v, "payment_fees"), g(v, "payroll"), g(v, "other_opex")) },
@@ -85,7 +86,7 @@ export const ECOMMERCE: ActivityTemplate = {
     { id: "gross_sales", label: "CA brut (avant remboursements)", section: "orders", unit: "CUR", hint: "Ventes brutes avant retours" },
     { id: "refunds", label: "Remboursements & retours", section: "orders", unit: "CUR", hint: "Montant remboursé sur le mois" },
     { id: "refund_rate", label: "Taux de remboursement", section: "orders", unit: "%", note: "Remboursements ÷ CA brut", compute: (v) => pct(g(v, "refunds"), g(v, "gross_sales")) },
-    { id: "orders", label: "Nombre de commandes", section: "orders", unit: "", hint: "Commandes livrées sur le mois" },
+    { id: "orders", label: "Nombre de commandes", section: "orders", unit: "", core: true, hint: "Commandes livrées sur le mois" },
     { id: "units", label: "Articles vendus", section: "orders", unit: "", hint: "Nombre d'unités vendues" },
     { id: "aov", label: "Panier moyen (AOV)", section: "orders", unit: "CUR", note: "CA ÷ commandes", compute: (v) => ratio(g(v, "ca"), g(v, "orders")) },
     { id: "units_per_order", label: "Articles par commande", section: "orders", unit: "", note: "Articles ÷ commandes", compute: (v) => ratio(g(v, "units"), g(v, "orders")) },
@@ -122,7 +123,7 @@ export const ECOMMERCE: ActivityTemplate = {
 
     // ── Trésorerie & stock ──
     { id: "cash_start", label: "Trésorerie début de mois", section: "cash", unit: "CUR", hint: "Solde bancaire au 1er du mois" },
-    { id: "cash_end", label: "Trésorerie fin de mois", section: "cash", unit: "CUR", hint: "Solde bancaire en fin de mois" },
+    { id: "cash_end", label: "Trésorerie fin de mois", section: "cash", unit: "CUR", core: true, hint: "Solde bancaire en fin de mois" },
     { id: "cash_variation", label: "Variation de trésorerie", section: "cash", unit: "CUR", total: true, note: "Trésorerie fin − début", compute: (v) => sub(g(v, "cash_end"), g(v, "cash_start")) },
     { id: "inventory_value", label: "Valeur du stock", section: "cash", unit: "CUR", hint: "Stock valorisé en fin de mois" },
     { id: "receivables", label: "Créances clients", section: "cash", unit: "CUR", hint: "Si dispo" },

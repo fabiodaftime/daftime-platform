@@ -10,6 +10,7 @@ import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_s
 import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
 import { getTemplate, inputLines, buildStandardized, type TemplateLine } from "../_shared/templates.ts";
+import { reconcile, type FileExtract } from "../_shared/reconcile.ts";
 
 // Repères métier par type d'activité (KPIs et charges typiques). Surchargé par activity_types.config si fourni.
 const ACTIVITY_GUIDE: Record<string, string> = {
@@ -49,23 +50,29 @@ Format attendu (STRICT, structure tabulaire) :
   "missing_items": [ "ce qu'il faut demander au client" ]
 }`;
 
-// Chemin TEMPLATE : l'IA n'extrait QUE les postes d'entrée (le code calcule les dérivés).
-const TEMPLATE_SYSTEM = (activity: string, lines: TemplateLine[]) => `Tu es un analyste financier. Tu EXTRAIS des montants depuis les fichiers d'un client "${activity}" (PDF, images, Excel : relevés, factures, exports).
-Pour chaque poste demandé, donne sa valeur numérique pour LE MOIS (nombre brut, sans symbole de devise ni séparateur de milliers) UNIQUEMENT si elle est présente ou directement déductible des fichiers ; sinon null.
-RÈGLES :
-- N'INVENTE JAMAIS un chiffre. Ne calcule PAS les totaux, marges ou ratios (le système s'en charge) — extrais seulement les postes ci-dessous.
-- Pour chaque valeur trouvée, indique sa PROVENANCE (nom de fichier + page/feuille si possible).
-- Liste dans "missing_items" ce qu'il faut demander au client pour compléter.
+// Chemin MULTI-SOURCES : on classe + extrait UN fichier à la fois, puis on réconcilie.
+const PERFILE_SYSTEM = (activity: string, lines: TemplateLine[]) => `Tu analyses UN SEUL fichier d'un client "${activity}".
+1) IDENTIFIE le type de source (source_type) parmi : "sales_export" (export de ventes Shopify/Stripe/Amazon), "ads_dashboard" (dashboard publicitaire Meta/Google/TikTok), "bank_statement" (relevé bancaire), "invoice" (facture), "payroll" (journal de paie), "pnl" (compte de résultat / compta), "other".
+2) EXTRAIS uniquement les postes ci-dessous que CE fichier fournit réellement, pour LE MOIS (valeur numérique brute, sans symbole ni séparateur de milliers). N'invente rien ; omets ce qui n'est pas dans ce fichier.
+   - Si c'est un RELEVÉ BANCAIRE : catégorise les transactions et additionne-les par poste (ventes encaissées, pub, salaires, frais de paiement, logistique…).
+3) Pour chaque valeur, indique brièvement OÙ tu l'as trouvée (page / ligne / feuille).
 
-POSTES À EXTRAIRE :
+POSTES POSSIBLES :
 ${lines.map((l) => `- ${l.id} : ${l.label}${l.hint ? ` (${l.hint})` : ""}`).join("\n")}
 
 Réponds UNIQUEMENT en JSON :
-{
-  "inputs": { ${lines.slice(0, 2).map((l) => `"${l.id}": 0`).join(", ")} },
-  "sources": { "${lines[0]?.id ?? "ca"}": "fichier.pdf p.1" },
-  "missing_items": [ "…" ]
-}`;
+{ "source_type": "sales_export", "values": { "ca": 12000 }, "sources": { "ca": "p.1, ligne Net sales" } }`;
+
+// Exécute fn sur le tableau avec un parallélisme borné (évite les limites de débit Anthropic).
+async function mapLimit<T, R>(arr: T[], limit: number, fn: (t: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(arr.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, arr.length || 1) }, async () => {
+    while (i < arr.length) { const idx = i++; out[idx] = await fn(arr[idx]); }
+  });
+  await Promise.all(workers);
+  return out;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -107,19 +114,38 @@ Deno.serve(async (req) => {
     let usage: unknown;
 
     if (tpl) {
-      // TEMPLATE : l'IA extrait les inputs (+ provenance), le code calcule les dérivés et vérifie.
-      const content: unknown[] = [ctxBlock, ...fileBlocks, { type: "text", text: "Extrais maintenant les postes demandés en JSON." }];
-      const res = await callAnthropic({
-        model: MODELS.fast,
-        system: TEMPLATE_SYSTEM(activity, inputLines(tpl)),
-        messages: [{ role: "user", content } as AnthropicMessage],
-        max_tokens: 4000,
-      });
-      usage = res.usage;
-      const parsed = extractJson<{ inputs?: Record<string, number>; sources?: Record<string, string>; missing_items?: unknown[] }>(res.text);
-      const built = buildStandardized(tpl, parsed.inputs ?? {}, parsed.sources ?? {}, currency);
-      dataToSave = built.data;
-      missing = parsed.missing_items ?? [];
+      // MULTI-SOURCES : classer + extraire CHAQUE fichier (en parallèle borné), puis réconcilier.
+      const lines = inputLines(tpl);
+      const usable = docs.filter((d) => d.kind !== "skipped");
+      const perFile = (await mapLimit(usable, 4, async (doc) => {
+        const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: "Classe ce fichier et extrais les postes en JSON." }];
+        try {
+          const res = await callAnthropic({
+            model: MODELS.fast,
+            system: PERFILE_SYSTEM(activity, lines),
+            messages: [{ role: "user", content } as AnthropicMessage],
+            max_tokens: 1500,
+          });
+          const p = extractJson<{ source_type?: string; values?: Record<string, number>; sources?: Record<string, string> }>(res.text);
+          return { file: doc.name, type: (p.source_type ?? "other") as FileExtract["type"], values: p.values ?? {}, sources: p.sources ?? {} } as FileExtract;
+        } catch { return null; }
+      })).filter((x): x is FileExtract => !!x);
+
+      const rec = reconcile(perFile, (id) => tpl.lines.find((l) => l.id === id)?.label ?? id);
+      const built = buildStandardized(tpl, rec.values, rec.sources, currency);
+
+      // Annote chaque ligne avec sa confiance ; ajoute les conflits aux alertes.
+      const data = built.data as { sections: { rows: Record<string, unknown>[] }[]; flags: unknown[]; meta?: Record<string, unknown> };
+      for (const sec of data.sections) for (const row of sec.rows) {
+        const conf = rec.confidence[row.id as string];
+        if (conf) row.confidence = conf;
+      }
+      data.flags = [...(data.flags ?? []), ...rec.conflicts];
+      data.meta = { ...(data.meta ?? {}), sources_count: perFile.length };
+
+      dataToSave = data;
+      missing = lines.filter((l) => l.core && rec.values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);
+      usage = { files: perFile.length };
     } else {
       // GÉNÉRIQUE (activités sans template) : l'IA produit directement la structure.
       const configGuide = at?.config && Object.keys(at.config).length ? JSON.stringify(at.config) : "";
