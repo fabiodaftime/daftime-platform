@@ -78,9 +78,6 @@ export const ECOMMERCE: ActivityTemplate = {
 
     // ── Marges & rentabilité (ratios) ──
     { id: "taux_marge_brute", label: "Taux de marge brute", section: "rentabilite", unit: "%", note: "Marge brute ÷ CA", compute: (v) => pct(g(v, "marge_brute"), g(v, "ca")) },
-    { id: "contribution_margin", label: "Marge de contribution", section: "rentabilite", unit: "CUR", total: true, note: "CA − COGS − logistique − paiement − pub", compute: (v) => { const ca = g(v, "ca"), c = g(v, "cogs"); if (ca == null || c == null) return null; const varc = ["shipping_cost", "payment_fees", "ads_total"].reduce((a, k) => a + (g(v, k) ?? 0), 0); return r2(ca - c - varc); } },
-    { id: "contribution_rate", label: "Taux de marge de contribution", section: "rentabilite", unit: "%", note: "Marge de contribution ÷ CA", compute: (v) => pct(g(v, "contribution_margin"), g(v, "ca")) },
-    { id: "contribution_per_order", label: "Contribution par commande", section: "rentabilite", unit: "CUR", note: "Marge de contribution ÷ commandes", compute: (v) => ratio(g(v, "contribution_margin"), g(v, "orders")) },
     { id: "marge_ebitda", label: "Marge d'EBITDA", section: "rentabilite", unit: "%", note: "EBITDA ÷ CA", compute: (v) => pct(g(v, "ebitda"), g(v, "ca")) },
     { id: "marge_nette", label: "Marge nette", section: "rentabilite", unit: "%", note: "Résultat net ÷ CA", compute: (v) => pct(g(v, "resultat_net"), g(v, "ca")) },
 
@@ -121,7 +118,7 @@ export const ECOMMERCE: ActivityTemplate = {
     { id: "purchase_frequency", label: "Fréquence d'achat", section: "customers", unit: "", note: "Commandes ÷ clients actifs", compute: (v) => ratio(g(v, "orders"), g(v, "total_customers")) },
     { id: "ltv", label: "LTV (valeur vie client)", section: "customers", unit: "CUR", note: "AOV × taux de marge brute × fréquence d'achat × durée de vie (mois)", compute: (v) => { const a = g(v, "aov"), m = g(v, "taux_marge_brute"), f = g(v, "purchase_frequency"), l = g(v, "avg_lifespan_months"); return (a != null && m != null && f != null && l != null) ? r2(a * (m / 100) * f * l) : null; } },
     { id: "ltv_cac", label: "LTV / CAC", section: "customers", unit: "x", note: "LTV ÷ CAC", compute: (v) => ratio(g(v, "ltv"), g(v, "cac")) },
-    { id: "payback_cac", label: "Payback CAC (mois)", section: "customers", unit: "", note: "CAC ÷ contribution mensuelle par client", compute: (v) => { const c = g(v, "cac"), cm = g(v, "contribution_margin"), tc = g(v, "total_customers"); if (c == null || cm == null || tc == null || tc === 0) return null; const per = cm / tc; return per > 0 ? r2(c / per) : null; } },
+    { id: "payback_cac", label: "Payback CAC (mois)", section: "customers", unit: "", note: "CAC ÷ (marge brute mensuelle ÷ clients actifs)", compute: (v) => { const c = g(v, "cac"), mb = g(v, "marge_brute"), tc = g(v, "total_customers"); if (c == null || mb == null || tc == null || tc === 0) return null; const per = mb / tc; return per > 0 ? r2(c / per) : null; } },
 
     // ── Trésorerie & stock ──
     { id: "cash_start", label: "Trésorerie début de mois", section: "cash", unit: "CUR", hint: "Solde bancaire au 1er du mois" },
