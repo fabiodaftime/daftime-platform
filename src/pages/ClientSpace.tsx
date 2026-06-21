@@ -9,7 +9,7 @@ import { BookingButton } from '@/components/booking/BookingButton';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
-  Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X,
+  Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
@@ -19,8 +19,15 @@ const BUCKET = 'client-files';
 const NAV = [
   { key: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { key: 'documents', label: 'Mes documents', icon: FolderOpen },
+  { key: 'assistant', label: 'Poser une question', icon: MessageCircle },
   { key: 'activity', label: 'Activité', icon: Activity },
 ] as const;
+
+const SUGGESTIONS = [
+  "Quel est mon chiffre d'affaires ce mois-ci ?",
+  "Quelle est l'évolution de mon EBITDA ?",
+  "Quel est mon poste de charge le plus élevé ?",
+];
 
 function labelActivity(a: any): string {
   if (a.action === 'file_uploaded') return `Document déposé : ${a.metadata?.name ?? ''}`;
@@ -83,6 +90,30 @@ export default function ClientSpace() {
   const [error, setError] = useState<string | null>(null);
   const [hasNew, setHasNew] = useState(false); // nouveau rapport publié non encore vu
   const [series, setSeries] = useState<Array<{ period: string; values: Record<string, number | null> }>>([]);
+  // Assistant "questions à vos chiffres"
+  const [chat, setChat] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatBusy, setChatBusy] = useState(false);
+
+  const sendQuestion = async (q: string) => {
+    const question = q.trim();
+    if (!question || chatBusy) return;
+    const history = chat.map((m) => ({ role: m.role, content: m.content }));
+    setChat((c) => [...c, { role: 'user', content: question }]);
+    setChatInput('');
+    setChatBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('client-chat', { body: { client_id: id, question, history } });
+      const answer = error
+        ? "Désolé, une erreur est survenue. Réessayez ou contactez votre conseiller Daftime."
+        : (data?.answer ?? '—');
+      setChat((c) => [...c, { role: 'assistant', content: answer }]);
+    } catch {
+      setChat((c) => [...c, { role: 'assistant', content: 'Désolé, une erreur est survenue.' }]);
+    } finally {
+      setChatBusy(false);
+    }
+  };
 
   const loadClient = useCallback(async () => {
     const { data } = await supabase.from('clients' as any)
@@ -371,6 +402,45 @@ export default function ClientSpace() {
                 )}
               </section>
               </div>
+            )}
+
+            {tab === 'assistant' && (
+              <section className="rounded-xl border bg-card p-6 flex flex-col">
+                <h2 className="font-semibold mb-1 flex items-center gap-2"><MessageCircle className="w-4 h-4 text-accent" /> Posez une question à vos chiffres</h2>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Réponses factuelles sur vos données (un poste, un indicateur, une évolution). Pour une analyse ou un conseil, contactez votre conseiller Daftime.
+                </p>
+                <div className="flex-1 min-h-[240px] max-h-[50vh] overflow-y-auto space-y-3 mb-4">
+                  {chat.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      <p className="mb-2">Exemples de questions :</p>
+                      <div className="flex flex-wrap gap-2">
+                        {SUGGESTIONS.map((s) => (
+                          <button key={s} type="button" onClick={() => sendQuestion(s)}
+                            className="text-xs rounded-full border px-3 py-1.5 hover:bg-muted hover:border-primary/40 transition">
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : chat.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+                        {m.content}
+                      </div>
+                    </div>
+                  ))}
+                  {chatBusy && <div className="text-xs text-muted-foreground">L'assistant consulte vos chiffres…</div>}
+                </div>
+                <form onSubmit={(e) => { e.preventDefault(); sendQuestion(chatInput); }} className="flex gap-2">
+                  <input value={chatInput} onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ex. Quel est mon EBITDA ce mois-ci ?"
+                    className="flex-1 h-11 rounded-lg border px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                  <Button type="submit" disabled={chatBusy || !chatInput.trim()} className="h-11 px-4" aria-label="Envoyer">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </section>
             )}
 
             {tab === 'activity' && (
