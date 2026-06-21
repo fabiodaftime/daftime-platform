@@ -7,16 +7,22 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, stripCodeFences, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
+import { injectDashboardData } from "../_shared/dashboardHtml.ts";
 
-const SYSTEM = `Tu génères un DASHBOARD financier mensuel sous forme d'un fichier HTML autonome.
-EXIGENCES :
-- HTML complet et valide (<!doctype html> ... </html>), responsive, sobre et professionnel.
-- Graphiques via Chart.js chargé par CDN (https://cdn.jsdelivr.net/npm/chart.js).
-- SÉPARE les données du rendu : déclare "const DASHBOARD_DATA = ...;" puis construis le DOM/charts à partir de cette constante.
-- N'invente aucun chiffre : utilise STRICTEMENT les données fournies. Si une métrique manque, ne l'affiche pas (ou indique "n/d").
-- AFFICHAGE DES DONNÉES (IMPORTANT) : affiche TOUTES les sections des données sous forme de tableaux lisibles (colonnes Libellé / Valeur / Unité) ET des cartes KPI pour les chiffres clés. Les valeurs doivent rester visibles même si Chart.js ne se charge pas (les graphiques sont un complément, pas le seul rendu). DASHBOARD_DATA doit contenir EXACTEMENT les données fournies (mêmes sections/rows/valeurs).
-- CHARTE GRAPHIQUE : respecte STRICTEMENT les tokens de design fournis (couleurs déclarées en variables CSS dans :root, polices heading/body, ambiance de style). Si aucun token n'est fourni, applique un style sobre par défaut.
-- Réponds UNIQUEMENT avec le document HTML COMPLET (commence par <!doctype html>, finit par </html>), SANS JSON ni texte autour.`;
+const SYSTEM = `Tu génères un DASHBOARD financier mensuel : un fichier HTML autonome, responsive, sobre et professionnel.
+
+DONNÉES (RÈGLE ANTI-INVENTION) :
+- Les données du mois sont disponibles dans la variable globale window.DASHBOARD_DATA (injectée séparément, NE la déclare PAS toi-même). Forme : { client, period, currency, sections: [ { label, rows: [ { label, value, unit, type? } ] } ] } ("type":"total" = ligne de total à mettre en évidence).
+- NE CODE EN DUR AUCUN chiffre : tout nombre affiché (tableaux, KPI, graphiques) DOIT être lu depuis window.DASHBOARD_DATA. Si une valeur est absente, ne l'affiche pas (ou "n/d").
+
+RENDU :
+- Affiche chaque section en tableau lisible (Libellé / Valeur), lignes "total" mises en évidence.
+- Cartes KPI pour les chiffres clés présents (CA, marge brute, EBITDA, taux de marge, CAC, ROAS, taux de conversion, LTV/CAC…).
+- Graphiques via Chart.js (CDN https://cdn.jsdelivr.net/npm/chart.js), construits depuis window.DASHBOARD_DATA ; les valeurs restent lisibles même si Chart.js ne charge pas.
+- Une courte section "Analyse du mois" : 2 à 4 points FACTUELS basés UNIQUEMENT sur les chiffres fournis (aucune invention, aucune spéculation).
+- CHARTE : applique les tokens de design fournis (couleurs en variables CSS dans :root, polices). Sinon style sobre par défaut.
+
+Réponds UNIQUEMENT avec le document HTML COMPLET (de <!doctype html> à </html>), SANS JSON ni texte autour.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -38,10 +44,23 @@ Deno.serve(async (req) => {
 
     const { data: client } = await admin.from("clients").select("name, currency, brand").eq("id", client_id).maybeSingle();
 
+    // Porte de confiance : pour les données pilotées par template, exiger la validation.
+    const meta = (sd.data as { meta?: { template?: string; validated?: boolean } })?.meta;
+    if (meta?.template && !meta?.validated) {
+      return json({ error: "Validez d'abord les données (cockpit → Valider) avant de générer le dashboard." }, 409);
+    }
+
+    // Données client-facing : on retire les champs internes (flags, confiance, provenance, id…).
+    const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as Record<string, unknown>[]).map((s) => ({
+      label: s.label,
+      rows: ((s.rows ?? []) as Record<string, unknown>[]).map((r) => ({ label: r.label, value: r.value, unit: r.unit, ...(r.type === "total" ? { type: "total" } : {}) })),
+    }));
+    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections };
+
     const userContent =
       `Client : ${client?.name ?? client_id} — Devise : ${client?.currency ?? "?"} — Mois : ${period}\n\n` +
       `CHARTE GRAPHIQUE (tokens de design à appliquer):\n${JSON.stringify(client?.brand ?? {}, null, 2)}\n\n` +
-      `DONNÉES STANDARDISÉES (source de vérité):\n${JSON.stringify(sd.data, null, 2)}`;
+      `DONNÉES (pour rédiger l'analyse ; à l'exécution elles seront dans window.DASHBOARD_DATA) :\n${JSON.stringify(clientData, null, 2)}`;
 
     const { text: out, usage } = await callAnthropic({
       model: MODELS.fast, // Sonnet : rapide et fiable (Opus dépasse la limite de durée des edge functions sur un gros HTML)
@@ -49,13 +68,17 @@ Deno.serve(async (req) => {
       messages: [{ role: "user", content: userContent }],
       max_tokens: 16000,
     });
-    const html = stripCodeFences(out);
+    let html = stripCodeFences(out);
     if (html.length < 50 || !html.includes("<")) return json({ error: "le modèle n'a pas renvoyé de HTML valide" }, 502);
+    if (!html.includes("DASHBOARD_DATA")) return json({ error: "le modèle n'a pas utilisé les données injectées (DASHBOARD_DATA)" }, 502);
+
+    // Anti-hallucination : on injecte NOUS-MÊMES les données validées ; le HTML les lit, ne les réinvente pas.
+    html = injectDashboardData(html, clientData);
 
     const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
       standardized_data_id: sd.id,
       html,
-      data_json: sd.data ?? {},
+      data_json: { sections },
       status: "draft_ia",
       created_by: user.id,
     });
