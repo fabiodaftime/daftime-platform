@@ -39,6 +39,8 @@ import AdminDataroomUpload from "./pages/AdminDataroomUpload";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminClientCockpit from "./pages/admin/AdminClientCockpit";
 import AdminClientSettings from "./pages/admin/AdminClientSettings";
+import AdminAdvisors from "./pages/admin/AdminAdvisors";
+import AdminActivities from "./pages/admin/AdminActivities";
 import ClientSpace from "./pages/ClientSpace";
 import NotFound from "./pages/NotFound";
 
@@ -293,6 +295,22 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminClientSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/advisors"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminAdvisors />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/activities"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminActivities />
                 </ProtectedRoute>
               }
             />
