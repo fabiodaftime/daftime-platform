@@ -8,10 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Boxes, Save, CheckCircle2 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 
-// Slugs disposant d'un catalogue d'indicateurs codé dans le moteur (_shared/templates.ts).
-const TEMPLATED = new Set(['ecommerce']);
-
-interface ActivityType { id: string; slug: string; name: string; is_active: boolean }
+interface ActivityType { id: string; slug: string; name: string; is_active: boolean; config?: any }
 
 export default function AdminActivities() {
   const navigate = useNavigate();
@@ -22,7 +19,7 @@ export default function AdminActivities() {
 
   const load = useCallback(async () => {
     const [{ data: at }, { data: cl }] = await Promise.all([
-      supabase.from('activity_types' as any).select('id, slug, name, is_active').order('name'),
+      supabase.from('activity_types' as any).select('id, slug, name, is_active, config').order('name'),
       supabase.from('clients' as any).select('activity_type_id'),
     ]);
     setTypes((at as any[]) ?? []);
@@ -67,8 +64,8 @@ export default function AdminActivities() {
                     <span className="text-[11px] text-muted-foreground">{a.slug}</span>
                   </td>
                   <td className="px-4 py-2.5">
-                    {TEMPLATED.has(a.slug)
-                      ? <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 className="w-3 h-3" /> Catalogue</span>
+                    {Array.isArray(a.config?.lines) && a.config.lines.length
+                      ? <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 className="w-3 h-3" /> {a.config.lines.length} indic.</span>
                       : <span className="text-xs text-muted-foreground">générique</span>}
                   </td>
                   <td className="px-4 py-2.5 text-center tabular-nums">{counts[a.id] ?? 0}</td>
