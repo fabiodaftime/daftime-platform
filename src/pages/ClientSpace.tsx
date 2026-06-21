@@ -12,7 +12,7 @@ import {
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
-import { ADVISOR } from '@/lib/config';
+import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
 
 const BUCKET = 'client-files';
 
@@ -46,9 +46,11 @@ export default function ClientSpace() {
   const [activity, setActivity] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasNew, setHasNew] = useState(false); // nouveau rapport publié non encore vu
 
   const loadClient = useCallback(async () => {
-    const { data } = await supabase.from('clients' as any).select('id, name, currency, logo_url').eq('id', id).maybeSingle();
+    const { data } = await supabase.from('clients' as any)
+      .select('id, name, currency, logo_url, activity_types:activity_type_id(slug)').eq('id', id).maybeSingle();
     setClient(data);
   }, [id]);
 
@@ -58,6 +60,12 @@ export default function ClientSpace() {
     const periods = [...new Set(((data as any[]) ?? []).map((d) => d.period))];
     setAvailablePeriods(periods);
     if (periods.length) setPeriod((p) => (periods.includes(p) ? p : periods[0]));
+    const latest = periods[0];
+    if (latest) {
+      let seen: string | null = null;
+      try { seen = localStorage.getItem(`daftime_lastseen_${id}`); } catch { /* ignore */ }
+      setHasNew(seen !== latest);
+    }
   }, [id]);
 
   const loadDashboard = useCallback(async () => {
@@ -80,6 +88,15 @@ export default function ClientSpace() {
 
   useEffect(() => { loadClient(); loadAvailable(); loadActivity(); }, [loadClient, loadAvailable, loadActivity]);
   useEffect(() => { loadDashboard(); loadFiles(); }, [loadDashboard, loadFiles]);
+
+  // Marque le dernier rapport comme vu quand le client le consulte.
+  useEffect(() => {
+    const latest = availablePeriods[0];
+    if (tab === 'dashboard' && latest && period === latest) {
+      try { localStorage.setItem(`daftime_lastseen_${id}`, latest); } catch { /* ignore */ }
+      setHasNew(false);
+    }
+  }, [tab, period, availablePeriods, id]);
 
   const upload = async (fileList: FileList) => {
     setBusy(true); setError(null);
@@ -121,6 +138,9 @@ export default function ClientSpace() {
   };
 
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
+
+  const docSlug = (client as any)?.activity_types?.slug as string | undefined;
+  const requiredDocs = (docSlug && DOC_TEMPLATES[docSlug]) || DEFAULT_DOCS;
 
   const MonthBar = (
     <div className="flex flex-wrap items-center gap-3">
@@ -192,6 +212,9 @@ export default function ClientSpace() {
                     }`}
                   >
                     <item.icon className="w-4 h-4 shrink-0" /> {item.label}
+                    {item.key === 'dashboard' && hasNew && (
+                      <span className="ml-auto w-2 h-2 rounded-full bg-accent" title="Nouveau rapport" />
+                    )}
                   </button>
                 );
               })}
@@ -238,6 +261,18 @@ export default function ClientSpace() {
             )}
 
             {tab === 'documents' && (
+              <div className="space-y-4">
+              <div className="rounded-xl border bg-card p-6">
+                <h2 className="font-semibold mb-1 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Documents à fournir</h2>
+                <p className="text-xs text-muted-foreground mb-3">Habituellement nécessaires pour {periodLabel(period)}</p>
+                <ul className="space-y-2">
+                  {requiredDocs.map((d) => (
+                    <li key={d} className="text-sm flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/50 shrink-0" /> {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
               <section className="rounded-xl border bg-card p-6">
                 <h2 className="font-semibold mb-1 flex items-center gap-2"><UploadCloud className="w-4 h-4 text-accent" /> Déposer mes documents</h2>
                 <p className="text-xs text-muted-foreground mb-4">Pour {periodLabel(period)}</p>
@@ -261,6 +296,7 @@ export default function ClientSpace() {
                   </div>
                 )}
               </section>
+              </div>
             )}
 
             {tab === 'activity' && (
