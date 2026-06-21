@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
+  FileBarChart2, ArrowRight,
 } from 'lucide-react';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
@@ -17,7 +18,8 @@ import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
 const BUCKET = 'client-files';
 
 const NAV = [
-  { key: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { key: 'accueil', label: 'Accueil', icon: LayoutDashboard },
+  { key: 'dashboard', label: 'Rapport complet', icon: FileBarChart2 },
   { key: 'documents', label: 'Mes documents', icon: FolderOpen },
   { key: 'assistant', label: 'Poser une question', icon: MessageCircle },
   { key: 'activity', label: 'Activité', icon: Activity },
@@ -70,11 +72,56 @@ function Sparkline({ values }: { values: (number | null)[] }) {
   );
 }
 
+// Panneau de chat "questions à vos chiffres", réutilisé en version compacte (accueil) et complète.
+function ChatPanel({ chat, input, setInput, busy, onSend, compact = false }: {
+  chat: Array<{ role: 'user' | 'assistant'; content: string }>;
+  input: string;
+  setInput: (v: string) => void;
+  busy: boolean;
+  onSend: (q: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex flex-col flex-1">
+      <div className={`flex-1 overflow-y-auto space-y-3 mb-3 ${compact ? 'max-h-44 min-h-[120px]' : 'min-h-[240px] max-h-[50vh]'}`}>
+        {chat.length === 0 ? (
+          <div className="text-sm text-muted-foreground">
+            <p className="mb-2">Exemples de questions :</p>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button key={s} type="button" onClick={() => onSend(s)}
+                  className="text-xs rounded-full border px-3 py-1.5 hover:bg-muted hover:border-primary/40 transition text-left">
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : chat.map((m, i) => (
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+              {m.content}
+            </div>
+          </div>
+        ))}
+        {busy && <div className="text-xs text-muted-foreground">L'assistant consulte vos chiffres…</div>}
+      </div>
+      <form onSubmit={(e) => { e.preventDefault(); onSend(input); }} className="flex gap-2">
+        <input value={input} onChange={(e) => setInput(e.target.value)}
+          placeholder="Ex. Quel est mon EBITDA ce mois-ci ?"
+          className="flex-1 h-11 rounded-lg border px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+        <Button type="submit" disabled={busy || !input.trim()} className="h-11 px-4" aria-label="Envoyer">
+          <Send className="w-4 h-4" />
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 export default function ClientSpace() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const [tab, setTab] = useState<(typeof NAV)[number]['key']>('dashboard');
+  const [tab, setTab] = useState<(typeof NAV)[number]['key']>('accueil');
   // Bandeau de bienvenue : affiché une fois par session de connexion (refermable).
   const bannerKey = `daftime_welcome_${id}`;
   const [showBanner, setShowBanner] = useState(() => {
@@ -338,11 +385,53 @@ export default function ClientSpace() {
 
           {/* Contenu */}
           <div className="space-y-4">
-            {tab !== 'activity' && MonthBar}
+            {(tab === 'accueil' || tab === 'dashboard') && MonthBar}
+
+            {tab === 'accueil' && (
+              <div className="space-y-4">
+                {kpiBlock}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Chat synthétique */}
+                  <div className="lg:col-span-2 rounded-xl border bg-card p-5 flex flex-col">
+                    <h2 className="font-semibold mb-1 flex items-center gap-2"><MessageCircle className="w-4 h-4 text-accent" /> Une question sur vos chiffres ?</h2>
+                    <p className="text-xs text-muted-foreground mb-3">Réponses factuelles, basées sur vos données. Pour un conseil, contactez votre conseiller.</p>
+                    <ChatPanel chat={chat} input={chatInput} setInput={setChatInput} busy={chatBusy} onSend={sendQuestion} compact />
+                  </div>
+
+                  {/* Colonne droite : rapport + documents */}
+                  <div className="space-y-4">
+                    <div className="rounded-xl border bg-card p-5">
+                      <h2 className="font-semibold mb-2 flex items-center gap-2"><FileBarChart2 className="w-4 h-4 text-accent" /> Votre rapport</h2>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {dash
+                          ? <>Le rapport de <span className="capitalize font-medium text-foreground">{periodLabel(period)}</span> est disponible.</>
+                          : <>Le rapport de {periodLabel(period)} est en préparation.</>}
+                      </p>
+                      <Button onClick={() => setTab('dashboard')} className="w-full" disabled={!dash}>
+                        Voir le rapport complet <ArrowRight className="w-4 h-4 ml-1.5" />
+                      </Button>
+                    </div>
+
+                    <div className="rounded-xl border bg-card p-5">
+                      <h2 className="font-semibold mb-2 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Documents à fournir</h2>
+                      <ul className="space-y-1.5 mb-3">
+                        {requiredDocs.slice(0, 4).map((d) => (
+                          <li key={d} className="text-sm flex items-center gap-2 text-muted-foreground">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50 shrink-0" /> {d}
+                          </li>
+                        ))}
+                      </ul>
+                      <button onClick={() => setTab('documents')} className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">
+                        Déposer mes documents <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {tab === 'dashboard' && (
               <div className="space-y-4">
-                {kpiBlock}
                 <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
                 <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
                   <span className="text-sm font-medium capitalize">{periodLabel(period)}</span>
@@ -410,36 +499,7 @@ export default function ClientSpace() {
                 <p className="text-xs text-muted-foreground mb-4">
                   Réponses factuelles sur vos données (un poste, un indicateur, une évolution). Pour une analyse ou un conseil, contactez votre conseiller Daftime.
                 </p>
-                <div className="flex-1 min-h-[240px] max-h-[50vh] overflow-y-auto space-y-3 mb-4">
-                  {chat.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">
-                      <p className="mb-2">Exemples de questions :</p>
-                      <div className="flex flex-wrap gap-2">
-                        {SUGGESTIONS.map((s) => (
-                          <button key={s} type="button" onClick={() => sendQuestion(s)}
-                            className="text-xs rounded-full border px-3 py-1.5 hover:bg-muted hover:border-primary/40 transition">
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : chat.map((m, i) => (
-                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
-                        {m.content}
-                      </div>
-                    </div>
-                  ))}
-                  {chatBusy && <div className="text-xs text-muted-foreground">L'assistant consulte vos chiffres…</div>}
-                </div>
-                <form onSubmit={(e) => { e.preventDefault(); sendQuestion(chatInput); }} className="flex gap-2">
-                  <input value={chatInput} onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ex. Quel est mon EBITDA ce mois-ci ?"
-                    className="flex-1 h-11 rounded-lg border px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                  <Button type="submit" disabled={chatBusy || !chatInput.trim()} className="h-11 px-4" aria-label="Envoyer">
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </form>
+                <ChatPanel chat={chat} input={chatInput} setInput={setChatInput} busy={chatBusy} onSend={sendQuestion} />
               </section>
             )}
 
