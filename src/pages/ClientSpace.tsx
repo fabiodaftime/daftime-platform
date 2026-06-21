@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
-  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone,
+  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone, MessagesSquare,
 } from 'lucide-react';
+import { Conversation } from '@/components/messaging/Conversation';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR, DOC_TEMPLATES, DEFAULT_DOCS } from '@/lib/config';
 
@@ -21,6 +22,7 @@ const NAV = [
   { key: 'accueil', label: 'Accueil', icon: LayoutDashboard },
   { key: 'dashboard', label: 'Rapport complet', icon: FileBarChart2 },
   { key: 'documents', label: 'Mes documents', icon: FolderOpen },
+  { key: 'messages', label: 'Mon conseiller', icon: MessagesSquare },
   { key: 'assistant', label: 'Poser une question', icon: MessageCircle },
   { key: 'activity', label: 'Activité', icon: Activity },
 ] as const;
@@ -651,6 +653,16 @@ export default function ClientSpace() {
                 )}
               </section>
               </div>
+            )}
+
+            {tab === 'messages' && (
+              <section className="rounded-xl border bg-card p-6">
+                <h2 className="font-semibold mb-1 flex items-center gap-2"><MessagesSquare className="w-4 h-4 text-accent" /> Échanger avec votre conseiller</h2>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {advisor?.name ? `Vous écrivez à ${advisor.name}.` : 'Votre conseiller Daftime vous répondra ici.'} Pour une question factuelle sur vos chiffres, utilisez plutôt « Poser une question ».
+                </p>
+                <Conversation clientId={id!} senderKind="client" emptyHint="Aucun message pour le moment. Écrivez à votre conseiller, il vous répondra ici." />
+              </section>
             )}
 
             {tab === 'assistant' && (

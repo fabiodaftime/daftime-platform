@@ -38,6 +38,7 @@ import AdminLabarileImport from "./pages/AdminLabarileImport";
 import AdminDataroomUpload from "./pages/AdminDataroomUpload";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminClientCockpit from "./pages/admin/AdminClientCockpit";
+import AdminMessages from "./pages/admin/AdminMessages";
 import ClientSpace from "./pages/ClientSpace";
 import NotFound from "./pages/NotFound";
 
@@ -284,6 +285,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireSuperAdmin>
                   <AdminClientCockpit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/messages"
+              element={
+                <ProtectedRoute requireSuperAdmin>
+                  <AdminMessages />
                 </ProtectedRoute>
               }
             />
