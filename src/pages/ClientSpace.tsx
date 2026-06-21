@@ -573,7 +573,7 @@ export default function ClientSpace() {
                     </div>
 
                     <div className="rounded-xl border bg-card p-5">
-                      <h2 className="font-semibold mb-2 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Documents à fournir</h2>
+                      <h2 className="font-semibold mb-2 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Documents recommandés</h2>
                       <ul className="space-y-1.5 mb-3">
                         {requiredDocs.slice(0, 4).map((d) => (
                           <li key={d} className="text-sm flex items-center gap-2 text-muted-foreground">
@@ -617,8 +617,8 @@ export default function ClientSpace() {
             {tab === 'documents' && (
               <div className="space-y-4">
               <div className="rounded-xl border bg-card p-6">
-                <h2 className="font-semibold mb-1 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Documents à fournir</h2>
-                <p className="text-xs text-muted-foreground mb-3">Habituellement nécessaires pour {periodLabel(period)}</p>
+                <h2 className="font-semibold mb-1 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Documents recommandés</h2>
+                <p className="text-xs text-muted-foreground mb-3">Liste indicative pour {periodLabel(period)} — elle varie selon votre situation. Déposez ce que vous avez, votre conseiller revient vers vous si besoin.</p>
                 <ul className="space-y-2">
                   {requiredDocs.map((d) => (
                     <li key={d} className="text-sm flex items-center gap-2">

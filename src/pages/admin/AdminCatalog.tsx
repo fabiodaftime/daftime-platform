@@ -60,7 +60,7 @@ export default function AdminCatalog() {
         <section className="rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-3"><h2 className="font-semibold">Documents recommandés</h2>
             <Button size="sm" variant="outline" onClick={() => upd({ documents: [...(cat.documents ?? []), ''] })}><Plus className="w-4 h-4 mr-1" /> Document</Button></div>
-          <p className="text-xs text-muted-foreground mb-2">Affichés au client dans « Documents à fournir ».</p>
+          <p className="text-xs text-muted-foreground mb-2">Affichés au client comme <strong>recommandations</strong> (liste indicative, non obligatoire) dans son espace.</p>
           <div className="space-y-2">
             {(cat.documents ?? []).map((d, i) => (
               <div key={i} className="flex items-center gap-2">
