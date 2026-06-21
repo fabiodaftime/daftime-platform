@@ -27,7 +27,7 @@ const NAV = [
 
 const SUGGESTIONS = [
   "Quel est mon chiffre d'affaires ce mois-ci ?",
-  "Quelle est l'évolution de mon EBITDA ?",
+  "Quel est mon résultat net ?",
   "Quel est mon poste de charge le plus élevé ?",
 ];
 
@@ -37,21 +37,30 @@ function labelActivity(a: any): string {
   return a.action;
 }
 
-// KPIs extraits du data_json du dashboard (sections/rows), par mots-clés sur les libellés.
+// KPIs extraits du data_json du dashboard, par mots-clés sur les libellés (1er match retenu).
+// Ordre de priorité dans keywords : on tente EBITDA, sinon le résultat d'exploitation.
 const KPIS = [
-  { key: 'ca', label: "Chiffre d'affaires", keywords: ['chiffre d', 'ca total', 'chiffre affaires'] },
-  { key: 'ebitda', label: 'EBITDA', keywords: ['ebitda'] },
-  { key: 'cashflow', label: 'Trésorerie', keywords: ['cash', 'tresorerie', 'tresor'] },
+  { key: 'ca', label: "Chiffre d'affaires", keywords: ['chiffre d', 'chiffre affaires', 'ca total', 'revenue', 'sales'] },
+  { key: 'ebitda', label: "Résultat d'exploitation", keywords: ['ebitda', 'resultat d exploitation', 'operating profit', 'resultat operationnel'] },
+  { key: 'net', label: 'Résultat net', keywords: ['resultat net', 'net profit', 'net income', 'net result'] },
 ] as const;
 
-const norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const norm = (s: string) =>
+  (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/['’]/g, ' ').replace(/\s+/g, ' ');
+
+// Ramasse récursivement tout couple { label, value:number } (pnl[], sections[].rows[], etc.).
+function collectFigures(node: any, out: { label: string; value: number }[]): void {
+  if (Array.isArray(node)) { for (const x of node) collectFigures(x, out); return; }
+  if (node && typeof node === 'object') {
+    if (typeof node.label === 'string' && typeof node.value === 'number') out.push({ label: node.label, value: node.value });
+    for (const k of Object.keys(node)) collectFigures(node[k], out);
+  }
+}
 
 function findMetric(dataJson: any, keywords: readonly string[]): number | null {
-  for (const sec of dataJson?.sections ?? []) {
-    for (const row of sec?.rows ?? []) {
-      if (typeof row?.value === 'number' && keywords.some((k) => norm(row.label).includes(k))) return row.value;
-    }
-  }
+  const rows: { label: string; value: number }[] = [];
+  collectFigures(dataJson, rows);
+  for (const r of rows) if (keywords.some((k) => norm(r.label).includes(k))) return r.value;
   return null;
 }
 

@@ -19,22 +19,49 @@ RÈGLES STRICTES :
 - Tu te limites à restituer ou recalculer des chiffres simples à partir des données (lecture d'une valeur, somme, différence, variation en %).
 - Réponds en français, de façon concise (1 à 3 phrases), en citant les montants avec leur devise et le mois concerné.`;
 
-// Met en forme les data_json (sections -> lignes) en texte compact pour le contexte.
-function figuresToText(periods: { period: string; data: any }[], currency: string): string {
+// Ramasse récursivement tout couple { label, value } d'un data_json, quelle que soit
+// la structure (pnl[], sections[].rows[], etc.).
+function flattenFigures(node: any, out: { label: string; value: unknown; unit?: string }[]): void {
+  if (Array.isArray(node)) { for (const x of node) flattenFigures(x, out); return; }
+  if (node && typeof node === "object") {
+    if (typeof node.label === "string" && (typeof node.value === "number" || typeof node.value === "string")) {
+      out.push({ label: node.label, value: node.value, unit: node.unit });
+    }
+    for (const k of Object.keys(node)) flattenFigures(node[k], out);
+  }
+}
+
+// Repli : extrait le texte visible d'un dashboard HTML (sans <script>/<style>).
+function htmlToText(html: string): string {
+  return (html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Met en forme les chiffres de chaque mois en texte compact pour le contexte du modèle.
+function figuresToText(periods: { period: string; data: any; html: string }[], currency: string): string {
   return periods
-    .map(({ period, data }) => {
-      const lines: string[] = [];
-      for (const sec of data?.sections ?? []) {
-        if (sec?.label) lines.push(`  [${sec.label}]`);
-        for (const row of sec?.rows ?? []) {
-          if (row?.label == null) continue;
-          const val = typeof row.value === "number"
-            ? `${row.value.toLocaleString("fr-FR")} ${row.unit ?? currency}`
-            : (row.value ?? "");
-          lines.push(`    - ${row.label}: ${val}`);
-        }
+    .map(({ period, data, html }) => {
+      const rows: { label: string; value: unknown; unit?: string }[] = [];
+      flattenFigures(data, rows);
+      let body: string;
+      if (rows.length > 0) {
+        body = rows
+          .map((r) => {
+            const val = typeof r.value === "number"
+              ? `${r.value.toLocaleString("fr-FR")} ${r.unit ?? currency}`
+              : String(r.value ?? "");
+            return `  - ${r.label}: ${val}`;
+          })
+          .join("\n");
+      } else {
+        body = `  (extrait du rapport)\n  ${htmlToText(html).slice(0, 6000)}`;
       }
-      return `MOIS ${period}:\n${lines.join("\n") || "  (aucune donnée)"}`;
+      return `MOIS ${period}:\n${body || "  (aucune donnée)"}`;
     })
     .join("\n\n");
 }
@@ -61,14 +88,14 @@ Deno.serve(async (req) => {
 
     const { data: dashes } = await supa
       .from("dashboards")
-      .select("period, data_json")
+      .select("period, data_json, html")
       .eq("client_id", client_id)
       .eq("status", "publie")
       .eq("is_current", true)
       .order("period", { ascending: false })
       .limit(6);
 
-    const periods = (dashes ?? []).map((d: any) => ({ period: d.period, data: d.data_json }));
+    const periods = (dashes ?? []).map((d: any) => ({ period: d.period, data: d.data_json, html: d.html ?? "" }));
     if (periods.length === 0) {
       return json({ answer: "Aucun rapport publié n'est encore disponible pour répondre à votre question." });
     }
