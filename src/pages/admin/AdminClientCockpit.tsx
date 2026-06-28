@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
@@ -37,6 +37,7 @@ export default function AdminClientCockpit() {
   const [period, setPeriod] = useState(currentPeriod());
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ kind: 'running' | 'success' | 'error'; text: string } | null>(null);
 
   const [contextText, setContextText] = useState('');
   const [currentContext, setCurrentContext] = useState<any>(null);
@@ -46,9 +47,26 @@ export default function AdminClientCockpit() {
   const [dash, setDash] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
 
+  // Libellés lisibles des opérations (pour le bandeau d'état).
+  const OP_LABELS: Record<string, string> = {
+    standardize: 'Standardisation des données', generate: 'Génération du dashboard', validate: 'Validation',
+    'save-sd': 'Enregistrement', recompute: 'Recalcul', status: 'Changement de statut',
+    files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données',
+  };
+
   const run = async (key: string, fn: () => Promise<void>) => {
+    const label = OP_LABELS[key] ?? key;
     setBusy(key); setError(null);
-    try { await fn(); } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(null); }
+    setNotice({ kind: 'running', text: `${label} en cours…` });
+    try {
+      await fn();
+      setNotice({ kind: 'success', text: `${label} terminé.` });
+      window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), 4000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      setNotice({ kind: 'error', text: `${label} : échec — ${msg}` });
+    } finally { setBusy(null); }
   };
 
   const loadClient = useCallback(async () => {
@@ -238,7 +256,23 @@ export default function AdminClientCockpit() {
         <p className="text-xs text-muted-foreground">
           💾 Tout est enregistré automatiquement. Tu peux fermer et revenir plus tard pour finaliser — pense à sélectionner le bon mois.
         </p>
-        {error && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
+        {notice && (
+          <div className={
+            'sticky top-2 z-20 rounded-lg px-4 py-3 text-sm flex items-center gap-2 shadow-sm border ' +
+            (notice.kind === 'running' ? 'bg-primary/10 text-primary border-primary/30'
+              : notice.kind === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              : 'bg-destructive/10 text-destructive border-destructive/40')
+          }>
+            {notice.kind === 'running' ? <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+              : notice.kind === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" />
+              : <AlertCircle className="w-4 h-4 shrink-0" />}
+            <span className="flex-1">{notice.text}</span>
+            {notice.kind !== 'running' && (
+              <button onClick={() => { setNotice(null); setError(null); }} className="text-xs underline shrink-0">fermer</button>
+            )}
+          </div>
+        )}
+        {error && !notice && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
         <Section icon={<Palette className="w-4 h-4" />} title="Charte graphique">
           <BrandPanel clientId={id!} brand={client.brand} onChange={(b) => setClient({ ...client, brand: b })} />
@@ -295,12 +329,21 @@ export default function AdminClientCockpit() {
         <Section icon={<Wand2 className="w-4 h-4" />} title="Données standardisées"
           action={<div className="flex items-center gap-2">
             {validated && <span className="text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">✓ Validé</span>}
-            <Button size="sm" variant="outline" onClick={standardize} disabled={busy === 'standardize'}>{busy === 'standardize' ? 'IA…' : 'Standardiser (IA)'}</Button>
-            {isTemplate && <Button size="sm" variant="outline" onClick={recompute} disabled={busy === 'recompute' || !sd}>{busy === 'recompute' ? 'Calcul…' : 'Recalculer'}</Button>}
+            <Button size="sm" variant="outline" onClick={standardize} disabled={!!busy}>
+              {busy === 'standardize' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Lecture…</> : 'Standardiser (IA)'}
+            </Button>
+            {isTemplate && <Button size="sm" variant="outline" onClick={recompute} disabled={!!busy || !sd}>
+              {busy === 'recompute' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Calcul…</> : 'Recalculer'}
+            </Button>}
             {isTemplate
-              ? <Button size="sm" onClick={validate} disabled={busy === 'validate' || !sd}>{busy === 'validate' ? '…' : 'Valider'}</Button>
-              : <Button size="sm" onClick={saveStandardized} disabled={busy === 'save-sd' || !sd}>Enregistrer</Button>}
+              ? <Button size="sm" onClick={validate} disabled={!!busy || !sd}>
+                  {busy === 'validate' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />…</> : 'Valider'}
+                </Button>
+              : <Button size="sm" onClick={saveStandardized} disabled={!!busy || !sd}>
+                  {busy === 'save-sd' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />…</> : 'Enregistrer'}
+                </Button>}
           </div>}>
+          {busy === 'standardize' && <p className="text-sm text-primary mb-3 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Le moteur lit tes documents et reconstitue les chiffres — compte ~10 à 20 s.</p>}
           <MissingItemsTable
             items={missing}
             busy={busy === 'answer-missing'}
@@ -327,7 +370,10 @@ export default function AdminClientCockpit() {
         </Section>
 
         <Section icon={<LayoutDashboard className="w-4 h-4" />} title="Dashboard"
-          action={<Button size="sm" onClick={generate} disabled={busy === 'generate' || !sd}>{busy === 'generate' ? 'Génération…' : 'Générer (IA)'}</Button>}>
+          action={<Button size="sm" onClick={generate} disabled={!!busy || !sd}>
+            {busy === 'generate' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Génération…</> : 'Générer (IA)'}
+          </Button>}>
+          {busy === 'generate' && <p className="text-sm text-primary mb-3 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />L'IA compose le dashboard — ça peut prendre 30 s à 1 min, ne ferme pas la page.</p>}
           {!sd && <p className="text-sm text-muted-foreground mb-3">Standardisez d'abord les données pour générer un dashboard.</p>}
           {dash ? (
             <>
