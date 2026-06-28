@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
@@ -73,7 +73,7 @@ export default function AdminClientCockpit() {
   const [history, setHistory] = useState<any[]>([]);
   const [guidanceText, setGuidanceText] = useState('');
   const [transcript, setTranscript] = useState('');
-  const [tab, setTab] = useState<'data' | 'context' | 'custom' | 'dashboard'>('data');
+  const [tab, setTab] = useState<'home' | 'data' | 'context' | 'custom' | 'dashboard'>('home');
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
   const OP_LABELS: Record<string, string> = {
@@ -328,11 +328,25 @@ export default function AdminClientCockpit() {
 
   const docCats = DOC_CATEGORIES[client?.activity_types?.slug as string] ?? DOC_CATEGORIES.default;
   const TABS = [
+    { id: 'home' as const, label: 'Accueil', icon: <Home className="w-4 h-4" /> },
     { id: 'data' as const, label: 'Données', icon: <Wand2 className="w-4 h-4" /> },
     { id: 'context' as const, label: 'Contexte', icon: <BookOpen className="w-4 h-4" /> },
     { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
+  // Synthèse pour la page d'accueil de la fiche.
+  const charteSet = !!(client?.brand?.colors?.primary || (Array.isArray(client?.brand?.palette) && client.brand.palette.length));
+  const steps = [
+    { label: 'Fichiers déposés', done: files.length > 0 },
+    { label: 'Standardisé', done: !!sd },
+    { label: 'Validé', done: validated },
+    { label: 'Dashboard généré', done: !!dash },
+    { label: 'Publié', done: dash?.status === 'publie' },
+  ];
+  let _cur = false; for (const s of steps) { (s as any).current = !s.done && !_cur; if (!s.done) _cur = true; }
+  const findRow = (id: string) => { for (const sec of editData?.sections ?? []) { const r = (sec.rows ?? []).find((x: any) => x.id === id); if (r) return r; } return null; };
+  const homeKpis = ['ca', 'ebitda', 'resultat_net', 'cash_end'].map(findRow).filter(Boolean) as any[];
+  const fmtV = (r: any) => { const v = r?.value; if (typeof v !== 'number') return '—'; const u = r.unit; if (u === '%') return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'; if (u === 'x') return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '×'; return v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + (u ? ` ${u}` : ''); };
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
   const isTemplate = !!editData?.meta?.template;
@@ -397,6 +411,58 @@ export default function AdminClientCockpit() {
             </nav>
           </aside>
           <div className="space-y-6 min-w-0">
+
+        {tab === 'home' && (
+          <div className="space-y-5">
+            <div className="rounded-xl border bg-card p-5">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-semibold">{client.name}</h2>
+                  <p className="text-sm text-muted-foreground">{client.activity_types?.name ?? '—'} · {client.currency ?? 'EUR'}{client.category ? ` · ${client.category}` : ''}</p>
+                </div>
+                <span className="text-xs px-2 py-1 rounded-full bg-muted">{period.slice(0, 7)}</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-card p-5">
+              <div className="text-sm font-medium mb-3">Avancement du mois</div>
+              <ol className="flex flex-wrap gap-2">
+                {steps.map((s, i) => (
+                  <li key={i} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${s.done ? 'bg-emerald-50 text-emerald-700' : (s as any).current ? 'bg-primary/10 text-primary font-medium' : 'bg-muted text-muted-foreground'}`}>
+                    <span className="w-5 h-5 rounded-full bg-white/70 flex items-center justify-center text-xs">{s.done ? '✓' : i + 1}</span>{s.label}
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {homeKpis.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {homeKpis.map((r, i) => (
+                  <div key={i} className="rounded-xl border bg-card p-4">
+                    <div className="text-xs text-muted-foreground">{r.label}</div>
+                    <div className="text-xl font-semibold mt-1">{fmtV(r)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="rounded-xl border bg-card p-5 text-sm space-y-2">
+                <div className="font-medium mb-1">À surveiller</div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground">Pièces manquantes</span><span className={missing.length ? 'text-amber-600 font-medium' : ''}>{missing.length}</span></div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground">Charte graphique</span>{charteSet ? <span className="text-emerald-600">définie</span> : <button className="text-primary underline" onClick={() => setTab('custom')}>à définir</button>}</div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground">Consignes dashboard</span>{guidanceText.trim() ? <span className="text-emerald-600">oui</span> : <button className="text-primary underline" onClick={() => setTab('custom')}>ajouter</button>}</div>
+                <div className="flex items-center justify-between"><span className="text-muted-foreground">Dashboard</span><span>{dash ? (STATUS_LABELS[dash.status] ?? dash.status) : '—'}</span></div>
+              </div>
+              <div className="rounded-xl border bg-card p-5 space-y-2">
+                <div className="font-medium mb-1 text-sm">Accès rapides</div>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => setTab('data')}><FileUp className="w-4 h-4 mr-2" />Déposer / standardiser les données</Button>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => setTab('custom')}><Palette className="w-4 h-4 mr-2" />Charte &amp; consignes</Button>
+                <Button size="sm" className="w-full justify-start" onClick={() => setTab('dashboard')} disabled={!sd}><LayoutDashboard className="w-4 h-4 mr-2" />{dash ? 'Voir le dashboard' : 'Générer le dashboard'}</Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {tab === 'custom' && (
         <Section icon={<Palette className="w-4 h-4" />} title="Charte graphique">
