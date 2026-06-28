@@ -63,6 +63,7 @@ WIDGETS (JSON) :
 - {"type":"treemap","title":"...","breakdown":"clé"}             // treemap d'un BREAKDOWN (poids relatif des catégories, ex. top_products) — surface ∝ valeur
 - {"type":"calendar","title":"...","breakdown":"clé"}            // calendrier-heatmap d'un BREAKDOWN journalier (ex. daily_sales) — intensité par jour du mois
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"} // ANALYSE/CONSEIL : constat chiffré → interprétation → reco. good=point fort, warn=vigilance/dérive, info=lecture neutre. EN METTRE sur chaque page.
+- {"type":"scorecard","title":"Diagnostic du mois"} // bloc santé : compte les indicateurs sains/à surveiller/en alerte + points forts & vigilances (selon les repères). Idéal en tête de la vue d'ensemble (auto-inséré si tu l'oublies).
 
 BIBLIOTHÈQUE PREMIUM ÉTENDUE (à EXPLOITER pour sortir du trio line/bar/donut — choisis selon la forme de la donnée ; 2 à 4 graphes forts et VARIÉS par page, sans répéter un type) :
 Séries temporelles (nécessitent l'historique) :
@@ -171,6 +172,7 @@ function renders(w: Widget, a: Avail): boolean {
     case "map": case "sunburst": case "histogram": case "calendar":
       return !!w.breakdown && a.brk.has(w.breakdown);
     case "callout": return !!(w.text && w.text.trim());
+    case "scorecard": return true; // s'auto-valide au rendu (vide si < 3 verdicts)
     default: return false;
   }
 }
@@ -254,8 +256,9 @@ function validatePlan(plan: DashPlan, a: Avail, sections: Sec[]): DashPlan {
 }
 
 // Liste lisible des types de widgets qui afficheront des données ce mois-ci (selon la donnée réelle).
-function availableTypes(a: Avail): string {
+function availableTypes(a: Avail, hasVerdicts = false): string {
   const t = ["kpi_row", "bar", "donut", "table", "funnel", "waterfall", "callout", "treemap", "rose", "polar", "pictorial", "lollipop", "share", "ranking"];
+  if (hasVerdicts) t.push("scorecard");
   if (a.ids.has("ca") && a.ids.has("marge_brute") && a.ids.has("ebitda")) t.push("flow");
   if (a.months >= 2) t.push("line", "area", "stacked", "stacked_area", "combo", "trend_grid");
   if (a.months >= 3) t.push("river", "matrix");
@@ -414,12 +417,14 @@ Deno.serve(async (req) => {
     // dès que la nouvelle version apparaît en base.
     const produce = async () => {
       const a = availability(sections, history.months.length, Object.keys(breakdowns ?? {}), Object.keys(targets ?? {}));
-      const avTypes = availableTypes(a);
       // Diagnostic sectoriel (repères) → on l'injecte pour que l'analyse IA soit FONDÉE, pas vague.
-      const diag = Object.keys(metrics).map((id) => {
+      const diagLines = Object.keys(metrics).map((id) => {
         const v = assess(id, metrics[id].value, activity, clientBench);
         return v ? `- ${metrics[id].label} = ${metrics[id].value}${metrics[id].unit ? " " + metrics[id].unit : ""} → ${v.level === "good" ? "BON" : v.level === "warn" ? "MOYEN" : "ALERTE"} (${v.note})` : null;
-      }).filter(Boolean).join("\n");
+      }).filter(Boolean) as string[];
+      const diag = diagLines.join("\n");
+      const hasVerdicts = diagLines.length >= 3;
+      const avTypes = availableTypes(a, hasVerdicts);
 
       // 1) COMPOSITION (IA) : l'IA conçoit la structure ET l'analyse, MAIS uniquement avec les types
       //    DISPONIBLES (calculés depuis la donnée) → plus de graphe vide. Riche : ≥6 graphes/page.
@@ -452,6 +457,11 @@ Deno.serve(async (req) => {
       // 2) FILETS : on supprime les widgets vides puis on garantit la densité (≥5 graphes/page) via le pool déterministe.
       plan = validatePlan(plan, a, sections);
       plan = ensureDensity(plan, a, sections, 5);
+      // Diagnostic du mois : on le place en tête de la 1re page (après le kpi_row) s'il n'y est pas déjà.
+      if (hasVerdicts && plan.pages[0] && !plan.pages.some((p) => p.widgets.some((w) => w.type === "scorecard"))) {
+        const at = plan.pages[0].widgets.findIndex((w) => w.type === "kpi_row");
+        plan.pages[0].widgets.splice(at >= 0 ? at + 1 : 0, 0, { type: "scorecard", title: "Diagnostic du mois" } as Widget);
+      }
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
       const html = renderDashboard(

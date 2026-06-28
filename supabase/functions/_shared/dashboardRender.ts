@@ -24,7 +24,7 @@ export interface Widget {
     // bibliothèque premium étendue (composée par l'IA quand ça s'y prête) :
     | "area" | "stacked_area" | "river" | "combo" | "slope" | "matrix"
     | "rose" | "polar" | "sunburst" | "pictorial" | "lollipop" | "share" | "histogram"
-    | "bullet" | "rings" | "gauge_grid" | "diverging" | "comparison" | "trend_grid";
+    | "bullet" | "rings" | "gauge_grid" | "diverging" | "comparison" | "trend_grid" | "scorecard";
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   line?: string; // widget "combo" : id de la métrique tracée en courbe (2e axe)
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
@@ -65,7 +65,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const M = ctx.metrics;
   const has = (id: string) => M[id] && M[id].value != null;
   // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
-  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey"]);
+  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard"]);
   const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
@@ -449,6 +449,25 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
           return `<div class="tg-c"><div class="tg-l">${esc(m.label)}</div><div class="tg-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div><div class="tg-f">${changeHtml(m.change_pct) || '<span class="chg flat">—</span>'}</div><div class="tg-s echart" id="${spId}"></div></div>`;
         }).join("")}</div></div>`;
       }
+      case "scorecard": {
+        // Diagnostic synthétique : compte les indicateurs sains / à surveiller / en alerte (via les repères).
+        type SI = { label: string; value: number; unit: string; level: string; note: string };
+        const items: SI[] = (w.metrics ?? Object.keys(M)).map((id) => {
+          if (!has(id)) return null; const v = assess(id, M[id].value, ctx.activity, ctx.benchmarks);
+          return v ? { label: M[id].label, value: M[id].value as number, unit: M[id].unit, level: v.level, note: v.note } : null;
+        }).filter(Boolean) as SI[];
+        if (items.length < 3) return "";
+        const cnt = (lv: string) => items.filter((x) => x.level === lv).length;
+        const chip = (x: SI) => `<div class="sc-chip b-${x.level}"><span class="sc-dot"></span><div><div class="sc-cl">${esc(x.label)} · <b>${esc(fmt(x.value, x.unit, ctx.currency))}</b></div><div class="sc-cn">${esc(x.note)}</div></div></div>`;
+        const strengths = items.filter((x) => x.level === "good").slice(0, 5);
+        const alerts = items.filter((x) => x.level !== "good").sort((a, b) => (a.level === "bad" ? 0 : 1) - (b.level === "bad" ? 0 : 1)).slice(0, 6);
+        return `<div class="card sc"><div class="card-t">${esc(w.title ?? "Diagnostic du mois")}</div>` +
+          `<div class="sc-stats"><div class="sc-stat b-good"><div class="sc-n">${cnt("good")}</div><div class="sc-sl">sains</div></div>` +
+          `<div class="sc-stat b-warn"><div class="sc-n">${cnt("warn")}</div><div class="sc-sl">à surveiller</div></div>` +
+          `<div class="sc-stat b-bad"><div class="sc-n">${cnt("bad")}</div><div class="sc-sl">en alerte</div></div></div>` +
+          `<div class="sc-cols"><div><div class="sc-h">Points forts</div>${strengths.length ? strengths.map(chip).join("") : '<div class="sc-empty">—</div>'}</div>` +
+          `<div><div class="sc-h">Points de vigilance</div>${alerts.length ? alerts.map(chip).join("") : '<div class="sc-empty">—</div>'}</div></div></div>`;
+      }
       case "callout": {
         if (!w.text) return "";
         const tone = w.tone ?? "info";
@@ -581,6 +600,19 @@ header.hero h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;lin
 .kpi-bench{font-size:11px;font-weight:600;margin-top:7px;display:flex;align-items:center;gap:5px;line-height:1.3}
 .kpi-bench::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
 .b-good{color:#0a7d3f}.b-warn{color:#b9770a}.b-bad{color:#b41a3a}
+.sc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.sc-stat{border:1px solid var(--bd);border-radius:13px;padding:15px 12px;text-align:center}
+.sc-stat.b-good{background:${th.dark ? "#13301f" : "#eafaf0"};border-color:${th.dark ? "#1d4a30" : "#cdeedb"}}
+.sc-stat.b-warn{background:${th.dark ? "#332611" : "#fef6e7"};border-color:${th.dark ? "#54421c" : "#f1e2bf"}}
+.sc-stat.b-bad{background:${th.dark ? "#3a1c1c" : "#fdecec"};border-color:${th.dark ? "#5a2a2a" : "#f3cccc"}}
+.sc-n{font-size:30px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.sc-sl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;margin-top:6px;font-weight:600;opacity:.9}
+.sc-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px 26px}
+.sc-h{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);font-weight:700;margin-bottom:8px}
+.sc-chip{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--bd)}.sc-chip:last-child{border-bottom:0}
+.sc-dot{width:8px;height:8px;border-radius:50%;background:currentColor;margin-top:6px;flex:0 0 auto}
+.sc-cl{font-size:13px;color:var(--ink)}.sc-cn{font-size:11.5px;color:var(--mut)}.sc-empty{color:var(--mut);font-size:13px}
+@media(max-width:760px){.sc-cols{grid-template-columns:1fr}}
 .glassbg .card,.glassbg .kpi{background:rgba(255,255,255,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,.5)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px 22px;box-shadow:0 1px 2px rgba(20,26,60,.04),0 10px 26px rgba(20,26,60,.035)}
 .card-t{font-weight:700;font-size:15px;margin-bottom:16px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.card-sub{font-weight:500;color:var(--mut);font-size:12px}
