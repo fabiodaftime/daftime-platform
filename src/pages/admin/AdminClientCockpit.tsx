@@ -102,6 +102,39 @@ export default function AdminClientCockpit() {
   useEffect(() => { loadClient(); loadContext(); }, [loadClient, loadContext]);
   useEffect(() => { loadFiles(); loadStandardized(); loadDashboard(); }, [loadFiles, loadStandardized, loadDashboard]);
 
+  // Reprise d'une tâche de fond : si une standardisation/génération a été lancée puis la page quittée,
+  // on retrouve le marqueur au retour et on suit jusqu'à l'apparition du résultat.
+  useEffect(() => {
+    if (!id || !period) return;
+    const key = `cockpit:job:${id}:${period}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    let job: { op: string; at: number };
+    try { job = JSON.parse(raw); } catch { localStorage.removeItem(key); return; }
+    if (Date.now() - job.at > 5 * 60 * 1000) { localStorage.removeItem(key); return; } // marqueur périmé
+    const label = job.op === 'generate' ? 'Génération du dashboard' : 'Standardisation des données';
+    setNotice({ kind: 'running', text: `${label} en cours en arrière-plan…` });
+    let stop = false;
+    const check = async () => {
+      const table = job.op === 'generate' ? 'dashboards' : 'standardized_data';
+      const { data } = await supabase.from(table as any).select('created_at')
+        .eq('client_id', id).eq('period', period).eq('is_current', true)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      const done = data && new Date((data as any).created_at).getTime() > job.at - 3000;
+      if (done && !stop) {
+        localStorage.removeItem(key);
+        if (job.op === 'generate') await loadDashboard(); else await loadStandardized();
+        setNotice({ kind: 'success', text: `${label} terminé.` });
+        window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), 4000);
+        return true;
+      }
+      return false;
+    };
+    const iv = window.setInterval(async () => { if (await check()) clearInterval(iv); }, 4000);
+    check().then((d) => { if (d) clearInterval(iv); });
+    return () => { stop = true; clearInterval(iv); };
+  }, [id, period, loadStandardized, loadDashboard]);
+
   // À l'ouverture d'un client, se placer sur le dernier mois travaillé (dashboard, sinon données).
   useEffect(() => {
     let cancelled = false;
@@ -146,19 +179,28 @@ export default function AdminClientCockpit() {
     await loadFiles();
   });
 
+  // Marqueur de tâche de fond (survit à la navigation) : permet de retrouver "en cours" au retour.
+  const bgKey = () => (id && period ? `cockpit:job:${id}:${period}` : '');
+  const markBg = (op: string) => { const k = bgKey(); if (k) localStorage.setItem(k, JSON.stringify({ op, at: Date.now() })); };
+  const clearBg = () => { const k = bgKey(); if (k) localStorage.removeItem(k); };
+
   const standardize = () => run('standardize', async () => {
-    await invokeFn('standardize-data', { client_id: id, period });
-    await loadStandardized();
+    markBg('standardize');
+    try { await invokeFn('standardize-data', { client_id: id, period }); await loadStandardized(); }
+    finally { clearBg(); }
   });
 
   const saveStandardized = () => run('save-sd', async () => {
-    await supabase.from('standardized_data' as any).update({ is_current: false }).eq('client_id', id).eq('period', period).eq('is_current', true);
+    if (!(editData?.sections?.length)) throw new Error('Aucune donnée à enregistrer.');
     const { data: last } = await supabase.from('standardized_data' as any).select('version').eq('client_id', id).eq('period', period).order('version', { ascending: false }).limit(1).maybeSingle();
     const version = (((last as any)?.version) ?? 0) + 1;
-    await supabase.from('standardized_data' as any).insert({
+    const { data: inserted, error: insErr } = await supabase.from('standardized_data' as any).insert({
       client_id: id, period, activity_type_id: client?.activity_type_id ?? null,
       data: editData, missing_items: sd?.missing_items ?? [], source: 'manual', version, is_current: true, created_by: user?.id ?? null,
-    });
+    }).select('id').single();
+    if (insErr) throw insErr;
+    await supabase.from('standardized_data' as any).update({ is_current: false })
+      .eq('client_id', id).eq('period', period).eq('is_current', true).neq('id', (inserted as any).id);
     await loadStandardized();
   });
 
@@ -193,22 +235,29 @@ export default function AdminClientCockpit() {
   });
 
   // Valider = porte de confiance : enregistre une version marquée "validée".
+  // Insert D'ABORD (is_current), désactivation des autres ENSUITE → jamais de perte de données.
   const validate = () => run('validate', async () => {
+    if (!sd || !(editData?.sections?.length)) throw new Error("Aucune donnée standardisée à valider — clique d'abord sur « Standardiser ».");
     const validated = { ...editData, meta: { ...(editData?.meta ?? {}), validated: true, validated_at: new Date().toISOString() } };
-    await supabase.from('standardized_data' as any).update({ is_current: false }).eq('client_id', id).eq('period', period).eq('is_current', true);
     const { data: last } = await supabase.from('standardized_data' as any).select('version').eq('client_id', id).eq('period', period).order('version', { ascending: false }).limit(1).maybeSingle();
     const version = (((last as any)?.version) ?? 0) + 1;
-    await supabase.from('standardized_data' as any).insert({
+    const { data: inserted, error: insErr } = await supabase.from('standardized_data' as any).insert({
       client_id: id, period, activity_type_id: client?.activity_type_id ?? null,
-      data: validated, missing_items: sd?.missing_items ?? [], source: 'validated', version, is_current: true, created_by: user?.id ?? null,
-    });
+      data: validated, missing_items: sd?.missing_items ?? [], source: 'manual', version, is_current: true, created_by: user?.id ?? null,
+    }).select('id').single();
+    if (insErr) throw insErr;
+    await supabase.from('standardized_data' as any).update({ is_current: false })
+      .eq('client_id', id).eq('period', period).eq('is_current', true).neq('id', (inserted as any).id);
     await loadStandardized();
   });
 
   const generate = () => run('generate', async () => {
-    const res = await invokeFn<{ dashboard?: any }>('generate-dashboard', { client_id: id, period });
-    if (res?.dashboard) setDash(res.dashboard);
-    else await loadDashboard();
+    markBg('generate');
+    try {
+      const res = await invokeFn<{ dashboard?: any }>('generate-dashboard', { client_id: id, period });
+      if (res?.dashboard) setDash(res.dashboard);
+      else await loadDashboard();
+    } finally { clearBg(); }
   });
 
   const changeStatus = (to: string) => run('status', async () => {
@@ -266,7 +315,9 @@ export default function AdminClientCockpit() {
             {notice.kind === 'running' ? <Loader2 className="w-4 h-4 animate-spin shrink-0" />
               : notice.kind === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" />
               : <AlertCircle className="w-4 h-4 shrink-0" />}
-            <span className="flex-1">{notice.text}</span>
+            <span className="flex-1">{notice.text}
+              {notice.kind === 'running' && <span className="block text-xs opacity-70 mt-0.5">Tu peux changer de page, le traitement continue — tu retrouveras l'état ici.</span>}
+            </span>
             {notice.kind !== 'running' && (
               <button onClick={() => { setNotice(null); setError(null); }} className="text-xs underline shrink-0">fermer</button>
             )}
