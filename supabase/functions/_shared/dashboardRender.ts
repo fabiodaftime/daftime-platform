@@ -10,7 +10,7 @@ export interface RenderCtx {
   history: { months: string[]; series: Record<string, (number | null)[]>; labels: Record<string, string> };
 }
 export interface Widget {
-  type: "kpi_row" | "line" | "bar" | "donut" | "waterfall" | "table" | "callout";
+  type: "kpi_row" | "line" | "bar" | "donut" | "waterfall" | "table" | "callout" | "funnel";
   title?: string;
   metrics?: string[];          // ids
   items?: { metric: string }[];
@@ -100,6 +100,22 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return `<div class="card"><div class="card-t">${esc(w.title ?? "Détail")}</div><table class="tbl"><tbody>${rows.map((r) =>
           `<tr class="${r.type === "total" ? "tot" : ""}"><td>${esc(r.label)}</td><td class="num">${esc(fmt(r.value as number, r.unit, ctx.currency))}</td><td class="num">${changeHtml(r.change_pct)}</td></tr>`).join("")}</tbody></table></div>`;
       }
+      case "funnel": {
+        // Entonnoir (style Shopify) : étapes décroissantes + taux de passage entre étapes.
+        const ids = (w.metrics ?? []).filter(has);
+        if (ids.length < 2) return "";
+        const top = M[ids[0]].value || 0;
+        return `<div class="card"><div class="card-t">${esc(w.title ?? "Entonnoir de conversion")}</div><div class="funnel">${
+          ids.map((id, i) => {
+            const m = M[id]; const val = m.value ?? 0;
+            const w2 = top > 0 ? Math.max(8, Math.round((val / top) * 100)) : 100;
+            const prev = i > 0 ? (M[ids[i - 1]].value ?? 0) : 0;
+            const conv = i > 0 && prev > 0 ? Math.round((val / prev) * 1000) / 10 : null;
+            return `<div class="fn-row">${conv != null ? `<div class="fn-conv">↓ ${conv.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}%</div>` : ""}` +
+              `<div class="fn-bar" style="width:${w2}%"><span class="fn-l">${esc(m.label)}</span><span class="fn-v">${esc(fmt(val, m.unit, ctx.currency))}</span></div></div>`;
+          }).join("")
+        }</div></div>`;
+      }
       case "callout": {
         if (!w.text) return "";
         const tone = w.tone ?? "info";
@@ -143,6 +159,11 @@ header h1{margin:0;font-size:22px}header .sub{color:var(--mut);font-size:14px;ma
 .tbl{width:100%;border-collapse:collapse;font-size:14px}
 .tbl td{padding:7px 4px;border-bottom:1px solid var(--bd)}.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .tbl tr.tot td{font-weight:700;background:#fafafa}
+.funnel{display:flex;flex-direction:column;gap:6px}
+.fn-row{display:flex;align-items:center;gap:10px}
+.fn-conv{font-size:12px;color:var(--mut);min-width:64px}
+.fn-bar{background:var(--p);color:#fff;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;min-width:140px;gap:10px}
+.fn-l{font-size:13px;opacity:.92}.fn-v{font-weight:700;font-variant-numeric:tabular-nums}
 .callout{border:1px solid var(--bd);border-left:3px solid var(--p);background:var(--card);border-radius:8px;padding:12px 14px;font-size:14px}
 .callout.warn{border-left-color:#d97706;background:#fffbeb}.callout.good{border-left-color:#16a34a;background:#f0fdf4}
 .co-t{font-weight:600;margin-bottom:3px}

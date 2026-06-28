@@ -26,6 +26,7 @@ WIDGETS (JSON) :
 - {"type":"bar","title":"...","metrics":["id", ...]}                // comparaison / structure (valeurs négatives en rouge)
 - {"type":"donut","title":"...","metrics":["id", ...]}             // répartition (≥ 2 ids positifs)
 - {"type":"table","title":"...","metrics":["id", ...]}             // détail (libellé / valeur / évolution)
+- {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
 Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}]}`;
