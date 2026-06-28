@@ -16,6 +16,8 @@ export function BrandPanel({ clientId, brand, onChange }: { clientId: string; br
 
   const colors: Record<string, string> = local?.colors ?? {};
   const fonts: Record<string, string> = local?.fonts ?? {};
+  const palette: string[] = Array.isArray(local?.palette) ? local.palette : [];
+  const setPalette = (p: string[]) => setLocal({ ...local, palette: p });
 
   const runExtract = async (payload: Record<string, unknown>) => {
     setBusy(true); setError(null);
@@ -89,6 +91,36 @@ export function BrandPanel({ clientId, brand, onChange }: { clientId: string; br
           <Input value={fonts.body ?? ''} onChange={(e) => setLocal({ ...local, fonts: { ...fonts, body: e.target.value } })} />
         </div>
       </div>
+      {/* Palette des graphes */}
+      <div>
+        <div className="text-xs text-muted-foreground mb-1">Palette des graphes (couleurs du dashboard)</div>
+        <div className="flex flex-wrap items-center gap-2">
+          {palette.map((c, i) => (
+            <div key={i} className="relative group">
+              <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(c) ? c : '#000000'}
+                onChange={(e) => { const p = [...palette]; p[i] = e.target.value; setPalette(p); }}
+                className="h-8 w-8 rounded border cursor-pointer" title={c} />
+              <button onClick={() => setPalette(palette.filter((_, j) => j !== i))}
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-destructive text-white text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100">×</button>
+            </div>
+          ))}
+          <button onClick={() => setPalette([...palette, colors.primary ?? '#3b82f6'])}
+            className="h-8 w-8 rounded border text-muted-foreground hover:bg-muted" title="Ajouter une couleur">+</button>
+          {palette.length === 0 && <span className="text-xs text-muted-foreground">Aucune palette — analyse l'URL ou ajoute des couleurs.</span>}
+        </div>
+      </div>
+
+      {/* Logo */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="text-xs text-muted-foreground">Logo</div>
+        {local?.logo && <img src={local.logo} alt="logo" className="h-9 max-w-[130px] object-contain bg-white border rounded p-1" />}
+        <input className="flex-1 min-w-[180px] text-xs bg-transparent outline-none border-b" placeholder="URL du logo…"
+          value={local?.logo ?? ''} onChange={(e) => setLocal({ ...local, logo: e.target.value || undefined })} />
+      </div>
+
+      {(local?.googleFont || local?.font) && (
+        <div className="text-xs text-muted-foreground">Police chargée : {local.googleFont ?? local.font}</div>
+      )}
       {Array.isArray(local?.style) && local.style.length > 0 && (
         <div className="text-xs text-muted-foreground">Style : {local.style.join(', ')}{local.notes ? ` — ${local.notes}` : ''}</div>
       )}
