@@ -64,6 +64,7 @@ export default function AdminClientCockpit() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: 'running' | 'success' | 'error'; text: string } | null>(null);
+  const [genActive, setGenActive] = useState(false); // génération en cours (tâche de fond) → on bloque un nouveau clic
 
   const [contextText, setContextText] = useState('');
   const [currentContext, setCurrentContext] = useState<any>(null);
@@ -155,6 +156,7 @@ export default function AdminClientCockpit() {
     if (Date.now() - job.at > 5 * 60 * 1000) { localStorage.removeItem(key); return; } // marqueur périmé
     const label = job.op === 'generate' ? 'Génération du dashboard' : 'Standardisation des données';
     setNotice({ kind: 'running', text: `${label} en cours en arrière-plan…` });
+    if (job.op === 'generate') setGenActive(true);
     let stop = false;
     const check = async () => {
       const table = job.op === 'generate' ? 'dashboards' : 'standardized_data';
@@ -164,7 +166,7 @@ export default function AdminClientCockpit() {
       const done = data && new Date((data as any).created_at).getTime() > job.at - 3000;
       if (done && !stop) {
         localStorage.removeItem(key);
-        if (job.op === 'generate') await loadDashboard(); else await loadStandardized();
+        if (job.op === 'generate') { setGenActive(false); await loadDashboard(); } else await loadStandardized();
         setNotice({ kind: 'success', text: `${label} terminé.` });
         window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), 4000);
         return true;
@@ -236,11 +238,13 @@ export default function AdminClientCockpit() {
       if (data && new Date((data as any).created_at).getTime() > since - 3000) {
         clearInterval(iv);
         if (key) localStorage.removeItem(key);
+        setGenActive(false);
         await loadDashboard();
         setNotice({ kind: 'success', text: 'Génération du dashboard terminée.' });
         window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), 4000);
       } else if (Date.now() - since > 4 * 60 * 1000) {
         clearInterval(iv);
+        setGenActive(false);
         setNotice({ kind: 'error', text: 'La génération prend anormalement longtemps — réessayez, ou consultez les logs de la fonction.' });
       }
     }, 4000);
@@ -314,18 +318,22 @@ export default function AdminClientCockpit() {
   });
 
   const generate = () => run('generate', async () => {
+    if (genActive) return; // déjà en cours
     markBg('generate');
+    setGenActive(true);
     const since = Date.now();
     const res = await invokeFn<{ dashboard?: any; status?: string }>('generate-dashboard', { client_id: id, period });
     if (res?.status === 'processing') {
       // tâche de fond : on suit jusqu'à l'apparition de la nouvelle version (marqueur conservé pour reprise au retour).
-      setNotice({ kind: 'running', text: 'Génération du dashboard en cours en arrière-plan (≈ 1 à 2 min) — vous pouvez quitter la page.' });
+      setNotice({ kind: 'running', text: 'Génération du dashboard en cours en arrière-plan (≈ 1 min) — vous pouvez quitter la page.' });
       pollGenerate(since);
       return;
     }
+    // chemin synchrone (dev local)
     if (res?.dashboard) setDash(res.dashboard);
     else await loadDashboard();
     clearBg();
+    setGenActive(false);
   });
 
   const changeStatus = (to: string) => run('status', async () => {
@@ -624,10 +632,10 @@ export default function AdminClientCockpit() {
 
         {tab === 'dashboard' && (<>
         <Section icon={<LayoutDashboard className="w-4 h-4" />} title="Dashboard"
-          action={<Button size="sm" onClick={generate} disabled={!!busy || !sd}>
-            {busy === 'generate' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Génération…</> : 'Générer (IA)'}
+          action={<Button size="sm" onClick={generate} disabled={!!busy || genActive || !sd}>
+            {(busy === 'generate' || genActive) ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Génération…</> : 'Générer (IA)'}
           </Button>}>
-          {busy === 'generate' && <p className="text-sm text-primary mb-3 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />L'IA compose le dashboard — ça peut prendre 30 s à 1 min, ne ferme pas la page.</p>}
+          {genActive && <p className="text-sm text-primary mb-3 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />L'IA construit le dashboard et rédige l'analyse — ≈ 1 min. Vous pouvez quitter la page, il se chargera tout seul.</p>}
           {!sd && <p className="text-sm text-muted-foreground mb-3">Standardisez d'abord les données pour générer un dashboard.</p>}
           {dash ? (
             <>

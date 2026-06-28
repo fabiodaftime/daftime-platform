@@ -104,6 +104,15 @@ const REVIEW_SYSTEM = (activity: string) => `Tu es le DIRECTEUR DE L'ANALYSE. On
 4. VARIÉTÉ & VALIDITÉ : graphes variés et adaptés à la forme de la donnée ; n'utilise QUE des ids/breakdowns/cibles de la liste VALIDE fournie ; supprime tout widget qui resterait vide ; 3-6 graphes + kpi_row + callout(s) par page ; 2 à 4 pages.
 Conserve le THÈME tel quel (ne touche pas aux couleurs/police). Renvoie le PLAN AMÉLIORÉ, MÊME FORMAT, UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}]}. Si le plan est déjà excellent, renvoie-le quasi inchangé.`;
 
+// Passe NARRATIF : l'IA n'invente AUCUNE structure ni chiffre ; elle écrit l'analyse et choisit l'ambiance visuelle.
+const NARRATIVE_SYSTEM = (activity: string) => `Tu es un ANALYSTE FINANCIER SENIOR / conseiller pour ce client "${activity}". On te donne les CHIFFRES du mois et la liste des PAGES d'un rapport déjà construit. Ta mission : écrire l'ANALYSE qui donne de la valeur, et choisir l'ambiance visuelle.
+- N'invente AUCUN chiffre : tu peux calculer des ratios/écarts simples à partir des valeurs fournies et les interpréter.
+- SYNTHÈSE (3-5 phrases) : la lecture du mois pour un dirigeant — performance, ce qui va / ne va pas, et l'enjeu principal. Concrète, chiffrée, sans jargon.
+- INSIGHTS : pour CHAQUE page (par index), 1 analyse = constat chiffré → interprétation/cause plausible → recommandation ou point de vigilance. Mobilise les standards du secteur "${activity}" (ex. e-commerce : conversion saine ~2-3 %, ROAS, poids de la pub dans le CA, taux de retour, part de nouveaux clients vs fidélisation, marge après COGS/pub/PSP).
+- TONE : good (point fort), warn (dérive/risque), info (lecture neutre).
+- THÈME : choisis un "mood" adapté à l'univers ${activity} (ne définis PAS de couleurs/police, elles viennent de la marque) et des icônes par KPI si utile.
+Réponds UNIQUEMENT en JSON : {"theme":{"mood":"...","icons":{}},"synthese":"...","insights":[{"page":0,"title":"...","text":"...","tone":"good|warn|info"}, ...]}`;
+
 type Row = { id?: string; label?: string; value?: unknown; unit?: string; type?: string; change_pct?: number };
 const idVal = (d: { sections?: { rows?: Row[] }[] } | null | undefined): Record<string, number> => {
   const m: Record<string, number> = {};
@@ -113,28 +122,130 @@ const idVal = (d: { sections?: { rows?: Row[] }[] } | null | undefined): Record<
 const shortMonth = (p: string) => { try { return new Date(p).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }); } catch { return p.slice(0, 7); } };
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
-function defaultPlan(sections: { label?: string; rows: Row[] }[], hasHistory: boolean): DashPlan {
-  const totals = sections.flatMap((s) => s.rows.filter((r) => r.type === "total" || r.id === "ca").map((r) => r.id!)).filter(Boolean);
-  const withChange = sections.flatMap((s) => s.rows.filter((r) => r.change_pct != null && r.id).map((r) => r.id!));
-  const overview: Widget[] = [{ type: "kpi_row", items: totals.slice(0, 6).map((id) => ({ metric: id })) }];
-  if (hasHistory) overview.push({ type: "line", title: "Tendance des principaux soldes", metrics: totals.slice(0, 4) });
-  if (totals.length >= 2) overview.push({ type: "bar", title: "Principaux soldes", metrics: totals.slice(0, 6) });
-  if (withChange.length >= 2) overview.push({ type: "diverging", title: "Variations vs M-1", metrics: withChange.slice(0, 8) });
-  if (totals.length >= 3) overview.push({ type: "radar", title: "Profil financier", metrics: totals.slice(0, 6) });
-  const pages: DashPlan["pages"] = [{ title: "Vue d'ensemble", widgets: overview }];
-  // Rentabilité : sankey/cascade P&L + structure des charges (sans dupliquer la vue d'ensemble).
-  const profit: Widget[] = [{ type: "flow", title: "Du chiffre d'affaires au résultat" }];
-  if (totals.length >= 2) profit.push({ type: "waterfall", title: "Cascade du résultat", metrics: totals.slice(0, 5) });
-  const charges = sections.find((s) => /charge|opex|exploit/i.test(s.label ?? ""));
-  if (charges) {
-    const cids = charges.rows.filter((r) => typeof r.value === "number" && (r.value as number) > 0 && r.id).map((r) => r.id!);
-    if (cids.length >= 2) profit.push({ type: "donut", title: "Structure des charges", metrics: cids.slice(0, 6) });
+// ───────────────────────────────────────────────────────────────────────────
+// MOTEUR DÉTERMINISTE : on NE laisse PAS l'IA composer la structure (elle propose des graphes
+// dont la donnée n'existe pas → rendu vide). On construit un dashboard RICHE et 100 % rendable
+// à partir des données réelles ; l'IA n'ajoute que le NARRATIF. Un validateur supprime tout
+// widget qui se rendrait à vide (mêmes conditions que le moteur de rendu).
+// ───────────────────────────────────────────────────────────────────────────
+type Sec = { label?: string; rows: Row[] };
+type Avail = { ids: Set<string>; pos: Set<string>; change: Set<string>; brk: Set<string>; tgt: Set<string>; months: number };
+
+function availability(sections: Sec[], months: number, breakdownKeys: string[], targetIds: string[]): Avail {
+  const ids = new Set<string>(), pos = new Set<string>(), change = new Set<string>();
+  for (const s of sections) for (const r of s.rows) {
+    if (r.id && typeof r.value === "number") { ids.add(r.id); if ((r.value as number) > 0) pos.add(r.id); if (r.change_pct != null) change.add(r.id); }
   }
-  if (profit.length >= 2) pages.push({ title: "Rentabilité", widgets: profit });
-  // Une SEULE page de détail comptable : une table par section (données différentes, pas de répétition de graphes).
-  const detail: Widget[] = sections.map((s) => ({ type: "table" as const, title: s.label, metrics: s.rows.map((r) => r.id!).filter(Boolean) })).filter((w) => w.metrics.length);
-  if (detail.length) pages.push({ title: "Détail comptable", widgets: detail });
+  return { ids, pos, change, brk: new Set(breakdownKeys), tgt: new Set(targetIds), months };
+}
+
+// VRAI si le widget produira un rendu non vide (miroir des conditions de dashboardRender).
+function renders(w: Widget, a: Avail): boolean {
+  const m = w.metrics ?? [];
+  const id = (x: string) => a.ids.has(x);
+  const some = (n = 1) => m.filter(id).length >= n;
+  switch (w.type) {
+    case "kpi_row": return (w.items?.map((i) => i.metric) ?? m).some(id);
+    case "bar": return some(1);
+    case "table": return some(1) || !!(w.rows && w.rows.length);
+    case "donut": return m.filter((x) => a.pos.has(x)).length >= 2;
+    case "funnel": return some(2);
+    case "waterfall": return some(2);
+    case "flow": return id("ca") && id("marge_brute") && id("ebitda");
+    case "radar": return some(3) && (m.some((x) => a.tgt.has(x)) || m.some((x) => a.change.has(x)));
+    case "diverging": return m.filter((x) => a.change.has(x)).length >= 2;
+    case "comparison": return m.some((x) => a.change.has(x));
+    case "gauge": return !!m[0] && a.tgt.has(m[0]);
+    case "gauge_grid": case "bullet": case "rings": return m.some((x) => a.tgt.has(x));
+    case "line": case "area": case "trend_grid": return some(1) && a.months >= 2;
+    case "stacked": case "stacked_area": case "combo": return some(2) && a.months >= 2;
+    case "river": return some(2) && a.months >= 3;
+    case "slope": return m.filter((x) => a.change.has(x)).length >= 2;
+    case "matrix": return some(2) && a.months >= 3;
+    case "ranking": case "map": case "treemap": case "rose": case "polar":
+    case "sunburst": case "pictorial": case "lollipop": case "share": case "histogram": case "calendar":
+      return !!w.breakdown && a.brk.has(w.breakdown);
+    case "callout": return !!(w.text && w.text.trim());
+    default: return false;
+  }
+}
+
+function buildPlan(sections: Sec[], a: Avail): DashPlan {
+  const id = (x: string) => a.ids.has(x);
+  const pick = (...arr: string[]) => arr.filter(id);
+  const sec = (re: RegExp) => sections.find((s) => re.test(s.label ?? ""));
+  const secIds = (re: RegExp) => (sec(re)?.rows.map((r) => r.id!).filter(Boolean)) ?? [];
+  const W = (w: Widget) => w;
+  const pages: DashPlan["pages"] = [];
+
+  // 1) VUE D'ENSEMBLE — la photo du mois : KPIs clés + P&L (sankey/cascade) + soldes.
+  const ov: Widget[] = [];
+  const kpisOv = pick("ca", "resultat_net", "ebitda", "marge_brute", "cash_end", "orders", "aov", "roas").slice(0, 6);
+  if (kpisOv.length) ov.push(W({ type: "kpi_row", items: kpisOv.map((m) => ({ metric: m })) }));
+  if (id("ca") && id("marge_brute") && id("ebitda")) ov.push(W({ type: "flow", title: "Du chiffre d'affaires au résultat" }));
+  const chain = pick("ca", "marge_brute", "ebitda", "resultat_net");
+  if (chain.length >= 2) ov.push(W({ type: "waterfall", title: "Cascade du résultat", metrics: chain }));
+  const soldes = pick("ca", "marge_brute", "total_opex", "ebitda", "resultat_net");
+  if (soldes.length >= 2) ov.push(W({ type: "bar", title: "Principaux soldes", metrics: soldes }));
+  if (ov.length >= 2) pages.push({ title: "Vue d'ensemble", widgets: ov });
+
+  // 2) ACQUISITION & CONVERSION (e-commerce) — entonnoir + publicité.
+  const acq: Widget[] = [];
+  const kAcq = pick("sessions", "orders", "conversion_rate", "cac", "roas", "aov").slice(0, 6);
+  if (kAcq.length) acq.push(W({ type: "kpi_row", items: kAcq.map((m) => ({ metric: m })) }));
+  const fn = pick("sessions", "add_to_carts", "orders");
+  if (fn.length >= 2) acq.push(W({ type: "funnel", title: "Entonnoir de conversion", metrics: fn }));
+  const pub = pick("ads_total", "ads_google", "new_customers", "cac", "cpa_order");
+  if (pub.length >= 2) acq.push(W({ type: "bar", title: "Acquisition & publicité", metrics: pub }));
+  const trafIds = [...secIds(/trafic|conversion/i), ...secIds(/acquisition|publicit/i)];
+  if (trafIds.length) acq.push(W({ type: "table", title: "Trafic, conversion & acquisition", metrics: trafIds }));
+  if (acq.length >= 3) pages.push({ title: "Acquisition & conversion", widgets: acq });
+
+  // 3) RENTABILITÉ & CHARGES — marges + structure des coûts.
+  const prof: Widget[] = [];
+  const kProf = pick("marge_brute", "taux_marge_brute", "ebitda", "marge_ebitda", "resultat_net", "marge_nette").slice(0, 6);
+  if (kProf.length) prof.push(W({ type: "kpi_row", items: kProf.map((m) => ({ metric: m })) }));
+  const charges = pick("cogs", "payment_fees", "platform_fees", "ads_total", "other_opex").filter((x) => a.pos.has(x));
+  if (charges.length >= 2) prof.push(W({ type: "donut", title: "Structure des charges", metrics: charges }));
+  const tauxIds = pick("taux_marge_brute", "marge_ebitda", "marge_nette");
+  if (tauxIds.length >= 2) prof.push(W({ type: "bar", title: "Taux de marge (%)", metrics: tauxIds }));
+  const resIds = secIds(/résultat|resultat|marge|rentab/i);
+  if (resIds.length) prof.push(W({ type: "table", title: "Compte de résultat", metrics: resIds }));
+  if (prof.length >= 3) pages.push({ title: "Rentabilité & charges", widgets: prof });
+
+  // 4) COMMANDES, CLIENTS & TRÉSORERIE.
+  const ops: Widget[] = [];
+  const kOps = pick("orders", "units", "aov", "total_customers", "repeat_rate", "cash_end").slice(0, 6);
+  if (kOps.length) ops.push(W({ type: "kpi_row", items: kOps.map((m) => ({ metric: m })) }));
+  const cmd = pick("gross_sales", "refunds", "orders", "units");
+  if (cmd.length >= 2) ops.push(W({ type: "bar", title: "Commandes & retours", metrics: cmd }));
+  const cli = pick("new_customers", "total_customers", "returning_customers");
+  if (cli.length >= 2) ops.push(W({ type: "bar", title: "Clients", metrics: cli }));
+  const tre = pick("cash_start", "cash_end", "cash_variation");
+  if (tre.length >= 2) ops.push(W({ type: "bar", title: "Trésorerie", metrics: tre }));
+  if (ops.length >= 3) pages.push({ title: "Commandes, clients & trésorerie", widgets: ops });
+
+  // FILET : si peu de pages e-commerce (autre métier), garantir une structure générique riche.
+  if (pages.length < 2) {
+    const generic: Widget[] = [];
+    const allIds = [...a.ids];
+    if (allIds.length) generic.push(W({ type: "kpi_row", items: allIds.slice(0, 6).map((m) => ({ metric: m })) }));
+    if (chain.length >= 2) generic.push(W({ type: "waterfall", title: "Cascade du résultat", metrics: chain }));
+    if (soldes.length >= 2) generic.push(W({ type: "bar", title: "Principaux soldes", metrics: soldes }));
+    if (generic.length >= 2 && !pages.length) pages.push({ title: "Vue d'ensemble", widgets: generic });
+    const detail: Widget[] = sections.map((s) => W({ type: "table", title: s.label, metrics: s.rows.map((r) => r.id!).filter(Boolean) })).filter((w) => (w.metrics?.length ?? 0) > 0);
+    if (detail.length) pages.push({ title: "Détail", widgets: detail });
+  }
   return { pages };
+}
+
+// Supprime tout widget non rendable ; garde les pages à ≥2 widgets ; reconstruit si tout s'effondre.
+function validatePlan(plan: DashPlan, a: Avail, sections: Sec[]): DashPlan {
+  const pages = (plan.pages ?? [])
+    .map((p) => ({ ...p, widgets: (p.widgets ?? []).filter((w) => renders(w, a)) }))
+    .filter((p) => p.widgets.length >= 2);
+  if (!pages.length) return buildPlan(sections, a);
+  return { pages, theme: plan.theme };
 }
 
 Deno.serve(async (req) => {
@@ -258,46 +369,37 @@ Deno.serve(async (req) => {
     // dépasser le délai de la passerelle. La fonction répond tout de suite ; le cockpit recharge
     // dès que la nouvelle version apparaît en base.
     const produce = async () => {
-      // Passe IA : composer le plan (Opus, relais Sonnet si timeout).
-      let plan: DashPlan | null = null;
+      // 1) STRUCTURE DÉTERMINISTE : construite à partir des données réelles → 100 % rendable, jamais vide.
+      const a = availability(sections, history.months.length, Object.keys(breakdowns ?? {}), Object.keys(targets ?? {}));
+      let plan = buildPlan(sections, a);
+
+      // 2) NARRATIF (IA) : synthèse + une analyse par page + ambiance (mood). Aucune structure ni chiffre inventé.
+      let theme: Record<string, unknown> = (prevTheme as Record<string, unknown>) ?? {};
       try {
+        const narrMsg = [{ role: "user" as const, content:
+          `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
+          `CHIFFRES DU MOIS (id, libellé, valeur) :\n${metricsText}\n\n` +
+          `PAGES DU RAPPORT (index → titre) :\n${plan.pages.map((p, i) => `${i} — ${p.title}`).join("\n")}\n\n` +
+          (guidance ? `CONSIGNES CLIENT (à intégrer) :\n${guidance}\n\n` : "") +
+          `Rédige la synthèse d'ouverture et UNE analyse (insight) par page (champ "page" = index ci-dessus).` }];
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 70_000);
         let raw: string;
-        try {
-          const ctrl = new AbortController();
-          const timer = setTimeout(() => ctrl.abort(), 80_000);
-          try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9, signal: ctrl.signal })).text; }
-          finally { clearTimeout(timer); }
-        } catch (e) {
-          console.warn("plan Opus KO/timeout → relais Sonnet:", e instanceof Error ? e.message : String(e));
-          raw = (await callAnthropic({ model: MODELS.fast, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9 })).text;
+        try { raw = (await callAnthropic({ model: MODELS.quality, system: NARRATIVE_SYSTEM(activity), messages: narrMsg, max_tokens: 3000, temperature: 0.5, signal: ctrl.signal })).text; }
+        finally { clearTimeout(timer); }
+        const n = extractJson<{ theme?: Record<string, unknown>; synthese?: string; insights?: { page?: number; title?: string; text?: string; tone?: string }[] }>(raw);
+        if (n.theme && Object.keys(n.theme).length) theme = { ...theme, ...n.theme, icons: { ...(theme.icons as object ?? {}), ...((n.theme.icons as object) ?? {}) } };
+        if (n.synthese && plan.pages[0]) plan.pages[0].widgets.unshift({ type: "callout", title: "Synthèse du mois", text: n.synthese, tone: "info" } as Widget);
+        for (const ins of (n.insights ?? [])) {
+          const pi = typeof ins.page === "number" ? ins.page : -1;
+          if (ins.text && plan.pages[pi]) plan.pages[pi].widgets.push({ type: "callout", title: ins.title, text: ins.text, tone: (["good", "warn", "info"].includes(ins.tone ?? "") ? ins.tone : "info") as "good" | "warn" | "info" } as Widget);
         }
-        plan = extractJson<DashPlan>(raw);
-      } catch (e) { console.error("plan:", e); }
-      if (!plan || !Array.isArray(plan.pages) || !plan.pages.length) plan = defaultPlan(sections, history.months.length > 1);
+      } catch (e) { console.warn("narratif KO (dashboard sans analyse):", e instanceof Error ? e.message : String(e)); }
 
-      // 2e passe — RELECTURE : un « directeur de l'analyse » durcit le plan (anti-répétition, narratif, cohérence).
-      try {
-        const validIds = Object.keys(metrics);
-        const reviewMsg = [{ role: "user" as const, content:
-          `Activité : ${activity}. Mois : ${period}.\n\n` +
-          `IDS VALIDES (métriques) : ${validIds.join(", ") || "aucun"}.\n` +
-          `BREAKDOWNS VALIDES : ${breakdowns && Object.keys(breakdowns).length ? Object.keys(breakdowns).join(", ") : "aucun"}.\n` +
-          `CIBLES VALIDES : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n` +
-          `HISTORIQUE : ${history.months.length} mois.\n\n` +
-          `DONNÉES (id, valeur, variation) :\n${metricsText}\n\n` +
-          `PLAN À RELIRE ET AMÉLIORER :\n${JSON.stringify({ pages: plan.pages })}` }];
-        const ctrl2 = new AbortController();
-        const timer2 = setTimeout(() => ctrl2.abort(), 45_000);
-        let reviewRaw: string;
-        try { reviewRaw = (await callAnthropic({ model: MODELS.fast, system: REVIEW_SYSTEM(activity), messages: reviewMsg, max_tokens: 4000, temperature: 0.3, signal: ctrl2.signal })).text; }
-        finally { clearTimeout(timer2); }
-        const reviewed = extractJson<DashPlan>(reviewRaw);
-        if (reviewed && Array.isArray(reviewed.pages) && reviewed.pages.length) {
-          plan = { pages: reviewed.pages, theme: plan.theme };
-        }
-      } catch (e) { console.warn("relecture KO (on garde le plan initial):", e instanceof Error ? e.message : String(e)); }
+      // 3) FILET FINAL : supprime tout widget qui se rendrait vide.
+      plan = validatePlan(plan, a, sections);
+      if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
-      const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
       const html = renderDashboard(
         { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
         plan,
@@ -307,7 +409,7 @@ Deno.serve(async (req) => {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });
       await admin.from("dashboard_status_history").insert({
-        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré par l'IA (plan + rendu)",
+        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré (structure déterministe + analyse IA)",
       });
       return saved;
     };
