@@ -29,12 +29,11 @@ WIDGETS (JSON) :
 - {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
-THÈME VISUEL — choisis AUSSI un thème PREMIUM dans la bibliothèque, adapté à l'UNIVERS du client (secteur, marque, ton) :
-- mood (preset) : vivid | aurora | ocean | sunset | forest | noir | neon | royal | slate | corporate | pastel | editorial | glass | minimal | dark
-  Exemples : boutique sport/streetwear → vivid/aurora ; food/artisan → sunset/forest ; luxe/bijoux → noir/royal ; SaaS/tech → glass/neon ; finance/cabinet → slate/royal/corporate ; bien-être/cosmétique → pastel ; média/marque éditoriale → editorial.
-- tu peux affiner : primary/accent (hex, pars de la marque si fournie), palette (3-6 hex), background (soft|plain|gradient|dark|mesh|glass), header (gradient|solid|dark|minimal|band), kpi (icon|accent|gradient|plain|glass), googleFont (Inter|Sora|Manrope|Plus Jakarta Sans|DM Sans|Space Grotesk|Fraunces), radius.
+THÈME VISUEL — choisis le "mood" (TRAITEMENT visuel) adapté à l'UNIVERS du client. IMPORTANT : les COULEURS et la POLICE viennent AUTOMATIQUEMENT de la marque/du site — ne les définis PAS (pas de primary/accent/palette/font). Le mood ne change que le style (fond, en-tête, tuiles), pas les couleurs.
+- mood : vivid | aurora | ocean | sunset | forest | noir | neon | royal | slate | corporate | pastel | editorial | glass | minimal | dark
+  Exemples : sport/streetwear → vivid/aurora ; food/artisan → sunset/forest ; luxe/bijoux → noir/royal ; SaaS/tech → glass/neon ; finance/cabinet → slate/corporate ; cosmétique/bien-être → pastel ; média → editorial.
 - icons : map { id_metrique: nom } parmi banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, trophy, heart
-Le plus souvent, choisir un bon "mood" suffit (le preset gère palette/fond/police). Si un THÈME du mois précédent est fourni, GARDE-le (cohérence dans le temps), sauf consigne contraire.
+Si un THÈME du mois précédent est fourni, GARDE-le (cohérence), sauf consigne contraire.
 
 Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}], "theme":{ "mood":"...", "icons":{ } }}`;
 

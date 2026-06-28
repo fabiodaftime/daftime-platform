@@ -26,6 +26,32 @@ export interface ResolvedTheme {
 
 const VIVID = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444", "#14b8a6"];
 
+// ---- palette de graphes DÉRIVÉE des couleurs de marque (les couleurs restent celles du site) ----
+function hexToHsl(hex: string): [number, number, number] {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return [230, 0.5, 0.45];
+  const n = parseInt(m[1], 16); const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0; const l = (mx + mn) / 2;
+  const d = mx - mn; const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  if (d !== 0) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, s, l];
+}
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0]; else if (h < 120) [r, g, b] = [x, c, 0]; else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c]; else if (h < 300) [r, g, b] = [x, 0, c]; else [r, g, b] = [c, 0, x];
+  const to = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+// Génère une palette cohérente ancrée sur primary + accent (rotations de teinte, S/L lisibles).
+export function genPalette(primary: string, accent: string): string[] {
+  const [h, s, l] = hexToHsl(primary);
+  const S = Math.min(0.78, Math.max(0.45, s)), L = Math.min(0.6, Math.max(0.4, l));
+  const rot = (d: number) => hslToHex((h + d + 360) % 360, S, L);
+  return [primary, accent, rot(38), rot(-38), rot(85), rot(165)];
+}
+
 // Bibliothèque de thèmes premium. Chaque preset = ambiance complète (l'IA choisit selon le client).
 type Preset = Partial<Omit<Theme, "mood">>;
 export const PRESETS: Record<string, Preset> = {
@@ -55,9 +81,13 @@ export function resolveTheme(brand: Record<string, any> | null | undefined, t: T
   const accent = t.accent ?? b.colors?.accent ?? b.accent ?? p.accent ?? "#D6D303";
   const background = (t.background ?? p.background ?? "soft") as string;
   const dark = background === "dark";
-  const palette = (t.palette && t.palette.length) ? t.palette : (p.palette ?? VIVID);
-  const googleFont = t.googleFont ?? p.googleFont;
-  const stack = t.font ?? (googleFont ? `'${googleFont}', ` : "") + (b.typography?.body ?? b.font ?? "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif");
+  // Couleurs = marque. La palette des graphes est DÉRIVÉE de primary/accent (pas du preset),
+  // sauf si l'utilisateur impose une palette explicite (t.palette).
+  const palette = (t.palette && t.palette.length) ? t.palette : genPalette(primary, accent);
+  // Police = marque (site). Le thème ne la change QUE si explicitement demandé (t.font / t.googleFont).
+  const brandFont = b.typography?.body ?? b.font;
+  const googleFont = t.googleFont ?? (b as { googleFont?: string }).googleFont ?? b.typography?.googleFont;
+  const stack = t.font ?? brandFont ?? ((googleFont ? `'${googleFont}', ` : "") + "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif");
   const bgColor = t.bgColor ?? p.bgColor;
   return {
     mood, primary, accent, palette, background,

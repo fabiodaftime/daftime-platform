@@ -22,7 +22,8 @@ Champs du thème :
 - googleFont : Inter | Sora | Manrope | Plus Jakarta Sans | DM Sans | Space Grotesk | Fraunces
 - radius : nombre, density : "comfortable" | "compact"
 - icons : map { id_metrique: nom } parmi : banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, trophy, heart, circle
-Si l'utilisateur évoque une ambiance (« plus luxe », « plus sombre », « plus fun »), change de "mood" vers le preset adéquat. Renvoie le thème COMPLET mis à jour (reprends les valeurs actuelles pour ce qui n'est pas modifié).
+RÈGLE COULEURS/POLICE : les couleurs (primary/accent/palette) et la police (font/googleFont) viennent de la MARQUE (site). Ne les change QUE si l'utilisateur le demande EXPLICITEMENT (ex. « mets du rouge », « police plus moderne »). Une demande d'ambiance/mood ou de fond NE doit PAS modifier les couleurs ni la police — laisse ces champs vides dans ta réponse pour qu'ils restent ceux de la marque.
+Si l'utilisateur évoque une ambiance (« plus luxe », « plus sombre », « plus fun »), change seulement le "mood"/background/header/kpi. Renvoie le thème mis à jour (reprends les valeurs actuelles non modifiées).
 Réponds UNIQUEMENT en JSON : { "theme": { ... }, "summary": "ce qui a changé en une phrase" }`;
 
 const idVal = (sections: { rows?: { id?: string; label?: string; value?: unknown; unit?: string; change_pct?: number }[] }[]): Record<string, Metric> => {
