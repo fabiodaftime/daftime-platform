@@ -162,8 +162,12 @@ function renders(w: Widget, a: Avail): boolean {
     case "river": return some(2) && a.months >= 3;
     case "slope": return m.filter((x) => a.change.has(x)).length >= 2;
     case "matrix": return some(2) && a.months >= 3;
-    case "ranking": case "map": case "treemap": case "rose": case "polar":
-    case "sunburst": case "pictorial": case "lollipop": case "share": case "histogram": case "calendar":
+    // Répartitions utilisables AUSSI à partir d'une liste de métriques (pas seulement un breakdown nommé).
+    case "ranking": case "polar": case "pictorial": case "lollipop":
+      return (!!w.breakdown && a.brk.has(w.breakdown)) || some(2);
+    case "treemap": case "rose": case "share":
+      return (!!w.breakdown && a.brk.has(w.breakdown)) || m.filter((x) => a.pos.has(x)).length >= 2;
+    case "map": case "sunburst": case "histogram": case "calendar":
       return !!w.breakdown && a.brk.has(w.breakdown);
     case "callout": return !!(w.text && w.text.trim());
     default: return false;
@@ -245,6 +249,44 @@ function validatePlan(plan: DashPlan, a: Avail, sections: Sec[]): DashPlan {
     .map((p) => ({ ...p, widgets: (p.widgets ?? []).filter((w) => renders(w, a)) }))
     .filter((p) => p.widgets.length >= 2);
   if (!pages.length) return buildPlan(sections, a);
+  return { pages, theme: plan.theme };
+}
+
+// Liste lisible des types de widgets qui afficheront des données ce mois-ci (selon la donnée réelle).
+function availableTypes(a: Avail): string {
+  const t = ["kpi_row", "bar", "donut", "table", "funnel", "waterfall", "callout", "treemap", "rose", "polar", "pictorial", "lollipop", "share", "ranking"];
+  if (a.ids.has("ca") && a.ids.has("marge_brute") && a.ids.has("ebitda")) t.push("flow");
+  if (a.months >= 2) t.push("line", "area", "stacked", "stacked_area", "combo", "trend_grid");
+  if (a.months >= 3) t.push("river", "matrix");
+  if (a.change.size) t.push("diverging", "comparison");
+  if (a.change.size >= 2) t.push("slope");
+  if (a.tgt.size) t.push("gauge", "gauge_grid", "bullet", "rings");
+  if (a.change.size || a.tgt.size) t.push("radar");
+  if (a.brk.size) t.push("map", "calendar", "histogram", "sunburst");
+  return t.join(", ");
+}
+
+// FILET DE DENSITÉ : garantit ≥ `min` graphes (hors KPI/callout/table) par page en puisant dans
+// le pool déterministe (chaque graphe n'est utilisé qu'une fois pour éviter la répétition).
+function ensureDensity(plan: DashPlan, a: Avail, sections: Sec[], min = 4): DashPlan {
+  const isGraph = (w: Widget) => !["kpi_row", "callout", "table"].includes(w.type);
+  const sig = (w: Widget) => `${w.type}:${(w.metrics ?? []).slice().sort().join(",") || w.breakdown || ""}`;
+  const pool = buildPlan(sections, a).pages.flatMap((p) => p.widgets).filter((w) => isGraph(w) && renders(w, a));
+  const used = new Set<string>(plan.pages.flatMap((p) => p.widgets.map(sig)));
+  const pages = plan.pages.map((p) => {
+    const widgets = [...p.widgets];
+    let g = widgets.filter(isGraph).length;
+    for (const w of pool) {
+      if (g >= min) break;
+      const s = sig(w);
+      if (used.has(s)) continue;
+      // insère le graphe après le kpi_row si présent, sinon en tête
+      const at = widgets.findIndex((x) => x.type === "kpi_row");
+      widgets.splice(at >= 0 ? at + 1 : 0, 0, w);
+      used.add(s); g++;
+    }
+    return { ...p, widgets };
+  });
   return { pages, theme: plan.theme };
 }
 
@@ -369,35 +411,39 @@ Deno.serve(async (req) => {
     // dépasser le délai de la passerelle. La fonction répond tout de suite ; le cockpit recharge
     // dès que la nouvelle version apparaît en base.
     const produce = async () => {
-      // 1) STRUCTURE DÉTERMINISTE : construite à partir des données réelles → 100 % rendable, jamais vide.
       const a = availability(sections, history.months.length, Object.keys(breakdowns ?? {}), Object.keys(targets ?? {}));
-      let plan = buildPlan(sections, a);
+      const avTypes = availableTypes(a);
 
-      // 2) NARRATIF (IA) : synthèse + une analyse par page + ambiance (mood). Aucune structure ni chiffre inventé.
+      // 1) COMPOSITION (IA) : l'IA conçoit la structure ET l'analyse, MAIS uniquement avec les types
+      //    DISPONIBLES (calculés depuis la donnée) → plus de graphe vide. Riche : ≥6 graphes/page.
+      let plan: DashPlan | null = null;
       let theme: Record<string, unknown> = (prevTheme as Record<string, unknown>) ?? {};
+      const composeMsg = [{ role: "user" as const, content:
+        `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
+        `DONNÉES DISPONIBLES (par section — id, libellé, valeur, variation) :\n${metricsText}\n\n` +
+        `BREAKDOWNS : ${breakdowns && Object.keys(breakdowns).length ? Object.entries(breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun"}.\n` +
+        `CIBLES : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n\n` +
+        `⛔ TYPES DE GRAPHES AUTORISÉS CE MOIS (les seuls qui afficheront des données — N'EN UTILISE AUCUN AUTRE) :\n${avTypes}\n` +
+        `Les répartitions (treemap, rose, polar, pictorial, lollipop, share, ranking) acceptent une LISTE DE MÉTRIQUES (champ "metrics"), pas seulement un breakdown : sers-t'en pour faire parler les ratios (AOV, ROAS, CAC, CPA, taux…) et les postes (charges, canaux).\n\n` +
+        `EXIGENCES : 3 à 4 pages à ANGLES DISTINCTS ; CHAQUE page = un kpi_row + AU MOINS 6 graphes qui afficheront vraiment des données + 1 callout d'analyse. EXPLOITE toute la richesse (unit economics, acquisition, conversion, LTV/fidélisation, rentabilité, trésorerie) — pas seulement CA/marge. Varie les types.\n` +
+        (guidance ? `\nCONSIGNES CLIENT (prioritaires) :\n${guidance}\n` : "") +
+        (prevTheme ? `\nTHÈME À CONSERVER : ${JSON.stringify(prevTheme)}\n` : "") +
+        `\nMARQUE : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie"}` }];
       try {
-        const narrMsg = [{ role: "user" as const, content:
-          `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
-          `CHIFFRES DU MOIS (id, libellé, valeur) :\n${metricsText}\n\n` +
-          `PAGES DU RAPPORT (index → titre) :\n${plan.pages.map((p, i) => `${i} — ${p.title}`).join("\n")}\n\n` +
-          (guidance ? `CONSIGNES CLIENT (à intégrer) :\n${guidance}\n\n` : "") +
-          `Rédige la synthèse d'ouverture et UNE analyse (insight) par page (champ "page" = index ci-dessus).` }];
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 70_000);
+        const timer = setTimeout(() => ctrl.abort(), 80_000);
         let raw: string;
-        try { raw = (await callAnthropic({ model: MODELS.quality, system: NARRATIVE_SYSTEM(activity), messages: narrMsg, max_tokens: 3000, temperature: 0.5, signal: ctrl.signal })).text; }
+        try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: composeMsg, max_tokens: 5000, temperature: 0.7, signal: ctrl.signal })).text; }
         finally { clearTimeout(timer); }
-        const n = extractJson<{ theme?: Record<string, unknown>; synthese?: string; insights?: { page?: number; title?: string; text?: string; tone?: string }[] }>(raw);
-        if (n.theme && Object.keys(n.theme).length) theme = { ...theme, ...n.theme, icons: { ...(theme.icons as object ?? {}), ...((n.theme.icons as object) ?? {}) } };
-        if (n.synthese && plan.pages[0]) plan.pages[0].widgets.unshift({ type: "callout", title: "Synthèse du mois", text: n.synthese, tone: "info" } as Widget);
-        for (const ins of (n.insights ?? [])) {
-          const pi = typeof ins.page === "number" ? ins.page : -1;
-          if (ins.text && plan.pages[pi]) plan.pages[pi].widgets.push({ type: "callout", title: ins.title, text: ins.text, tone: (["good", "warn", "info"].includes(ins.tone ?? "") ? ins.tone : "info") as "good" | "warn" | "info" } as Widget);
-        }
-      } catch (e) { console.warn("narratif KO (dashboard sans analyse):", e instanceof Error ? e.message : String(e)); }
+        const parsed = extractJson<DashPlan>(raw);
+        if (parsed && Array.isArray(parsed.pages) && parsed.pages.length) plan = parsed;
+        if (parsed?.theme && Object.keys(parsed.theme).length) theme = { ...theme, ...parsed.theme, icons: { ...(theme.icons as object ?? {}), ...((parsed.theme as { icons?: object }).icons ?? {}) } };
+      } catch (e) { console.warn("compose IA KO → structure déterministe:", e instanceof Error ? e.message : String(e)); }
+      if (!plan) plan = buildPlan(sections, a);
 
-      // 3) FILET FINAL : supprime tout widget qui se rendrait vide.
+      // 2) FILETS : on supprime les widgets vides puis on garantit la densité (≥5 graphes/page) via le pool déterministe.
       plan = validatePlan(plan, a, sections);
+      plan = ensureDensity(plan, a, sections, 5);
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
       const html = renderDashboard(
@@ -409,7 +455,7 @@ Deno.serve(async (req) => {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });
       await admin.from("dashboard_status_history").insert({
-        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré (structure déterministe + analyse IA)",
+        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré (composition IA + filets anti-vide/densité)",
       });
       return saved;
     };

@@ -70,6 +70,14 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const hist = (id: string) => ctx.history.series[id]; // série temporelle d'une métrique (ou undefined)
   const lab = (id: string) => ctx.history.labels[id] ?? M[id]?.label ?? id;
   const hasTarget = (id: string) => has(id) && ctx.targets?.[id] != null && isFinite(ctx.targets[id]) && (ctx.targets[id] as number) > 0;
+  // "Répartition" : lignes depuis un breakdown nommé OU directement depuis une liste de métriques (w.metrics).
+  const repRows = (w: Widget, opts?: { positive?: boolean }): { label: string; value: number; unit?: string }[] => {
+    if (w.breakdown && ctx.breakdowns?.[w.breakdown]?.rows?.length) return ctx.breakdowns[w.breakdown].rows;
+    let rows = (w.metrics ?? []).filter(has).map((id) => ({ label: M[id].label, value: M[id].value as number, unit: M[id].unit }));
+    if (opts?.positive) rows = rows.filter((r) => r.value > 0);
+    return rows;
+  };
+  const repLabel = (w: Widget, def: string) => (w.breakdown ? ctx.breakdowns?.[w.breakdown]?.label : undefined) ?? w.title ?? def;
 
   const kpiTile = (id: string, i: number): string => {
     const m = M[id]; const c = col(i);
@@ -155,12 +163,11 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? bk.label)}</div><div class="echart echart-map" id="${id}"></div></div>`;
       }
       case "ranking": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        if (!bk || !bk.rows?.length) return "";
-        const rows = bk.rows.slice(0, 8);
+        const rows = repRows(w).slice(0, 8);
+        if (rows.length < 2) return "";
         const max = Math.max(...rows.map((r) => Math.abs(r.value))) || 1;
         const total = rows.reduce((s, r) => s + r.value, 0) || 1;
-        return `<div class="card"><div class="card-t">${esc(w.title ?? bk.label)}</div><div class="rank">${rows.map((r, i) => {
+        return `<div class="card"><div class="card-t">${esc(repLabel(w, "Classement"))}</div><div class="rank">${rows.map((r, i) => {
           const pct = Math.max(4, Math.round((Math.abs(r.value) / max) * 100));
           const share = Math.round((r.value / total) * 1000) / 10;
           return `<div class="rk-row"><div class="rk-l" title="${esc(r.label)}">${esc(r.label)}</div><div class="rk-track"><div class="rk-bar" style="width:${pct}%;background:${col(i)}"></div></div><div class="rk-v">${esc(fmt(r.value, r.unit ?? "", ctx.currency))} <span class="rk-s">${share}%</span></div></div>`;
@@ -244,11 +251,11 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Profil de performance")} <span class="card-sub">· ${esc(refLabel)}</span></div><div class="echart" id="${id}"></div></div>`;
       }
       case "treemap": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        if (!bk || bk.rows.length < 2) return "";
+        const rows = repRows(w, { positive: true }).slice(0, 12);
+        if (rows.length < 2) return "";
         const id = `ch${cid++}`;
-        charts.push({ id, kind: "treemap", items: bk.rows.slice(0, 12).map((r, i) => ({ name: r.label, value: r.value, color: col(i) })) });
-        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? bk.label)}</div><div class="echart" id="${id}"></div></div>`;
+        charts.push({ id, kind: "treemap", items: rows.map((r, i) => ({ name: r.label, value: Math.abs(r.value), color: col(i) })) });
+        return chCard(id, repLabel(w, "Répartition"));
       }
       case "calendar": {
         const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
@@ -310,20 +317,18 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return chCard(id, w.title ?? "Carte de chaleur des indicateurs");
       }
       case "rose": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        const rows = bk?.rows.filter((r) => r.value > 0).slice(0, 10) ?? [];
+        const rows = repRows(w, { positive: true }).slice(0, 10);
         if (rows.length < 2) return "";
         const id = `ch${cid++}`;
         charts.push({ id, kind: "rose", items: rows.map((r, i) => ({ name: r.label, value: r.value, color: col(i) })) });
-        return chCard(id, w.title ?? bk!.label);
+        return chCard(id, repLabel(w, "Répartition"));
       }
       case "polar": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        const rows = bk?.rows.slice(0, 8) ?? [];
+        const rows = repRows(w).slice(0, 8);
         if (rows.length < 2) return "";
         const id = `ch${cid++}`;
         charts.push({ id, kind: "polarbar", labels: rows.map((r) => r.label), data: rows.map((r) => Math.abs(r.value)), colors: rows.map((_, i) => col(i)), max: (Math.max(...rows.map((r) => Math.abs(r.value))) || 1) * 1.1 });
-        return chCard(id, w.title ?? bk!.label);
+        return chCard(id, repLabel(w, "Classement"));
       }
       case "sunburst": {
         const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
@@ -342,29 +347,26 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return chCard(id, w.title ?? bk.label);
       }
       case "pictorial": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        const rows = bk?.rows.slice(0, 7) ?? [];
+        const rows = repRows(w).slice(0, 7);
         if (rows.length < 2) return "";
         const id = `ch${cid++}`;
         charts.push({ id, kind: "pictorial", labels: rows.map((r) => r.label), data: rows.map((r) => Math.abs(r.value)), colors: rows.map((_, i) => col(i)), max: (Math.max(...rows.map((r) => Math.abs(r.value))) || 1) * 1.15, fmts: rows.map((r) => fmt(r.value, r.unit ?? "", ctx.currency)) });
-        return chCard(id, w.title ?? bk!.label);
+        return chCard(id, repLabel(w, "Comparaison"));
       }
       case "lollipop": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        const rows = bk?.rows.slice(0, 8) ?? [];
+        const rows = repRows(w).slice(0, 8);
         if (rows.length < 2) return "";
         const id = `ch${cid++}`;
         charts.push({ id, kind: "lollipop", labels: rows.map((r) => r.label), data: rows.map((r) => Math.abs(r.value)), colors: rows.map((_, i) => col(i)), max: (Math.max(...rows.map((r) => Math.abs(r.value))) || 1) * 1.15, fmts: rows.map((r) => fmt(r.value, r.unit ?? "", ctx.currency)) });
-        return chCard(id, w.title ?? bk!.label);
+        return chCard(id, repLabel(w, "Classement"));
       }
       case "share": {
-        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
-        const rows = bk?.rows.filter((r) => r.value > 0).slice(0, 8) ?? [];
+        const rows = repRows(w, { positive: true }).slice(0, 8);
         if (rows.length < 2) return "";
         const total = rows.reduce((s, r) => s + r.value, 0) || 1;
         const seg = rows.map((r, i) => `<div class="sh-seg" style="width:${((r.value / total) * 100).toFixed(2)}%;background:${col(i)}" title="${esc(r.label)} : ${esc(fmt(r.value, r.unit ?? "", ctx.currency))}"></div>`).join("");
         const leg = rows.map((r, i) => `<div class="sh-li"><span class="sh-dot" style="background:${col(i)}"></span>${esc(r.label)} <b>${((r.value / total) * 100).toFixed(1)}%</b></div>`).join("");
-        return `<div class="card"><div class="card-t">${esc(w.title ?? bk!.label)}</div><div class="sh-bar">${seg}</div><div class="sh-leg">${leg}</div></div>`;
+        return `<div class="card"><div class="card-t">${esc(repLabel(w, "Répartition"))}</div><div class="sh-bar">${seg}</div><div class="sh-leg">${leg}</div></div>`;
       }
       case "histogram": {
         const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
