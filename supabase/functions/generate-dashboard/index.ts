@@ -29,6 +29,9 @@ WIDGETS (JSON) :
 - {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
 - {"type":"ranking","title":"...","breakdown":"clé"}              // classement (barres horizontales) d'un BREAKDOWN fourni (ex. sales_by_country, sessions_by_country, top_products)
 - {"type":"map","title":"...","breakdown":"clé"}                  // CARTE choroplèthe (monde, intensité par valeur) — idéale pour un breakdown PAR PAYS (sales_by_country / sessions_by_country)
+- {"type":"gauge","title":"...","metrics":["id"]}                 // jauge d'objectif : un indicateur vs sa cible (UNIQUEMENT si une cible existe pour cet id, voir CIBLES)
+- {"type":"stacked","title":"...","metrics":["id", ...]}          // barres empilées dans le temps (ex. répartition des charges par mois) — nécessite l'historique (≥2 mois)
+- {"type":"flow","title":"..."}                                   // sankey du CA au résultat (CA → marge brute/COGS → EBITDA/charges)
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
 THÈME VISUEL — choisis le "mood" (TRAITEMENT visuel) adapté à l'UNIVERS du client. IMPORTANT : les COULEURS et la POLICE viennent AUTOMATIQUEMENT de la marque/du site — ne les définis PAS (pas de primary/accent/palette/font). Le mood ne change que le style (fond, en-tête, tuiles), pas les couleurs.
@@ -122,9 +125,21 @@ Deno.serve(async (req) => {
     for (const s of sections) for (const r of s.rows) {
       if (r.id && !seen.has(r.id) && (r.type === "total" || r.id === "ca" || r.id === "mrr")) { seen.add(r.id); trend.push({ id: r.id, label: r.label ?? r.id }); }
     }
+    // Séries pour TOUS les indicateurs présents (permet courbes ET barres empilées sur n'importe quel poste).
+    const labelOf: Record<string, string> = {};
+    for (const s of sections) for (const r of s.rows) if (r.id) labelOf[r.id] = r.label ?? r.id;
     const series: Record<string, (number | null)[]> = {};
-    for (const t of trend) series[t.id] = monthsRaw.map((m) => (typeof m.map[t.id] === "number" ? m.map[t.id] : null));
-    const history = { months: monthsRaw.map((m) => shortMonth(m.period)), series, labels: Object.fromEntries(trend.map((t) => [t.id, t.label])) };
+    for (const id of Object.keys(labelOf)) {
+      const arr = monthsRaw.map((m) => (typeof m.map[id] === "number" ? m.map[id] : null));
+      if (arr.some((x) => x != null)) series[id] = arr;
+    }
+    const history = { months: monthsRaw.map((m) => shortMonth(m.period)), series, labels: labelOf };
+
+    // Objectifs (contexte) → cibles des jauges ; à défaut, le mois précédent sert de référence.
+    const { data: ctxRow } = await admin.from("contexts").select("data").eq("client_id", client_id).eq("is_current", true).maybeSingle();
+    const objectives = ((ctxRow?.data as { objectives?: Record<string, number> } | null)?.objectives) ?? {};
+    const targets: Record<string, number> = {};
+    for (const id of Object.keys(labelOf)) { const t = objectives[id] ?? (typeof prevMap[id] === "number" ? prevMap[id] : undefined); if (typeof t === "number" && isFinite(t) && t > 0) targets[id] = t; }
 
     // Carte des indicateurs (pour le rendu).
     const metrics: Record<string, Metric> = {};
@@ -146,7 +161,8 @@ Deno.serve(async (req) => {
       `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
       `DONNÉES DISPONIBLES (id, libellé, valeur, évolution) :\n${metricsText}\n\n` +
       `HISTORIQUE : ${history.months.length} mois (${history.months.join(", ")}). Tendances possibles sur : ${trendText}.\n\n` +
-      `BREAKDOWNS (pour widget "ranking") : ${breakdowns && Object.keys(breakdowns).length ? Object.entries(breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun"}.\n\n` +
+      `BREAKDOWNS (widget "ranking"/"map") : ${breakdowns && Object.keys(breakdowns).length ? Object.entries(breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun"}.\n` +
+      `CIBLES (widget "gauge") : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n\n` +
       `BRIEF MÉTIER :\n${briefText}` +
       `\n\nMARQUE (couleurs/charte si dispo) : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie — choisis une palette adaptée au secteur"}` +
       (prevTheme ? `\n\nTHÈME DU MOIS PRÉCÉDENT — à CONSERVER (cohérence visuelle dans le temps) sauf consigne contraire :\n${JSON.stringify(prevTheme)}` : "") +
@@ -173,12 +189,12 @@ Deno.serve(async (req) => {
     // Thème : composé par l'IA (adapté au client), sinon repris du mois précédent.
     const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
     const html = renderDashboard(
-      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns },
+      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
       plan,
     );
 
-    // On sauvegarde le PLAN + le THÈME + les BREAKDOWNS dans data_json → base de forme/style/data au mois suivant et au restyle.
-    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme, breakdowns };
+    // On sauvegarde le PLAN + le THÈME + les BREAKDOWNS + les CIBLES dans data_json → base de forme/style/data au mois suivant et au restyle.
+    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme, breakdowns, targets };
     const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
       standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
     });

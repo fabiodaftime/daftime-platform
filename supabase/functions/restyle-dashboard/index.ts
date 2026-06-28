@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const { data: dash } = await admin.from("dashboards").select("*").eq("id", dashboard_id).maybeSingle();
     if (!dash) return json({ error: "dashboard introuvable" }, 404);
     const dataJson = ((dash as any).data_json ?? {}) as {
-      client?: string; period?: string; currency?: string; sections?: any[]; history?: any; plan?: { pages?: any[] }; theme?: Theme; breakdowns?: any;
+      client?: string; period?: string; currency?: string; sections?: any[]; history?: any; plan?: { pages?: any[] }; theme?: Theme; breakdowns?: any; targets?: any;
     };
     if (!dataJson.plan?.pages?.length) return json({ error: "ce dashboard n'a pas de plan ré-affichable (régénérez-le d'abord)" }, 409);
 
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
 
     const html = renderDashboard(
       { client: dataJson.client ?? client?.name ?? "", period: dataJson.period ?? (dash as any).period, currency: dataJson.currency ?? client?.currency ?? "EUR",
-        brand: client?.brand as any, theme, metrics, history: dataJson.history ?? { months: [], series: {}, labels: {} }, breakdowns: dataJson.breakdowns },
+        brand: client?.brand as any, theme, metrics, history: dataJson.history ?? { months: [], series: {}, labels: {} }, breakdowns: dataJson.breakdowns, targets: dataJson.targets },
       { pages: dataJson.plan!.pages as any, theme },
     );
 

@@ -13,9 +13,10 @@ export interface RenderCtx {
   metrics: Record<string, Metric>;
   history: { months: string[]; series: Record<string, (number | null)[]>; labels: Record<string, string> };
   breakdowns?: Record<string, Breakdown>;
+  targets?: Record<string, number>;
 }
 export interface Widget {
-  type: "kpi_row" | "line" | "bar" | "donut" | "waterfall" | "table" | "callout" | "funnel" | "ranking" | "map";
+  type: "kpi_row" | "line" | "bar" | "donut" | "waterfall" | "table" | "callout" | "funnel" | "ranking" | "map" | "gauge" | "stacked" | "flow";
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
   text?: string; tone?: "info" | "warn" | "good";
@@ -54,7 +55,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   let cid = 0;
   const M = ctx.metrics;
   const has = (id: string) => M[id] && M[id].value != null;
-  const fullTypes = new Set(["kpi_row", "line", "funnel", "table", "map"]);
+  const fullTypes = new Set(["kpi_row", "line", "funnel", "table", "map", "flow", "stacked"]);
   const col = (i: number) => palette[i % palette.length];
 
   const kpiTile = (id: string, i: number): string => {
@@ -140,6 +141,36 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
           }).join("")
         }</div></div>`;
       }
+      case "gauge": {
+        const id = w.metrics?.[0];
+        if (!id || !has(id)) return "";
+        const target = ctx.targets?.[id];
+        if (target == null || !isFinite(target) || target <= 0) return "";
+        const m = M[id]; const gid = `ch${cid++}`;
+        charts.push({ id: gid, kind: "gauge", value: m.value, target, color: primary, accent, fmt: fmt(m.value, m.unit, ctx.currency), targetFmt: fmt(target, m.unit, ctx.currency) });
+        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? m.label)}</div><div class="echart echart-gauge" id="${gid}"></div></div>`;
+      }
+      case "stacked": {
+        const ids = (w.metrics ?? []).filter((id) => ctx.history.series[id]);
+        if (ids.length < 2 || ctx.history.months.length < 2) return "";
+        const id = `ch${cid++}`;
+        charts.push({ id, kind: "stackbar", labels: ctx.history.months, series: ids.map((mid, i) => ({ name: ctx.history.labels[mid] ?? M[mid]?.label ?? mid, data: ctx.history.series[mid], color: col(i) })) });
+        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Évolution")}</div><div class="echart" id="${id}"></div></div>`;
+      }
+      case "flow": {
+        const v = (id: string) => (has(id) ? (M[id].value as number) : null);
+        const ca = v("ca"), cogs = v("cogs"), marge = v("marge_brute"), opex = v("total_opex"), ebitda = v("ebitda");
+        const nodes: { name: string; itemStyle?: { color: string } }[] = []; const links: { source: string; target: string; value: number }[] = [];
+        const addN = (n: string) => { if (!nodes.find((x) => x.name === n)) nodes.push({ name: n }); };
+        const link = (s: string, t: string, val: number | null) => { if (val && val > 0) { addN(s); addN(t); links.push({ source: s, target: t, value: Math.round(val) }); } };
+        if (ca && marge != null) { link("Chiffre d'affaires", "Marge brute", marge); link("Chiffre d'affaires", "Coût des ventes", cogs); }
+        if (marge && ebitda != null) { link("Marge brute", "EBITDA", ebitda); link("Marge brute", "Charges", opex); }
+        if (links.length < 2) return "";
+        nodes.forEach((n, i) => (n.itemStyle = { color: col(i) }));
+        const id = `ch${cid++}`;
+        charts.push({ id, kind: "sankey", nodes, links });
+        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Du chiffre d'affaires au résultat")}</div><div class="echart echart-map" id="${id}"></div></div>`;
+      }
       case "callout": {
         if (!w.text) return "";
         const tone = w.tone ?? "info";
@@ -182,6 +213,9 @@ function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLin
  if(d.kind==='bar')return{...BASE,animationDuration:800,xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true}},yAxis:{type:'value',...ax},series:[{type:'bar',data:d.data.map((v,i)=>({value:v,itemStyle:{color:d.colors[i],borderRadius:[CS.barRadius,CS.barRadius,0,0],shadowBlur:CS.glow?10:0,shadowColor:d.colors[i]+'66'}})),barMaxWidth:54}]};
  if(d.kind==='pie')return{...BASE,animationDuration:800,tooltip:{...BASE.tooltip,trigger:'item'},legend:{orient:'vertical',right:0,top:'center',icon:'circle',textStyle:{color:MUT}},series:[{type:'pie',radius:['58%','80%'],center:['38%','50%'],avoidLabelOverlap:true,itemStyle:{borderColor:SURF,borderWidth:2,borderRadius:4},label:{show:false},data:d.items.map(it=>({name:it.name,value:it.value,itemStyle:{color:it.color}}))}]};
  if(d.kind==='map')return{tooltip:{trigger:'item',backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'},formatter:function(p){return p.name+(p.value?(': '+Number(p.value).toLocaleString('fr-FR')):'');}},visualMap:{min:0,max:d.max,left:8,bottom:8,calculable:true,inRange:{color:[PRIMARY+'18',PRIMARY+'66',PRIMARY]},textStyle:{color:MUT}},series:[{type:'map',map:'world',roam:false,emphasis:{label:{show:false},itemStyle:{areaColor:${JSON.stringify(accent)}}},itemStyle:{borderColor:GRID,areaColor:DARK?'#1d2236':'#eef0f6'},data:d.items}]};
+ if(d.kind==='gauge')return{series:[{type:'gauge',startAngle:215,endAngle:-35,min:0,max:Math.max(d.target,d.value)||1,progress:{show:true,width:13,roundCap:true,itemStyle:{color:d.color}},axisLine:{lineStyle:{width:13,color:[[1,GRID]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},title:{offsetCenter:[0,'32%'],color:MUT,fontSize:12},detail:{offsetCenter:[0,'-6%'],fontSize:23,fontWeight:'bold',color:INK,formatter:function(){return d.fmt;}},data:[{value:d.value,name:'objectif '+d.targetFmt+(d.target?(' · '+Math.round(d.value/d.target*100)+'%'):'')}]}]};
+ if(d.kind==='stackbar')return{...BASE,animationDuration:800,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'bar',stack:'t',data:s.data,itemStyle:{color:s.color},barMaxWidth:48};})};
+ if(d.kind==='sankey')return{...BASE,tooltip:{trigger:'item',backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'}},series:[{type:'sankey',data:d.nodes,links:d.links,emphasis:{focus:'adjacency'},nodeGap:16,label:{color:INK,fontSize:11},itemStyle:{borderWidth:0},lineStyle:{color:'gradient',opacity:.35,curveness:.5}}]};
  return{};}
 function build(i){if(!window.echarts)return;document.querySelectorAll('.page[data-i="'+i+'"] .echart').forEach(function(el){if(made[el.id])return;var d=CHARTS.find(function(x){return x.id===el.id;});if(!d)return;if(d.kind==='map'&&!(echarts.getMap&&echarts.getMap('world')))return;try{var c=echarts.init(el,null,{renderer:'canvas'});c.setOption(opt(echarts,d));made[el.id]=c;}catch(e){}});}
 window.addEventListener('resize',function(){for(var k in made){try{made[k].resize();}catch(e){}}});
@@ -221,7 +255,7 @@ header.hero .sub{opacity:.82;font-size:14px;margin-top:4px;text-transform:capita
 .glassbg .card,.glassbg .kpi{background:rgba(255,255,255,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,.5)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 2px rgba(20,26,60,.04)}
 .card-t{font-weight:700;font-size:15px;margin-bottom:14px}
-.echart{height:300px;width:100%}.echart-map{height:420px}
+.echart{height:300px;width:100%}.echart-map{height:420px}.echart-gauge{height:250px}
 .tbl{width:100%;border-collapse:collapse;font-size:14px}
 .tbl td{padding:9px 4px;border-bottom:1px solid var(--bd)}.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .tbl tr:last-child td{border-bottom:0}.tbl tr.tot td{font-weight:700;color:var(--ink)}
