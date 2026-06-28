@@ -81,11 +81,11 @@ export function resolveTheme(brand: Record<string, any> | null | undefined, t: T
   const accent = t.accent ?? b.colors?.accent ?? b.accent ?? p.accent ?? "#D6D303";
   const background = (t.background ?? p.background ?? "soft") as string;
   const dark = background === "dark";
-  // Couleurs = marque. La palette des graphes est DÉRIVÉE de primary/accent (pas du preset),
-  // sauf si l'utilisateur impose une palette explicite (t.palette).
-  const palette = (t.palette && t.palette.length) ? t.palette : genPalette(primary, accent);
+  // Couleurs = marque. Priorité : palette explicite > PALETTE DU SITE (extraite) > dérivée de primary/accent.
+  const brandPalette = Array.isArray(b.palette) && b.palette.length >= 3 ? (b.palette as string[]) : undefined;
+  const palette = (t.palette && t.palette.length) ? t.palette : (brandPalette ?? genPalette(primary, accent));
   // Police = marque (site). Le thème ne la change QUE si explicitement demandé (t.font / t.googleFont).
-  const brandFont = b.typography?.body ?? b.font;
+  const brandFont = b.font ?? b.typography?.body ?? (b.fonts?.body ? `'${b.fonts.body}', system-ui, sans-serif` : undefined);
   const googleFont = t.googleFont ?? (b as { googleFont?: string }).googleFont ?? b.typography?.googleFont;
   const stack = t.font ?? brandFont ?? ((googleFont ? `'${googleFont}', ` : "") + "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif");
   const bgColor = t.bgColor ?? p.bgColor;
