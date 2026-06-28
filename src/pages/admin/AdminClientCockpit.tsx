@@ -14,6 +14,7 @@ import { DashboardChat } from '@/components/generic/DashboardChat';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
 import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
+import { extractTextFromFile } from '@/lib/extractText';
 
 const BUCKET = 'client-files';
 
@@ -55,7 +56,17 @@ export default function AdminClientCockpit() {
     'save-sd': 'Enregistrement', recompute: 'Recalcul', status: 'Changement de statut',
     files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données',
     guidance: 'Enregistrement des consignes', ingest: 'Analyse de la transcription',
+    'extract-file': 'Extraction du fichier',
   };
+
+  // Extrait le texte d'un fichier joint (txt/md/docx/pdf) et l'ajoute au champ cible.
+  const attachToField = (file: File | null | undefined, setter: (updater: (prev: string) => string) => void) =>
+    run('extract-file', async () => {
+      if (!file) return;
+      const txt = await extractTextFromFile(file);
+      if (!txt) throw new Error('Aucun texte extrait de ce fichier.');
+      setter((prev) => (prev && prev.trim() ? prev + '\n\n' : '') + txt);
+    });
 
   const run = async (key: string, fn: () => Promise<void>) => {
     const label = OP_LABELS[key] ?? key;
@@ -348,12 +359,12 @@ export default function AdminClientCockpit() {
 
         <Section icon={<BookOpen className="w-4 h-4" />} title="Contexte client"
           action={<Button size="sm" onClick={extractContext} disabled={busy === 'context'}>{busy === 'context' ? 'Extraction…' : 'Extraire le contexte'}</Button>}>
-          <textarea className="w-full h-28 border rounded-md p-2 text-sm" placeholder="Collez ici le contexte (ou importez un .txt/.md)…"
+          <textarea className="w-full h-28 border rounded-md p-2 text-sm" placeholder="Collez ici le contexte (ou joignez un .txt/.md/.docx/.pdf)…"
             value={contextText} onChange={(e) => setContextText(e.target.value)} />
           <label className="inline-block mt-2 text-sm">
-            <input type="file" accept=".txt,.md,text/plain" className="hidden"
-              onChange={async (e) => { const f = e.target.files?.[0]; if (f) setContextText(await f.text()); e.currentTarget.value = ''; }} />
-            <span className="underline cursor-pointer text-muted-foreground">importer un .txt/.md</span>
+            <input type="file" accept=".txt,.md,.docx,.pdf" className="hidden"
+              onChange={(e) => { attachToField(e.target.files?.[0], setContextText); e.currentTarget.value = ''; }} />
+            <span className="underline cursor-pointer text-muted-foreground">{busy === 'extract-file' ? 'Extraction…' : 'joindre un .txt / .md / .docx / .pdf'}</span>
           </label>
           {currentContext && (
             <pre className="mt-3 bg-muted/50 rounded p-3 text-xs overflow-auto max-h-48">{JSON.stringify(currentContext.data, null, 2)}</pre>
@@ -445,11 +456,18 @@ export default function AdminClientCockpit() {
             <div>
               <div className="text-xs font-medium mb-1">Transcription / notes du call</div>
               <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={6}
-                placeholder="Colle ici la transcription ou les notes du call client…"
+                placeholder="Colle la transcription, ou joins un .txt/.md/.docx/.pdf…"
                 className="w-full text-sm border rounded p-2 bg-background" />
-              <Button size="sm" variant="outline" className="mt-2" onClick={ingestTranscript} disabled={!!busy}>
-                {busy === 'ingest' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Analyse…</> : 'Intégrer au suivi (IA)'}
-              </Button>
+              <div className="flex items-center gap-3 mt-2">
+                <Button size="sm" variant="outline" onClick={ingestTranscript} disabled={!!busy}>
+                  {busy === 'ingest' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Analyse…</> : 'Intégrer au suivi (IA)'}
+                </Button>
+                <label className="text-sm">
+                  <input type="file" accept=".txt,.md,.docx,.pdf" className="hidden"
+                    onChange={(e) => { attachToField(e.target.files?.[0], setTranscript); e.currentTarget.value = ''; }} />
+                  <span className="underline cursor-pointer text-muted-foreground">{busy === 'extract-file' ? 'Extraction…' : 'joindre un fichier'}</span>
+                </label>
+              </div>
             </div>
             <div>
               <div className="text-xs font-medium mb-1">Consignes durables (éditable)</div>
