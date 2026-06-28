@@ -278,12 +278,13 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
   if (has(h, "Net sales") && has(h, "Order name")) {
     const iNet = idx(h, "Net sales"), iDate = idx(h, "Day"), iOrder = idx(h, "Order name"),
           iGross = idx(h, "Gross sales"), iRet = idx(h, "Returns"), iProd = idx(h, "Product title at time of sale");
-    const orders = new Set<string>(); let ca = 0, gross = 0, ret = 0, units = 0; const prod: Record<string, number> = {};
+    const orders = new Set<string>(); let ca = 0, gross = 0, ret = 0, units = 0; const prod: Record<string, number> = {}; const daily: Record<string, number> = {};
     for (const r of data) {
       if (!inMonth(r[iDate], ctx.period)) continue;
       const net = toNum(r[iNet]);
       if (net != null) {
         ca += net;
+        const day = (r[iDate] ?? "").trim().slice(0, 10); if (day) daily[day] = (daily[day] ?? 0) + net;
         if (net > 0 && r[iOrder]) { orders.add(r[iOrder]); if (iProd >= 0 && (r[iProd] ?? "").trim()) { units++; prod[(r[iProd] ?? "").trim()] = (prod[(r[iProd] ?? "").trim()] ?? 0) + net; } }
       }
       if (iGross >= 0) { const g = toNum(r[iGross]); if (g != null) gross += g; }
@@ -293,7 +294,9 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     if (units) v.units = units;
     if (iGross >= 0) v.gross_sales = Math.round(gross * 100) / 100;
     if (iRet >= 0) v.refunds = Math.round(-ret * 100) / 100; // Returns négatifs → remboursements positifs
-    const breakdowns = Object.keys(prod).length ? { top_products: { label: "Top produits (CA net)", rows: topN(prod) } } : undefined;
+    const breakdowns: Record<string, { label: string; rows: { label: string; value: number }[] }> = {};
+    if (Object.keys(prod).length) breakdowns.top_products = { label: "Top produits (CA net)", rows: topN(prod) };
+    if (Object.keys(daily).length) breakdowns.daily_sales = { label: "Ventes par jour", rows: Object.entries(daily).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([label, value]) => ({ label, value: Math.round(value * 100) / 100 })) };
     // le fichier riche (avec Gross sales) prime au dédoublonnage
     return mk("revenue", v, { ca: `Shopify (${name}) — net sales`, orders: "Shopify — commandes distinctes du mois" },
       { revenueCandidate: v.ca, dedupGroup: "shopify_ca", count: iGross >= 0 ? 1_000_000 : orders.size, breakdowns });
