@@ -20,6 +20,7 @@ export async function callAnthropic(opts: {
   system: string;
   messages: AnthropicMessage[];
   max_tokens?: number;
+  temperature?: number;
   signal?: AbortSignal;
 }): Promise<{ text: string; usage: unknown }> {
   if (!ANTHROPIC_API_KEY) {
@@ -35,6 +36,7 @@ export async function callAnthropic(opts: {
     body: JSON.stringify({
       model: opts.model,
       max_tokens: opts.max_tokens ?? 4096,
+      ...(opts.temperature != null ? { temperature: opts.temperature } : {}),
       system: opts.system,
       messages: opts.messages,
     }),

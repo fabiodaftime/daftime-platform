@@ -17,8 +17,18 @@ RÈGLES :
 - N'invente AUCUN chiffre. Les widgets ne portent que des RÉFÉRENCES d'indicateurs (ids fournis). Les textes "callout" ne citent QUE des chiffres/variations fournis — aucune invention, et AUCUNE recommandation (sauf demande explicite).
 - N'utilise QUE des ids présents dans la liste fournie. Pas de widget qui resterait vide.
 - PLUSIEURS pages (onglets) : une « Vue d'ensemble » puis des pages d'analyse thématiques adaptées au métier. Respecte les incontournables du BRIEF.
-- CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, GARDE la même forme générale (mêmes pages/onglets, mêmes types de graphes) — on veut un suivi cohérent d'un mois à l'autre. Adapte seulement les chiffres et l'analyse au mois courant, et APPLIQUE les CONSIGNES fournies (elles priment). Ne change la structure que si une consigne le demande.
-- Chaque page : un kpi_row en tête si pertinent ; des graphes VARIÉS et bien choisis (line = tendance, bar = comparaison/structure, donut = répartition) ; des tables de détail ; des callouts d'analyse (lecture du mois, constats chiffrés, points de vigilance).
+- VARIÉTÉ EXIGÉE : un dashboard premium ne se résume PAS à line + bar + donut + table. Tu DOIS exploiter la BIBLIOTHÈQUE PREMIUM ci-dessous dès que la forme de la donnée s'y prête. Sur l'ensemble du dashboard, n'emploie JAMAIS le même type de graphe plus de 2 fois, et fais se côtoyer des familles différentes (temporel / répartition / objectifs / flux). Évite l'enchaînement monotone bar→bar→donut.
+- CHOISIS le graphe selon la FORME de la donnée (mapping) :
+  · breakdown PAR PAYS → map, puis varie avec rose / polar / ranking.
+  · breakdown PRODUITS / CATÉGORIES → treemap, pictorial, lollipop, share, sunburst (si libellés « Parent / Enfant »), ranking.
+  · breakdown JOURNALIER (daily_sales) → calendar, histogram, area.
+  · plusieurs KPIs d'un coup → radar, trend_grid, bullet/rings (si cibles), diverging.
+  · historique ≥3 mois → area, stacked_area, river, combo (barres+courbe), slope, matrix, stacked, line.
+  · chaîne P&L (CA→marge→EBITDA→résultat) → flow (sankey) ou waterfall (cascade).
+  · indicateur vs CIBLE → gauge, gauge_grid, bullet, rings.
+- DIRECTIVE DE VARIÉTÉ : une orientation esthétique t'est donnée à chaque génération (voir le message) — privilégie cette famille de graphes ce coup-ci, tout en restant pertinent.
+- CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, GARDE la même ossature (mêmes pages/onglets et mêmes grands choix de graphes) pour un suivi cohérent d'un mois à l'autre ; APPLIQUE les CONSIGNES (elles priment). En l'ABSENCE de structure précédente, tu es LIBRE et tu DOIS oser des graphes variés et premium.
+- Chaque page : un kpi_row en tête si pertinent ; 2 à 4 graphes VARIÉS et bien choisis (pas deux fois le même type sur une page) ; des tables de détail ; des callouts d'analyse (lecture du mois, constats chiffrés, points de vigilance).
 
 WIDGETS (JSON) :
 - {"type":"kpi_row","items":[{"metric":"id"}, ...]}                  // 3 à 6 KPIs clés
@@ -37,7 +47,7 @@ WIDGETS (JSON) :
 - {"type":"calendar","title":"...","breakdown":"clé"}            // calendrier-heatmap d'un BREAKDOWN journalier (ex. daily_sales) — intensité par jour du mois
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
-BIBLIOTHÈQUE PREMIUM ÉTENDUE (à utiliser avec PARCIMONIE, seulement quand ça s'y prête — ne JAMAIS tout mettre ; vise la lisibilité, 2-3 graphes forts par page) :
+BIBLIOTHÈQUE PREMIUM ÉTENDUE (à EXPLOITER pour sortir du trio line/bar/donut — choisis selon la forme de la donnée ; 2 à 4 graphes forts et VARIÉS par page, sans répéter un type) :
 Séries temporelles (nécessitent l'historique) :
 - {"type":"area","title":"...","metrics":["id"(,…)]}            // courbe avec aire (1 à 4 ids) — tendance élégante
 - {"type":"stacked_area","title":"...","metrics":["id", ...]}    // aires empilées — composition qui évolue dans le temps (≥2 ids)
@@ -184,13 +194,25 @@ Deno.serve(async (req) => {
     const trendText = Object.keys(series).map((id) => `${id} (${history.labels[id]})`).join(", ") || "aucune";
     const briefText = brief ? JSON.stringify(brief) : "Compose une « Vue d'ensemble » puis des pages d'analyse pertinentes selon les données.";
 
+    // Directive de VARIÉTÉ : tourne à chaque génération pour que régénérer explore d'autres graphes premium.
+    const VARIETY_FAMILIES = [
+      "ORGANIQUE & FLUIDE — privilégie area, river (stream), rose, sunburst, treemap : des formes douces et enveloppantes.",
+      "STRUCTURÉ & ANALYTIQUE — privilégie matrix (heatmap), stacked_area, combo (barres+courbe), stacked, table riche : une lecture rigoureuse.",
+      "EDITORIAL & VISUEL — privilégie pictorial, lollipop, share (barre 100%), treemap, ranking : un rendu magazine, très visuel.",
+      "PERFORMANCE & OBJECTIFS — privilégie slope, diverging, bullet, rings, gauge_grid, radar : centré sur progression et atteinte des cibles.",
+      "GÉO & RÉPARTITION — privilégie map, polar, rose, donut, share : met l'accent sur les répartitions (pays, canaux, produits).",
+      "DYNAMIQUE TEMPORELLE — privilégie line, area, combo, calendar, histogram, slope : raconte l'évolution dans le temps.",
+    ];
+    const variety = VARIETY_FAMILIES[Math.floor(Math.random() * VARIETY_FAMILIES.length)];
+
     const planMsg = [{ role: "user" as const, content:
       `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
       `DONNÉES DISPONIBLES (id, libellé, valeur, évolution) :\n${metricsText}\n\n` +
       `HISTORIQUE : ${history.months.length} mois (${history.months.join(", ")}). Tendances possibles sur : ${trendText}.\n\n` +
-      `BREAKDOWNS (widget "ranking"/"map") : ${breakdowns && Object.keys(breakdowns).length ? Object.entries(breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun"}.\n` +
-      `CIBLES (widget "gauge") : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n\n` +
-      `BRIEF MÉTIER :\n${briefText}` +
+      `BREAKDOWNS (alimentent map/ranking/treemap/rose/polar/sunburst/pictorial/lollipop/share/histogram/calendar) : ${breakdowns && Object.keys(breakdowns).length ? Object.entries(breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun"}.\n` +
+      `CIBLES (alimentent gauge/gauge_grid/bullet/rings) : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n\n` +
+      `BRIEF MÉTIER :\n${briefText}\n\n` +
+      `DIRECTIVE DE VARIÉTÉ (oriente TES choix de graphes CETTE génération, sans sacrifier la pertinence) : ${variety}` +
       `\n\nMARQUE (couleurs/charte si dispo) : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie — choisis une palette adaptée au secteur"}` +
       (prevTheme ? `\n\nTHÈME DU MOIS PRÉCÉDENT — à CONSERVER (cohérence visuelle dans le temps) sauf consigne contraire :\n${JSON.stringify(prevTheme)}` : "") +
       (prevPlan ? `\n\nSTRUCTURE DU MOIS PRÉCÉDENT — à CONSERVER dans sa forme générale (mêmes pages/onglets, mêmes types de graphes), en adaptant les chiffres et l'analyse au mois courant :\n${JSON.stringify(prevPlan)}` : "") +
@@ -203,11 +225,11 @@ Deno.serve(async (req) => {
       try {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 90_000);
-        try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, signal: ctrl.signal })).text; }
+        try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9, signal: ctrl.signal })).text; }
         finally { clearTimeout(timer); }
       } catch (e) {
         console.warn("plan Opus KO/timeout → relais Sonnet:", e instanceof Error ? e.message : String(e));
-        raw = (await callAnthropic({ model: MODELS.fast, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000 })).text;
+        raw = (await callAnthropic({ model: MODELS.fast, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9 })).text;
       }
       plan = extractJson<DashPlan>(raw);
     } catch (e) { console.error("plan:", e); }
