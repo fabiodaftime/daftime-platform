@@ -139,7 +139,19 @@ Deno.serve(async (req) => {
       const manualByName = new Map<string, { role?: string; note?: string }>();
       for (const f of (files ?? []) as { original_name?: string; doc_role?: string; doc_note?: string }[])
         if (f.original_name) manualByName.set(f.original_name, { role: f.doc_role ?? undefined, note: f.doc_note ?? undefined });
-      const effRoleOf = (e: ParsedExtract) => (manualByName.get(e.file)?.role || e.role) as string;
+      // Normalise les catégories métier (Shopify, PSP, ads, comptable…) vers un rôle comptable canonique.
+      const CANON: Record<string, string> = {
+        shopify: "revenue", site: "revenue", invoicing: "revenue", quaderno: "revenue", revenue: "revenue",
+        psp: "payment", payment: "payment",
+        bank: "bank", banque: "bank",
+        ads: "ads", publicite: "ads",
+        accounting: "pnl", comptable: "pnl", pnl: "pnl",
+        expense: "expense", internal: "internal", ignore: "ignore",
+      };
+      const effRoleOf = (e: ParsedExtract) => {
+        const raw = (manualByName.get(e.file)?.role || e.role) as string;
+        return CANON[raw] ?? raw;
+      };
 
       // 1) PARSERS déterministes sur les fichiers texte/CSV reconnus (hors fichiers mis en "ignore").
       const usable = docs.filter((d) => d.kind !== "skipped" && manualByName.get(d.name)?.role !== "ignore");

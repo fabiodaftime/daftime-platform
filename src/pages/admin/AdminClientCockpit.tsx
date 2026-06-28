@@ -18,6 +18,30 @@ import { extractTextFromFile } from '@/lib/extractText';
 
 const BUCKET = 'client-files';
 
+// Catégories de documents par activité (le moteur les mappe vers le bon traitement comptable).
+const DOC_CATEGORIES: Record<string, { value: string; label: string }[]> = {
+  ecommerce: [
+    { value: '', label: 'Auto' },
+    { value: 'shopify', label: 'Shopify / site' },
+    { value: 'psp', label: 'PSP (Stripe, PayPal…)' },
+    { value: 'bank', label: 'Banque' },
+    { value: 'ads', label: 'Publicité (Meta, Google…)' },
+    { value: 'accounting', label: 'Données comptables' },
+    { value: 'ignore', label: 'Ignorer' },
+  ],
+  default: [
+    { value: '', label: 'Auto' },
+    { value: 'revenue', label: 'CA (facturé)' },
+    { value: 'psp', label: 'Réception / PSP' },
+    { value: 'bank', label: 'Banque' },
+    { value: 'ads', label: 'Publicité' },
+    { value: 'accounting', label: 'Données comptables' },
+    { value: 'expense', label: 'Charge' },
+    { value: 'internal', label: 'Interne' },
+    { value: 'ignore', label: 'Ignorer' },
+  ],
+};
+
 function Section({ icon, title, children, action }: { icon: ReactNode; title: string; children: ReactNode; action?: ReactNode }) {
   return (
     <section className="border rounded-lg p-5">
@@ -84,7 +108,7 @@ export default function AdminClientCockpit() {
   };
 
   const loadClient = useCallback(async () => {
-    const { data } = await supabase.from('clients' as any).select('*').eq('id', id).maybeSingle();
+    const { data } = await supabase.from('clients' as any).select('*, activity_types:activity_type_id(slug, name)').eq('id', id).maybeSingle();
     setClient(data);
   }, [id]);
 
@@ -301,6 +325,7 @@ export default function AdminClientCockpit() {
     catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
+  const docCats = DOC_CATEGORIES[client?.activity_types?.slug as string] ?? DOC_CATEGORIES.default;
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
   const isTemplate = !!editData?.meta?.template;
@@ -383,16 +408,10 @@ export default function AdminClientCockpit() {
             {files.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-2 text-muted-foreground py-1.5">
                 <span className="flex-1 min-w-[160px]">• {f.original_name} <span className="text-xs">({f.status})</span></span>
-                <select value={f.doc_role ?? ''} title="Rôle comptable du document"
+                <select value={f.doc_role ?? ''} title="Catégorie du document"
                   onChange={(e) => setFileMeta(f, { doc_role: e.target.value || null })}
                   className="text-xs border rounded px-1 py-0.5 bg-background">
-                  <option value="">Auto</option>
-                  <option value="revenue">CA (facturé)</option>
-                  <option value="payment">Réception paiement</option>
-                  <option value="bank">Banque</option>
-                  <option value="expense">Charge</option>
-                  <option value="internal">Interne</option>
-                  <option value="ignore">Ignorer</option>
+                  {docCats.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
                 <input defaultValue={f.doc_note ?? ''} placeholder="commentaire…"
                   onBlur={(e) => { const v = e.target.value || null; if (v !== (f.doc_note ?? null)) setFileMeta(f, { doc_note: v }); }}
