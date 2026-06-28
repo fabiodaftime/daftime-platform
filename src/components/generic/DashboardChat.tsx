@@ -1,4 +1,4 @@
-// Chat d'itération sur un dashboard (appelle l'edge function chat-iterate).
+// Chat d'ajustement ESTHÉTIQUE du dashboard (couleurs, fond, icônes, mood) — appelle restyle-dashboard.
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
@@ -26,7 +26,7 @@ export function DashboardChat({
     setTurns((t) => [...t, { role: 'user', content: message }]);
     setBusy(true);
     try {
-      const res = await invokeFn<{ dashboard: any; summary: string }>('chat-iterate', {
+      const res = await invokeFn<{ dashboard: any; summary: string }>('restyle-dashboard', {
         dashboard_id: dashboardId,
         message,
         history: turns,
@@ -45,7 +45,7 @@ export function DashboardChat({
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {turns.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Demandez une modification : « passe les graphes en barres », « ajoute une carte marge nette », « applique mieux la charte »…
+            Ajuste le style : « plus de couleur », « passe en sombre », « style corporate sobre », « mets des icônes par KPI », « palette plus douce », « reprends mieux ma charte »…
           </p>
         )}
         {turns.map((t, i) => (

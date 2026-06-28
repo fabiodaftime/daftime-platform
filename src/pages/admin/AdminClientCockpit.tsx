@@ -530,7 +530,7 @@ export default function AdminClientCockpit() {
         </Section>
 
         {dash && (
-          <Section icon={<Wand2 className="w-4 h-4" />} title="Affiner par chat">
+          <Section icon={<Palette className="w-4 h-4" />} title="Style & apparence (chat)">
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />
           </Section>
         )}

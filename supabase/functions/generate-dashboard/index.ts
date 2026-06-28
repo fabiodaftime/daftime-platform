@@ -29,7 +29,15 @@ WIDGETS (JSON) :
 - {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
-Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}]}`;
+THÈME VISUEL — compose AUSSI un thème DISTINCTIF, adapté à l'UNIVERS du client (secteur, marque, ton), pour un rendu premium personnalisé :
+- mood : "vivid" (coloré/énergique) | "corporate" (sobre/sérieux) | "minimal" (épuré) | "dark" | "editorial"
+- primary, accent : couleurs hex (pars de la marque si fournie)
+- palette : 3 à 6 couleurs hex harmonisées pour les graphes
+- background : "soft" | "plain" | "gradient" | "dark" ; header : "gradient" | "solid" | "dark" | "minimal" ; kpi : "icon" | "accent" | "gradient" | "plain"
+- icons : map { id_metrique: nom } parmi banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap
+Choisis un thème qui colle au client (ex. boutique sport/streetwear = vivid, palette dynamique, kpi "icon" ; cabinet d'avocats = corporate sobre). Si un THÈME du mois précédent est fourni, GARDE-le (cohérence dans le temps), sauf consigne contraire.
+
+Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}], "theme":{ "mood":"...", "palette":["#..",".."], "background":"...", "header":"...", "kpi":"...", "icons":{ } }}`;
 
 type Row = { id?: string; label?: string; value?: unknown; unit?: string; type?: string; change_pct?: number };
 const idVal = (d: { sections?: { rows?: Row[] }[] } | null | undefined): Record<string, number> => {
@@ -94,6 +102,7 @@ Deno.serve(async (req) => {
     const { data: prevDash } = await admin.from("dashboards").select("period, data_json")
       .eq("client_id", client_id).eq("is_current", true).lt("period", period).order("period", { ascending: false }).limit(1).maybeSingle();
     const prevPlan = (prevDash?.data_json as { plan?: DashPlan } | null)?.plan ?? null;
+    const prevTheme = (prevDash?.data_json as { theme?: unknown } | null)?.theme ?? null;
     const guidance = ((client as { dashboard_guidance?: string } | null)?.dashboard_guidance ?? "").trim();
 
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
@@ -137,6 +146,8 @@ Deno.serve(async (req) => {
       `DONNÉES DISPONIBLES (id, libellé, valeur, évolution) :\n${metricsText}\n\n` +
       `HISTORIQUE : ${history.months.length} mois (${history.months.join(", ")}). Tendances possibles sur : ${trendText}.\n\n` +
       `BRIEF MÉTIER :\n${briefText}` +
+      `\n\nMARQUE (couleurs/charte si dispo) : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie — choisis une palette adaptée au secteur"}` +
+      (prevTheme ? `\n\nTHÈME DU MOIS PRÉCÉDENT — à CONSERVER (cohérence visuelle dans le temps) sauf consigne contraire :\n${JSON.stringify(prevTheme)}` : "") +
       (prevPlan ? `\n\nSTRUCTURE DU MOIS PRÉCÉDENT — à CONSERVER dans sa forme générale (mêmes pages/onglets, mêmes types de graphes), en adaptant les chiffres et l'analyse au mois courant :\n${JSON.stringify(prevPlan)}` : "") +
       (guidance ? `\n\nCONSIGNES DURABLES (issues des calls client — à APPLIQUER en priorité) :\n${guidance}` : "") }];
 
@@ -157,13 +168,15 @@ Deno.serve(async (req) => {
     } catch (e) { console.error("plan:", e); }
     if (!plan || !Array.isArray(plan.pages) || !plan.pages.length) plan = defaultPlan(sections, history.months.length > 1);
 
+    // Thème : composé par l'IA (adapté au client), sinon repris du mois précédent.
+    const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
     const html = renderDashboard(
-      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, metrics, history },
+      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history },
       plan,
     );
 
-    // On sauvegarde le PLAN dans data_json → il sert de base de forme au mois suivant.
-    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan };
+    // On sauvegarde le PLAN + le THÈME dans data_json → base de forme ET de style au mois suivant.
+    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme };
     const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
       standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
     });
