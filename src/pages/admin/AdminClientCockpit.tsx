@@ -343,7 +343,7 @@ export default function AdminClientCockpit() {
   return (
     <AppShell
       title={client.name}
-      maxWidth="max-w-5xl"
+      maxWidth="max-w-6xl"
       onBack={() => navigate('/admin/clients')}
       actions={
         <>
@@ -385,14 +385,18 @@ export default function AdminClientCockpit() {
         )}
         {error && !notice && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
-        <nav className="flex flex-wrap gap-2 border-b pb-2">
-          {TABS.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${tab === t.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>
-              {t.icon}{t.label}
-            </button>
-          ))}
-        </nav>
+        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
+          <aside>
+            <nav className="rounded-xl border bg-card p-2 space-y-1 lg:sticky lg:top-4">
+              {TABS.map((t) => (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${tab === t.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}>
+                  {t.icon}{t.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
+          <div className="space-y-6 min-w-0">
 
         {tab === 'custom' && (
         <Section icon={<Palette className="w-4 h-4" />} title="Charte graphique">
@@ -560,6 +564,8 @@ export default function AdminClientCockpit() {
           </Section>
         )}
         </>)}
+        </div>
+        </div>
       </div>
     </AppShell>
   );
