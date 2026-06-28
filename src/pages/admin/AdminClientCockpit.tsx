@@ -73,6 +73,7 @@ export default function AdminClientCockpit() {
   const [history, setHistory] = useState<any[]>([]);
   const [guidanceText, setGuidanceText] = useState('');
   const [transcript, setTranscript] = useState('');
+  const [tab, setTab] = useState<'data' | 'context' | 'custom' | 'dashboard'>('data');
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
   const OP_LABELS: Record<string, string> = {
@@ -326,6 +327,12 @@ export default function AdminClientCockpit() {
   };
 
   const docCats = DOC_CATEGORIES[client?.activity_types?.slug as string] ?? DOC_CATEGORIES.default;
+  const TABS = [
+    { id: 'data' as const, label: 'Données', icon: <Wand2 className="w-4 h-4" /> },
+    { id: 'context' as const, label: 'Contexte', icon: <BookOpen className="w-4 h-4" /> },
+    { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
+    { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+  ];
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
   const isTemplate = !!editData?.meta?.template;
@@ -378,10 +385,22 @@ export default function AdminClientCockpit() {
         )}
         {error && !notice && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
+        <nav className="flex flex-wrap gap-2 border-b pb-2">
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${tab === t.id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'}`}>
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </nav>
+
+        {tab === 'custom' && (
         <Section icon={<Palette className="w-4 h-4" />} title="Charte graphique">
           <BrandPanel clientId={id!} brand={client.brand} onChange={(b) => setClient({ ...client, brand: b })} />
         </Section>
+        )}
 
+        {tab === 'context' && (
         <Section icon={<BookOpen className="w-4 h-4" />} title="Contexte client"
           action={<Button size="sm" onClick={extractContext} disabled={busy === 'context'}>{busy === 'context' ? 'Extraction…' : 'Extraire le contexte'}</Button>}>
           <textarea className="w-full h-28 border rounded-md p-2 text-sm" placeholder="Collez ici le contexte (ou joignez un .txt/.md/.docx/.pdf)…"
@@ -395,7 +414,9 @@ export default function AdminClientCockpit() {
             <pre className="mt-3 bg-muted/50 rounded p-3 text-xs overflow-auto max-h-48">{JSON.stringify(currentContext.data, null, 2)}</pre>
           )}
         </Section>
+        )}
 
+        {tab === 'data' && (<>
         <Section icon={<FileUp className="w-4 h-4" />} title={`Fichiers du mois (${files.length})`}>
           <label className="inline-block">
             <input type="file" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadFiles(e.target.files); e.currentTarget.value = ''; }} />
@@ -466,7 +487,9 @@ export default function AdminClientCockpit() {
             />
           </div>
         </Section>
+        </>)}
 
+        {tab === 'custom' && (
         <Section icon={<BookOpen className="w-4 h-4" />} title="Consignes dashboard (reprises chaque mois)">
           <p className="text-sm text-muted-foreground mb-3">
             Ces consignes sont appliquées à <strong>chaque génération</strong>, et la <strong>forme du mois précédent est conservée</strong>. Colle la transcription du call : l'IA en extrait les consignes durables et les ajoute ci-dessous.
@@ -499,7 +522,9 @@ export default function AdminClientCockpit() {
             </div>
           </div>
         </Section>
+        )}
 
+        {tab === 'dashboard' && (<>
         <Section icon={<LayoutDashboard className="w-4 h-4" />} title="Dashboard"
           action={<Button size="sm" onClick={generate} disabled={!!busy || !sd}>
             {busy === 'generate' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Génération…</> : 'Générer (IA)'}
@@ -534,6 +559,7 @@ export default function AdminClientCockpit() {
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />
           </Section>
         )}
+        </>)}
       </div>
     </AppShell>
   );
