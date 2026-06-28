@@ -9,7 +9,11 @@
 import { convert } from "./fx.ts";
 import type { SourceType } from "./reconcile.ts";
 
-export interface ParseCtx { reporting: string; factor: Record<string, number>; period: string; }
+export interface ParseCtx {
+  reporting: string; factor: Record<string, number>; period: string;
+  activity?: string;                                  // slug d'activité (mappe les charges vers les bons postes)
+  categoryRules?: { match: string; category: string }[]; // règles par client (ex. "paypal" -> "cogs")
+}
 // Rôle COMPTABLE du document — déterminé par le type de source, jamais deviné :
 //  revenue  = ce qui est FACTURÉ (= le CA). Une seule source fait foi (ex. Quaderno).
 //  payment  = réception d'un encaissement par un moyen de paiement (Stripe/Whop) → PAS du CA.
@@ -90,17 +94,25 @@ const ADS = /facebk|facebook|meta\b|tiktok|google ads|linkedin|snapchat|taboola/
 const FX_FEE = /foreign exchange transaction fee|currency conversion fee/i;
 const SALARY = /salary|payroll|prestation|salaire/i;
 const INTERNAL_IN = /network international|stripe|payout/i; // entrées = règlements Stripe (exclus du CA)
-const SAAS = /openai|anthropic|claude|google\b|gworkspace|workspace|vercel|supabase|zoom|slack|notion|close crm|canva|calendly|adobe|apple|dropbox|webflow|make\.com|www make|zapier|manychat|heygen|elevenlabs|hyros|asana|miro|loom|respond io|lemlist|typeform|quaderno|submagic|clickfunnels|webinarjam|hotmart|skool|higgsfield|arcads|artlist|fathom|whoscale|turboscribe|onoff|ionos|hetzner|ovhcloud|wistia|foreplay|buffer|openai|chatgpt|linkedin corp|monday|airtable|stripe|figma/i;
+const SAAS = /shopify|paytabs|openai|anthropic|claude|gworkspace|workspace|vercel|supabase|zoom|slack|notion|close crm|canva|calendly|adobe|dropbox|webflow|make\.com|www make|zapier|manychat|heygen|elevenlabs|hyros|asana|miro|loom|respond io|lemlist|typeform|quaderno|submagic|clickfunnels|webinarjam|hotmart|skool|higgsfield|arcads|artlist|fathom|whoscale|turboscribe|onoff|ionos|hetzner|ovhcloud|wistia|foreplay|buffer|chatgpt|monday|airtable|figma/i;
 
-type Cat = "marketing" | "fin_result" | "payroll" | "platform_fees" | "other_opex" | "skip";
-function categorize(desc: string): Cat {
+// Catégorie CANONIQUE de dépense, traduite ensuite vers les postes du catalogue selon l'activité.
+type Canon = "cogs" | "ads" | "payroll" | "tools" | "fin" | "other";
+function categorize(desc: string, rules?: { match: string; category: string }[]): Canon {
   const d = desc.toLowerCase();
-  if (ADS.test(d)) return "marketing";
-  if (FX_FEE.test(d)) return "fin_result";
+  for (const r of rules ?? []) if (r.match && d.includes(r.match.toLowerCase())) return r.category as Canon; // règles du dossier en priorité
+  if (ADS.test(d)) return "ads";
+  if (FX_FEE.test(d)) return "fin";
   if (SALARY.test(d)) return "payroll";
-  if (SAAS.test(d)) return "platform_fees";
-  return "other_opex";
+  if (SAAS.test(d)) return "tools";
+  return "other";
 }
+// Traduction canonique -> id(s) de poste, par activité (un poste pub différent en e-com vs coach…).
+const EXPENSE_MAP: Record<string, Record<Canon, string[]>> = {
+  ecommerce: { cogs: ["cogs"], ads: ["ads_total"], payroll: ["payroll"], tools: ["platform_fees"], fin: ["financial_result"], other: ["other_opex"] },
+  coach: { cogs: ["other_opex"], ads: ["marketing", "ad_spend"], payroll: ["payroll"], tools: ["platform_fees"], fin: ["fin_result"], other: ["other_opex"] },
+  default: { cogs: ["cogs"], ads: ["marketing", "ad_spend"], payroll: ["payroll"], tools: ["platform_fees"], fin: ["fin_result"], other: ["other_opex"] },
+};
 
 // ---- parsers par source -------------------------------------------------------
 
@@ -230,19 +242,20 @@ function bankSigned(rows: string[][], ctx: ParseCtx, name: string): ParsedExtrac
     if (amt == null) continue;
     used++;
     const conv = convert(amt, cur, ctx.factor);
-    if (amt > 0) continue; // entrées : règlements Stripe / virements — pas de CA ici (CA = Stripe + Ebury)
-    const exp = -conv; const cat = categorize(desc);
-    if (cat === "fin_result") add(v, "fin_result", -exp); // charge financière (négatif)
-    else if (cat === "marketing") { add(v, "marketing", exp); add(v, "ad_spend", exp); }
-    else add(v, cat, exp);
+    if (amt > 0) continue; // entrées : règlements Stripe / virements — pas de CA ici
+    const exp = -conv; const cat = categorize(desc, ctx.categoryRules);
+    const map = EXPENSE_MAP[ctx.activity ?? ""] ?? EXPENSE_MAP.default;
+    for (const id of (map[cat] ?? ["other_opex"])) add(v, id, cat === "fin" ? -exp : exp); // résultat financier en négatif
   }
   let cash = 0, nAcc = 0;
   for (const { bal, cur } of Object.values(lastBal)) { cash += convert(bal, cur, ctx.factor); nAcc++; }
   if (nAcc) add(v, "cash_end", Math.round(cash * 100) / 100);
   for (const k of Object.keys(v)) v[k] = Math.round(v[k] * 100) / 100;
+  const src = (label: string) => `${name} — ${label}`;
   return { parser: "bank_signed", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, count: used,
-    sources: { marketing: `${name} — pub (FACEBK…)`, payroll: `${name} — Salary`, platform_fees: `${name} — outils/SaaS`,
-      fin_result: `${name} — frais de change`, other_opex: `${name} — autres dépenses`, cash_end: `${name} — solde(s) de clôture` } };
+    sources: { cogs: src("achats fournisseurs"), ads_total: src("publicité"), marketing: src("publicité"), payroll: src("salaires"),
+      platform_fees: src("outils/SaaS"), financial_result: src("frais de change"), fin_result: src("frais de change"),
+      other_opex: src("autres dépenses"), cash_end: src("solde de clôture") } };
 }
 
 // ---- Shopify (exports analytics) ----------------------------------------------

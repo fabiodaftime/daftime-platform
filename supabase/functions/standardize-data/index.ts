@@ -133,7 +133,10 @@ Deno.serve(async (req) => {
 
       const fxOverrides = (ctx?.data as { fx_rates?: Record<string, number> } | null)?.fx_rates;
       const { factor, source: fxSource } = await ratesToReporting(period, currency, fxOverrides);
-      const pctx = { reporting: currency, factor, period };
+      // Règles de catégorisation bancaire propres au dossier (ex. "paypal" -> "cogs").
+      const ctxData = (ctx?.data ?? {}) as { bank_rules?: { match: string; category: string }[]; playbook?: { bank_rules?: { match: string; category: string }[] } };
+      const categoryRules = ctxData.bank_rules ?? ctxData.playbook?.bank_rules;
+      const pctx = { reporting: currency, factor, period, activity, categoryRules };
 
       // Triage manuel : rôle imposé + commentaire par fichier (prime sur la détection auto).
       const manualByName = new Map<string, { role?: string; note?: string }>();
