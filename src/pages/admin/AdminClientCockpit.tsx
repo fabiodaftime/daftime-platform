@@ -122,6 +122,12 @@ export default function AdminClientCockpit() {
     await loadFiles();
   });
 
+  // Triage manuel : rôle comptable imposé + commentaire de contexte par fichier.
+  const setFileMeta = (f: any, patch: { doc_role?: string | null; doc_note?: string | null }) => run('files', async () => {
+    await supabase.from('files' as any).update(patch).eq('id', f.id);
+    await loadFiles();
+  });
+
   const standardize = () => run('standardize', async () => {
     await invokeFn('standardize-data', { client_id: id, period });
     await loadStandardized();
@@ -259,10 +265,25 @@ export default function AdminClientCockpit() {
               {busy === 'files' ? 'Envoi…' : 'Déposer des fichiers'}
             </span>
           </label>
-          <ul className="mt-3 text-sm space-y-1">
+          <p className="mt-3 text-xs text-muted-foreground">Laisse « Auto » si la détection est bonne ; impose un rôle ou ajoute un commentaire si besoin.</p>
+          <ul className="mt-1 text-sm divide-y">
             {files.map((f) => (
-              <li key={f.id} className="flex items-center gap-2 text-muted-foreground">
-                <span className="flex-1">• {f.original_name} <span className="text-xs">({f.status})</span></span>
+              <li key={f.id} className="flex flex-wrap items-center gap-2 text-muted-foreground py-1.5">
+                <span className="flex-1 min-w-[160px]">• {f.original_name} <span className="text-xs">({f.status})</span></span>
+                <select value={f.doc_role ?? ''} title="Rôle comptable du document"
+                  onChange={(e) => setFileMeta(f, { doc_role: e.target.value || null })}
+                  className="text-xs border rounded px-1 py-0.5 bg-background">
+                  <option value="">Auto</option>
+                  <option value="revenue">CA (facturé)</option>
+                  <option value="payment">Réception paiement</option>
+                  <option value="bank">Banque</option>
+                  <option value="expense">Charge</option>
+                  <option value="internal">Interne</option>
+                  <option value="ignore">Ignorer</option>
+                </select>
+                <input defaultValue={f.doc_note ?? ''} placeholder="commentaire…"
+                  onBlur={(e) => { const v = e.target.value || null; if (v !== (f.doc_note ?? null)) setFileMeta(f, { doc_note: v }); }}
+                  className="text-xs border rounded px-1.5 py-0.5 bg-background w-40" />
                 <button className="text-xs underline hover:text-destructive" onClick={() => deleteFile(f)} disabled={busy === 'files'}>
                   Supprimer
                 </button>

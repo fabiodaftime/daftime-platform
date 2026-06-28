@@ -22,6 +22,7 @@ export interface ParsedExtract {
   source_type: SourceType;
   currency: string;            // = reporting (déjà converti)
   values: Record<string, number>;
+  revenueCandidate?: number;   // montant qui devient le CA SI le rôle effectif du doc = "revenue"
   sources: Record<string, string>;
   note?: string;
   dedupGroup?: string;         // doublons potentiels (ex. Stripe multi-mois, Ebury -EUR vs -all_currencies)
@@ -124,8 +125,9 @@ function stripePayments(rows: string[][], ctx: ParseCtx): ParsedExtract {
   }
   if (n) v["new_subs"] = n;
   return { parser: "stripe_payments", role: "payment", source_type: "sales_export", currency: ctx.reporting, values: v,
-    sources: { new_subs: "Stripe — nouvelles souscriptions du mois" }, dedupGroup: "stripe_recv", count: used,
-    note: `Réception Stripe : ${Math.round(received).toLocaleString("fr-FR")} ${ctx.reporting} (${used} paiements) — déjà facturé via Quaderno, non ajouté au CA.` };
+    revenueCandidate: Math.round(received * 100) / 100,
+    sources: { new_subs: "Stripe — nouvelles souscriptions du mois", ca: "Stripe — paiements reçus du mois" }, dedupGroup: "stripe_recv", count: used,
+    note: `Réception Stripe : ${Math.round(received).toLocaleString("fr-FR")} ${ctx.reporting} (${used} paiements) — réception, hors CA par défaut (passe le doc en rôle « CA » pour le compter).` };
 }
 
 // Stripe — payouts (virements vers la banque) : MOUVEMENT INTERNE.
@@ -141,7 +143,7 @@ function quaderno(rows: string[][], ctx: ParseCtx): ParsedExtract {
   const iCur = idx(h, "original_currency"), iAmt = idx(h, "original_amount", "net_amount"),
         iStatus = idx(h, "status"), iDate = idx(h, "payment_date", "date"),
         iType = idx(h, "document_type"), iMethod = idx(h, "payment_method");
-  const v: Record<string, number> = {}; let used = 0;
+  let total = 0, used = 0;
   const byMethod: Record<string, number> = {};
   for (const r of rows.slice(1)) {
     if (iType >= 0 && /credit.?note|avoir|refund/i.test(r[iType] ?? "")) continue; // pas les avoirs
@@ -149,13 +151,13 @@ function quaderno(rows: string[][], ctx: ParseCtx): ParsedExtract {
     if (iStatus >= 0 && (r[iStatus] ?? "").toLowerCase() !== "paid") continue;
     const amt = toNum(r[iAmt]); if (amt == null) continue;
     const c = convert(amt, (r[iCur] ?? ctx.reporting).toUpperCase(), ctx.factor);
-    add(v, "ca", c); used++;
+    total += c; used++;
     const m = (iMethod >= 0 ? r[iMethod] : "") || "autre";
     byMethod[m] = (byMethod[m] ?? 0) + c;
   }
-  v.ca = Math.round((v.ca ?? 0) * 100) / 100;
   const recap = Object.entries(byMethod).map(([m, x]) => `${m} ${Math.round(x).toLocaleString("fr-FR")}`).join(", ");
-  return { parser: "quaderno", role: "revenue", source_type: "invoice", currency: ctx.reporting, values: v,
+  return { parser: "quaderno", role: "revenue", source_type: "invoice", currency: ctx.reporting, values: {},
+    revenueCandidate: Math.round(total * 100) / 100,
     sources: { ca: "Quaderno — factures émises du mois (original_amount)" }, dedupGroup: "quaderno_ca", count: used,
     note: recap ? `CA facturé par moyen de paiement : ${recap}.` : undefined };
 }
@@ -172,9 +174,10 @@ function whopExport(rows: string[][], ctx: ParseCtx): ParsedExtract {
     const amt = toNum(r[iAmt]); if (amt == null) continue;
     received += convert(amt, (r[iCur] ?? ctx.reporting).toUpperCase(), ctx.factor); used++;
   }
-  return { parser: "whop_export", role: "payment", source_type: "sales_export", currency: ctx.reporting, values: {}, sources: {},
-    dedupGroup: "whop_recv", count: used,
-    note: `Réception Whop : ${Math.round(received).toLocaleString("fr-FR")} ${ctx.reporting} (${used} paiements) — déjà facturé via Quaderno, non ajouté au CA.` };
+  return { parser: "whop_export", role: "payment", source_type: "sales_export", currency: ctx.reporting, values: {},
+    revenueCandidate: Math.round(received * 100) / 100,
+    sources: { ca: "Whop — paiements reçus du mois" }, dedupGroup: "whop_recv", count: used,
+    note: `Réception Whop : ${Math.round(received).toLocaleString("fr-FR")} ${ctx.reporting} (${used} paiements) — réception, hors CA par défaut (passe le doc en rôle « CA » pour le compter).` };
 }
 
 // Ebury — comptes multi-devises : encaissements clients directs = CA ; salaires/prestations = prestataires.

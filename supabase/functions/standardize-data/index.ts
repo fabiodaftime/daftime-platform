@@ -135,8 +135,14 @@ Deno.serve(async (req) => {
       const { factor, source: fxSource } = await ratesToReporting(period, currency, fxOverrides);
       const pctx = { reporting: currency, factor, period };
 
-      // 1) PARSERS déterministes sur les fichiers texte/CSV reconnus.
-      const usable = docs.filter((d) => d.kind !== "skipped");
+      // Triage manuel : rôle imposé + commentaire par fichier (prime sur la détection auto).
+      const manualByName = new Map<string, { role?: string; note?: string }>();
+      for (const f of (files ?? []) as { original_name?: string; doc_role?: string; doc_note?: string }[])
+        if (f.original_name) manualByName.set(f.original_name, { role: f.doc_role ?? undefined, note: f.doc_note ?? undefined });
+      const effRoleOf = (e: ParsedExtract) => (manualByName.get(e.file)?.role || e.role) as string;
+
+      // 1) PARSERS déterministes sur les fichiers texte/CSV reconnus (hors fichiers mis en "ignore").
+      const usable = docs.filter((d) => d.kind !== "skipped" && manualByName.get(d.name)?.role !== "ignore");
       const parsed: ParsedExtract[] = [];
       const llmDocs: typeof usable = [];
       for (const doc of usable) {
@@ -155,12 +161,20 @@ Deno.serve(async (req) => {
         parsedValues[k] = Math.round(((parsedValues[k] ?? 0) + val) * 100) / 100;
         if (!parsedSources[k]) parsedSources[k] = e.sources[k] ?? e.parser;
       }
+      // CA = somme des revenueCandidate des documents dont le RÔLE EFFECTIF est "revenue" (ex. Quaderno).
+      const revenueDocs = keptParsed.filter((e) => effRoleOf(e) === "revenue" && typeof e.revenueCandidate === "number");
+      if (revenueDocs.length) {
+        parsedValues["ca"] = Math.round(revenueDocs.reduce((s, e) => s + (e.revenueCandidate ?? 0), 0) * 100) / 100;
+        parsedSources["ca"] = revenueDocs.map((e) => e.sources.ca ?? e.parser).join(" + ");
+      }
 
       // 2) GAP-FILL IA (contrat STRICT via tool use) : sur les fichiers NON reconnus (PDF/scan/inconnu),
       //    et SEULEMENT pour les postes encore absents. Chaque champ = valeur+provenance OU null+raison.
       const missingLines = lines.filter((l) => parsedValues[l.id] == null);
       const missingIds = missingLines.map((l) => l.id);
-      const ctxText = ctx?.data ? JSON.stringify((ctx.data as { playbook?: unknown }).playbook ?? ctx.data).slice(0, 4000) : "";
+      const playbookText = ctx?.data ? JSON.stringify((ctx.data as { playbook?: unknown }).playbook ?? ctx.data).slice(0, 4000) : "";
+      const fileNotes = [...manualByName.entries()].filter(([, m]) => m.note).map(([n, m]) => `${n} : ${m.note}`).join(" | ");
+      const ctxText = [playbookText, fileNotes ? `NOTES PAR FICHIER (contexte imposé) : ${fileNotes}` : ""].filter(Boolean).join("\n");
       const EXTRACT_TOOL = {
         name: "emit_extraction",
         description: "Renvoie les postes que CE fichier permet de renseigner. N'invente jamais : si un poste est introuvable, ne l'inclus pas (ou value=null avec la raison).",
@@ -222,11 +236,13 @@ Deno.serve(async (req) => {
       const detected = [...new Set([...keptParsed.map((e) => e.currency), ...llmExtracts.map((e) => (e.currency ?? "").toUpperCase())].filter(Boolean))];
       const flags: unknown[] = [...(data.flags ?? [])];
       flags.push({ id: "_fx", severity: "info", label: `Devises converties vers ${currency} (taux ${fxSource}).` });
-      // Classification des documents par rôle (CA / réception / banque / interne) — pas de devinette.
-      const byRole = (role: string) => keptParsed.filter((e) => e.role === role).map((e) => e.parser).join(", ") || "—";
-      flags.push({ id: "_classif", severity: "info", label: `Documents classés — CA (facturé) : ${byRole("revenue")} · Réception paiement : ${byRole("payment")} · Banque : ${byRole("bank")}.` });
-      if (!keptParsed.some((e) => e.role === "revenue"))
-        flags.push({ id: "_no_revenue", severity: "warn", label: "Aucune source de CA facturé (ex. Quaderno) détectée — le chiffre d'affaires risque d'être incomplet." });
+      // Classification des documents par rôle EFFECTIF (auto + override manuel) — pas de devinette.
+      const byRole = (role: string) => keptParsed.filter((e) => effRoleOf(e) === role).map((e) => e.parser).join(", ") || "—";
+      flags.push({ id: "_classif", severity: "info", label: `Documents classés — CA (facturé) : ${byRole("revenue")} · Réception : ${byRole("payment")} · Banque : ${byRole("bank")}.` });
+      if (!revenueDocs.length)
+        flags.push({ id: "_no_revenue", severity: "warn", label: "Aucune source de CA (rôle « revenue », ex. Quaderno) — CA potentiellement incomplet. Classe un document en « CA » si besoin." });
+      if (revenueDocs.length > 1)
+        flags.push({ id: "_multi_revenue", severity: "warn", label: `${revenueDocs.length} sources de CA cumulées (${revenueDocs.map((e) => e.parser).join(", ")}) — risque de double comptage. Mets en « réception » celles qui ne sont pas le CA facturé.` });
       // Remonte les notes des parsers (CA par méthode, montants de réception Stripe/Whop…).
       for (const e of keptParsed) if (e.note) flags.push({ id: `_note_${e.parser}`, severity: "info", label: e.note });
       flags.push(...recLLM.conflicts);
@@ -239,7 +255,7 @@ Deno.serve(async (req) => {
       if (blocking.length) flags.push({ id: "_invalid", severity: "error", label: `Validation bloquante : ${blocking.join(" · ")}. Le dashboard ne sera pas généré tant que ce n'est pas corrigé.` });
 
       data.meta = { ...(data.meta ?? {}), fx: { reporting: currency, source: fxSource, detected, factor },
-        classification: keptParsed.map((e) => ({ parser: e.parser, role: e.role, note: e.note })),
+        classification: keptParsed.map((e) => ({ parser: e.parser, file: e.file, role: e.role, effRole: effRoleOf(e), manual: !!manualByName.get(e.file)?.role, revenueCandidate: e.revenueCandidate ?? null, note: e.note })),
         sources_count: keptParsed.length + llmExtracts.length,
         period, currency, entity: (client as { name?: string }).name ?? null,
         validation: { ok: blocking.length === 0, blocking } };
