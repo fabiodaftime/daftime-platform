@@ -231,9 +231,18 @@ Deno.serve(async (req) => {
       for (const e of keptParsed) if (e.note) flags.push({ id: `_note_${e.parser}`, severity: "info", label: e.note });
       flags.push(...recLLM.conflicts);
       data.flags = flags;
+
+      // VALIDATION BLOQUANTE : champs clés (core) présents + aucun check d'erreur du catalogue.
+      const coreMissing = lines.filter((l) => l.core && values[l.id] == null).map((l) => l.label);
+      const errorIssues = (flags as { severity?: string; label?: string }[]).filter((f) => f.severity === "error").map((f) => f.label ?? "");
+      const blocking = [...coreMissing.map((l) => `Champ clé manquant : ${l}`), ...errorIssues];
+      if (blocking.length) flags.push({ id: "_invalid", severity: "error", label: `Validation bloquante : ${blocking.join(" · ")}. Le dashboard ne sera pas généré tant que ce n'est pas corrigé.` });
+
       data.meta = { ...(data.meta ?? {}), fx: { reporting: currency, source: fxSource, detected, factor },
         classification: keptParsed.map((e) => ({ parser: e.parser, role: e.role, note: e.note })),
-        sources_count: keptParsed.length + llmExtracts.length };
+        sources_count: keptParsed.length + llmExtracts.length,
+        period, currency, entity: (client as { name?: string }).name ?? null,
+        validation: { ok: blocking.length === 0, blocking } };
 
       dataToSave = data;
       missing = lines.filter((l) => l.core && values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);

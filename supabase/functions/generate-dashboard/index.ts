@@ -71,9 +71,13 @@ Deno.serve(async (req) => {
     const { data: client } = await admin.from("clients")
       .select("name, currency, brand, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
 
-    const meta = (sd.data as { meta?: { template?: string; validated?: boolean } })?.meta;
+    const meta = (sd.data as { meta?: { template?: string; validated?: boolean; validation?: { ok?: boolean; blocking?: string[] } } })?.meta;
     if (meta?.template && !meta?.validated) {
       return json({ error: "Validez d'abord les données (cockpit → Valider) avant de générer le dashboard." }, 409);
+    }
+    // Validation automatique bloquante : champ clé manquant ou incohérence → pas de génération.
+    if (meta?.validation && meta.validation.ok === false) {
+      return json({ error: `Données incomplètes/incohérentes — dashboard bloqué : ${(meta.validation.blocking ?? []).join(" · ")}` }, 409);
     }
 
     // Historique (variations + tendances).
