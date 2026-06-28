@@ -28,6 +28,7 @@ WIDGETS (JSON) :
 - {"type":"table","title":"...","metrics":["id", ...]}             // détail (libellé / valeur / évolution)
 - {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
 - {"type":"ranking","title":"...","breakdown":"clé"}              // classement (barres horizontales) d'un BREAKDOWN fourni (ex. sales_by_country, sessions_by_country, top_products)
+- {"type":"map","title":"...","breakdown":"clé"}                  // CARTE choroplèthe (monde, intensité par valeur) — idéale pour un breakdown PAR PAYS (sales_by_country / sessions_by_country)
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
 THÈME VISUEL — choisis le "mood" (TRAITEMENT visuel) adapté à l'UNIVERS du client. IMPORTANT : les COULEURS et la POLICE viennent AUTOMATIQUEMENT de la marque/du site — ne les définis PAS (pas de primary/accent/palette/font). Le mood ne change que le style (fond, en-tête, tuiles), pas les couleurs.
