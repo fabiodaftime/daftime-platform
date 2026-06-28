@@ -11,6 +11,12 @@ import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
 import { getCatalog, inputLines, buildStandardized, type CatalogLine } from "../_shared/templates.ts";
 import { reconcile, type FileExtract } from "../_shared/reconcile.ts";
+import { ratesToReporting } from "../_shared/fx.ts";
+import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
+
+// Unités NON monétaires (comptes, ratios, durées) : ne pas convertir.
+const NON_MONEY_UNITS = new Set(["%", "x", "u", "nb", "ratio", "pts", "j", "jours", "mois", "q", "score"]);
+const isMonetary = (unit?: string) => !unit || !NON_MONEY_UNITS.has(unit.trim());
 
 // Repères métier par type d'activité (KPIs et charges typiques). Surchargé par activity_types.config si fourni.
 const ACTIVITY_GUIDE: Record<string, string> = {
@@ -51,17 +57,22 @@ Format attendu (STRICT, structure tabulaire) :
 }`;
 
 // Chemin MULTI-SOURCES : on classe + extrait UN fichier à la fois, puis on réconcilie.
-const PERFILE_SYSTEM = (activity: string, lines: CatalogLine[]) => `Tu analyses UN SEUL fichier d'un client "${activity}".
-1) IDENTIFIE le type de source (source_type) parmi : "sales_export" (export de ventes Shopify/Stripe/Amazon), "ads_dashboard" (dashboard publicitaire Meta/Google/TikTok), "bank_statement" (relevé bancaire), "invoice" (facture), "payroll" (journal de paie), "pnl" (compte de résultat / compta), "other".
-2) EXTRAIS uniquement les postes ci-dessous que CE fichier fournit réellement, pour LE MOIS (valeur numérique brute, sans symbole ni séparateur de milliers). N'invente rien ; omets ce qui n'est pas dans ce fichier.
-   - Si c'est un RELEVÉ BANCAIRE : catégorise les transactions et additionne-les par poste (ventes encaissées, pub, salaires, frais de paiement, logistique…).
-3) Pour chaque valeur, indique brièvement OÙ tu l'as trouvée (page / ligne / feuille).
+const PERFILE_SYSTEM = (activity: string, lines: CatalogLine[], ctxText: string) => `Tu analyses UN SEUL fichier d'un client "${activity}". Tu fais partie d'une chaîne qui agrège plusieurs fichiers ensuite : extrais SEULEMENT ce que CE fichier contient, sans déduire le reste.
+
+${ctxText ? `CONTEXTE DU DOSSIER (rôle des sources, montage financier — à respecter) :\n${ctxText}\n` : ""}
+1) IDENTIFIE le type de source (source_type) parmi : "sales_export" (export de ventes Shopify/Stripe/Amazon/Whop), "ads_dashboard" (dashboard publicitaire Meta/Google/TikTok), "bank_statement" (relevé bancaire), "invoice" (facture / export de factures), "payroll" (journal de paie), "pnl" (compte de résultat / bilan / cash flow comptable), "other".
+2) DEVISE : indique "currency" = la devise PRINCIPALE des montants de ce fichier (code ISO : EUR, AED, USD, GBP…). Donne les montants DANS CETTE DEVISE, bruts, SANS conversion (la conversion est faite ensuite par le système). Si le fichier mélange plusieurs devises ligne à ligne, additionne par devise et renvoie la devise dominante dans "currency" (la conversion fine sera gérée en aval — signale-le dans "note").
+3) EXTRAIS uniquement les postes ci-dessous que CE fichier fournit réellement, pour LE MOIS (valeur numérique brute, sans symbole ni séparateur de milliers). N'invente rien ; omets ce qui n'est pas dans ce fichier.
+   - RELEVÉ BANCAIRE : catégorise les transactions et additionne par poste (ventes encaissées, pub, salaires, frais de paiement, abonnements/outils, frais bancaires…). Ignore les frais de change internes "Foreign exchange transaction fee" comme poste de CA. Le solde de fin = dernier "Balance".
+   - EXPORT DE PAIEMENTS (Stripe/Whop) : ne compte QUE les paiements réussis (Paid/Captured=true/succeeded). EXCLUS les "Failed", "open", "pending", "past_due" et les remboursements.
+   - ⚠️ ANTI-DOUBLE-COMPTAGE : n'attribue PAS au CA des montants qui sont de simples mouvements internes (virements entre comptes, "payouts" Stripe vers la banque, règlements d'un processeur qui réapparaissent sur le relevé bancaire). Si tu identifies un tel mouvement, mets-le dans "note" plutôt que dans "values".
+4) Pour chaque valeur, indique brièvement OÙ tu l'as trouvée (page / ligne / feuille) dans "sources".
 
 POSTES POSSIBLES :
 ${lines.map((l) => `- ${l.id} : ${l.label}${l.hint ? ` (${l.hint})` : ""}`).join("\n")}
 
 Réponds UNIQUEMENT en JSON :
-{ "source_type": "sales_export", "values": { "ca": 12000 }, "sources": { "ca": "p.1, ligne Net sales" } }`;
+{ "source_type": "sales_export", "currency": "EUR", "values": { "ca": 12000 }, "sources": { "ca": "lignes Paid, colonne Amount" }, "note": "payouts ignorés (mouvement interne)" }`;
 
 // Exécute fn sur le tableau avec un parallélisme borné (évite les limites de débit Anthropic).
 async function mapLimit<T, R>(arr: T[], limit: number, fn: (t: T) => Promise<R>): Promise<R[]> {
@@ -114,38 +125,82 @@ Deno.serve(async (req) => {
     let usage: unknown;
 
     if (tpl) {
-      // MULTI-SOURCES : classer + extraire CHAQUE fichier (en parallèle borné), puis réconcilier.
+      // PIPELINE : 1) parsers DÉTERMINISTES (CSV/exports) → 2) IA seulement sur les PDF/inconnus
+      //            et uniquement pour les postes encore manquants → 3) réconciliation → calcul.
       const lines = inputLines(tpl);
+      const monetaryIds = new Set(lines.filter((l) => isMonetary(l.unit)).map((l) => l.id));
+      const labelOf = (id: string) => tpl.lines.find((l) => l.id === id)?.label ?? id;
+
+      const fxOverrides = (ctx?.data as { fx_rates?: Record<string, number> } | null)?.fx_rates;
+      const { factor, source: fxSource } = await ratesToReporting(period, currency, fxOverrides);
+      const pctx = { reporting: currency, factor, period };
+
+      // 1) PARSERS déterministes sur les fichiers texte/CSV reconnus.
       const usable = docs.filter((d) => d.kind !== "skipped");
-      const perFile = (await mapLimit(usable, 4, async (doc) => {
-        const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: "Classe ce fichier et extrais les postes en JSON." }];
-        try {
-          const res = await callAnthropic({
-            model: MODELS.fast,
-            system: PERFILE_SYSTEM(activity, lines),
-            messages: [{ role: "user", content } as AnthropicMessage],
-            max_tokens: 1500,
-          });
-          const p = extractJson<{ source_type?: string; values?: Record<string, number>; sources?: Record<string, string> }>(res.text);
-          return { file: doc.name, type: (p.source_type ?? "other") as FileExtract["type"], values: p.values ?? {}, sources: p.sources ?? {} } as FileExtract;
-        } catch { return null; }
-      })).filter((x): x is FileExtract => !!x);
-
-      const rec = reconcile(perFile, (id) => tpl.lines.find((l) => l.id === id)?.label ?? id);
-      const built = buildStandardized(tpl, rec.values, rec.sources, currency);
-
-      // Annote chaque ligne avec sa confiance ; ajoute les conflits aux alertes.
-      const data = built.data as { sections: { rows: Record<string, unknown>[] }[]; flags: unknown[]; meta?: Record<string, unknown> };
-      for (const sec of data.sections) for (const row of sec.rows) {
-        const conf = rec.confidence[row.id as string];
-        if (conf) row.confidence = conf;
+      const parsed: ParsedExtract[] = [];
+      const llmDocs: typeof usable = [];
+      for (const doc of usable) {
+        const p = doc.kind === "text" ? parseFile(doc.name, (doc as { content: string }).content, pctx) : null;
+        if (p) parsed.push(p); else llmDocs.push(doc);
       }
-      data.flags = [...(data.flags ?? []), ...rec.conflicts];
-      data.meta = { ...(data.meta ?? {}), sources_count: perFile.length };
+      // Dédup par groupe (Stripe multi-mois, Ebury -EUR vs all_currencies…) : on garde le plus complet.
+      const best = new Map<string, ParsedExtract>();
+      for (const e of parsed) if (e.dedupGroup) { const c = best.get(e.dedupGroup); if (!c || (e.count ?? 0) > (c.count ?? 0)) best.set(e.dedupGroup, e); }
+      const keptParsed = parsed.filter((e) => !e.dedupGroup || best.get(e.dedupGroup) === e);
+
+      // Somme des contributions parsées (déjà en devise de reporting). Provenance = 1re source rencontrée.
+      const parsedValues: Record<string, number> = {};
+      const parsedSources: Record<string, string> = {};
+      for (const e of keptParsed) for (const [k, val] of Object.entries(e.values)) {
+        parsedValues[k] = Math.round(((parsedValues[k] ?? 0) + val) * 100) / 100;
+        if (!parsedSources[k]) parsedSources[k] = e.sources[k] ?? e.parser;
+      }
+
+      // 2) GAP-FILL IA : sur les fichiers NON reconnus (PDF/scan/inconnu), seulement pour les postes encore absents.
+      const missingLines = lines.filter((l) => parsedValues[l.id] == null);
+      const ctxText = ctx?.data ? JSON.stringify((ctx.data as { playbook?: unknown }).playbook ?? ctx.data).slice(0, 4000) : "";
+      const llmExtracts = (llmDocs.length && missingLines.length)
+        ? (await mapLimit(llmDocs, 3, async (doc) => {
+            const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: "Classe ce fichier, indique sa devise et extrais SEULEMENT les postes demandés (sinon null)." }];
+            try {
+              const res = await callAnthropic({ model: MODELS.fast, system: PERFILE_SYSTEM(activity, missingLines, ctxText),
+                messages: [{ role: "user", content } as AnthropicMessage], max_tokens: 1200 });
+              const p = extractJson<{ source_type?: string; currency?: string; values?: Record<string, number>; sources?: Record<string, string> }>(res.text);
+              return { file: doc.name, type: (p.source_type ?? "other") as FileExtract["type"], currency: p.currency, values: p.values ?? {}, sources: p.sources ?? {} } as FileExtract;
+            } catch { return null; }
+          })).filter((x): x is FileExtract => !!x)
+        : [];
+      const recLLM = reconcile(llmExtracts, labelOf, { factor, monetaryIds, reporting: currency });
+
+      // 3) FUSION : les parsers (exacts) priment ; l'IA complète les trous.
+      const values = { ...recLLM.values, ...parsedValues };
+      const sources = { ...recLLM.sources, ...parsedSources };
+      const confidence: Record<string, string> = { ...recLLM.confidence };
+      for (const k of Object.keys(parsedValues)) confidence[k] = "parsed";
+
+      const built = buildStandardized(tpl, values, sources, currency);
+      const data = built.data as { sections: { rows: Record<string, unknown>[] }[]; flags: unknown[]; meta?: Record<string, unknown> };
+      for (const sec of data.sections) for (const row of sec.rows) { const c = confidence[row.id as string]; if (c) row.confidence = c; }
+
+      const detected = [...new Set([...keptParsed.map((e) => e.currency), ...llmExtracts.map((e) => (e.currency ?? "").toUpperCase())].filter(Boolean))];
+      const flags: unknown[] = [...(data.flags ?? [])];
+      flags.push({ id: "_fx", severity: "info", label: `Devises converties vers ${currency} (taux ${fxSource}).` });
+      // Classification des documents par rôle (CA / réception / banque / interne) — pas de devinette.
+      const byRole = (role: string) => keptParsed.filter((e) => e.role === role).map((e) => e.parser).join(", ") || "—";
+      flags.push({ id: "_classif", severity: "info", label: `Documents classés — CA (facturé) : ${byRole("revenue")} · Réception paiement : ${byRole("payment")} · Banque : ${byRole("bank")}.` });
+      if (!keptParsed.some((e) => e.role === "revenue"))
+        flags.push({ id: "_no_revenue", severity: "warn", label: "Aucune source de CA facturé (ex. Quaderno) détectée — le chiffre d'affaires risque d'être incomplet." });
+      // Remonte les notes des parsers (CA par méthode, montants de réception Stripe/Whop…).
+      for (const e of keptParsed) if (e.note) flags.push({ id: `_note_${e.parser}`, severity: "info", label: e.note });
+      flags.push(...recLLM.conflicts);
+      data.flags = flags;
+      data.meta = { ...(data.meta ?? {}), fx: { reporting: currency, source: fxSource, detected, factor },
+        classification: keptParsed.map((e) => ({ parser: e.parser, role: e.role, note: e.note })),
+        sources_count: keptParsed.length + llmExtracts.length };
 
       dataToSave = data;
-      missing = lines.filter((l) => l.core && rec.values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);
-      usage = { files: perFile.length };
+      missing = lines.filter((l) => l.core && values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);
+      usage = { parsers: keptParsed.length, llm: llmExtracts.length };
     } else {
       // GÉNÉRIQUE (activités sans template) : l'IA produit directement la structure.
       const configGuide = at?.config && Object.keys(at.config).length ? JSON.stringify(at.config) : "";
