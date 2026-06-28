@@ -61,8 +61,10 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   let cid = 0;
   const M = ctx.metrics;
   const has = (id: string) => M[id] && M[id].value != null;
-  const fullTypes = new Set(["kpi_row", "line", "funnel", "table", "map", "flow", "stacked", "calendar", "treemap",
-    "area", "stacked_area", "river", "combo", "slope", "matrix", "comparison", "histogram", "share", "trend_grid", "gauge_grid", "waterfall"]);
+  // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
+  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey"]);
+  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram"]);
+  const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
   const chCard = (id: string, title: string, cls = "echart") => `<div class="card chartcard"><div class="card-t">${esc(title)}</div><div class="${cls}" id="${id}"></div></div>`;
   const hist = (id: string) => ctx.history.series[id]; // série temporelle d'une métrique (ou undefined)
@@ -410,7 +412,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   };
 
   const rendered = (plan.pages ?? [])
-    .map((p) => ({ title: p.title, cells: (p.widgets ?? []).map((w) => { const html = widgetHtml(w); return html.trim() ? `<div class="cell ${fullTypes.has(w.type) ? "full" : "half"}">${html}</div>` : ""; }).join("") }))
+    .map((p) => ({ title: p.title, cells: (p.widgets ?? []).map((w) => { const html = widgetHtml(w); return html.trim() ? `<div class="cell ${cellCls(w.type)}">${html}</div>` : ""; }).join("") }))
     .filter((p) => p.cells.trim().length > 0);
   const nav = rendered.map((p, i) => `<button class="tab ${i === 0 ? "on" : ""}" data-i="${i}">${esc(p.title)}</button>`).join("");
   const main = rendered.map((p, i) => `<section class="page ${i === 0 ? "on" : ""}" data-i="${i}">${p.cells}</section>`).join("");
@@ -443,7 +445,7 @@ function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLin
  if(d.kind==='map')return{tooltip:{trigger:'item',backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'},formatter:function(p){return p.name+(p.value?(': '+Number(p.value).toLocaleString('fr-FR')):'');}},visualMap:{min:0,max:d.max,left:8,bottom:8,calculable:true,inRange:{color:[PRIMARY+'18',PRIMARY+'66',PRIMARY]},textStyle:{color:MUT}},series:[{type:'map',map:'world',roam:false,emphasis:{label:{show:false},itemStyle:{areaColor:${JSON.stringify(accent)}}},itemStyle:{borderColor:GRID,areaColor:DARK?'#1d2236':'#eef0f6'},data:d.items}]};
  if(d.kind==='gauge')return{series:[{type:'gauge',startAngle:215,endAngle:-35,min:0,max:Math.max(d.target,d.value)||1,progress:{show:true,width:13,roundCap:true,itemStyle:{color:d.color}},axisLine:{lineStyle:{width:13,color:[[1,GRID]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},title:{offsetCenter:[0,'32%'],color:MUT,fontSize:12},detail:{offsetCenter:[0,'-6%'],fontSize:23,fontWeight:'bold',color:INK,formatter:function(){return d.fmt;}},data:[{value:d.value,name:'objectif '+d.targetFmt+(d.target?(' · '+Math.round(d.value/d.target*100)+'%'):'')}]}]};
  if(d.kind==='stackbar')return{...BASE,animationDuration:800,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'bar',stack:'t',data:s.data,itemStyle:{color:s.color},barMaxWidth:48};})};
- if(d.kind==='sankey')return{...BASE,tooltip:{trigger:'item',backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'}},series:[{type:'sankey',data:d.nodes,links:d.links,emphasis:{focus:'adjacency'},nodeGap:16,label:{color:INK,fontSize:11},itemStyle:{borderWidth:0},lineStyle:{color:'gradient',opacity:.35,curveness:.5}}]};
+ if(d.kind==='sankey')return{...BASE,tooltip:{trigger:'item',backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'}},series:[{type:'sankey',data:d.nodes,links:d.links,emphasis:{focus:'adjacency',lineStyle:{opacity:.7}},nodeGap:18,nodeWidth:16,label:{color:INK,fontSize:12,fontWeight:600},itemStyle:{borderWidth:0,borderRadius:3},lineStyle:{color:'source',opacity:.5,curveness:.55}}]};
  if(d.kind==='radar')return{...BASE,legend:{show:d.series.length>1,bottom:0,icon:'circle',textStyle:{color:MUT}},radar:{indicator:d.indicators,splitNumber:4,axisName:{color:MUT,fontSize:11},splitLine:{lineStyle:{color:GRID}},splitArea:{show:false},axisLine:{lineStyle:{color:GRID}}},series:[{type:'radar',data:d.series.map(function(s){return{value:s.value,name:s.name,symbolSize:4,lineStyle:{width:2,color:s.color},itemStyle:{color:s.color},areaStyle:{color:s.color,opacity:.12}};})}]};
  if(d.kind==='treemap')return{...BASE,tooltip:{trigger:'item',backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'},formatter:function(p){return p.name+': '+Number(p.value).toLocaleString('fr-FR');}},series:[{type:'treemap',roam:false,nodeClick:false,breadcrumb:{show:false},width:'100%',height:'100%',label:{color:'#fff',fontSize:12,overflow:'truncate'},itemStyle:{borderColor:SURF,borderWidth:2,gapWidth:2},data:d.items.map(function(it){return{name:it.name,value:it.value,itemStyle:{color:it.color}};})}]};
  if(d.kind==='calendar')return{tooltip:{backgroundColor:DARK?'#0b0e1a':'#171a2b',borderWidth:0,textStyle:{color:'#fff'},formatter:function(p){return p.value[0]+': '+Number(p.value[1]).toLocaleString('fr-FR');}},visualMap:{min:0,max:d.max,show:false,inRange:{color:[PRIMARY+'14',PRIMARY+'66',PRIMARY]}},calendar:{range:d.range,cellSize:['auto',15],left:20,right:14,top:22,bottom:6,itemStyle:{color:SURF,borderColor:DARK?'#0f1221':'#fff',borderWidth:2},splitLine:{show:false},dayLabel:{color:MUT,firstDay:1},monthLabel:{show:false},yearLabel:{show:false}},series:[{type:'heatmap',coordinateSystem:'calendar',data:d.data}]};
@@ -476,7 +478,7 @@ ${fontLink}
 <style>
 :root{--p:${primary};--a:${accent};--bg:${th.bg};--card:${th.surface};--bd:${th.border};--mut:${th.muted};--ink:${th.ink};--r:${th.radius}px}
 *{box-sizing:border-box}body{margin:0;font-family:${th.font};background:${bgCss};color:var(--ink);-webkit-font-smoothing:antialiased}
-.dash{max-width:1060px;margin:0 auto;padding:0 18px 40px}
+.dash{max-width:1480px;margin:0 auto;padding:0 26px 48px}
 header.hero{${headerCss};border-radius:0 0 22px 22px;padding:26px 26px 24px;margin:0 -18px 22px;position:relative;overflow:hidden}
 ${heroDecor ? `header.hero::after{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:var(--a);opacity:.16}` : ""}
 header.hero h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em}
@@ -484,8 +486,9 @@ header.hero .sub{opacity:.82;font-size:14px;margin-top:4px;text-transform:capita
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px}
 .tab{border:1px solid var(--bd);background:var(--card);padding:8px 15px;font:inherit;font-size:13px;font-weight:600;color:var(--mut);cursor:pointer;border-radius:999px;transition:all .15s}
 .tab:hover{color:var(--ink)} .tab.on{color:#fff;background:var(--p);border-color:var(--p)}
-.page{display:none}.page.on{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
-.cell.full{grid-column:1/-1}
+.page{display:none}.page.on{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.cell.full{grid-column:1/-1}.cell.wide{grid-column:span 2}
+@media(max-width:1150px){.page.on{grid-template-columns:repeat(2,minmax(0,1fr))}.cell.wide{grid-column:1/-1}}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
 .kpi{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:15px 17px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s;display:flex;gap:13px;align-items:center}
 .kpi:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(20,26,60,.10)}
@@ -501,7 +504,7 @@ header.hero .sub{opacity:.82;font-size:14px;margin-top:4px;text-transform:capita
 .glassbg .card,.glassbg .kpi{background:rgba(255,255,255,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,.5)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 2px rgba(20,26,60,.04)}
 .card-t{font-weight:700;font-size:15px;margin-bottom:14px}
-.echart{height:300px;width:100%}.echart-map{height:420px}.echart-gauge{height:250px}.echart-cal{height:170px}.echart-gg{height:130px}
+.echart{height:280px;width:100%}.echart-map{height:440px}.echart-gauge{height:240px}.echart-cal{height:180px}.echart-gg{height:130px}
 .sh-bar{display:flex;height:24px;border-radius:8px;overflow:hidden;background:var(--bd)}.sh-seg{height:100%;transition:width .3s}
 .sh-leg{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:13px;font-size:12.5px;color:var(--mut)}
 .sh-li{display:flex;align-items:center;gap:6px}.sh-li b{color:var(--ink);font-weight:600}.sh-dot{width:9px;height:9px;border-radius:3px;flex:0 0 auto}

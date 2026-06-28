@@ -11,6 +11,7 @@ import { BrandPanel } from '@/components/generic/BrandPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { StandardizedReview } from '@/components/generic/StandardizedReview';
 import { DashboardChat } from '@/components/generic/DashboardChat';
+import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
 import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
@@ -610,8 +611,7 @@ export default function AdminClientCockpit() {
                 </select>
                 <span className="text-muted-foreground text-xs">v{dash.version}</span>
               </div>
-              <iframe title="dashboard" srcDoc={dash.html ?? ''} sandbox="allow-scripts"
-                className="w-full h-[600px] border rounded-lg bg-white" />
+              <DashboardFrame html={dash.html ?? ''} />
               {history.length > 0 && (
                 <details className="mt-3 text-xs text-muted-foreground">
                   <summary className="cursor-pointer">Historique du workflow ({history.length})</summary>

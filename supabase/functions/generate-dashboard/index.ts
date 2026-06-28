@@ -9,7 +9,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
-import { renderDashboard, type DashPlan, type Metric } from "../_shared/dashboardRender.ts";
+import { renderDashboard, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
 
 const PLAN_SYSTEM = (activity: string) => `Tu COMPOSES le plan d'un dashboard financier mensuel pour un client "${activity}". Tu choisis LIBREMENT les pages et widgets les plus PERTINENTS au vu des données RÉELLES et du métier — adapté à l'entreprise, pas générique.
 
@@ -28,7 +28,9 @@ RÈGLES :
   · indicateur vs CIBLE → gauge, gauge_grid, bullet, rings.
 - DIRECTIVE DE VARIÉTÉ : une orientation esthétique t'est donnée à chaque génération (voir le message) — privilégie cette famille de graphes ce coup-ci, tout en restant pertinent.
 - CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, GARDE la même ossature (mêmes pages/onglets et mêmes grands choix de graphes) pour un suivi cohérent d'un mois à l'autre ; APPLIQUE les CONSIGNES (elles priment). En l'ABSENCE de structure précédente, tu es LIBRE et tu DOIS oser des graphes variés et premium.
-- Chaque page : un kpi_row en tête si pertinent ; 2 à 4 graphes VARIÉS et bien choisis (pas deux fois le même type sur une page) ; des tables de détail ; des callouts d'analyse (lecture du mois, constats chiffrés, points de vigilance).
+- DENSITÉ EXIGÉE : un dashboard premium est RICHE. Chaque page porte un kpi_row en tête PUIS **4 à 8 graphes** variés (jamais 1 seul !), plus éventuellement une table et un callout. Vise un dashboard de 2 à 4 pages → au total 12 à 30 widgets. Une page avec un seul graphe est INACCEPTABLE.
+- Le rendu place automatiquement les graphes sur une grille à 3 colonnes : profite-en pour juxtaposer plusieurs graphes (ex. donut + rose + gauge_grid sur une ligne, puis treemap + pictorial + ranking).
+- DONNÉE COURTE (peu/pas d'historique) : si l'HISTORIQUE fait moins de 3 mois, N'UTILISE PAS les graphes temporels (line, area, river, combo, slope, matrix, stacked, stacked_area) — ils seraient vides. Construis la richesse avec des graphes « instantané » du mois : bar, donut, rose, polar, treemap, pictorial, lollipop, share, ranking, map, gauge, gauge_grid, bullet, rings, radar, diverging, waterfall, flow, funnel, histogram, calendar (si daily_sales). Décline les MÊMES données sous plusieurs angles plutôt que d'avoir une page vide.
 
 WIDGETS (JSON) :
 - {"type":"kpi_row","items":[{"metric":"id"}, ...]}                  // 3 à 6 KPIs clés
@@ -90,14 +92,22 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 
 function defaultPlan(sections: { label?: string; rows: Row[] }[], hasHistory: boolean): DashPlan {
   const totals = sections.flatMap((s) => s.rows.filter((r) => r.type === "total" || r.id === "ca").map((r) => r.id!)).filter(Boolean);
-  const pages: DashPlan["pages"] = [{
-    title: "Vue d'ensemble",
-    widgets: [
-      { type: "kpi_row", items: totals.slice(0, 6).map((id) => ({ metric: id })) },
-      ...(hasHistory ? [{ type: "line" as const, title: "Tendance des principaux soldes", metrics: totals.slice(0, 3) }] : []),
-    ],
-  }];
-  for (const s of sections) pages.push({ title: s.label ?? "Détail", widgets: [{ type: "table", title: s.label, metrics: s.rows.map((r) => r.id!).filter(Boolean) }] });
+  const withChange = sections.flatMap((s) => s.rows.filter((r) => r.change_pct != null && r.id).map((r) => r.id!));
+  const overview: Widget[] = [{ type: "kpi_row", items: totals.slice(0, 6).map((id) => ({ metric: id })) }];
+  if (hasHistory) overview.push({ type: "line", title: "Tendance des principaux soldes", metrics: totals.slice(0, 4) });
+  if (totals.length >= 2) overview.push({ type: "bar", title: "Principaux soldes", metrics: totals.slice(0, 6) });
+  if (withChange.length >= 2) overview.push({ type: "diverging", title: "Variations vs M-1", metrics: withChange.slice(0, 8) });
+  if (totals.length >= 3) overview.push({ type: "radar", title: "Profil financier", metrics: totals.slice(0, 6) });
+  const pages: DashPlan["pages"] = [{ title: "Vue d'ensemble", widgets: overview }];
+  for (const s of sections) {
+    const ids = s.rows.map((r) => r.id!).filter(Boolean);
+    const positives = s.rows.filter((r) => typeof r.value === "number" && (r.value as number) > 0 && r.type !== "total" && r.id).map((r) => r.id!);
+    const widgets: Widget[] = [];
+    if (ids.length >= 2) widgets.push({ type: "bar", title: s.label, metrics: ids.slice(0, 8) });
+    if (positives.length >= 2) widgets.push({ type: "donut", title: `Répartition — ${s.label ?? ""}`.trim(), metrics: positives.slice(0, 6) });
+    widgets.push({ type: "table", title: s.label, metrics: ids });
+    pages.push({ title: s.label ?? "Détail", widgets });
+  }
   return { pages };
 }
 

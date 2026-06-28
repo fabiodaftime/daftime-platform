@@ -8,10 +8,11 @@ import { AppShell } from '@/components/layout/AppShell';
 import { BookingButton } from '@/components/booking/BookingButton';
 import { Button } from '@/components/ui/button';
 import {
-  ChevronLeft, ChevronRight, UploadCloud, Activity, FileText, Maximize2, Printer,
+  ChevronLeft, ChevronRight, UploadCloud, Activity, FileText,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
   FileBarChart2, ArrowRight, TrendingUp, Mail, Phone,
 } from 'lucide-react';
+import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { ADVISOR, DEFAULT_DOCS } from '@/lib/config';
 
@@ -338,22 +339,6 @@ export default function ClientSpace() {
     setShowBanner(false);
   };
 
-  const openFullscreen = () => {
-    if (!dash?.html) return;
-    const url = URL.createObjectURL(new Blob([dash.html], { type: 'text/html' }));
-    window.open(url, '_blank');
-  };
-
-  const printPdf = () => {
-    if (!dash?.html) return;
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.open();
-    w.document.write(dash.html);
-    w.document.close();
-    w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 500);
-  };
-
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
   const cfgDocs = (client as any)?.activity_types?.config?.documents as string[] | undefined;
@@ -592,25 +577,14 @@ export default function ClientSpace() {
 
             {tab === 'dashboard' && (
               <div className="space-y-4">
-                <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/30">
-                  <span className="text-sm font-medium capitalize">{periodLabel(period)}</span>
-                  {dash && (
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={printPdf}><Printer className="w-4 h-4 mr-1.5" /> PDF</Button>
-                      <Button variant="ghost" size="sm" onClick={openFullscreen}><Maximize2 className="w-4 h-4 mr-1.5" /> Plein écran</Button>
-                    </div>
-                  )}
-                </div>
                 {dash ? (
-                  <iframe title="dashboard" srcDoc={dash.html ?? ''} sandbox="allow-scripts" className="w-full h-[640px] bg-white" />
+                  <DashboardFrame html={dash.html ?? ''} />
                 ) : (
-                  <div className="text-center text-muted-foreground py-20">
+                  <div className="rounded-xl border bg-card text-center text-muted-foreground py-20">
                     <Clock className="w-10 h-10 mx-auto mb-3 opacity-40" />
                     Votre rapport pour {periodLabel(period)} est en préparation.
                   </div>
                 )}
-              </div>
               </div>
             )}
 
