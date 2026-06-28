@@ -11,26 +11,40 @@ import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { renderDashboard, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
 
-const PLAN_SYSTEM = (activity: string) => `Tu COMPOSES le plan d'un dashboard financier mensuel pour un client "${activity}". Tu choisis LIBREMENT les pages et widgets les plus PERTINENTS au vu des données RÉELLES et du métier — adapté à l'entreprise, pas générique.
+const PLAN_SYSTEM = (activity: string) => `Tu es un ANALYSTE FINANCIER SENIOR et le CONSEILLER de ce client "${activity}". Tu ne « poses pas des graphes » : tu produis un RAPPORT MENSUEL qui RACONTE UNE HISTOIRE — où en est l'entreprise ce mois-ci, ce qui va, ce qui ne va pas, et quoi faire. Le dashboard est livré à un dirigeant qui paie pour du CONSEIL, pas pour une galerie de graphiques.
 
-RÈGLES :
-- N'invente AUCUN chiffre. Les widgets ne portent que des RÉFÉRENCES d'indicateurs (ids fournis). Les textes "callout" ne citent QUE des chiffres/variations fournis — aucune invention, et AUCUNE recommandation (sauf demande explicite).
-- N'utilise QUE des ids présents dans la liste fournie. Pas de widget qui resterait vide.
-- PLUSIEURS pages (onglets) : une « Vue d'ensemble » puis des pages d'analyse thématiques adaptées au métier. Respecte les incontournables du BRIEF.
-- VARIÉTÉ EXIGÉE : un dashboard premium ne se résume PAS à line + bar + donut + table. Tu DOIS exploiter la BIBLIOTHÈQUE PREMIUM ci-dessous dès que la forme de la donnée s'y prête. Sur l'ensemble du dashboard, n'emploie JAMAIS le même type de graphe plus de 2 fois, et fais se côtoyer des familles différentes (temporel / répartition / objectifs / flux). Évite l'enchaînement monotone bar→bar→donut.
-- CHOISIS le graphe selon la FORME de la donnée (mapping) :
-  · breakdown PAR PAYS → map, puis varie avec rose / polar / ranking.
-  · breakdown PRODUITS / CATÉGORIES → treemap, pictorial, lollipop, share, sunburst (si libellés « Parent / Enfant »), ranking.
-  · breakdown JOURNALIER (daily_sales) → calendar, histogram, area.
-  · plusieurs KPIs d'un coup → radar, trend_grid, bullet/rings (si cibles), diverging.
-  · historique ≥3 mois → area, stacked_area, river, combo (barres+courbe), slope, matrix, stacked, line.
-  · chaîne P&L (CA→marge→EBITDA→résultat) → flow (sankey) ou waterfall (cascade).
-  · indicateur vs CIBLE → gauge, gauge_grid, bullet, rings.
-- DIRECTIVE DE VARIÉTÉ : une orientation esthétique t'est donnée à chaque génération (voir le message) — privilégie cette famille de graphes ce coup-ci, tout en restant pertinent.
-- CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, GARDE la même ossature (mêmes pages/onglets et mêmes grands choix de graphes) pour un suivi cohérent d'un mois à l'autre ; APPLIQUE les CONSIGNES (elles priment). En l'ABSENCE de structure précédente, tu es LIBRE et tu DOIS oser des graphes variés et premium.
-- DENSITÉ EXIGÉE : un dashboard premium est RICHE. Chaque page porte un kpi_row en tête PUIS **4 à 8 graphes** variés (jamais 1 seul !), plus éventuellement une table et un callout. Vise un dashboard de 2 à 4 pages → au total 12 à 30 widgets. Une page avec un seul graphe est INACCEPTABLE.
-- Le rendu place automatiquement les graphes sur une grille à 3 colonnes : profite-en pour juxtaposer plusieurs graphes (ex. donut + rose + gauge_grid sur une ligne, puis treemap + pictorial + ranking).
-- DONNÉE COURTE (peu/pas d'historique) : si l'HISTORIQUE fait moins de 3 mois, N'UTILISE PAS les graphes temporels (line, area, river, combo, slope, matrix, stacked, stacked_area) — ils seraient vides. Construis la richesse avec des graphes « instantané » du mois : bar, donut, rose, polar, treemap, pictorial, lollipop, share, ranking, map, gauge, gauge_grid, bullet, rings, radar, diverging, waterfall, flow, funnel, histogram, calendar (si daily_sales). Décline les MÊMES données sous plusieurs angles plutôt que d'avoir une page vide.
+POSTURE & EXIGENCE D'ANALYSE :
+- RAISONNE D'ABORD comme un analyste : lis les chiffres et leurs variations, repère les 3-4 faits marquants du mois (forces, dérives, risques), déduis des causes plausibles à partir des données (ex. « marge brute en hausse alors que le CA stagne → meilleur mix produit »), et formule des RECOMMANDATIONS concrètes.
+- Le NARRATIF est OBLIGATOIRE (c'est ce qui manque le plus) :
+  · La page « Vue d'ensemble » s'ouvre par un callout de SYNTHÈSE (3-5 phrases) : la lecture du mois en langage dirigeant.
+  · CHAQUE page contient au moins 1 callout d'analyse : constat chiffré → interprétation → reco ou point de vigilance (tone good/warn/info).
+  · Les callouts citent des chiffres RÉELS (fournis) mais tu PEUX et DOIS interpréter et conseiller. Tu n'inventes jamais un chiffre ; tu as le droit de raisonner dessus.
+- Mobilise ta connaissance du SECTEUR "${activity}" : KPIs qui comptent vraiment, ordres de grandeur sains, pièges classiques. Pour de l'E-COMMERCE p.ex. : taux de conversion (sessions→commandes), panier moyen, coût d'acquisition vs panier, taux de retour, poids de la pub dans le CA, marge après COGS+logistique+PSP, saisonnalité.
+
+ANTI-RÉPÉTITION (problème n°1 à éviter) :
+- INTERDIT d'avoir deux pages qui se ressemblent. Chaque page a un ANGLE UNIQUE et un titre qui le dit. NE crée PAS une page par poste comptable (pas de « page CA » + « page Charges » + « page Marge » qui réaffichent les mêmes bar/donut/table). Ces postes se LISENT ENSEMBLE.
+- Un même couple (type de graphe + donnée) n'apparaît qu'UNE fois dans tout le dashboard. Sur l'ensemble, n'emploie pas le même TYPE de graphe plus de 2 fois.
+- Structure RECOMMANDÉE (adapte au métier, ne copie pas bêtement) :
+  · « Vue d'ensemble » : synthèse + KPIs clés + 1 graphe fort de tendance/structure + objectifs.
+  · E-commerce → « Acquisition & conversion » (funnel, sessions/pays, panier), « Ventes & produits » (top produits, mix, saisonnalité jour), « Rentabilité » (P&L flow/waterfall, marge, structure des charges), « Trésorerie & objectifs » (cash, jauges vs cibles).
+  · Autres activités → décline des angles équivalents (acquisition/activité, production/livraison, rentabilité, trésorerie).
+- Si les données sont pauvres, fais MOINS de pages mais COHÉRENTES — jamais du remplissage répétitif.
+
+VARIÉTÉ & CHOIX DU GRAPHE selon la FORME de la donnée :
+- breakdown PAR PAYS → map, puis varie avec rose / polar / ranking.
+- breakdown PRODUITS / CATÉGORIES → treemap, pictorial, lollipop, share, sunburst (si libellés « Parent / Enfant »), ranking.
+- breakdown JOURNALIER (daily_sales) → calendar, histogram, area.
+- plusieurs KPIs d'un coup → radar, trend_grid, bullet/rings (si cibles), diverging.
+- historique ≥3 mois → area, stacked_area, river, combo (barres+courbe), slope, matrix, stacked, line.
+- chaîne P&L (CA→marge→EBITDA→résultat) → flow (sankey) ou waterfall (cascade) — une seule fois.
+- indicateur vs CIBLE → gauge, gauge_grid, bullet, rings.
+- DIRECTIVE DE VARIÉTÉ esthétique fournie dans le message : privilégie cette famille ce coup-ci, sans sacrifier la pertinence.
+
+DENSITÉ : chaque page = un kpi_row (si pertinent) + 3 à 6 graphes VARIÉS + 1-2 callouts d'analyse. Dashboard de 2 à 4 pages distinctes. JAMAIS une page à 1 seul graphe.
+Le rendu est une grille 3 colonnes : juxtapose des graphes complémentaires (ex. funnel + share + gauge_grid).
+DONNÉE COURTE (historique < 3 mois) : n'utilise PAS les graphes temporels (line/area/river/combo/slope/matrix/stacked/stacked_area) — ils seraient vides. Construis avec les graphes « instantané » : bar, donut, rose, polar, treemap, pictorial, lollipop, share, ranking, map, gauge, gauge_grid, bullet, rings, radar, diverging, waterfall, flow, funnel, histogram, calendar. Mais décline des ANGLES différents, pas la même donnée répétée.
+N'invente AUCUN chiffre. N'utilise QUE des ids/breakdowns/cibles fournis. Pas de widget qui resterait vide.
+CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, garde la même ossature (mêmes pages, mêmes grands choix) ; APPLIQUE les CONSIGNES (prioritaires). Sinon tu es libre.
 
 WIDGETS (JSON) :
 - {"type":"kpi_row","items":[{"metric":"id"}, ...]}                  // 3 à 6 KPIs clés
@@ -47,7 +61,7 @@ WIDGETS (JSON) :
 - {"type":"radar","title":"...","metrics":["id", ...]}            // profil radar multi-indicateurs (≥3 ids) — ce mois vs M-1 (force/faiblesse en un coup d'œil)
 - {"type":"treemap","title":"...","breakdown":"clé"}             // treemap d'un BREAKDOWN (poids relatif des catégories, ex. top_products) — surface ∝ valeur
 - {"type":"calendar","title":"...","breakdown":"clé"}            // calendrier-heatmap d'un BREAKDOWN journalier (ex. daily_sales) — intensité par jour du mois
-- {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
+- {"type":"callout","title":"...","text":"...","tone":"info|warn|good"} // ANALYSE/CONSEIL : constat chiffré → interprétation → reco. good=point fort, warn=vigilance/dérive, info=lecture neutre. EN METTRE sur chaque page.
 
 BIBLIOTHÈQUE PREMIUM ÉTENDUE (à EXPLOITER pour sortir du trio line/bar/donut — choisis selon la forme de la donnée ; 2 à 4 graphes forts et VARIÉS par page, sans répéter un type) :
 Séries temporelles (nécessitent l'historique) :
@@ -79,7 +93,16 @@ THÈME VISUEL — choisis le "mood" (TRAITEMENT visuel) adapté à l'UNIVERS du 
 - icons : map { id_metrique: nom } parmi banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, trophy, heart
 Si un THÈME du mois précédent est fourni, GARDE-le (cohérence), sauf consigne contraire.
 
-Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}], "theme":{ "mood":"...", "icons":{ } }}`;
+Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}], "theme":{ "mood":"...", "icons":{ } }}
+Rappel final : pages à ANGLES DISTINCTS, narratif (callouts d'analyse) sur chaque page, synthèse en ouverture, recommandations concrètes. Un dirigeant doit COMPRENDRE son mois en lisant ce rapport.`;
+
+// 2e passe : un « directeur de l'analyse » durcit le plan (anti-répétition, narratif, cohérence).
+const REVIEW_SYSTEM = (activity: string) => `Tu es le DIRECTEUR DE L'ANALYSE. On te soumet un PLAN de dashboard "${activity}" déjà composé par un analyste junior, avec les données disponibles. Ta mission : le RENDRE EXCELLENT en le RÉ-ÉCRIVANT. Sois exigeant et CORRIGE :
+1. RÉPÉTITION (défaut le plus grave) : supprime ou FUSIONNE les pages qui se ressemblent (ex. « CA » + « Charges » + « Marge » qui montrent les mêmes graphes). Chaque page restante doit avoir un ANGLE clairement différent et un titre qui le dit. Un même couple (graphe+donnée) n'apparaît qu'une fois. Pas le même type de graphe > 2 fois au total.
+2. NARRATIF : garantis une SYNTHÈSE (callout) en ouverture de la 1re page, et AU MOINS un callout d'analyse (constat chiffré → interprétation → reco/vigilance) sur CHAQUE page. Enrichis ou ajoute-les si absents — interprète les chiffres, conseille, sans inventer de chiffre.
+3. PERTINENCE MÉTIER : ordonne les pages comme un vrai rapport ${activity} (vue d'ensemble → acquisition/activité → produits/ventes → rentabilité → trésorerie/objectifs selon ce qui existe). Mets en avant les KPIs qui comptent pour ce secteur.
+4. VARIÉTÉ & VALIDITÉ : graphes variés et adaptés à la forme de la donnée ; n'utilise QUE des ids/breakdowns/cibles de la liste VALIDE fournie ; supprime tout widget qui resterait vide ; 3-6 graphes + kpi_row + callout(s) par page ; 2 à 4 pages.
+Conserve le THÈME tel quel (ne touche pas aux couleurs/police). Renvoie le PLAN AMÉLIORÉ, MÊME FORMAT, UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}]}. Si le plan est déjà excellent, renvoie-le quasi inchangé.`;
 
 type Row = { id?: string; label?: string; value?: unknown; unit?: string; type?: string; change_pct?: number };
 const idVal = (d: { sections?: { rows?: Row[] }[] } | null | undefined): Record<string, number> => {
@@ -99,15 +122,18 @@ function defaultPlan(sections: { label?: string; rows: Row[] }[], hasHistory: bo
   if (withChange.length >= 2) overview.push({ type: "diverging", title: "Variations vs M-1", metrics: withChange.slice(0, 8) });
   if (totals.length >= 3) overview.push({ type: "radar", title: "Profil financier", metrics: totals.slice(0, 6) });
   const pages: DashPlan["pages"] = [{ title: "Vue d'ensemble", widgets: overview }];
-  for (const s of sections) {
-    const ids = s.rows.map((r) => r.id!).filter(Boolean);
-    const positives = s.rows.filter((r) => typeof r.value === "number" && (r.value as number) > 0 && r.type !== "total" && r.id).map((r) => r.id!);
-    const widgets: Widget[] = [];
-    if (ids.length >= 2) widgets.push({ type: "bar", title: s.label, metrics: ids.slice(0, 8) });
-    if (positives.length >= 2) widgets.push({ type: "donut", title: `Répartition — ${s.label ?? ""}`.trim(), metrics: positives.slice(0, 6) });
-    widgets.push({ type: "table", title: s.label, metrics: ids });
-    pages.push({ title: s.label ?? "Détail", widgets });
+  // Rentabilité : sankey/cascade P&L + structure des charges (sans dupliquer la vue d'ensemble).
+  const profit: Widget[] = [{ type: "flow", title: "Du chiffre d'affaires au résultat" }];
+  if (totals.length >= 2) profit.push({ type: "waterfall", title: "Cascade du résultat", metrics: totals.slice(0, 5) });
+  const charges = sections.find((s) => /charge|opex|exploit/i.test(s.label ?? ""));
+  if (charges) {
+    const cids = charges.rows.filter((r) => typeof r.value === "number" && (r.value as number) > 0 && r.id).map((r) => r.id!);
+    if (cids.length >= 2) profit.push({ type: "donut", title: "Structure des charges", metrics: cids.slice(0, 6) });
   }
+  if (profit.length >= 2) pages.push({ title: "Rentabilité", widgets: profit });
+  // Une SEULE page de détail comptable : une table par section (données différentes, pas de répétition de graphes).
+  const detail: Widget[] = sections.map((s) => ({ type: "table" as const, title: s.label, metrics: s.rows.map((r) => r.id!).filter(Boolean) })).filter((w) => w.metrics.length);
+  if (detail.length) pages.push({ title: "Détail comptable", widgets: detail });
   return { pages };
 }
 
@@ -234,7 +260,7 @@ Deno.serve(async (req) => {
       let raw: string;
       try {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 90_000);
+        const timer = setTimeout(() => ctrl.abort(), 80_000);
         try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9, signal: ctrl.signal })).text; }
         finally { clearTimeout(timer); }
       } catch (e) {
@@ -244,6 +270,29 @@ Deno.serve(async (req) => {
       plan = extractJson<DashPlan>(raw);
     } catch (e) { console.error("plan:", e); }
     if (!plan || !Array.isArray(plan.pages) || !plan.pages.length) plan = defaultPlan(sections, history.months.length > 1);
+
+    // 2e passe — RELECTURE : un « directeur de l'analyse » durcit le plan (anti-répétition, narratif, cohérence).
+    // Robuste : timeout court + skip gracieux (on garde le plan de la 1re passe en cas d'échec).
+    try {
+      const validIds = Object.keys(metrics);
+      const reviewMsg = [{ role: "user" as const, content:
+        `Activité : ${activity}. Mois : ${period}.\n\n` +
+        `IDS VALIDES (métriques) : ${validIds.join(", ") || "aucun"}.\n` +
+        `BREAKDOWNS VALIDES : ${breakdowns && Object.keys(breakdowns).length ? Object.keys(breakdowns).join(", ") : "aucun"}.\n` +
+        `CIBLES VALIDES : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n` +
+        `HISTORIQUE : ${history.months.length} mois.\n\n` +
+        `DONNÉES (id, valeur, variation) :\n${metricsText}\n\n` +
+        `PLAN À RELIRE ET AMÉLIORER :\n${JSON.stringify({ pages: plan.pages })}` }];
+      const ctrl2 = new AbortController();
+      const timer2 = setTimeout(() => ctrl2.abort(), 45_000);
+      let reviewRaw: string;
+      try { reviewRaw = (await callAnthropic({ model: MODELS.fast, system: REVIEW_SYSTEM(activity), messages: reviewMsg, max_tokens: 4000, temperature: 0.3, signal: ctrl2.signal })).text; }
+      finally { clearTimeout(timer2); }
+      const reviewed = extractJson<DashPlan>(reviewRaw);
+      if (reviewed && Array.isArray(reviewed.pages) && reviewed.pages.length) {
+        plan = { pages: reviewed.pages, theme: plan.theme }; // on garde le thème de la 1re passe
+      }
+    } catch (e) { console.warn("relecture KO (on garde le plan initial):", e instanceof Error ? e.message : String(e)); }
 
     // Thème : composé par l'IA (adapté au client), sinon repris du mois précédent.
     const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
