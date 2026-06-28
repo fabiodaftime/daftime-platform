@@ -21,6 +21,7 @@ Champs du thème :
 - kpi : "icon" | "accent" | "gradient" | "plain" | "glass"
 - googleFont : Inter | Sora | Manrope | Plus Jakarta Sans | DM Sans | Space Grotesk | Fraunces
 - radius : nombre, density : "comfortable" | "compact"
+- chart : style des graphes { area (aire sous les courbes), smooth (lissage), grid (grille visible), barRadius (arrondi barres), glow (halo/relief), lineWidth } — ex. « graphes plus épurés » → {area:false,grid:false,glow:false} ; « plus de relief » → {glow:true,area:true}
 - icons : map { id_metrique: nom } parmi : banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, trophy, heart, circle
 RÈGLE COULEURS/POLICE : les couleurs (primary/accent/palette) et la police (font/googleFont) viennent de la MARQUE (site). Ne les change QUE si l'utilisateur le demande EXPLICITEMENT (ex. « mets du rouge », « police plus moderne »). Une demande d'ambiance/mood ou de fond NE doit PAS modifier les couleurs ni la police — laisse ces champs vides dans ta réponse pour qu'ils restent ceux de la marque.
 Si l'utilisateur évoque une ambiance (« plus luxe », « plus sombre », « plus fun »), change seulement le "mood"/background/header/kpi. Renvoie le thème mis à jour (reprends les valeurs actuelles non modifiées).

@@ -4,6 +4,7 @@
 
 export interface Theme {
   mood?: string;                      // clé de preset (voir PRESETS)
+  chart?: Partial<ChartStyle>;        // surcharge fine du style des graphes
   primary?: string; accent?: string;
   palette?: string[];
   background?: "soft" | "plain" | "gradient" | "dark" | "mesh" | "glass";
@@ -17,11 +18,13 @@ export interface Theme {
   icons?: Record<string, string>;
 }
 
+export interface ChartStyle { area: boolean; smooth: boolean; grid: boolean; barRadius: number; glow: boolean; lineWidth: number }
 export interface ResolvedTheme {
   mood: string; primary: string; accent: string; palette: string[];
   background: string; header: string; kpi: string; radius: number; density: string;
   font: string; googleFont?: string; icons: Record<string, string>;
   bg: string; surface: string; ink: string; muted: string; border: string; grid: string; dark: boolean;
+  chart: ChartStyle;
 }
 
 const VIVID = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444", "#14b8a6"];
@@ -72,6 +75,20 @@ export const PRESETS: Record<string, Preset> = {
   dark:      { background: "dark",     header: "dark",     kpi: "icon",   radius: 16, palette: ["#60a5fa", "#a78bfa", "#34d399", "#fbbf24", "#f472b6"], googleFont: "Inter" },
 };
 
+// Style des graphes par mood (le rendu ECharts s'ajuste au thème choisi).
+const CHART_DEFAULT: ChartStyle = { area: true, smooth: true, grid: true, barRadius: 8, glow: false, lineWidth: 2.5 };
+const CHART_STYLES: Record<string, Partial<ChartStyle>> = {
+  corporate: { area: false, smooth: false, barRadius: 4 },
+  slate:     { area: false, smooth: false, barRadius: 4 },
+  royal:     { area: false, smooth: true, barRadius: 6 },
+  minimal:   { area: false, smooth: false, grid: false, barRadius: 2, lineWidth: 2 },
+  editorial: { area: true, smooth: true, barRadius: 4 },
+  noir:      { area: false, smooth: true, glow: true, barRadius: 8 },
+  neon:      { area: true, smooth: true, glow: true, barRadius: 10 },
+  aurora:    { area: true, smooth: true, glow: true, barRadius: 10 },
+  glass:     { area: true, smooth: true, glow: true, barRadius: 10 },
+};
+
 export function resolveTheme(brand: Record<string, any> | null | undefined, t: Theme = {}): ResolvedTheme {
   const b = brand ?? {};
   const mood = t.mood && PRESETS[t.mood] ? t.mood : "vivid";
@@ -104,6 +121,7 @@ export function resolveTheme(brand: Record<string, any> | null | undefined, t: T
     border: dark ? "#2a2f45" : "#ebedf4",
     grid: dark ? "#262b40" : "#eef0f6",
     dark,
+    chart: { ...CHART_DEFAULT, ...(CHART_STYLES[mood] ?? {}), ...(t.chart ?? {}) },
   };
 }
 
