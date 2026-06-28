@@ -254,62 +254,70 @@ Deno.serve(async (req) => {
       (prevPlan ? `\n\nSTRUCTURE DU MOIS PRÉCÉDENT — à CONSERVER dans sa forme générale (mêmes pages/onglets, mêmes types de graphes), en adaptant les chiffres et l'analyse au mois courant :\n${JSON.stringify(prevPlan)}` : "") +
       (guidance ? `\n\nCONSIGNES DURABLES (issues des calls client — à APPLIQUER en priorité) :\n${guidance}` : "") }];
 
-    // Passe IA : composer le plan (Opus, relais Sonnet si timeout).
-    let plan: DashPlan | null = null;
-    try {
-      let raw: string;
+    // Travail LOURD (2 passes IA + rendu + sauvegarde) — exécuté en TÂCHE DE FOND pour ne pas
+    // dépasser le délai de la passerelle. La fonction répond tout de suite ; le cockpit recharge
+    // dès que la nouvelle version apparaît en base.
+    const produce = async () => {
+      // Passe IA : composer le plan (Opus, relais Sonnet si timeout).
+      let plan: DashPlan | null = null;
       try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 80_000);
-        try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9, signal: ctrl.signal })).text; }
-        finally { clearTimeout(timer); }
-      } catch (e) {
-        console.warn("plan Opus KO/timeout → relais Sonnet:", e instanceof Error ? e.message : String(e));
-        raw = (await callAnthropic({ model: MODELS.fast, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9 })).text;
-      }
-      plan = extractJson<DashPlan>(raw);
-    } catch (e) { console.error("plan:", e); }
-    if (!plan || !Array.isArray(plan.pages) || !plan.pages.length) plan = defaultPlan(sections, history.months.length > 1);
+        let raw: string;
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 80_000);
+          try { raw = (await callAnthropic({ model: MODELS.quality, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9, signal: ctrl.signal })).text; }
+          finally { clearTimeout(timer); }
+        } catch (e) {
+          console.warn("plan Opus KO/timeout → relais Sonnet:", e instanceof Error ? e.message : String(e));
+          raw = (await callAnthropic({ model: MODELS.fast, system: PLAN_SYSTEM(activity), messages: planMsg, max_tokens: 4000, temperature: 0.9 })).text;
+        }
+        plan = extractJson<DashPlan>(raw);
+      } catch (e) { console.error("plan:", e); }
+      if (!plan || !Array.isArray(plan.pages) || !plan.pages.length) plan = defaultPlan(sections, history.months.length > 1);
 
-    // 2e passe — RELECTURE : un « directeur de l'analyse » durcit le plan (anti-répétition, narratif, cohérence).
-    // Robuste : timeout court + skip gracieux (on garde le plan de la 1re passe en cas d'échec).
-    try {
-      const validIds = Object.keys(metrics);
-      const reviewMsg = [{ role: "user" as const, content:
-        `Activité : ${activity}. Mois : ${period}.\n\n` +
-        `IDS VALIDES (métriques) : ${validIds.join(", ") || "aucun"}.\n` +
-        `BREAKDOWNS VALIDES : ${breakdowns && Object.keys(breakdowns).length ? Object.keys(breakdowns).join(", ") : "aucun"}.\n` +
-        `CIBLES VALIDES : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n` +
-        `HISTORIQUE : ${history.months.length} mois.\n\n` +
-        `DONNÉES (id, valeur, variation) :\n${metricsText}\n\n` +
-        `PLAN À RELIRE ET AMÉLIORER :\n${JSON.stringify({ pages: plan.pages })}` }];
-      const ctrl2 = new AbortController();
-      const timer2 = setTimeout(() => ctrl2.abort(), 45_000);
-      let reviewRaw: string;
-      try { reviewRaw = (await callAnthropic({ model: MODELS.fast, system: REVIEW_SYSTEM(activity), messages: reviewMsg, max_tokens: 4000, temperature: 0.3, signal: ctrl2.signal })).text; }
-      finally { clearTimeout(timer2); }
-      const reviewed = extractJson<DashPlan>(reviewRaw);
-      if (reviewed && Array.isArray(reviewed.pages) && reviewed.pages.length) {
-        plan = { pages: reviewed.pages, theme: plan.theme }; // on garde le thème de la 1re passe
-      }
-    } catch (e) { console.warn("relecture KO (on garde le plan initial):", e instanceof Error ? e.message : String(e)); }
+      // 2e passe — RELECTURE : un « directeur de l'analyse » durcit le plan (anti-répétition, narratif, cohérence).
+      try {
+        const validIds = Object.keys(metrics);
+        const reviewMsg = [{ role: "user" as const, content:
+          `Activité : ${activity}. Mois : ${period}.\n\n` +
+          `IDS VALIDES (métriques) : ${validIds.join(", ") || "aucun"}.\n` +
+          `BREAKDOWNS VALIDES : ${breakdowns && Object.keys(breakdowns).length ? Object.keys(breakdowns).join(", ") : "aucun"}.\n` +
+          `CIBLES VALIDES : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n` +
+          `HISTORIQUE : ${history.months.length} mois.\n\n` +
+          `DONNÉES (id, valeur, variation) :\n${metricsText}\n\n` +
+          `PLAN À RELIRE ET AMÉLIORER :\n${JSON.stringify({ pages: plan.pages })}` }];
+        const ctrl2 = new AbortController();
+        const timer2 = setTimeout(() => ctrl2.abort(), 45_000);
+        let reviewRaw: string;
+        try { reviewRaw = (await callAnthropic({ model: MODELS.fast, system: REVIEW_SYSTEM(activity), messages: reviewMsg, max_tokens: 4000, temperature: 0.3, signal: ctrl2.signal })).text; }
+        finally { clearTimeout(timer2); }
+        const reviewed = extractJson<DashPlan>(reviewRaw);
+        if (reviewed && Array.isArray(reviewed.pages) && reviewed.pages.length) {
+          plan = { pages: reviewed.pages, theme: plan.theme };
+        }
+      } catch (e) { console.warn("relecture KO (on garde le plan initial):", e instanceof Error ? e.message : String(e)); }
 
-    // Thème : composé par l'IA (adapté au client), sinon repris du mois précédent.
-    const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
-    const html = renderDashboard(
-      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
-      plan,
-    );
+      const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
+      const html = renderDashboard(
+        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
+        plan,
+      );
+      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme, breakdowns, targets };
+      const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
+        standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
+      });
+      await admin.from("dashboard_status_history").insert({
+        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré par l'IA (plan + rendu)",
+      });
+      return saved;
+    };
 
-    // On sauvegarde le PLAN + le THÈME + les BREAKDOWNS + les CIBLES dans data_json → base de forme/style/data au mois suivant et au restyle.
-    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme, breakdowns, targets };
-    const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
-      standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
-    });
-    await admin.from("dashboard_status_history").insert({
-      dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré par l'IA (plan + rendu)",
-    });
-
+    const ER = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+    if (ER && typeof ER.waitUntil === "function") {
+      ER.waitUntil(produce().catch((e) => console.error("generate-dashboard (fond):", e)));
+      return json({ status: "processing" });
+    }
+    const saved = await produce(); // fallback (dev local sans EdgeRuntime) : synchrone
     return json({ ok: true, dashboard: saved });
   } catch (e) {
     console.error("generate-dashboard:", e);

@@ -225,6 +225,27 @@ export default function AdminClientCockpit() {
   const markBg = (op: string) => { const k = bgKey(); if (k) localStorage.setItem(k, JSON.stringify({ op, at: Date.now() })); };
   const clearBg = () => { const k = bgKey(); if (k) localStorage.removeItem(k); };
 
+  // Suivi actif d'une génération lancée en tâche de fond (la fonction répond « processing » puis
+  // écrit la nouvelle version quand elle a fini). On recharge dès qu'elle apparaît.
+  const pollGenerate = (since: number) => {
+    const key = bgKey();
+    const iv = window.setInterval(async () => {
+      const { data } = await supabase.from('dashboards' as any).select('created_at')
+        .eq('client_id', id).eq('period', period).eq('is_current', true)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (data && new Date((data as any).created_at).getTime() > since - 3000) {
+        clearInterval(iv);
+        if (key) localStorage.removeItem(key);
+        await loadDashboard();
+        setNotice({ kind: 'success', text: 'Génération du dashboard terminée.' });
+        window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), 4000);
+      } else if (Date.now() - since > 4 * 60 * 1000) {
+        clearInterval(iv);
+        setNotice({ kind: 'error', text: 'La génération prend anormalement longtemps — réessayez, ou consultez les logs de la fonction.' });
+      }
+    }, 4000);
+  };
+
   const standardize = () => run('standardize', async () => {
     markBg('standardize');
     try { await invokeFn('standardize-data', { client_id: id, period }); await loadStandardized(); }
@@ -294,11 +315,17 @@ export default function AdminClientCockpit() {
 
   const generate = () => run('generate', async () => {
     markBg('generate');
-    try {
-      const res = await invokeFn<{ dashboard?: any }>('generate-dashboard', { client_id: id, period });
-      if (res?.dashboard) setDash(res.dashboard);
-      else await loadDashboard();
-    } finally { clearBg(); }
+    const since = Date.now();
+    const res = await invokeFn<{ dashboard?: any; status?: string }>('generate-dashboard', { client_id: id, period });
+    if (res?.status === 'processing') {
+      // tâche de fond : on suit jusqu'à l'apparition de la nouvelle version (marqueur conservé pour reprise au retour).
+      setNotice({ kind: 'running', text: 'Génération du dashboard en cours en arrière-plan (≈ 1 à 2 min) — vous pouvez quitter la page.' });
+      pollGenerate(since);
+      return;
+    }
+    if (res?.dashboard) setDash(res.dashboard);
+    else await loadDashboard();
+    clearBg();
   });
 
   const changeStatus = (to: string) => run('status', async () => {
