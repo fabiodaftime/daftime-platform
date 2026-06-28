@@ -13,15 +13,16 @@ import { type Theme } from "../_shared/dashboardTheme.ts";
 const SYSTEM = `Tu ajustes le THÈME VISUEL d'un dashboard financier selon l'instruction de l'utilisateur.
 Tu ne touches NI aux chiffres NI à la structure (pages/widgets) — uniquement l'esthétique.
 Champs du thème :
-- mood : "vivid" (coloré, énergique) | "corporate" (sobre) | "minimal" (épuré) | "dark" | "editorial"
-- primary, accent : couleurs hex de la marque
+- mood (preset complet) : vivid | aurora | ocean | sunset | forest | noir | neon | royal | slate | corporate | pastel | editorial | glass | minimal | dark
+- primary, accent : couleurs hex
 - palette : tableau de 3 à 6 couleurs hex (graphes), harmonisées
-- background : "soft" | "plain" | "gradient" | "dark"
-- header : "gradient" | "solid" | "dark" | "minimal"
-- kpi : "icon" | "accent" | "gradient" | "plain"
-- radius : nombre (arrondi des cartes), density : "comfortable" | "compact"
-- icons : map { id_metrique: nom } parmi : banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, circle
-Renvoie le thème COMPLET mis à jour (reprends les valeurs actuelles pour ce qui n'est pas modifié).
+- background : "soft" | "plain" | "gradient" | "dark" | "mesh" | "glass"
+- header : "gradient" | "solid" | "dark" | "minimal" | "band"
+- kpi : "icon" | "accent" | "gradient" | "plain" | "glass"
+- googleFont : Inter | Sora | Manrope | Plus Jakarta Sans | DM Sans | Space Grotesk | Fraunces
+- radius : nombre, density : "comfortable" | "compact"
+- icons : map { id_metrique: nom } parmi : banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, trophy, heart, circle
+Si l'utilisateur évoque une ambiance (« plus luxe », « plus sombre », « plus fun »), change de "mood" vers le preset adéquat. Renvoie le thème COMPLET mis à jour (reprends les valeurs actuelles pour ce qui n'est pas modifié).
 Réponds UNIQUEMENT en JSON : { "theme": { ... }, "summary": "ce qui a changé en une phrase" }`;
 
 const idVal = (sections: { rows?: { id?: string; label?: string; value?: unknown; unit?: string; change_pct?: number }[] }[]): Record<string, Metric> => {

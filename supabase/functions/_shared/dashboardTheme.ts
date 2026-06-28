@@ -1,57 +1,74 @@
 // Thème data-driven du dashboard : la PRÉSENTATION devient un jeu de paramètres.
 // L'IA compose un thème adapté à l'univers du client ; le chat peut l'ajuster ; le code l'applique.
-// Aucun recodage : changer le thème change le rendu.
+// Bibliothèque de "moods" premium + icônes + polices.
 
 export interface Theme {
-  mood?: "vivid" | "corporate" | "minimal" | "dark" | "editorial";
+  mood?: string;                      // clé de preset (voir PRESETS)
   primary?: string; accent?: string;
-  palette?: string[];                 // couleurs des graphes / icônes
-  background?: "soft" | "plain" | "gradient" | "dark";
-  header?: "gradient" | "solid" | "dark" | "minimal";
-  kpi?: "icon" | "accent" | "gradient" | "plain";
-  radius?: number;                    // arrondi des cartes (px)
+  palette?: string[];
+  background?: "soft" | "plain" | "gradient" | "dark" | "mesh" | "glass";
+  header?: "gradient" | "solid" | "dark" | "minimal" | "band";
+  kpi?: "icon" | "accent" | "gradient" | "plain" | "glass";
+  radius?: number;
   density?: "comfortable" | "compact";
-  font?: string;
-  icons?: Record<string, string>;     // id de métrique -> nom d'icône
+  font?: string;                      // stack CSS
+  googleFont?: string;                // nom Google Fonts (chargé en <link>)
+  bgColor?: string;                   // fond personnalisé (sinon défaut clair/sombre)
+  icons?: Record<string, string>;
 }
 
 export interface ResolvedTheme {
   mood: string; primary: string; accent: string; palette: string[];
-  background: string; header: string; kpi: string; radius: number; density: string; font: string;
-  icons: Record<string, string>;
-  // couleurs dérivées
+  background: string; header: string; kpi: string; radius: number; density: string;
+  font: string; googleFont?: string; icons: Record<string, string>;
   bg: string; surface: string; ink: string; muted: string; border: string; grid: string; dark: boolean;
 }
 
 const VIVID = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444", "#14b8a6"];
 
-const MOODS: Record<string, Partial<ResolvedTheme>> = {
-  vivid:     { background: "soft",  header: "gradient", kpi: "icon",   radius: 16 },
-  corporate: { background: "plain", header: "solid",    kpi: "accent", radius: 12 },
-  minimal:   { background: "plain", header: "minimal",  kpi: "plain",  radius: 14 },
-  dark:      { background: "dark",  header: "dark",      kpi: "icon",   radius: 16 },
-  editorial: { background: "soft",  header: "minimal",  kpi: "gradient", radius: 18 },
+// Bibliothèque de thèmes premium. Chaque preset = ambiance complète (l'IA choisit selon le client).
+type Preset = Partial<Omit<Theme, "mood">>;
+export const PRESETS: Record<string, Preset> = {
+  vivid:     { background: "soft",     header: "gradient", kpi: "icon",   radius: 16, palette: VIVID, googleFont: "Inter" },
+  aurora:    { background: "mesh",     header: "gradient", kpi: "icon",   radius: 18, palette: ["#6366f1", "#8b5cf6", "#06b6d4", "#ec4899", "#3b82f6"], accent: "#8b5cf6", googleFont: "Sora" },
+  ocean:     { background: "gradient", header: "gradient", kpi: "icon",   radius: 16, palette: ["#0ea5e9", "#06b6d4", "#3b82f6", "#14b8a6", "#6366f1"], primary: "#0b3b66", accent: "#06b6d4", googleFont: "Manrope" },
+  sunset:    { background: "gradient", header: "gradient", kpi: "icon",   radius: 18, palette: ["#f97316", "#ef4444", "#ec4899", "#f59e0b", "#fb7185"], primary: "#7c2d12", accent: "#f97316", googleFont: "Plus Jakarta Sans" },
+  forest:    { background: "soft",     header: "solid",    kpi: "icon",   radius: 14, palette: ["#16a34a", "#10b981", "#0d9488", "#65a30d", "#059669"], primary: "#14532d", accent: "#84cc16", googleFont: "Manrope" },
+  noir:      { background: "dark",     header: "dark",     kpi: "icon",   radius: 16, palette: ["#c8a24a", "#e6c878", "#a78bfa", "#9aa0bd", "#f5f5f0"], primary: "#11131f", accent: "#c8a24a", googleFont: "Sora" },
+  neon:      { background: "dark",     header: "dark",     kpi: "icon",   radius: 16, palette: ["#22d3ee", "#a78bfa", "#f472b6", "#34d399", "#facc15"], accent: "#22d3ee", googleFont: "Space Grotesk" },
+  royal:     { background: "plain",    header: "solid",    kpi: "accent", radius: 12, palette: ["#1b2a5b", "#c5a253", "#475569", "#64748b", "#0ea5e9"], primary: "#1b2a5b", accent: "#c5a253", googleFont: "Sora" },
+  slate:     { background: "plain",    header: "solid",    kpi: "accent", radius: 12, palette: ["#334155", "#0ea5e9", "#64748b", "#94a3b8", "#1d4ed8"], primary: "#1e293b", accent: "#0ea5e9", googleFont: "Inter" },
+  corporate: { background: "plain",    header: "solid",    kpi: "accent", radius: 12, palette: ["#1A1D56", "#475569", "#64748b", "#94a3b8", "#0ea5e9"], googleFont: "Inter" },
+  pastel:    { background: "soft",     header: "minimal",  kpi: "gradient", radius: 18, palette: ["#818cf8", "#f0abfc", "#6ee7b7", "#fcd34d", "#7dd3fc"], bgColor: "#f7f7fb", googleFont: "DM Sans" },
+  editorial: { background: "soft",     header: "minimal",  kpi: "plain",  radius: 14, palette: ["#1f2937", "#b45309", "#6b7280", "#0f766e", "#9333ea"], bgColor: "#faf7f0", googleFont: "Fraunces" },
+  glass:     { background: "glass",    header: "gradient", kpi: "glass",  radius: 18, palette: VIVID, googleFont: "Sora" },
+  minimal:   { background: "plain",    header: "minimal",  kpi: "plain",  radius: 14, palette: ["#111827", "#6b7280", "#9ca3af", "#374151", "#2563eb"], googleFont: "Inter" },
+  dark:      { background: "dark",     header: "dark",     kpi: "icon",   radius: 16, palette: ["#60a5fa", "#a78bfa", "#34d399", "#fbbf24", "#f472b6"], googleFont: "Inter" },
 };
 
 export function resolveTheme(brand: Record<string, any> | null | undefined, t: Theme = {}): ResolvedTheme {
   const b = brand ?? {};
-  const primary = t.primary ?? b.colors?.primary ?? b.primary ?? "#1A1D56";
-  const accent = t.accent ?? b.colors?.accent ?? b.accent ?? "#D6D303";
-  const mood = t.mood ?? "vivid";
-  const m = MOODS[mood] ?? MOODS.vivid;
-  const dark = (t.background ?? m.background) === "dark";
-  const palette = (t.palette && t.palette.length ? t.palette : (mood === "corporate" ? [primary, "#475569", "#64748b", accent, "#94a3b8", "#0ea5e9"] : VIVID));
+  const mood = t.mood && PRESETS[t.mood] ? t.mood : "vivid";
+  const p = PRESETS[mood];
+  // la marque prime pour les couleurs identitaires ; sinon on prend celles du preset.
+  const primary = t.primary ?? b.colors?.primary ?? b.primary ?? p.primary ?? "#1A1D56";
+  const accent = t.accent ?? b.colors?.accent ?? b.accent ?? p.accent ?? "#D6D303";
+  const background = (t.background ?? p.background ?? "soft") as string;
+  const dark = background === "dark";
+  const palette = (t.palette && t.palette.length) ? t.palette : (p.palette ?? VIVID);
+  const googleFont = t.googleFont ?? p.googleFont;
+  const stack = t.font ?? (googleFont ? `'${googleFont}', ` : "") + (b.typography?.body ?? b.font ?? "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif");
+  const bgColor = t.bgColor ?? p.bgColor;
   return {
-    mood, primary, accent, palette,
-    background: t.background ?? m.background ?? "soft",
-    header: t.header ?? m.header ?? "gradient",
-    kpi: t.kpi ?? m.kpi ?? "icon",
-    radius: t.radius ?? m.radius ?? 16,
-    density: t.density ?? "comfortable",
-    font: t.font ?? b.typography?.body ?? b.font ?? "Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+    mood, primary, accent, palette, background,
+    header: (t.header ?? p.header ?? "gradient") as string,
+    kpi: (t.kpi ?? p.kpi ?? "icon") as string,
+    radius: t.radius ?? p.radius ?? 16,
+    density: (t.density ?? p.density ?? "comfortable") as string,
+    font: stack, googleFont,
     icons: t.icons ?? {},
-    bg: dark ? "#0f1221" : "#f4f5f9",
-    surface: dark ? "#1a1e30" : "#ffffff",
+    bg: dark ? "#0f1221" : (bgColor ?? "#f4f5f9"),
+    surface: dark ? "#191d2e" : "#ffffff",
     ink: dark ? "#eef0f8" : "#171a2b",
     muted: dark ? "#9aa0bd" : "#6b7180",
     border: dark ? "#2a2f45" : "#ebedf4",
@@ -59,6 +76,8 @@ export function resolveTheme(brand: Record<string, any> | null | undefined, t: T
     dark,
   };
 }
+
+export const MOOD_KEYS = Object.keys(PRESETS);
 
 // ---- icônes (jeu inline, style trait) ----------------------------------------
 const ICONS: Record<string, string> = {
@@ -79,6 +98,8 @@ const ICONS: Record<string, string> = {
   package: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z M3.3 7 12 12l8.7-5 M12 22V12",
   globe: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z M2 12h20 M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z",
   zap: "M13 2 3 14h9l-1 8 10-12h-9l1-8z",
+  trophy: "M6 9a6 6 0 0 0 12 0V3H6Z M6 5H3v2a3 3 0 0 0 3 3 M18 5h3v2a3 3 0 0 1-3 3 M9 21h6 M12 15v6",
+  heart: "M19 14c1.5-1.5 3-3.2 3-5.5A4.5 4.5 0 0 0 12 5 4.5 4.5 0 0 0 2 8.5C2 10.8 3.5 12.5 5 14l7 7Z",
   circle: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z",
 };
 
@@ -87,13 +108,13 @@ export function iconFor(id: string, override?: string): string {
   const k = id.toLowerCase();
   if (/\bca\b|revenue|sales|mrr|gross|honorair/.test(k)) return "banknote";
   if (/order|commande/.test(k)) return "shopping-bag";
-  if (/cart|panier_ajout|add_to_cart/.test(k)) return "shopping-cart";
+  if (/cart|add_to_cart/.test(k)) return "shopping-cart";
   if (/aov|panier|ticket/.test(k)) return "receipt";
   if (/session|visit|traffic/.test(k)) return "activity";
   if (/conversion|convert|funnel/.test(k)) return "target";
   if (/roas|trend|growth|rotation/.test(k)) return "trending-up";
   if (/cac|cpa|ads|market|pub|cpc|cpm|spend/.test(k)) return "megaphone";
-  if (/ltv|star|fidel/.test(k)) return "star";
+  if (/ltv|fidel|loyal/.test(k)) return "star";
   if (/cash|tresor|treso/.test(k)) return "wallet";
   if (/marge|margin|taux|rate|%|ebitda/.test(k)) return "percent";
   if (/result|net|opex|charge|cost|cogs/.test(k)) return "bar-chart";

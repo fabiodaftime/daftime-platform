@@ -29,15 +29,14 @@ WIDGETS (JSON) :
 - {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
-THÈME VISUEL — compose AUSSI un thème DISTINCTIF, adapté à l'UNIVERS du client (secteur, marque, ton), pour un rendu premium personnalisé :
-- mood : "vivid" (coloré/énergique) | "corporate" (sobre/sérieux) | "minimal" (épuré) | "dark" | "editorial"
-- primary, accent : couleurs hex (pars de la marque si fournie)
-- palette : 3 à 6 couleurs hex harmonisées pour les graphes
-- background : "soft" | "plain" | "gradient" | "dark" ; header : "gradient" | "solid" | "dark" | "minimal" ; kpi : "icon" | "accent" | "gradient" | "plain"
-- icons : map { id_metrique: nom } parmi banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap
-Choisis un thème qui colle au client (ex. boutique sport/streetwear = vivid, palette dynamique, kpi "icon" ; cabinet d'avocats = corporate sobre). Si un THÈME du mois précédent est fourni, GARDE-le (cohérence dans le temps), sauf consigne contraire.
+THÈME VISUEL — choisis AUSSI un thème PREMIUM dans la bibliothèque, adapté à l'UNIVERS du client (secteur, marque, ton) :
+- mood (preset) : vivid | aurora | ocean | sunset | forest | noir | neon | royal | slate | corporate | pastel | editorial | glass | minimal | dark
+  Exemples : boutique sport/streetwear → vivid/aurora ; food/artisan → sunset/forest ; luxe/bijoux → noir/royal ; SaaS/tech → glass/neon ; finance/cabinet → slate/royal/corporate ; bien-être/cosmétique → pastel ; média/marque éditoriale → editorial.
+- tu peux affiner : primary/accent (hex, pars de la marque si fournie), palette (3-6 hex), background (soft|plain|gradient|dark|mesh|glass), header (gradient|solid|dark|minimal|band), kpi (icon|accent|gradient|plain|glass), googleFont (Inter|Sora|Manrope|Plus Jakarta Sans|DM Sans|Space Grotesk|Fraunces), radius.
+- icons : map { id_metrique: nom } parmi banknote, shopping-bag, shopping-cart, receipt, activity, target, trending-up, megaphone, star, wallet, percent, bar-chart, users, rotate, package, globe, zap, trophy, heart
+Le plus souvent, choisir un bon "mood" suffit (le preset gère palette/fond/police). Si un THÈME du mois précédent est fourni, GARDE-le (cohérence dans le temps), sauf consigne contraire.
 
-Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}], "theme":{ "mood":"...", "palette":["#..",".."], "background":"...", "header":"...", "kpi":"...", "icons":{ } }}`;
+Réponds UNIQUEMENT en JSON : {"pages":[{"title":"...","widgets":[ ... ]}], "theme":{ "mood":"...", "icons":{ } }}`;
 
 type Row = { id?: string; label?: string; value?: unknown; unit?: string; type?: string; change_pct?: number };
 const idVal = (d: { sections?: { rows?: Row[] }[] } | null | undefined): Record<string, number> => {

@@ -52,7 +52,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
     if (sp) { const spId = `ch${cid++}`; charts.push({ id: spId, type: "line", spark: true, color: c, data: { labels: ctx.history.months, datasets: [{ data: ctx.history.series[id], borderColor: c }] } }); spHtml = `<canvas class="spark" id="${spId}"></canvas>`; }
     const foot = `<div class="kpi-foot">${changeHtml(m.change_pct) || '<span class="chg flat">—</span>'}${spHtml}</div>`;
     const main = `<div class="kpi-main"><div class="kpi-l">${esc(m.label)}</div><div class="kpi-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div>${foot}</div>`;
-    if (th.kpi === "icon") {
+    if (th.kpi === "icon" || th.kpi === "glass") {
       return `<div class="kpi k-icon"><div class="kpi-ic" style="background:${c}1f;color:${c}">${iconSvg(iconFor(id, th.icons[id]), c)}</div>${main}</div>`;
     }
     if (th.kpi === "gradient") {
@@ -129,14 +129,23 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const main = rendered.map((p, i) => `<section class="page ${i === 0 ? "on" : ""}" data-i="${i}">${p.cells}</section>`).join("");
 
   // Fond + en-tête selon le thème.
+  const pe = (i: number, a: string) => `${palette[i % palette.length]}${a}`;
   const bgCss = th.background === "gradient"
     ? `radial-gradient(1100px 420px at 100% -8%, ${accent}14, transparent), linear-gradient(180deg, ${primary}0d, transparent 28%), ${th.bg}`
+    : th.background === "mesh"
+    ? `radial-gradient(720px 520px at 6% -12%, ${pe(0, "26")}, transparent), radial-gradient(680px 520px at 102% 4%, ${pe(1, "20")}, transparent), radial-gradient(820px 600px at 50% 124%, ${pe(2, "1c")}, transparent), ${th.bg}`
+    : th.background === "glass"
+    ? `radial-gradient(700px 480px at 0% 0%, ${pe(0, "33")}, transparent), radial-gradient(700px 480px at 100% 10%, ${pe(3, "2b")}, transparent), ${th.bg}`
     : th.bg;
   const headerCss = th.header === "gradient" ? `background:linear-gradient(135deg, ${primary}, color-mix(in srgb, ${primary} 70%, #000));color:#fff`
     : th.header === "dark" ? `background:#14172b;color:#fff`
     : th.header === "minimal" ? `background:transparent;color:var(--ink);border-bottom:2px solid ${accent};border-radius:0`
+    : th.header === "band" ? `background:${th.surface};color:var(--ink);border-top:4px solid ${accent};border-bottom:1px solid var(--bd);border-radius:0`
     : `background:${primary};color:#fff`;
   const heroDecor = (th.header === "gradient" || th.header === "solid" || th.header === "dark");
+  const glass = th.background === "glass" || th.kpi === "glass";
+  const logo = (ctx.brand as { logo?: string; logo_url?: string } | null)?.logo ?? (ctx.brand as { logo_url?: string } | null)?.logo_url;
+  const fontLink = th.googleFont ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${th.googleFont.replace(/ /g, "+")}:wght@400;500;600;700&display=swap">` : "";
 
   const chartsJs = `const CHARTS=${JSON.stringify(charts)};const made={};const MUT='${th.muted}',GRID='${th.grid}',DARK=${th.dark};
 if(window.Chart){Chart.defaults.font.family=${JSON.stringify(th.font)};Chart.defaults.font.size=12;Chart.defaults.color=MUT;Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.boxWidth=8;Chart.defaults.plugins.tooltip.backgroundColor=DARK?'#000':'#171a2b';Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=8;Chart.defaults.plugins.tooltip.boxPadding=6;Chart.defaults.animation.duration=850;Chart.defaults.animation.easing='easeOutQuart';}
@@ -153,6 +162,7 @@ window.addEventListener('load',()=>build('0'));`;
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(ctx.client)} — ${esc(periodLabel(ctx.period))}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+${fontLink}
 <style>
 :root{--p:${primary};--a:${accent};--bg:${th.bg};--card:${th.surface};--bd:${th.border};--mut:${th.muted};--ink:${th.ink};--r:${th.radius}px}
 *{box-sizing:border-box}body{margin:0;font-family:${th.font};background:${bgCss};color:var(--ink);-webkit-font-smoothing:antialiased}
@@ -197,9 +207,12 @@ canvas.spark{height:30px!important;width:80px!important;flex:0 0 auto}
 .callout.warn .co-ic{background:#d97706}.callout.good .co-ic{background:#16a34a}
 .co-t{font-weight:700;margin-bottom:3px}
 @media(max-width:760px){.page.on{grid-template-columns:1fr}.chartcard .cbox{height:250px}}
-</style></head><body>
+${glass ? ".glassbg .card,.glassbg .kpi{background:rgba(255,255,255,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,.5)}" : ""}
+.hero-row{display:flex;align-items:center;gap:14px}
+.logo{height:38px;max-width:140px;object-fit:contain;background:#fff;border-radius:9px;padding:4px 8px}
+</style></head><body class="${glass ? "glassbg" : ""}">
 <div class="dash">
-  <header class="hero"><h1>${esc(ctx.client)}</h1><div class="sub">${esc(periodLabel(ctx.period))} · ${esc(ctx.currency)}</div></header>
+  <header class="hero"><div class="hero-row">${logo ? `<img class="logo" src="${esc(logo)}" alt="">` : ""}<div><h1>${esc(ctx.client)}</h1><div class="sub">${esc(periodLabel(ctx.period))} · ${esc(ctx.currency)}</div></div></div></header>
   <nav class="tabs">${nav}</nav>
   <main>${main}</main>
 </div>
