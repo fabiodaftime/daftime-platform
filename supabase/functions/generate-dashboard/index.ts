@@ -17,6 +17,7 @@ RÈGLES :
 - N'invente AUCUN chiffre. Les widgets ne portent que des RÉFÉRENCES d'indicateurs (ids fournis). Les textes "callout" ne citent QUE des chiffres/variations fournis — aucune invention, et AUCUNE recommandation (sauf demande explicite).
 - N'utilise QUE des ids présents dans la liste fournie. Pas de widget qui resterait vide.
 - PLUSIEURS pages (onglets) : une « Vue d'ensemble » puis des pages d'analyse thématiques adaptées au métier. Respecte les incontournables du BRIEF.
+- CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, GARDE la même forme générale (mêmes pages/onglets, mêmes types de graphes) — on veut un suivi cohérent d'un mois à l'autre. Adapte seulement les chiffres et l'analyse au mois courant, et APPLIQUE les CONSIGNES fournies (elles priment). Ne change la structure que si une consigne le demande.
 - Chaque page : un kpi_row en tête si pertinent ; des graphes VARIÉS et bien choisis (line = tendance, bar = comparaison/structure, donut = répartition) ; des tables de détail ; des callouts d'analyse (lecture du mois, constats chiffrés, points de vigilance).
 
 WIDGETS (JSON) :
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
     if (!sd) return json({ error: "aucune donnée standardisée pour ce client/mois (lance d'abord standardize-data)" }, 404);
 
     const { data: client } = await admin.from("clients")
-      .select("name, currency, brand, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
+      .select("name, currency, brand, dashboard_guidance, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
 
     const meta = (sd.data as { meta?: { template?: string; validated?: boolean; validation?: { ok?: boolean; blocking?: string[] } } })?.meta;
     if (meta?.template && !meta?.validated) {
@@ -87,6 +88,12 @@ Deno.serve(async (req) => {
       .map((h) => ({ period: h.period, map: idVal(h.data as any) }));
     monthsRaw.push({ period: period!, map: idVal(sd.data as any) });
     const prevMap = monthsRaw.length >= 2 ? monthsRaw[monthsRaw.length - 2].map : {};
+
+    // CONTINUITÉ : plan du mois précédent (forme à conserver) + consignes durables (retours de call).
+    const { data: prevDash } = await admin.from("dashboards").select("period, data_json")
+      .eq("client_id", client_id).eq("is_current", true).lt("period", period).order("period", { ascending: false }).limit(1).maybeSingle();
+    const prevPlan = (prevDash?.data_json as { plan?: DashPlan } | null)?.plan ?? null;
+    const guidance = ((client as { dashboard_guidance?: string } | null)?.dashboard_guidance ?? "").trim();
 
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
       label: s.label,
@@ -128,7 +135,9 @@ Deno.serve(async (req) => {
       `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
       `DONNÉES DISPONIBLES (id, libellé, valeur, évolution) :\n${metricsText}\n\n` +
       `HISTORIQUE : ${history.months.length} mois (${history.months.join(", ")}). Tendances possibles sur : ${trendText}.\n\n` +
-      `BRIEF MÉTIER :\n${briefText}` }];
+      `BRIEF MÉTIER :\n${briefText}` +
+      (prevPlan ? `\n\nSTRUCTURE DU MOIS PRÉCÉDENT — à CONSERVER dans sa forme générale (mêmes pages/onglets, mêmes types de graphes), en adaptant les chiffres et l'analyse au mois courant :\n${JSON.stringify(prevPlan)}` : "") +
+      (guidance ? `\n\nCONSIGNES DURABLES (issues des calls client — à APPLIQUER en priorité) :\n${guidance}` : "") }];
 
     // Passe IA : composer le plan (Opus, relais Sonnet si timeout).
     let plan: DashPlan | null = null;
@@ -152,7 +161,8 @@ Deno.serve(async (req) => {
       plan,
     );
 
-    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history };
+    // On sauvegarde le PLAN dans data_json → il sert de base de forme au mois suivant.
+    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan };
     const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
       standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
     });

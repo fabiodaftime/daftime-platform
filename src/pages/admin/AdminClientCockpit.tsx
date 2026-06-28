@@ -46,12 +46,15 @@ export default function AdminClientCockpit() {
   const [editData, setEditData] = useState<any>({ sections: [] });
   const [dash, setDash] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [guidanceText, setGuidanceText] = useState('');
+  const [transcript, setTranscript] = useState('');
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
   const OP_LABELS: Record<string, string> = {
     standardize: 'Standardisation des données', generate: 'Génération du dashboard', validate: 'Validation',
     'save-sd': 'Enregistrement', recompute: 'Recalcul', status: 'Changement de statut',
     files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données',
+    guidance: 'Enregistrement des consignes', ingest: 'Analyse de la transcription',
   };
 
   const run = async (key: string, fn: () => Promise<void>) => {
@@ -101,6 +104,7 @@ export default function AdminClientCockpit() {
 
   useEffect(() => { loadClient(); loadContext(); }, [loadClient, loadContext]);
   useEffect(() => { loadFiles(); loadStandardized(); loadDashboard(); }, [loadFiles, loadStandardized, loadDashboard]);
+  useEffect(() => { setGuidanceText(client?.dashboard_guidance ?? ''); }, [client]);
 
   // Reprise d'une tâche de fond : si une standardisation/génération a été lancée puis la page quittée,
   // on retrouve le marqueur au retour et on suit jusqu'à l'apparition du résultat.
@@ -267,6 +271,19 @@ export default function AdminClientCockpit() {
     await loadDashboard();
   });
 
+  // Consignes durables (reprises chaque mois) : édition directe + distillation d'une transcription de call.
+  const saveGuidance = () => run('guidance', async () => {
+    await supabase.from('clients' as any).update({ dashboard_guidance: guidanceText }).eq('id', id);
+    await loadClient();
+  });
+  const ingestTranscript = () => run('ingest', async () => {
+    if (!transcript.trim()) throw new Error('Colle la transcription (ou les notes) du call.');
+    const res = await invokeFn<{ guidance?: string; added?: boolean; message?: string }>('distill-feedback', { client_id: id, transcript, period });
+    if (res?.guidance != null) setGuidanceText(res.guidance);
+    setTranscript('');
+    await loadClient();
+  });
+
   const removeClient = async () => {
     if (!confirm(`Supprimer définitivement « ${client.name} » et tout son contenu ? Action irréversible.`)) return;
     try { await deleteClient(id!); navigate('/admin/clients'); }
@@ -417,6 +434,32 @@ export default function AdminClientCockpit() {
                 return res.summary || 'Données mises à jour.';
               }}
             />
+          </div>
+        </Section>
+
+        <Section icon={<BookOpen className="w-4 h-4" />} title="Consignes dashboard (reprises chaque mois)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Ces consignes sont appliquées à <strong>chaque génération</strong>, et la <strong>forme du mois précédent est conservée</strong>. Colle la transcription du call : l'IA en extrait les consignes durables et les ajoute ci-dessous.
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs font-medium mb-1">Transcription / notes du call</div>
+              <textarea value={transcript} onChange={(e) => setTranscript(e.target.value)} rows={6}
+                placeholder="Colle ici la transcription ou les notes du call client…"
+                className="w-full text-sm border rounded p-2 bg-background" />
+              <Button size="sm" variant="outline" className="mt-2" onClick={ingestTranscript} disabled={!!busy}>
+                {busy === 'ingest' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Analyse…</> : 'Intégrer au suivi (IA)'}
+              </Button>
+            </div>
+            <div>
+              <div className="text-xs font-medium mb-1">Consignes durables (éditable)</div>
+              <textarea value={guidanceText} onChange={(e) => setGuidanceText(e.target.value)} rows={6}
+                placeholder="Les consignes reprises chaque mois apparaissent ici. Tu peux les corriger à la main."
+                className="w-full text-sm border rounded p-2 bg-background" />
+              <Button size="sm" className="mt-2" onClick={saveGuidance} disabled={!!busy}>
+                {busy === 'guidance' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />…</> : 'Enregistrer les consignes'}
+              </Button>
+            </div>
           </div>
         </Section>
 
