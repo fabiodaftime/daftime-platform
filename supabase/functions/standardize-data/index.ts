@@ -6,7 +6,7 @@
 
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
-import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
+import { callAnthropic, callAnthropicTool, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
 import { getCatalog, inputLines, buildStandardized, type CatalogLine } from "../_shared/templates.ts";
@@ -156,17 +156,54 @@ Deno.serve(async (req) => {
         if (!parsedSources[k]) parsedSources[k] = e.sources[k] ?? e.parser;
       }
 
-      // 2) GAP-FILL IA : sur les fichiers NON reconnus (PDF/scan/inconnu), seulement pour les postes encore absents.
+      // 2) GAP-FILL IA (contrat STRICT via tool use) : sur les fichiers NON reconnus (PDF/scan/inconnu),
+      //    et SEULEMENT pour les postes encore absents. Chaque champ = valeur+provenance OU null+raison.
       const missingLines = lines.filter((l) => parsedValues[l.id] == null);
+      const missingIds = missingLines.map((l) => l.id);
       const ctxText = ctx?.data ? JSON.stringify((ctx.data as { playbook?: unknown }).playbook ?? ctx.data).slice(0, 4000) : "";
-      const llmExtracts = (llmDocs.length && missingLines.length)
+      const EXTRACT_TOOL = {
+        name: "emit_extraction",
+        description: "Renvoie les postes que CE fichier permet de renseigner. N'invente jamais : si un poste est introuvable, ne l'inclus pas (ou value=null avec la raison).",
+        input_schema: {
+          type: "object",
+          properties: {
+            source_type: { type: "string", enum: ["sales_export", "ads_dashboard", "bank_statement", "invoice", "payroll", "pnl", "other"] },
+            currency: { type: "string", description: "Code ISO de la devise principale des montants (EUR, AED, USD, GBP…)" },
+            fields: {
+              type: "array",
+              description: "Un élément par poste réellement présent dans ce fichier.",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string", enum: missingIds },
+                  value: { type: ["number", "null"], description: "Montant brut DANS la devise du fichier (sans conversion), ou null si absent." },
+                  provenance: { type: "string", description: "Où trouvé (page/ligne/feuille) si value≠null ; sinon raison de l'absence." },
+                },
+                required: ["id", "value", "provenance"],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ["currency", "fields"],
+          additionalProperties: false,
+        },
+      };
+      type ToolOut = { source_type?: string; currency?: string; fields?: { id: string; value: number | null; provenance: string }[] };
+      const llmExtracts = (llmDocs.length && missingIds.length)
         ? (await mapLimit(llmDocs, 3, async (doc) => {
-            const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: "Classe ce fichier, indique sa devise et extrais SEULEMENT les postes demandés (sinon null)." }];
+            const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: "Classe ce fichier et renseigne UNIQUEMENT les postes présents, via l'outil." }];
             try {
-              const res = await callAnthropic({ model: MODELS.fast, system: PERFILE_SYSTEM(activity, missingLines, ctxText),
-                messages: [{ role: "user", content } as AnthropicMessage], max_tokens: 1200 });
-              const p = extractJson<{ source_type?: string; currency?: string; values?: Record<string, number>; sources?: Record<string, string> }>(res.text);
-              return { file: doc.name, type: (p.source_type ?? "other") as FileExtract["type"], currency: p.currency, values: p.values ?? {}, sources: p.sources ?? {} } as FileExtract;
+              const { input } = await callAnthropicTool<ToolOut>({ model: MODELS.fast, system: PERFILE_SYSTEM(activity, missingLines, ctxText),
+                messages: [{ role: "user", content } as AnthropicMessage], tool: EXTRACT_TOOL, max_tokens: 1500 });
+              if (!input) return null;
+              const values: Record<string, number> = {}; const sources: Record<string, string> = {};
+              for (const f of input.fields ?? []) {
+                // Contrat : valeur retenue seulement si numérique ET provenance fournie.
+                if (typeof f.value === "number" && isFinite(f.value) && f.provenance && f.provenance.trim()) {
+                  values[f.id] = f.value; sources[f.id] = `${doc.name} — ${f.provenance}`;
+                }
+              }
+              return { file: doc.name, type: (input.source_type ?? "other") as FileExtract["type"], currency: input.currency, values, sources } as FileExtract;
             } catch { return null; }
           })).filter((x): x is FileExtract => !!x)
         : [];

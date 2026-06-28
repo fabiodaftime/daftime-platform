@@ -50,6 +50,37 @@ export async function callAnthropic(opts: {
   return { text, usage: data.usage };
 }
 
+// Appel OUTILLÉ : force le modèle à répondre via un outil au schéma imposé (JSON Schema).
+// Garantit une sortie structurée et validée par l'API (pas de parsing approximatif).
+export async function callAnthropicTool<T = Record<string, unknown>>(opts: {
+  model: string;
+  system: string;
+  messages: AnthropicMessage[];
+  tool: { name: string; description: string; input_schema: Record<string, unknown> };
+  max_tokens?: number;
+  signal?: AbortSignal;
+}): Promise<{ input: T | null; usage: unknown }> {
+  if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY manquante");
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: opts.model,
+      max_tokens: opts.max_tokens ?? 1500,
+      system: opts.system,
+      messages: opts.messages,
+      tools: [opts.tool],
+      tool_choice: { type: "tool", name: opts.tool.name },
+    }),
+    signal: opts.signal,
+  });
+  const raw = await resp.text();
+  if (!resp.ok) throw new Error(`Anthropic ${resp.status}: ${raw}`);
+  const data = JSON.parse(raw);
+  const block = (data.content ?? []).find((b: { type: string; name?: string }) => b.type === "tool_use" && b.name === opts.tool.name);
+  return { input: (block?.input ?? null) as T | null, usage: data.usage };
+}
+
 // Retire d'éventuelles balises de code ```html ... ``` autour d'une sortie HTML brute.
 export function stripCodeFences(s: string): string {
   const m = s.match(/```(?:html)?\s*([\s\S]*?)```/i);
