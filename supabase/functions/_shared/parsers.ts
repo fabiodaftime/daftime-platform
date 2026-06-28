@@ -15,7 +15,7 @@ export interface ParseCtx { reporting: string; factor: Record<string, number>; p
 //  payment  = réception d'un encaissement par un moyen de paiement (Stripe/Whop) → PAS du CA.
 //  bank     = relevé bancaire → trésorerie (soldes) + charges (sorties).
 //  internal = mouvement interne (payout, virement entre comptes) → ignoré.
-export type DocRole = "revenue" | "payment" | "bank" | "internal";
+export type DocRole = "revenue" | "payment" | "bank" | "internal" | "analytics" | "ads";
 export interface ParsedExtract {
   parser: string;
   role: DocRole;
@@ -245,6 +245,66 @@ function bankSigned(rows: string[][], ctx: ParseCtx, name: string): ParsedExtrac
       fin_result: `${name} — frais de change`, other_opex: `${name} — autres dépenses`, cash_end: `${name} — solde(s) de clôture` } };
 }
 
+// ---- Shopify (exports analytics) ----------------------------------------------
+// Chaque rapport Shopify a son propre schéma : on mappe vers les indicateurs e-commerce.
+function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract | null {
+  const h = rows[0]; const data = rows.slice(1);
+  const sumCol = (col: number, iDate: number) => {
+    let s = 0; for (const r of data) { if (iDate >= 0 && !inMonth(r[iDate], ctx.period)) continue; const n = toNum(r[col]); if (n != null) s += n; }
+    return Math.round(s * 100) / 100;
+  };
+  const mk = (role: DocRole, values: Record<string, number>, sources: Record<string, string>, extra: Partial<ParsedExtract> = {}): ParsedExtract =>
+    ({ parser: "shopify", role, source_type: "sales_export", currency: ctx.reporting, values, sources, ...extra });
+
+  // Ventes : "Net sales by order" / "Discounts by order" → CA, commandes, brut, retours, articles.
+  if (has(h, "Net sales") && has(h, "Order name")) {
+    const iNet = idx(h, "Net sales"), iDate = idx(h, "Day"), iOrder = idx(h, "Order name"),
+          iGross = idx(h, "Gross sales"), iRet = idx(h, "Returns"), iProd = idx(h, "Product title at time of sale");
+    const orders = new Set<string>(); let ca = 0, gross = 0, ret = 0, units = 0;
+    for (const r of data) {
+      if (!inMonth(r[iDate], ctx.period)) continue;
+      const net = toNum(r[iNet]);
+      if (net != null) { ca += net; if (net > 0 && r[iOrder]) { orders.add(r[iOrder]); if (iProd >= 0 && (r[iProd] ?? "").trim()) units++; } }
+      if (iGross >= 0) { const g = toNum(r[iGross]); if (g != null) gross += g; }
+      if (iRet >= 0) { const rr = toNum(r[iRet]); if (rr != null) ret += rr; }
+    }
+    const v: Record<string, number> = { ca: Math.round(ca * 100) / 100, orders: orders.size };
+    if (units) v.units = units;
+    if (iGross >= 0) v.gross_sales = Math.round(gross * 100) / 100;
+    if (iRet >= 0) v.refunds = Math.round(-ret * 100) / 100; // Returns négatifs → remboursements positifs
+    // le fichier riche (avec Gross sales) prime au dédoublonnage
+    return mk("revenue", v, { ca: `Shopify (${name}) — net sales`, orders: "Shopify — commandes distinctes du mois" },
+      { revenueCandidate: v.ca, dedupGroup: "shopify_ca", count: iGross >= 0 ? 1_000_000 : orders.size });
+  }
+  // Sessions / visiteurs (et fichiers de conversion qui portent aussi Sessions)
+  if (has(h, "Sessions") && (has(h, "Online store visitors") || has(h, "Conversion rate"))) {
+    const iDate = idx(h, "Day"), iSess = idx(h, "Sessions");
+    // add_to_carts vient UNIQUEMENT du rapport "Customer behavior" (évite tout double comptage).
+    return mk("analytics", { sessions: sumCol(iSess, iDate) }, { sessions: "Shopify — sessions du mois" }, { dedupGroup: "shopify_sessions", count: data.length });
+  }
+  // Comportement (totaux mensuels du funnel : une seule ligne)
+  if (has(h, "Sessions with cart additions") && has(h, "Sessions that completed checkout") && !has(h, "Day")) {
+    const iCart = idx(h, "Sessions with cart additions"); const c = toNum((data[0] ?? [])[iCart]);
+    const v: Record<string, number> = {}; if (c != null) v.add_to_carts = c;
+    return mk("analytics", v, { add_to_carts: "Shopify — sessions avec ajout panier (mois)" }, { dedupGroup: "shopify_sessions_carts", count: 1_000_000 });
+  }
+  // Nouveaux vs récurrents (tableau de synthèse, pas la série temporelle)
+  if (has(h, "New or returning customer") && has(h, "Customers") && !has(h, "Day")) {
+    const iType = idx(h, "New or returning customer"), iCust = idx(h, "Customers");
+    let nw = 0, ret = 0;
+    for (const r of data) { const n = toNum(r[iCust]); if (n == null) continue; if (/new/i.test(r[iType] ?? "")) nw += n; else if (/return/i.test(r[iType] ?? "")) ret += n; }
+    return mk("analytics", { new_customers: nw, returning_customers: ret, total_customers: nw + ret },
+      { new_customers: "Shopify — nouveaux clients", returning_customers: "Shopify — clients récurrents" }, { dedupGroup: "shopify_customers", count: 1_000_000 });
+  }
+  // Paiements (PSP) : "Net payments by gateway/method" → réception, PAS le CA.
+  if ((has(h, "Payment gateway") || has(h, "Payment method")) && has(h, "Net payments")) {
+    const iNet = idx(h, "Net payments"); let s = 0; for (const r of data) { const n = toNum(r[iNet]); if (n != null) s += n; }
+    return mk("payment", {}, {}, { note: `Réception PSP (Shopify Payments) : ${Math.round(s).toLocaleString("fr-FR")} ${ctx.reporting} — réception, pas le CA.` });
+  }
+  // Autres exports analytics (recherches, one-time customers, séries temporelles, localisation…) : ignorés proprement (pas d'IA).
+  return mk("analytics", {}, {}, { note: `Export Shopify analytique (${name}) — non agrégé (info uniquement).` });
+}
+
 // ---- routeur ------------------------------------------------------------------
 
 // Renvoie un ParsedExtract si un parser déterministe reconnaît le fichier, sinon null (→ IA).
@@ -253,6 +313,13 @@ export function parseFile(name: string, text: string, ctx: ParseCtx): ParsedExtr
   const rows = parseCsv(text);
   if (rows.length < 2) return null;
   const h = rows[0];
+
+  // Shopify : détecté par les en-têtes caractéristiques de ses rapports.
+  const shopifyHit = has(h, "Net sales") || has(h, "Online store visitors") || has(h, "Sessions with cart additions") ||
+    has(h, "New or returning customer") || has(h, "Search query") || has(h, "Customer first order date") ||
+    has(h, "Checkout conversion rate") || has(h, "Sessions") || (has(h, "Day") && has(h, "Total sales")) ||
+    ((has(h, "Payment gateway") || has(h, "Payment method")) && has(h, "Net payments"));
+  if (shopifyHit) { const s = shopify(name, rows, ctx); if (s) return s; }
 
   if (has(h, "Converted Amount") && has(h, "Captured")) return stripePayments(rows, ctx);
   if (has(h, "Arrival Date (UTC)") || (has(h, "Destination Name") && has(h, "Source Type"))) return stripePayouts(rows, ctx);
