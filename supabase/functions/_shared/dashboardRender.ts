@@ -3,11 +3,13 @@
 // Les chiffres viennent de la data (zéro hallucination).
 
 import { type Theme, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
+import { assess } from "./benchmarks.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
 export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
 export interface RenderCtx {
   client: string; period: string; currency: string;
+  activity?: string; // slug d'activité (ex. "ecommerce") → repères sectoriels
   brand?: Record<string, any> | null;
   theme?: Theme;
   metrics: Record<string, Metric>;
@@ -85,7 +87,9 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
     let spHtml = "";
     if (sp) { const spId = `ch${cid++}`; charts.push({ id: spId, kind: "spark", color: c, data: ctx.history.series[id] }); spHtml = `<div class="spark echart" id="${spId}"></div>`; }
     const foot = `<div class="kpi-foot">${changeHtml(m.change_pct) || '<span class="chg flat">—</span>'}${spHtml}</div>`;
-    const main = `<div class="kpi-main"><div class="kpi-l">${esc(m.label)}</div><div class="kpi-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div>${foot}</div>`;
+    const vb = assess(id, m.value, ctx.activity); // verdict sectoriel (repère bon/moyen/alerte)
+    const benchHtml = vb ? `<div class="kpi-bench b-${vb.level}">${esc(vb.note)}</div>` : "";
+    const main = `<div class="kpi-main"><div class="kpi-l">${esc(m.label)}</div><div class="kpi-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div>${foot}${benchHtml}</div>`;
     if (th.kpi === "icon" || th.kpi === "glass") return `<div class="kpi k-icon"><div class="kpi-ic" style="background:${c}1f;color:${c}">${iconSvg(iconFor(id, th.icons[id]), c)}</div>${main}</div>`;
     if (th.kpi === "gradient") return `<div class="kpi k-grad" style="background:linear-gradient(135deg, ${c}14, transparent)"><div class="kpi-bar" style="background:${c}"></div>${main}</div>`;
     if (th.kpi === "plain") return `<div class="kpi k-plain">${main}</div>`;
@@ -549,6 +553,9 @@ header.hero .sub{opacity:.82;font-size:14px;margin-top:4px;text-transform:capita
 .chg{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .chg.up{color:#0a7d3f;background:#e7f7ee}.chg.down{color:#b41a3a;background:#fdeaf0}.chg.flat{color:var(--mut);background:${th.dark ? "#262b40" : "#f1f2f7"}}
 .spark{height:32px;width:84px;flex:0 0 auto}
+.kpi-bench{font-size:11px;font-weight:600;margin-top:7px;display:flex;align-items:center;gap:5px;line-height:1.3}
+.kpi-bench::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.b-good{color:#0a7d3f}.b-warn{color:#b9770a}.b-bad{color:#b41a3a}
 .glassbg .card,.glassbg .kpi{background:rgba(255,255,255,.62);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(255,255,255,.5)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;box-shadow:0 1px 2px rgba(20,26,60,.04)}
 .card-t{font-weight:700;font-size:15px;margin-bottom:14px}.card-sub{font-weight:500;color:var(--mut);font-size:12px}

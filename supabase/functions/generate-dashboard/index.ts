@@ -10,6 +10,7 @@ import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { renderDashboard, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
+import { assess } from "../_shared/benchmarks.ts";
 
 const PLAN_SYSTEM = (activity: string) => `Tu es un ANALYSTE FINANCIER SENIOR et le CONSEILLER de ce client "${activity}". Tu ne « poses pas des graphes » : tu produis un RAPPORT MENSUEL qui RACONTE UNE HISTOIRE — où en est l'entreprise ce mois-ci, ce qui va, ce qui ne va pas, et quoi faire. Le dashboard est livré à un dirigeant qui paie pour du CONSEIL, pas pour une galerie de graphiques.
 
@@ -413,6 +414,11 @@ Deno.serve(async (req) => {
     const produce = async () => {
       const a = availability(sections, history.months.length, Object.keys(breakdowns ?? {}), Object.keys(targets ?? {}));
       const avTypes = availableTypes(a);
+      // Diagnostic sectoriel (repères) → on l'injecte pour que l'analyse IA soit FONDÉE, pas vague.
+      const diag = Object.keys(metrics).map((id) => {
+        const v = assess(id, metrics[id].value, activity);
+        return v ? `- ${metrics[id].label} = ${metrics[id].value}${metrics[id].unit ? " " + metrics[id].unit : ""} → ${v.level === "good" ? "BON" : v.level === "warn" ? "MOYEN" : "ALERTE"} (${v.note})` : null;
+      }).filter(Boolean).join("\n");
 
       // 1) COMPOSITION (IA) : l'IA conçoit la structure ET l'analyse, MAIS uniquement avec les types
       //    DISPONIBLES (calculés depuis la donnée) → plus de graphe vide. Riche : ≥6 graphes/page.
@@ -425,7 +431,8 @@ Deno.serve(async (req) => {
         `CIBLES : ${Object.keys(targets).length ? Object.keys(targets).join(", ") : "aucune"}.\n\n` +
         `⛔ TYPES DE GRAPHES AUTORISÉS CE MOIS (les seuls qui afficheront des données — N'EN UTILISE AUCUN AUTRE) :\n${avTypes}\n` +
         `Les répartitions (treemap, rose, polar, pictorial, lollipop, share, ranking) acceptent une LISTE DE MÉTRIQUES (champ "metrics"), pas seulement un breakdown : sers-t'en pour faire parler les ratios (AOV, ROAS, CAC, CPA, taux…) et les postes (charges, canaux).\n\n` +
-        `EXIGENCES : 3 à 4 pages à ANGLES DISTINCTS ; CHAQUE page = un kpi_row + AU MOINS 6 graphes qui afficheront vraiment des données + 1 callout d'analyse. EXPLOITE toute la richesse (unit economics, acquisition, conversion, LTV/fidélisation, rentabilité, trésorerie) — pas seulement CA/marge. Varie les types.\n` +
+        (diag ? `\n📊 DIAGNOSTIC SECTORIEL (repères marché — APPUIE-TOI DESSUS dans les callouts, cite le repère et dis si c'est bon ou problématique) :\n${diag}\n` : "") +
+        `\nEXIGENCES : 3 à 4 pages à ANGLES DISTINCTS ; CHAQUE page = un kpi_row + AU MOINS 6 graphes qui afficheront vraiment des données + 1 callout d'analyse. EXPLOITE toute la richesse (unit economics, acquisition, conversion, LTV/fidélisation, rentabilité, trésorerie) — pas seulement CA/marge. Varie les types.\n` +
         (guidance ? `\nCONSIGNES CLIENT (prioritaires) :\n${guidance}\n` : "") +
         (prevTheme ? `\nTHÈME À CONSERVER : ${JSON.stringify(prevTheme)}\n` : "") +
         `\nMARQUE : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie"}` }];
@@ -447,10 +454,10 @@ Deno.serve(async (req) => {
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
       const html = renderDashboard(
-        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
+        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
         plan,
       );
-      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme, breakdowns, targets };
+      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, sections, history, plan, theme, breakdowns, targets };
       const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });

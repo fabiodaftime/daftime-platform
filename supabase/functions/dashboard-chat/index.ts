@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const { data: dash } = await admin.from("dashboards").select("*").eq("id", dashboard_id).maybeSingle();
     if (!dash) return json({ error: "dashboard introuvable" }, 404);
     const dj = ((dash as any).data_json ?? {}) as {
-      client?: string; period?: string; currency?: string; sections?: any[]; history?: any; plan?: DashPlan; theme?: Theme; breakdowns?: Record<string, { label: string; rows: unknown[] }>; targets?: Record<string, number>;
+      client?: string; period?: string; currency?: string; activity?: string; sections?: any[]; history?: any; plan?: DashPlan; theme?: Theme; breakdowns?: Record<string, { label: string; rows: unknown[] }>; targets?: Record<string, number>;
     };
 
     const { data: client } = await admin.from("clients").select("name, currency, brand").eq("id", (dash as any).client_id).maybeSingle();
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     // Mode MODIFICATION : on re-rend avec le nouveau plan (+ thème éventuel) et on enregistre une version.
     const theme: Theme = { ...(dj.theme ?? {}), ...(parsed.theme ?? {}), icons: { ...((dj.theme ?? {}).icons ?? {}), ...((parsed.theme ?? {}).icons ?? {}) } };
     const html = renderDashboard(
-      { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR",
+      { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity,
         brand: client?.brand as any, theme, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets },
       { pages: parsed.plan.pages as any, theme },
     );
