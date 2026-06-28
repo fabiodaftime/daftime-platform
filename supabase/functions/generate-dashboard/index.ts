@@ -309,7 +309,8 @@ Deno.serve(async (req) => {
     if (!sd) return json({ error: "aucune donnée standardisée pour ce client/mois (lance d'abord standardize-data)" }, 404);
 
     const { data: client } = await admin.from("clients")
-      .select("name, currency, brand, dashboard_guidance, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
+      .select("name, currency, brand, dashboard_guidance, benchmarks, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
+    const clientBench = ((client as { benchmarks?: Record<string, unknown> } | null)?.benchmarks ?? {}) as Record<string, import("../_shared/benchmarks.ts").BenchOverride>;
 
     const meta = (sd.data as { meta?: { template?: string; validated?: boolean; validation?: { ok?: boolean; blocking?: string[] } } })?.meta;
     if (meta?.template && !meta?.validated) {
@@ -416,7 +417,7 @@ Deno.serve(async (req) => {
       const avTypes = availableTypes(a);
       // Diagnostic sectoriel (repères) → on l'injecte pour que l'analyse IA soit FONDÉE, pas vague.
       const diag = Object.keys(metrics).map((id) => {
-        const v = assess(id, metrics[id].value, activity);
+        const v = assess(id, metrics[id].value, activity, clientBench);
         return v ? `- ${metrics[id].label} = ${metrics[id].value}${metrics[id].unit ? " " + metrics[id].unit : ""} → ${v.level === "good" ? "BON" : v.level === "warn" ? "MOYEN" : "ALERTE"} (${v.note})` : null;
       }).filter(Boolean).join("\n");
 
@@ -454,10 +455,10 @@ Deno.serve(async (req) => {
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
       const html = renderDashboard(
-        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
+        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
         plan,
       );
-      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, sections, history, plan, theme, breakdowns, targets };
+      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, sections, history, plan, theme, breakdowns, targets };
       const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });

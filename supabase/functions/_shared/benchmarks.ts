@@ -35,13 +35,36 @@ const VERB: Record<"high" | "low", Record<Verdict["level"], string>> = {
   low: { good: "maîtrisé", warn: "à surveiller", bad: "trop élevé" },
 };
 
-/** Verdict sectoriel pour un indicateur, ou null s'il n'a pas de repère connu. */
-export function assess(id: string, value: number | null | undefined, activity?: string): Verdict | null {
+// Surcharge par client : ajuste/désactive/ajoute un repère pour un indicateur.
+export type BenchOverride = { good?: number; warn?: number; dir?: "high" | "low"; ref?: string; off?: boolean };
+
+/** Repère EFFECTIF (défaut secteur fusionné avec la surcharge client), ou null si inexistant/désactivé. */
+export function effectiveBench(id: string, activity?: string, overrides?: Record<string, BenchOverride>): B | null {
+  const o = overrides?.[id];
+  if (o?.off) return null;
+  const base = (TABLES[activity ?? ""] ?? {})[id] ?? DEFAULT[id] ?? null;
+  if (!base && !(o && o.good != null && o.warn != null)) return null; // ni défaut ni surcharge complète
+  const merged: B = {
+    dir: o?.dir ?? base?.dir ?? "high",
+    good: o?.good ?? base?.good ?? 0,
+    warn: o?.warn ?? base?.warn ?? 0,
+    ref: o?.ref ?? base?.ref ?? "",
+  };
+  return merged;
+}
+
+/** Verdict d'un indicateur (avec surcharges client), ou null s'il n'a pas de repère. */
+export function assess(id: string, value: number | null | undefined, activity?: string, overrides?: Record<string, BenchOverride>): Verdict | null {
   if (value == null || !isFinite(value)) return null;
-  const b = (TABLES[activity ?? ""] ?? {})[id] ?? DEFAULT[id];
+  const b = effectiveBench(id, activity, overrides);
   if (!b) return null;
   const ok = b.dir === "high" ? value >= b.good : value <= b.good;
   const mid = b.dir === "high" ? value >= b.warn : value <= b.warn;
   const level: Verdict["level"] = ok ? "good" : mid ? "warn" : "bad";
-  return { level, note: `${VERB[b.dir][level]} · ${b.ref}` };
+  return { level, note: b.ref ? `${VERB[b.dir][level]} · ${b.ref}` : VERB[b.dir][level] };
+}
+
+/** Pour l'UI : les ids qui ont un repère par défaut pour cette activité (afin de pré-remplir l'éditeur). */
+export function defaultBenchIds(activity?: string): string[] {
+  return Array.from(new Set([...Object.keys(TABLES[activity ?? ""] ?? {}), ...Object.keys(DEFAULT)]));
 }

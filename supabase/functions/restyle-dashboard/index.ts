@@ -43,38 +43,45 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const dashboard_id: string | undefined = body.dashboard_id;
     const message: string = (body.message ?? "").toString();
-    if (!dashboard_id || !message.trim()) return json({ error: "dashboard_id et message requis" }, 400);
+    if (!dashboard_id) return json({ error: "dashboard_id requis" }, 400);
 
     const { data: dash } = await admin.from("dashboards").select("*").eq("id", dashboard_id).maybeSingle();
     if (!dash) return json({ error: "dashboard introuvable" }, 404);
     const dataJson = ((dash as any).data_json ?? {}) as {
-      client?: string; period?: string; currency?: string; activity?: string; sections?: any[]; history?: any; plan?: { pages?: any[] }; theme?: Theme; breakdowns?: any; targets?: any;
+      client?: string; period?: string; currency?: string; activity?: string; benchmarks?: any; sections?: any[]; history?: any; plan?: { pages?: any[] }; theme?: Theme; breakdowns?: any; targets?: any;
     };
     if (!dataJson.plan?.pages?.length) return json({ error: "ce dashboard n'a pas de plan ré-affichable (régénérez-le d'abord)" }, 409);
 
-    const { data: client } = await admin.from("clients").select("name, currency, brand").eq("id", (dash as any).client_id).maybeSingle();
+    const { data: client } = await admin.from("clients").select("name, currency, brand, benchmarks").eq("id", (dash as any).client_id).maybeSingle();
+    const benchmarks = ((client as { benchmarks?: any } | null)?.benchmarks) ?? dataJson.benchmarks ?? {}; // repères FRAIS du client (sinon snapshot)
 
     const currentTheme = dataJson.theme ?? {};
     const metrics = idVal(dataJson.sections ?? []);
     const ids = Object.keys(metrics);
 
-    const msg = [{ role: "user", content: `Thème actuel :\n${JSON.stringify(currentTheme)}\n\nMétriques disponibles (ids) : ${ids.join(", ")}\n\nInstruction : ${message}` } as AnthropicMessage];
-    const res = await callAnthropic({ model: MODELS.fast, system: SYSTEM, messages: msg, max_tokens: 1200 });
-    const parsed = extractJson<{ theme?: Theme; summary?: string }>(res.text);
-    const theme: Theme = { ...currentTheme, ...(parsed.theme ?? {}), icons: { ...(currentTheme.icons ?? {}), ...((parsed.theme ?? {}).icons ?? {}) } };
+    // Sans instruction : simple re-rendu (ex. appliquer de nouveaux repères/verdicts) — pas d'appel IA.
+    let theme: Theme = currentTheme;
+    let summary = "Dashboard ré-affiché (repères mis à jour).";
+    if (message.trim()) {
+      const msg = [{ role: "user", content: `Thème actuel :\n${JSON.stringify(currentTheme)}\n\nMétriques disponibles (ids) : ${ids.join(", ")}\n\nInstruction : ${message}` } as AnthropicMessage];
+      const res = await callAnthropic({ model: MODELS.fast, system: SYSTEM, messages: msg, max_tokens: 1200 });
+      const parsed = extractJson<{ theme?: Theme; summary?: string }>(res.text);
+      theme = { ...currentTheme, ...(parsed.theme ?? {}), icons: { ...(currentTheme.icons ?? {}), ...((parsed.theme ?? {}).icons ?? {}) } };
+      summary = parsed.summary ?? "Thème mis à jour.";
+    }
 
     const html = renderDashboard(
-      { client: dataJson.client ?? client?.name ?? "", period: dataJson.period ?? (dash as any).period, currency: dataJson.currency ?? client?.currency ?? "EUR", activity: dataJson.activity,
+      { client: dataJson.client ?? client?.name ?? "", period: dataJson.period ?? (dash as any).period, currency: dataJson.currency ?? client?.currency ?? "EUR", activity: dataJson.activity, benchmarks,
         brand: client?.brand as any, theme, metrics, history: dataJson.history ?? { months: [], series: {}, labels: {} }, breakdowns: dataJson.breakdowns, targets: dataJson.targets },
       { pages: dataJson.plan!.pages as any, theme },
     );
 
     const saved = await insertVersion(admin, "dashboards", { client_id: (dash as any).client_id, period: (dash as any).period }, {
       standardized_data_id: (dash as any).standardized_data_id ?? null,
-      html, data_json: { ...dataJson, theme }, status: (dash as any).status ?? "draft_ia", created_by: user.id,
+      html, data_json: { ...dataJson, theme, benchmarks }, status: (dash as any).status ?? "draft_ia", created_by: user.id,
     });
 
-    return json({ ok: true, dashboard: saved, summary: parsed.summary ?? "Thème mis à jour." });
+    return json({ ok: true, dashboard: saved, summary });
   } catch (e) {
     console.error("restyle-dashboard:", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);

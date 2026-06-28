@@ -3,13 +3,14 @@
 // Les chiffres viennent de la data (zéro hallucination).
 
 import { type Theme, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
-import { assess } from "./benchmarks.ts";
+import { assess, type BenchOverride } from "./benchmarks.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
 export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
 export interface RenderCtx {
   client: string; period: string; currency: string;
   activity?: string; // slug d'activité (ex. "ecommerce") → repères sectoriels
+  benchmarks?: Record<string, BenchOverride>; // surcharges des seuils par client
   brand?: Record<string, any> | null;
   theme?: Theme;
   metrics: Record<string, Metric>;
@@ -87,7 +88,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
     let spHtml = "";
     if (sp) { const spId = `ch${cid++}`; charts.push({ id: spId, kind: "spark", color: c, data: ctx.history.series[id] }); spHtml = `<div class="spark echart" id="${spId}"></div>`; }
     const foot = `<div class="kpi-foot">${changeHtml(m.change_pct) || '<span class="chg flat">—</span>'}${spHtml}</div>`;
-    const vb = assess(id, m.value, ctx.activity); // verdict sectoriel (repère bon/moyen/alerte)
+    const vb = assess(id, m.value, ctx.activity, ctx.benchmarks); // verdict (repères secteur + surcharges client)
     const benchHtml = vb ? `<div class="kpi-bench b-${vb.level}">${esc(vb.note)}</div>` : "";
     const main = `<div class="kpi-main"><div class="kpi-l">${esc(m.label)}</div><div class="kpi-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div>${foot}${benchHtml}</div>`;
     if (th.kpi === "icon" || th.kpi === "glass") return `<div class="kpi k-icon"><div class="kpi-ic" style="background:${c}1f;color:${c}">${iconSvg(iconFor(id, th.icons[id]), c)}</div>${main}</div>`;

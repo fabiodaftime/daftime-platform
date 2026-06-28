@@ -5,9 +5,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
+import { BenchmarksPanel } from '@/components/generic/BenchmarksPanel';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { StandardizedReview } from '@/components/generic/StandardizedReview';
 import { DashboardChat } from '@/components/generic/DashboardChat';
@@ -503,6 +504,21 @@ export default function AdminClientCockpit() {
         {tab === 'custom' && (
         <Section icon={<Palette className="w-4 h-4" />} title="Charte graphique">
           <BrandPanel clientId={id!} brand={client.brand} onChange={(b) => setClient({ ...client, brand: b })} />
+        </Section>
+        )}
+
+        {tab === 'custom' && (
+        <Section icon={<Activity className="w-4 h-4" />} title="Repères & verdicts (bon / moyen / alerte)">
+          <BenchmarksPanel
+            clientId={id!}
+            activity={(client as any)?.activity_types?.slug}
+            metrics={(((sd?.data?.sections ?? []) as any[]).flatMap((s) => (s.rows ?? []))
+              .filter((r: any) => r?.id && typeof r.value === 'number')
+              .map((r: any) => ({ id: r.id as string, label: (r.label as string) ?? r.id })))}
+            benchmarks={(client as any)?.benchmarks ?? {}}
+            dashboardId={dash?.id}
+            onApplied={() => { loadDashboard(); }}
+          />
         </Section>
         )}
 

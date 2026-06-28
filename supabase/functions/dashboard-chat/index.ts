@@ -65,7 +65,8 @@ Deno.serve(async (req) => {
       client?: string; period?: string; currency?: string; activity?: string; sections?: any[]; history?: any; plan?: DashPlan; theme?: Theme; breakdowns?: Record<string, { label: string; rows: unknown[] }>; targets?: Record<string, number>;
     };
 
-    const { data: client } = await admin.from("clients").select("name, currency, brand").eq("id", (dash as any).client_id).maybeSingle();
+    const { data: client } = await admin.from("clients").select("name, currency, brand, benchmarks").eq("id", (dash as any).client_id).maybeSingle();
+    const benchmarks = ((client as { benchmarks?: any } | null)?.benchmarks) ?? (dj as { benchmarks?: any }).benchmarks ?? {};
 
     const metrics = idVal(dj.sections ?? []);
     const metricsText = Object.entries(metrics).map(([id, m]) =>
@@ -95,14 +96,14 @@ Deno.serve(async (req) => {
     // Mode MODIFICATION : on re-rend avec le nouveau plan (+ thème éventuel) et on enregistre une version.
     const theme: Theme = { ...(dj.theme ?? {}), ...(parsed.theme ?? {}), icons: { ...((dj.theme ?? {}).icons ?? {}), ...((parsed.theme ?? {}).icons ?? {}) } };
     const html = renderDashboard(
-      { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity,
+      { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity, benchmarks,
         brand: client?.brand as any, theme, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets },
       { pages: parsed.plan.pages as any, theme },
     );
 
     const saved = await insertVersion(admin, "dashboards", { client_id: (dash as any).client_id, period: (dash as any).period }, {
       standardized_data_id: (dash as any).standardized_data_id ?? null,
-      html, data_json: { ...dj, plan: parsed.plan, theme }, status: (dash as any).status ?? "draft_ia", created_by: user.id,
+      html, data_json: { ...dj, plan: parsed.plan, theme, benchmarks }, status: (dash as any).status ?? "draft_ia", created_by: user.id,
     });
 
     return json({ action: "edit", dashboard: saved, summary: parsed.summary ?? "Dashboard mis à jour." });
