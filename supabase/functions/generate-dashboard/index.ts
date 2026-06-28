@@ -37,6 +37,30 @@ WIDGETS (JSON) :
 - {"type":"calendar","title":"...","breakdown":"clé"}            // calendrier-heatmap d'un BREAKDOWN journalier (ex. daily_sales) — intensité par jour du mois
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
+BIBLIOTHÈQUE PREMIUM ÉTENDUE (à utiliser avec PARCIMONIE, seulement quand ça s'y prête — ne JAMAIS tout mettre ; vise la lisibilité, 2-3 graphes forts par page) :
+Séries temporelles (nécessitent l'historique) :
+- {"type":"area","title":"...","metrics":["id"(,…)]}            // courbe avec aire (1 à 4 ids) — tendance élégante
+- {"type":"stacked_area","title":"...","metrics":["id", ...]}    // aires empilées — composition qui évolue dans le temps (≥2 ids)
+- {"type":"river","title":"...","metrics":["id", ...]}           // stream graph fluide (≥2 ids, ≥3 mois) — flux/composition organique
+- {"type":"combo","title":"...","metrics":["id"(bar)],"line":"id"} // barres + COURBE sur 2e axe (ex. CA en barres + marge % en courbe)
+- {"type":"slope","title":"...","metrics":["id", ...]}           // pentes M-1→ce mois en base 100 (≥2 ids avec variation) — qui progresse/recule
+- {"type":"matrix","title":"...","metrics":["id", ...]}          // carte de chaleur indicateurs × mois (≥2 ids, ≥3 mois)
+Répartitions (BREAKDOWN) :
+- {"type":"rose","title":"...","breakdown":"clé"}                // camembert de Nightingale (rayon ∝ valeur) — répartition stylée
+- {"type":"polar","title":"...","breakdown":"clé"}               // barres radiales — classement circulaire premium
+- {"type":"sunburst","title":"...","breakdown":"clé"}            // anneaux hiérarchiques — idéal si labels « Parent / Enfant »
+- {"type":"pictorial","title":"...","breakdown":"clé"}           // barres-pictogrammes — très visuel (e-commerce)
+- {"type":"lollipop","title":"...","breakdown":"clé"}            // bâtons-points — classement épuré (alternative à ranking)
+- {"type":"share","title":"...","breakdown":"clé"}               // barre 100% — part de chaque poste dans le total
+- {"type":"histogram","title":"...","breakdown":"clé"}           // distribution (ex. daily_sales) — dispersion des valeurs
+Objectifs & variations (KPIs) :
+- {"type":"bullet","title":"...","metrics":["id", ...]}          // barres d'objectif compactes vs cible (ids AVEC cible)
+- {"type":"rings","title":"...","metrics":["id", ...]}           // anneaux de progression concentriques vs cibles (1-4 ids avec cible)
+- {"type":"gauge_grid","title":"...","metrics":["id", ...]}      // plusieurs petites jauges côte à côte (ids avec cible)
+- {"type":"diverging","title":"...","metrics":["id", ...]}       // variations vs M-1 en barres divergentes ± (vert/rouge)
+- {"type":"comparison","title":"...","metrics":["id", ...]}      // barres groupées « M-1 vs ce mois »
+- {"type":"trend_grid","title":"...","metrics":["id", ...]}      // grille de mini-tendances (sparklines) — synthèse de plusieurs KPIs
+
 THÈME VISUEL — choisis le "mood" (TRAITEMENT visuel) adapté à l'UNIVERS du client. IMPORTANT : les COULEURS et la POLICE viennent AUTOMATIQUEMENT de la marque/du site — ne les définis PAS (pas de primary/accent/palette/font). Le mood ne change que le style (fond, en-tête, tuiles), pas les couleurs.
 - mood : vivid | aurora | ocean | sunset | forest | noir | neon | royal | slate | corporate | pastel | editorial | glass | minimal | dark
   Exemples : sport/streetwear → vivid/aurora ; food/artisan → sunset/forest ; luxe/bijoux → noir/royal ; SaaS/tech → glass/neon ; finance/cabinet → slate/corporate ; cosmétique/bien-être → pastel ; média → editorial.
