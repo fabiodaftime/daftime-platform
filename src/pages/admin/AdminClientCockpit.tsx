@@ -334,6 +334,10 @@ export default function AdminClientCockpit() {
     { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
+  const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
+  const missing: string[] = sd?.missing_items ?? [];
+  const isTemplate = !!editData?.meta?.template;
+  const validated = !!editData?.meta?.validated;
   // Synthèse pour la page d'accueil de la fiche.
   const charteSet = !!(client?.brand?.colors?.primary || (Array.isArray(client?.brand?.palette) && client.brand.palette.length));
   const steps = [
@@ -347,10 +351,6 @@ export default function AdminClientCockpit() {
   const findRow = (id: string) => { for (const sec of editData?.sections ?? []) { const r = (sec.rows ?? []).find((x: any) => x.id === id); if (r) return r; } return null; };
   const homeKpis = ['ca', 'ebitda', 'resultat_net', 'cash_end'].map(findRow).filter(Boolean) as any[];
   const fmtV = (r: any) => { const v = r?.value; if (typeof v !== 'number') return '—'; const u = r.unit; if (u === '%') return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'; if (u === 'x') return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '×'; return v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + (u ? ` ${u}` : ''); };
-  const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
-  const missing: string[] = sd?.missing_items ?? [];
-  const isTemplate = !!editData?.meta?.template;
-  const validated = !!editData?.meta?.validated;
 
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
