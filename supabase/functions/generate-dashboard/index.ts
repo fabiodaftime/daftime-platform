@@ -27,6 +27,7 @@ WIDGETS (JSON) :
 - {"type":"donut","title":"...","metrics":["id", ...]}             // répartition (≥ 2 ids positifs)
 - {"type":"table","title":"...","metrics":["id", ...]}             // détail (libellé / valeur / évolution)
 - {"type":"funnel","title":"...","metrics":["id", ...]}            // entonnoir (style Shopify) : étapes décroissantes ordonnées (ex. sessions → ajouts panier → commandes) + taux de passage
+- {"type":"ranking","title":"...","breakdown":"clé"}              // classement (barres horizontales) d'un BREAKDOWN fourni (ex. sales_by_country, sessions_by_country, top_products)
 - {"type":"callout","title":"...","text":"...","tone":"info|warn|good"}
 
 THÈME VISUEL — choisis le "mood" (TRAITEMENT visuel) adapté à l'UNIVERS du client. IMPORTANT : les COULEURS et la POLICE viennent AUTOMATIQUEMENT de la marque/du site — ne les définis PAS (pas de primary/accent/palette/font). Le mood ne change que le style (fond, en-tête, tuiles), pas les couleurs.
@@ -103,6 +104,7 @@ Deno.serve(async (req) => {
     const prevTheme = (prevDash?.data_json as { theme?: unknown } | null)?.theme ?? null;
     const guidance = ((client as { dashboard_guidance?: string } | null)?.dashboard_guidance ?? "").trim();
 
+    const breakdowns = (sd.data as { breakdowns?: Record<string, { label: string; rows: { label: string; value: number; unit?: string }[] }> })?.breakdowns;
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
       label: s.label,
       rows: (s.rows ?? []).map((r) => {
@@ -143,6 +145,7 @@ Deno.serve(async (req) => {
       `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
       `DONNÉES DISPONIBLES (id, libellé, valeur, évolution) :\n${metricsText}\n\n` +
       `HISTORIQUE : ${history.months.length} mois (${history.months.join(", ")}). Tendances possibles sur : ${trendText}.\n\n` +
+      `BREAKDOWNS (pour widget "ranking") : ${breakdowns && Object.keys(breakdowns).length ? Object.entries(breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun"}.\n\n` +
       `BRIEF MÉTIER :\n${briefText}` +
       `\n\nMARQUE (couleurs/charte si dispo) : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie — choisis une palette adaptée au secteur"}` +
       (prevTheme ? `\n\nTHÈME DU MOIS PRÉCÉDENT — à CONSERVER (cohérence visuelle dans le temps) sauf consigne contraire :\n${JSON.stringify(prevTheme)}` : "") +
@@ -169,12 +172,12 @@ Deno.serve(async (req) => {
     // Thème : composé par l'IA (adapté au client), sinon repris du mois précédent.
     const theme = (plan.theme && Object.keys(plan.theme).length) ? plan.theme : (prevTheme ?? {});
     const html = renderDashboard(
-      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history },
+      { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns },
       plan,
     );
 
-    // On sauvegarde le PLAN + le THÈME dans data_json → base de forme ET de style au mois suivant.
-    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme };
+    // On sauvegarde le PLAN + le THÈME + les BREAKDOWNS dans data_json → base de forme/style/data au mois suivant et au restyle.
+    const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", sections, history, plan, theme, breakdowns };
     const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
       standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
     });

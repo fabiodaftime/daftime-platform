@@ -20,6 +20,7 @@ export interface ParseCtx {
 //  bank     = relevé bancaire → trésorerie (soldes) + charges (sorties).
 //  internal = mouvement interne (payout, virement entre comptes) → ignoré.
 export type DocRole = "revenue" | "payment" | "bank" | "internal" | "analytics" | "ads";
+export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
 export interface ParsedExtract {
   parser: string;
   role: DocRole;
@@ -31,7 +32,11 @@ export interface ParsedExtract {
   note?: string;
   dedupGroup?: string;         // doublons potentiels (ex. Stripe multi-mois, Ebury -EUR vs -all_currencies)
   count?: number;              // nb de lignes du mois utilisées (sert au dédoublonnage : on garde le plus complet)
+  breakdowns?: Record<string, Breakdown>; // données dimensionnelles (ventes par pays, top produits…)
 }
+
+const topN = (m: Record<string, number>, n = 8): { label: string; value: number }[] =>
+  Object.entries(m).filter(([k]) => k).sort((a, b) => b[1] - a[1]).slice(0, n).map(([label, value]) => ({ label, value: Math.round(value * 100) / 100 }));
 
 // Vrai si la date tombe dans le mois de la période (YYYY-MM-01). Gère ISO (YYYY-MM-DD) et FR (DD/MM/YYYY).
 const inMonth = (dateStr: string | undefined, period: string): boolean => {
@@ -273,11 +278,14 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
   if (has(h, "Net sales") && has(h, "Order name")) {
     const iNet = idx(h, "Net sales"), iDate = idx(h, "Day"), iOrder = idx(h, "Order name"),
           iGross = idx(h, "Gross sales"), iRet = idx(h, "Returns"), iProd = idx(h, "Product title at time of sale");
-    const orders = new Set<string>(); let ca = 0, gross = 0, ret = 0, units = 0;
+    const orders = new Set<string>(); let ca = 0, gross = 0, ret = 0, units = 0; const prod: Record<string, number> = {};
     for (const r of data) {
       if (!inMonth(r[iDate], ctx.period)) continue;
       const net = toNum(r[iNet]);
-      if (net != null) { ca += net; if (net > 0 && r[iOrder]) { orders.add(r[iOrder]); if (iProd >= 0 && (r[iProd] ?? "").trim()) units++; } }
+      if (net != null) {
+        ca += net;
+        if (net > 0 && r[iOrder]) { orders.add(r[iOrder]); if (iProd >= 0 && (r[iProd] ?? "").trim()) { units++; prod[(r[iProd] ?? "").trim()] = (prod[(r[iProd] ?? "").trim()] ?? 0) + net; } }
+      }
       if (iGross >= 0) { const g = toNum(r[iGross]); if (g != null) gross += g; }
       if (iRet >= 0) { const rr = toNum(r[iRet]); if (rr != null) ret += rr; }
     }
@@ -285,9 +293,20 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     if (units) v.units = units;
     if (iGross >= 0) v.gross_sales = Math.round(gross * 100) / 100;
     if (iRet >= 0) v.refunds = Math.round(-ret * 100) / 100; // Returns négatifs → remboursements positifs
+    const breakdowns = Object.keys(prod).length ? { top_products: { label: "Top produits (CA net)", rows: topN(prod) } } : undefined;
     // le fichier riche (avec Gross sales) prime au dédoublonnage
     return mk("revenue", v, { ca: `Shopify (${name}) — net sales`, orders: "Shopify — commandes distinctes du mois" },
-      { revenueCandidate: v.ca, dedupGroup: "shopify_ca", count: iGross >= 0 ? 1_000_000 : orders.size });
+      { revenueCandidate: v.ca, dedupGroup: "shopify_ca", count: iGross >= 0 ? 1_000_000 : orders.size, breakdowns });
+  }
+  // Sessions par PAYS ("Sessions by location") → breakdown (et PAS de valeur sessions pour éviter le double-comptage).
+  if (has(h, "Session country")) {
+    const iC = idx(h, "Session country"), iR = idx(h, "Session region"), iCity = idx(h, "Session city"), iS = idx(h, "Sessions");
+    const tot: Record<string, number> = {};
+    for (const r of data) {
+      if ((r[iR] ?? "") !== "" || (r[iCity] ?? "") !== "") continue; // ne garder que les lignes "total pays"
+      const c = (r[iC] ?? "").trim(); const s = toNum(r[iS]); if (c && s != null) tot[c] = (tot[c] ?? 0) + s;
+    }
+    return mk("analytics", {}, {}, { breakdowns: { sessions_by_country: { label: "Sessions par pays", rows: topN(tot) } } });
   }
   // Sessions / visiteurs (et fichiers de conversion qui portent aussi Sessions)
   if (has(h, "Sessions") && (has(h, "Online store visitors") || has(h, "Conversion rate"))) {
@@ -309,10 +328,13 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     return mk("analytics", { new_customers: nw, returning_customers: ret, total_customers: nw + ret },
       { new_customers: "Shopify — nouveaux clients", returning_customers: "Shopify — clients récurrents" }, { dedupGroup: "shopify_customers", count: 1_000_000 });
   }
-  // Paiements (PSP) : "Net payments by gateway/method" → réception, PAS le CA.
+  // Paiements (PSP) : "Net payments by gateway/method" → réception, PAS le CA (+ ventes par pays si dispo).
   if ((has(h, "Payment gateway") || has(h, "Payment method")) && has(h, "Net payments")) {
-    const iNet = idx(h, "Net payments"); let s = 0; for (const r of data) { const n = toNum(r[iNet]); if (n != null) s += n; }
-    return mk("payment", {}, {}, { note: `Réception PSP (Shopify Payments) : ${Math.round(s).toLocaleString("fr-FR")} ${ctx.reporting} — réception, pas le CA.` });
+    const iNet = idx(h, "Net payments"), iCtry = idx(h, "Billing country");
+    let s = 0; const byCtry: Record<string, number> = {};
+    for (const r of data) { const n = toNum(r[iNet]); if (n == null) continue; s += n; if (iCtry >= 0) { const c = (r[iCtry] ?? "").trim(); if (c) byCtry[c] = (byCtry[c] ?? 0) + n; } }
+    const breakdowns = Object.keys(byCtry).length ? { sales_by_country: { label: "Encaissements par pays", rows: topN(byCtry) } } : undefined;
+    return mk("payment", {}, {}, { note: `Réception PSP (Shopify Payments) : ${Math.round(s).toLocaleString("fr-FR")} ${ctx.reporting} — réception, pas le CA.`, breakdowns });
   }
   // Autres exports analytics (recherches, one-time customers, séries temporelles, localisation…) : ignorés proprement (pas d'IA).
   return mk("analytics", {}, {}, { note: `Export Shopify analytique (${name}) — non agrégé (info uniquement).` });

@@ -275,6 +275,11 @@ Deno.serve(async (req) => {
         period, currency, entity: (client as { name?: string }).name ?? null,
         validation: { ok: blocking.length === 0, blocking } };
 
+      // Breakdowns dimensionnels (ventes par pays, top produits…) collectés depuis les parsers.
+      const breakdowns: Record<string, unknown> = {};
+      for (const e of keptParsed) if (e.breakdowns) for (const [k, v] of Object.entries(e.breakdowns)) if (!breakdowns[k]) breakdowns[k] = v;
+      if (Object.keys(breakdowns).length) (data as { breakdowns?: unknown }).breakdowns = breakdowns;
+
       dataToSave = data;
       missing = lines.filter((l) => l.core && values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);
       usage = { parsers: keptParsed.length, llm: llmExtracts.length };

@@ -5,16 +5,18 @@
 import { type Theme, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
+export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
 export interface RenderCtx {
   client: string; period: string; currency: string;
   brand?: Record<string, any> | null;
   theme?: Theme;
   metrics: Record<string, Metric>;
   history: { months: string[]; series: Record<string, (number | null)[]>; labels: Record<string, string> };
+  breakdowns?: Record<string, Breakdown>;
 }
 export interface Widget {
-  type: "kpi_row" | "line" | "bar" | "donut" | "waterfall" | "table" | "callout" | "funnel";
-  title?: string; metrics?: string[]; items?: { metric: string }[];
+  type: "kpi_row" | "line" | "bar" | "donut" | "waterfall" | "table" | "callout" | "funnel" | "ranking";
+  title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
   text?: string; tone?: "info" | "warn" | "good";
 }
@@ -112,6 +114,18 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
           }).join("")
         }</div></div>`;
       }
+      case "ranking": {
+        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
+        if (!bk || !bk.rows?.length) return "";
+        const rows = bk.rows.slice(0, 8);
+        const max = Math.max(...rows.map((r) => Math.abs(r.value))) || 1;
+        const total = rows.reduce((s, r) => s + r.value, 0) || 1;
+        return `<div class="card"><div class="card-t">${esc(w.title ?? bk.label)}</div><div class="rank">${rows.map((r, i) => {
+          const pct = Math.max(4, Math.round((Math.abs(r.value) / max) * 100));
+          const share = Math.round((r.value / total) * 1000) / 10;
+          return `<div class="rk-row"><div class="rk-l" title="${esc(r.label)}">${esc(r.label)}</div><div class="rk-track"><div class="rk-bar" style="width:${pct}%;background:${col(i)}"></div></div><div class="rk-v">${esc(fmt(r.value, r.unit ?? "", ctx.currency))} <span class="rk-s">${share}%</span></div></div>`;
+        }).join("")}</div></div>`;
+      }
       case "callout": {
         if (!w.text) return "";
         const tone = w.tone ?? "info";
@@ -201,6 +215,13 @@ canvas.spark{height:30px!important;width:80px!important;flex:0 0 auto}
 .fn-conv{font-size:12px;color:var(--mut);min-width:66px;font-weight:600}
 .fn-bar{color:#fff;border-radius:10px;padding:11px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px;min-width:150px;box-shadow:0 2px 8px rgba(20,26,60,.12)}
 .fn-l{font-size:13px;opacity:.95}.fn-v{font-weight:700;font-variant-numeric:tabular-nums}
+.rank{display:flex;flex-direction:column;gap:9px}
+.rk-row{display:grid;grid-template-columns:minmax(70px,34%) 1fr auto;align-items:center;gap:10px;font-size:13px}
+.rk-l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.rk-track{height:8px;background:var(--bd);border-radius:999px;overflow:hidden}
+.rk-bar{height:100%;border-radius:999px}
+.rk-v{font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.rk-s{color:var(--mut);font-weight:400;font-size:12px;margin-left:3px}
 .callout{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--bd);border-left:3px solid var(--p);background:var(--card);border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.5}
 .callout.warn{border-left-color:#d97706}.callout.good{border-left-color:#16a34a}
 .co-ic{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
