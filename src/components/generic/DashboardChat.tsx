@@ -1,4 +1,5 @@
-// Chat d'ajustement ESTHÉTIQUE du dashboard (couleurs, fond, icônes, mood) — appelle restyle-dashboard.
+// Assistant CONVERSATIONNEL du dashboard — répond aux questions sur les chiffres ET modifie
+// le dashboard (widgets, pages, titres, style). Appelle dashboard-chat.
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
@@ -23,16 +24,21 @@ export function DashboardChat({
     if (!message || busy) return;
     setInput('');
     setError(null);
-    setTurns((t) => [...t, { role: 'user', content: message }]);
+    const nextTurns: Turn[] = [...turns, { role: 'user', content: message }];
+    setTurns(nextTurns);
     setBusy(true);
     try {
-      const res = await invokeFn<{ dashboard: any; summary: string }>('restyle-dashboard', {
+      const res = await invokeFn<{ action: 'answer' | 'edit'; answer?: string; dashboard?: any; summary?: string }>('dashboard-chat', {
         dashboard_id: dashboardId,
         message,
         history: turns,
       });
-      setTurns((t) => [...t, { role: 'assistant', content: res.summary || 'Dashboard mis à jour.' }]);
-      onUpdated(res.dashboard);
+      if (res.action === 'edit') {
+        setTurns((t) => [...t, { role: 'assistant', content: res.summary || 'Dashboard mis à jour.' }]);
+        if (res.dashboard) onUpdated(res.dashboard);
+      } else {
+        setTurns((t) => [...t, { role: 'assistant', content: res.answer || res.summary || 'Je n\'ai pas de réponse à partir des données disponibles.' }]);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -45,7 +51,7 @@ export function DashboardChat({
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {turns.length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Ajuste le style : « plus de couleur », « passe en sombre », « style corporate sobre », « mets des icônes par KPI », « palette plus douce », « reprends mieux ma charte »…
+            Posez une question ou demandez un ajustement : « quelle est la marge nette ? », « pourquoi l'EBITDA baisse ? », « ajoute un graphe des ventes par pays », « mets le CA en avant », « renomme la page 2 », « passe en style sombre »…
           </p>
         )}
         {turns.map((t, i) => (
@@ -55,7 +61,7 @@ export function DashboardChat({
             </span>
           </div>
         ))}
-        {busy && <p className="text-sm text-muted-foreground">L'IA met à jour le dashboard…</p>}
+        {busy && <p className="text-sm text-muted-foreground">L'IA réfléchit…</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
       <div className="flex gap-2 border-t p-2">

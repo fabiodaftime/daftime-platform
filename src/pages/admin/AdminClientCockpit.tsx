@@ -625,7 +625,7 @@ export default function AdminClientCockpit() {
         </Section>
 
         {dash && (
-          <Section icon={<Palette className="w-4 h-4" />} title="Style & apparence (chat)">
+          <Section icon={<Palette className="w-4 h-4" />} title="Assistant du dashboard (questions & ajustements)">
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />
           </Section>
         )}
