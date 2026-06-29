@@ -399,7 +399,7 @@ function DashboardPreview() {
 
       {/* Badges flottants */}
       <div className="absolute -bottom-3 -left-3 bg-card border rounded-xl shadow-lg px-3 py-2 text-xs font-semibold flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-accent" /> CA en hausse, marge en baisse
+CA en hausse, marge en baisse
       </div>
       <div className="absolute -top-3 -right-3 bg-card border rounded-xl shadow-lg px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full bg-red-500" /> ROAS faible : prix ou ads à revoir
