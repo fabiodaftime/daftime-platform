@@ -296,9 +296,9 @@ function DashboardPreview() {
     { l: 'CA du mois', v: '136 840 €', dot: '', note: '+12 % vs M-1', noteCls: 'text-emerald-600' },
     { l: 'ROAS', v: '1,98', dot: 'bg-red-500', note: 'trop faible vs coûts' },
     { l: 'Conversion', v: '3,06 %', dot: 'bg-emerald-500', note: 'sain' },
-    { l: 'Marge nette', v: '−23 %', dot: 'bg-red-500', note: 'à corriger' },
+    { l: 'Marge nette', v: '−2 %', dot: 'bg-red-500', note: 'à redresser' },
     { l: 'Panier moyen', v: '72,79 €', dot: 'bg-amber-500', note: 'à surveiller' },
-    { l: 'Trésorerie', v: '28 670 €', dot: '', note: '−340 € sur le mois', noteCls: 'text-muted-foreground' },
+    { l: 'Trésorerie', v: '28 670 €', dot: '', note: '−9 400 € sur le mois', noteCls: 'text-muted-foreground' },
   ];
   return (
     <div className="relative">
@@ -359,7 +359,7 @@ function DashboardPreview() {
           {/* Charges + entonnoir */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border p-3">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Structure des charges</div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Coûts · % du CA</div>
               <div className="flex items-center gap-3">
                 <div className="relative w-14 h-14 rounded-full flex-shrink-0" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 51%, hsl(var(--accent)) 51% 78%, #14b8a6 78% 91%, hsl(var(--muted-foreground)/0.35) 91% 100%)' }}>
                   <div className="absolute inset-[5px] rounded-full bg-card" />
@@ -375,7 +375,7 @@ function DashboardPreview() {
             <div className="rounded-xl border p-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Conversion</div>
               <div className="space-y-1.5">
-                {[{ l: 'Sessions', v: '61 410', w: 100 }, { l: 'Paniers', v: '5 590', w: 38 }, { l: 'Commandes', v: '1 880', w: 18 }].map((f) => (
+                {[{ l: 'Sessions', v: '61 410', w: 100 }, { l: 'Paniers', v: '5 590', w: 9 }, { l: 'Commandes', v: '1 880', w: 4 }].map((f) => (
                   <div key={f.l}>
                     <div className="flex justify-between text-[9px] text-muted-foreground font-medium"><span>{f.l}</span><span className="tabular-nums">{f.v}</span></div>
                     <div className="h-2 rounded-full mt-0.5" style={{ width: `${f.w}%`, background: 'hsl(var(--primary))', opacity: 0.85 }} />
@@ -391,7 +391,7 @@ function DashboardPreview() {
             <div className="grid grid-cols-3 gap-2">
               <FinStat label="Trésorerie nette" value="−9 330 €" sub="cash + créances − dettes" tone="amber" />
               <FinStat label="BFR" value="18 j" sub="de CA" tone="emerald" />
-              <FinStat label="Var. de stock" value="+42 k€" sub="+42 k€ sur le résultat" tone="muted" />
+              <FinStat label="Var. de stock" value="+12 k€" sub="+12 k€ sur le résultat" tone="muted" />
             </div>
           </div>
         </div>
@@ -399,7 +399,7 @@ function DashboardPreview() {
 
       {/* Badges flottants */}
       <div className="absolute -bottom-3 -left-3 bg-card border rounded-xl shadow-lg px-3 py-2 text-xs font-semibold flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-accent" /> Diagnostic : 2 forces · 5 alertes
+        <Sparkles className="w-4 h-4 text-accent" /> Diagnostic : 2 forces · 4 alertes
       </div>
       <div className="absolute -top-3 -right-3 bg-card border rounded-xl shadow-lg px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full bg-red-500" /> ROAS sous le seuil
