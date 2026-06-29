@@ -290,47 +290,112 @@ export default function LandingEcommerce() {
   );
 }
 
-// Petit aperçu de dashboard pour le hero (montre le produit + les verdicts).
+// Aperçu de dashboard pour le hero — riche et premium (KPIs + verdicts, courbe CA, charges, entonnoir).
 function DashboardPreview() {
   const kpis = [
-    { l: 'CA du mois', v: '13 684 €', dot: '', note: '' },
-    { l: 'ROAS', v: '1,98', dot: 'bg-red-500', note: 'sous le seuil rentable' },
-    { l: 'Marge nette', v: '-23 %', dot: 'bg-red-500', note: 'à corriger' },
+    { l: 'CA du mois', v: '13 684 €', dot: '', note: '+12 % vs M-1', noteCls: 'text-emerald-600' },
+    { l: 'ROAS', v: '1,98', dot: 'bg-red-500', note: 'pub non rentable' },
     { l: 'Conversion', v: '3,06 %', dot: 'bg-emerald-500', note: 'sain' },
+    { l: 'Marge nette', v: '−23 %', dot: 'bg-red-500', note: 'à corriger' },
+    { l: 'Panier moyen', v: '72,79 €', dot: 'bg-amber-500', note: 'à surveiller' },
+    { l: 'Trésorerie', v: '2 867 €', dot: '', note: '−34 € sur le mois', noteCls: 'text-muted-foreground' },
   ];
   return (
     <div className="relative">
-      <div className="rounded-2xl border bg-card shadow-xl overflow-hidden">
+      <div className="rounded-2xl border bg-card shadow-2xl overflow-hidden">
+        {/* En-tête */}
         <div className="bg-primary text-primary-foreground px-5 py-4 flex items-center justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-widest opacity-60">E-commerce · Avril 2026</div>
-            <div className="font-semibold">Votre marque</div>
+            <div className="font-semibold text-[15px]">Votre marque</div>
           </div>
-          <LineChart className="w-5 h-5 opacity-80" />
+          <span className="text-[10px] font-semibold bg-white/15 rounded-full px-2.5 py-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> À jour
+          </span>
         </div>
-        <div className="p-4 grid grid-cols-2 gap-3">
-          {kpis.map((k) => (
-            <div key={k.l} className="rounded-xl border p-3">
-              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">{k.l}</div>
-              <div className="text-xl font-bold mt-1 tabular-nums">{k.v}</div>
-              {k.note && <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground"><span className={`w-1.5 h-1.5 rounded-full ${k.dot}`} />{k.note}</div>}
-            </div>
-          ))}
-        </div>
-        <div className="px-4 pb-4">
+
+        <div className="p-4 space-y-3">
+          {/* KPIs avec verdicts */}
+          <div className="grid grid-cols-3 gap-2">
+            {kpis.map((k) => (
+              <div key={k.l} className="rounded-lg border p-2.5">
+                <div className="text-[9px] uppercase tracking-wide text-muted-foreground font-semibold truncate">{k.l}</div>
+                <div className="text-base font-bold mt-0.5 tabular-nums leading-tight">{k.v}</div>
+                {k.note && (
+                  <div className={`mt-1 flex items-center gap-1 text-[10px] font-semibold ${k.noteCls ?? 'text-muted-foreground'}`}>
+                    {k.dot && <span className={`w-1.5 h-1.5 rounded-full ${k.dot}`} />}{k.note}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Courbe de CA */}
           <div className="rounded-xl border p-3">
-            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Du CA au résultat</div>
-            <div className="flex items-end gap-1.5 h-16">
-              {[100, 76, 56, 30].map((h, i) => (
-                <div key={i} className="flex-1 rounded-t" style={{ height: `${h}%`, background: i === 3 ? 'hsl(var(--destructive))' : 'hsl(var(--primary))', opacity: 0.85 - i * 0.12 }} />
-              ))}
+            <div className="flex items-baseline justify-between mb-1">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Chiffre d'affaires · 6 mois</span>
+              <span className="text-[10px] font-semibold text-emerald-600">+12 %</span>
+            </div>
+            <svg viewBox="0 0 320 88" className="w-full h-20" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.30" />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <polygon points="6,70 68,64 130,54 192,52 254,38 314,26 314,88 6,88" fill="url(#lpArea)" />
+              <polyline points="6,70 68,64 130,54 192,52 254,38 314,26" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="314" cy="26" r="3.5" fill="hsl(var(--primary))" stroke="white" strokeWidth="2" />
+            </svg>
+          </div>
+
+          {/* Charges + entonnoir */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Structure des charges</div>
+              <div className="flex items-center gap-3">
+                <div className="relative w-14 h-14 rounded-full flex-shrink-0" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 50%, hsl(var(--accent)) 50% 80%, hsl(var(--muted-foreground)/0.35) 80% 100%)' }}>
+                  <div className="absolute inset-[5px] rounded-full bg-card" />
+                </div>
+                <div className="text-[10px] space-y-1">
+                  <Leg color="hsl(var(--primary))" label="Pub" val="50 %" />
+                  <Leg color="hsl(var(--accent))" label="COGS" val="30 %" />
+                  <Leg color="hsl(var(--muted-foreground)/0.35)" label="Autres" val="20 %" />
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Conversion</div>
+              <div className="space-y-1.5">
+                {[{ l: 'Sessions', v: '6 141', w: 100 }, { l: 'Paniers', v: '559', w: 38 }, { l: 'Commandes', v: '188', w: 18 }].map((f) => (
+                  <div key={f.l}>
+                    <div className="flex justify-between text-[9px] text-muted-foreground font-medium"><span>{f.l}</span><span className="tabular-nums">{f.v}</span></div>
+                    <div className="h-2 rounded-full mt-0.5" style={{ width: `${f.w}%`, background: 'hsl(var(--primary))', opacity: 0.85 }} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Badges flottants */}
       <div className="absolute -bottom-3 -left-3 bg-card border rounded-xl shadow-lg px-3 py-2 text-xs font-semibold flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-accent" /> Diagnostic : 2 forces · 5 alertes
       </div>
+      <div className="absolute -top-3 -right-3 bg-card border rounded-xl shadow-lg px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-red-500" /> ROAS sous le seuil
+      </div>
+    </div>
+  );
+}
+
+function Leg({ color, label, val }: { color: string; label: string; val: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: color }} />
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold ml-auto tabular-nums">{val}</span>
     </div>
   );
 }
