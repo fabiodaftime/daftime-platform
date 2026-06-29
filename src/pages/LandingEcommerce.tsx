@@ -293,12 +293,12 @@ export default function LandingEcommerce() {
 // Aperçu de dashboard pour le hero — riche et premium (KPIs + verdicts, courbe CA, charges, entonnoir).
 function DashboardPreview() {
   const kpis = [
-    { l: 'CA du mois', v: '13 684 €', dot: '', note: '+12 % vs M-1', noteCls: 'text-emerald-600' },
+    { l: 'CA du mois', v: '136 840 €', dot: '', note: '+12 % vs M-1', noteCls: 'text-emerald-600' },
     { l: 'ROAS', v: '1,98', dot: 'bg-red-500', note: 'pub non rentable' },
     { l: 'Conversion', v: '3,06 %', dot: 'bg-emerald-500', note: 'sain' },
     { l: 'Marge nette', v: '−23 %', dot: 'bg-red-500', note: 'à corriger' },
     { l: 'Panier moyen', v: '72,79 €', dot: 'bg-amber-500', note: 'à surveiller' },
-    { l: 'Trésorerie', v: '2 867 €', dot: '', note: '−34 € sur le mois', noteCls: 'text-muted-foreground' },
+    { l: 'Trésorerie', v: '28 670 €', dot: '', note: '−340 € sur le mois', noteCls: 'text-muted-foreground' },
   ];
   return (
     <div className="relative">
@@ -367,7 +367,7 @@ function DashboardPreview() {
             <div className="rounded-xl border p-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Conversion</div>
               <div className="space-y-1.5">
-                {[{ l: 'Sessions', v: '6 141', w: 100 }, { l: 'Paniers', v: '559', w: 38 }, { l: 'Commandes', v: '188', w: 18 }].map((f) => (
+                {[{ l: 'Sessions', v: '61 410', w: 100 }, { l: 'Paniers', v: '5 590', w: 38 }, { l: 'Commandes', v: '1 880', w: 18 }].map((f) => (
                   <div key={f.l}>
                     <div className="flex justify-between text-[9px] text-muted-foreground font-medium"><span>{f.l}</span><span className="tabular-nums">{f.v}</span></div>
                     <div className="h-2 rounded-full mt-0.5" style={{ width: `${f.w}%`, background: 'hsl(var(--primary))', opacity: 0.85 }} />
@@ -381,9 +381,9 @@ function DashboardPreview() {
           <div className="rounded-xl border p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Position financière</div>
             <div className="grid grid-cols-3 gap-2">
-              <FinStat label="Trésorerie nette" value="−933 €" sub="cash + créances − dettes" tone="amber" />
+              <FinStat label="Trésorerie nette" value="−9 330 €" sub="cash + créances − dettes" tone="amber" />
               <FinStat label="BFR" value="18 j" sub="de CA" tone="emerald" />
-              <FinStat label="Var. de stock" value="+4,2 k€" sub="+4,2 k€ sur le résultat" tone="muted" />
+              <FinStat label="Var. de stock" value="+42 k€" sub="+42 k€ sur le résultat" tone="muted" />
             </div>
           </div>
         </div>
