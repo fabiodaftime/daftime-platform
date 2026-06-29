@@ -361,14 +361,14 @@ function DashboardPreview() {
             <div className="rounded-xl border p-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Structure des charges</div>
               <div className="flex items-center gap-3">
-                <div className="relative w-14 h-14 rounded-full flex-shrink-0" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 47%, hsl(var(--accent)) 47% 75%, #14b8a6 75% 89%, hsl(var(--muted-foreground)/0.35) 89% 100%)' }}>
+                <div className="relative w-14 h-14 rounded-full flex-shrink-0" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 51%, hsl(var(--accent)) 51% 78%, #14b8a6 78% 91%, hsl(var(--muted-foreground)/0.35) 91% 100%)' }}>
                   <div className="absolute inset-[5px] rounded-full bg-card" />
                 </div>
                 <div className="text-[9px] space-y-0.5">
-                  <Leg color="hsl(var(--primary))" label="Publicité" val="47 %" />
-                  <Leg color="hsl(var(--accent))" label="Achats (COGS)" val="28 %" />
-                  <Leg color="#14b8a6" label="Logistique" val="14 %" />
-                  <Leg color="hsl(var(--muted-foreground)/0.35)" label="PSP & autres" val="11 %" />
+                  <Leg color="hsl(var(--primary))" label="Publicité" val="51 %" />
+                  <Leg color="hsl(var(--accent))" label="Achats (COGS)" val="27 %" />
+                  <Leg color="#14b8a6" label="Logistique" val="13 %" />
+                  <Leg color="hsl(var(--muted-foreground)/0.35)" label="PSP & autres" val="9 %" />
                 </div>
               </div>
             </div>
