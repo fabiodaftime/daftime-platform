@@ -32,6 +32,7 @@ const DEF: Record<string, Record<string, Def>> = {
     marge_ebitda: { dir: 'high', good: 10, warn: 0, ref: 'viser > 10 %' },
     marge_nette: { dir: 'high', good: 8, warn: 0, ref: 'viser > 8 %' },
     gop_margin: { dir: 'high', good: 30, warn: 18, ref: 'hôtellerie 30-38 %' },
+    tresorerie_nette: { dir: 'high', good: 0, warn: 0, ref: 'viser > 0' },
   },
 };
 const defFor = (activity: string | undefined, id: string): Def | null => DEF[activity ?? '']?.[id] ?? DEF.default[id] ?? null;

@@ -46,7 +46,7 @@ const PAINS = [
 const BENEFITS = [
   { icon: Megaphone, t: 'Pub vraiment rentable', d: 'Votre ROAS relié à la marge réelle, pas au ROAS de la plateforme. On vous dit si votre acquisition gagne ou perd de l’argent.' },
   { icon: Percent, t: 'Votre vraie marge', d: 'Marge nette après COGS, pub, frais PSP (Stripe/PayPal) et logistique. La rentabilité réelle, pas le CA.' },
-  { icon: Wallet, t: 'Trésorerie & BFR', d: 'Trésorerie, besoin en fonds de roulement, frais et versements PSP : anticipez les tensions de cash.' },
+  { icon: Wallet, t: 'Trésorerie nette & fonds de roulement', d: 'Trésorerie nette (cash + créances − dettes), BFR, et l’impact de la variation de stock sur votre résultat. Anticipez les tensions de cash.' },
   { icon: RefreshCw, t: 'Fidélisation & LTV', d: 'Panier moyen, taux de retour, part de nouveaux clients vs réachat : où se cache votre croissance durable.' },
   { icon: Target, t: 'Verdicts par indicateur', d: 'Chaque KPI noté bon / à surveiller / alerte selon les repères e-commerce — personnalisables pour votre marque.' },
   { icon: LineChart, t: 'L’analyse d’un expert', d: 'Pas qu’un dashboard : chaque mois, la lecture et les recommandations d’un professionnel du conseil financier.' },
@@ -376,6 +376,16 @@ function DashboardPreview() {
               </div>
             </div>
           </div>
+
+          {/* Position financière (fonds de roulement) */}
+          <div className="rounded-xl border p-3">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Position financière</div>
+            <div className="grid grid-cols-3 gap-2">
+              <FinStat label="Trésorerie nette" value="−933 €" sub="cash + créances − dettes" tone="amber" />
+              <FinStat label="BFR" value="18 j" sub="de CA" tone="emerald" />
+              <FinStat label="Var. de stock" value="+4,2 k€" sub="+4,2 k€ sur le résultat" tone="muted" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -386,6 +396,17 @@ function DashboardPreview() {
       <div className="absolute -top-3 -right-3 bg-card border rounded-xl shadow-lg px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full bg-red-500" /> ROAS sous le seuil
       </div>
+    </div>
+  );
+}
+
+function FinStat({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: 'amber' | 'emerald' | 'muted' }) {
+  const c = tone === 'amber' ? 'text-amber-600' : tone === 'emerald' ? 'text-emerald-600' : 'text-foreground';
+  return (
+    <div className="rounded-lg bg-secondary/40 p-2">
+      <div className="text-[9px] uppercase tracking-wide text-muted-foreground font-semibold truncate">{label}</div>
+      <div className={`text-sm font-bold mt-0.5 tabular-nums ${c}`}>{value}</div>
+      <div className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{sub}</div>
     </div>
   );
 }

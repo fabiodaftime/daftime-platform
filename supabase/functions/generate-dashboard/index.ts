@@ -234,7 +234,7 @@ function buildPlan(sections: Sec[], a: Avail): DashPlan {
 
   // 5) TRÉSORERIE, PSP & BFR.
   const fin: Widget[] = [];
-  const kFin = pick("cash_end", "bfr", "bfr_days", "psp_balance", "psp_fee_rate", "psp_payout").slice(0, 6);
+  const kFin = pick("cash_end", "tresorerie_nette", "bfr", "bfr_days", "psp_balance", "psp_fee_rate", "psp_payout").slice(0, 6);
   if (kFin.length) fin.push(W({ type: "kpi_row", items: kFin.map((m) => ({ metric: m })) }));
   const fees = pick("payment_fees", "platform_fees").filter((x) => a.pos.has(x));
   if (fees.length >= 2) fin.push(W({ type: "treemap", title: "Frais (PSP & plateforme)", metrics: fees }));
