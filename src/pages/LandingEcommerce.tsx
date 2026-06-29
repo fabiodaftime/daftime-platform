@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   CalendarCheck, X, ArrowRight, ShieldCheck, Check, TrendingUp, Wallet, Target,
-  Percent, RefreshCw, Megaphone, FileSpreadsheet, Sparkles, LineChart, Lock, Star,
+  Percent, RefreshCw, Megaphone, FileSpreadsheet, Sparkles, LineChart, Lock, Star, Globe,
 } from 'lucide-react';
 import { BrandLockup } from '@/components/layout/BrandLockup';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
@@ -16,18 +16,26 @@ import { BOOKING_SCHEDULE_URL } from '@/lib/config';
 import { trackLead } from '@/lib/tracking';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// À REMPLIR — données RÉELLES (ne rien inventer : la fausse preuve tue la confiance)
-const PRICE_FROM = 'XXX'; // ex. '490' → « À partir de 490 €/mois »
+// Valeurs RÉELLES (ne rien inventer : la fausse preuve tue la confiance)
+const PRICE_FROM = '700';
+const CURRENCY = '$'; // USD — devise de facturation
 const STATS = [
-  { value: '[XX]', label: 'marques e-commerce accompagnées' }, // À REMPLIR
-  { value: '[X,X M€]', label: 'de CA piloté' },                 // À REMPLIR
-  { value: '[4,9/5]', label: 'satisfaction client' },          // À REMPLIR
+  { value: '40', label: 'marques accompagnées' },
+  { value: '35 M€', label: 'de CA piloté' },
+  { value: '5', label: 'juridictions couvertes' }, // FR · PT · UAE · US · HK
 ];
-const LOGOS = ['[Logo 1]', '[Logo 2]', '[Logo 3]', '[Logo 4]', '[Logo 5]']; // À REMPLIR (images clients)
-const TESTIMONIALS = [
-  { quote: '[Verbatim client réel — ce que Daftime a changé pour eux, idéalement avec un chiffre.]', name: '[Prénom Nom]', role: '[Fondateur·rice, Marque]' },
-  { quote: '[Verbatim client réel — gain de clarté / décision prise grâce au dashboard.]', name: '[Prénom Nom]', role: '[CEO, Marque]' },
+// Logos clients (autorisation OK). NB : surtout resto/agence/services — pertinence
+// e-commerce à valider ; on les affiche tels que fournis.
+const LOGOS: { name: string; src: string }[] = [
+  { name: 'TotalEnergies', src: '/logos/totalenergies.svg' },
+  { name: 'Chicken Street', src: '/logos/chicken-street.svg' },
+  { name: 'Skullis', src: '/logos/skullis.svg' },
+  { name: 'Café Crème', src: '/logos/cafe-creme.webp' },
+  { name: 'Miga Agence', src: '/logos/miga.jpeg' },
+  { name: 'Luxilo', src: '/logos/luxilo.jpg' },
 ];
+// Pas de témoignage e-commerce réel pour l'instant → section masquée (on ne met PAS de faux).
+const TESTIMONIALS: { quote: string; name: string; role: string }[] = [];
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PAINS = [
@@ -57,7 +65,7 @@ const FAQ = [
   { q: 'Mes données sont-elles en sécurité ?', a: 'Oui. Espace sécurisé, accès restreint, conformité RGPD. Vos fichiers ne servent qu’à produire vos rapports.' },
   { q: 'Quelles sources gérez-vous ?', a: 'Shopify, Stripe, PayPal, Whop, régies publicitaires (Meta/Google), exports comptables et relevés bancaires. On s’adapte à votre stack.' },
   { q: 'Est-ce adapté à ma taille ?', a: 'Si vous faites de la pub et voulez piloter votre rentabilité réelle, oui — de la marque en croissance au e-commerce établi.' },
-  { q: 'Quel est le tarif ?', a: `À partir de ${PRICE_FROM} €/mois, sans engagement. On en parle ensemble pendant l’audit offert pour caler la bonne formule.` },
+  { q: 'Quel est le tarif ?', a: `À partir de ${PRICE_FROM} ${CURRENCY}/mois, sans engagement. On en parle ensemble pendant l’audit offert pour caler la bonne formule.` },
 ];
 
 export default function LandingEcommerce() {
@@ -108,8 +116,9 @@ export default function LandingEcommerce() {
             </p>
             {/* Bandeau de confiance */}
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Star className="w-4 h-4 fill-accent text-accent" /> {STATS[2].value} {STATS[2].label}</span>
               <span className="flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-primary" /> {STATS[0].value} {STATS[0].label}</span>
+              <span className="flex items-center gap-1.5"><Wallet className="w-4 h-4 text-primary" /> {STATS[1].value} {STATS[1].label}</span>
+              <span className="flex items-center gap-1.5"><Globe className="w-4 h-4 text-primary" /> {STATS[2].value} {STATS[2].label}</span>
             </div>
           </div>
 
@@ -122,10 +131,8 @@ export default function LandingEcommerce() {
       <section className="border-y bg-secondary/40">
         <div className="max-w-6xl mx-auto px-6 py-10">
           <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">Ils pilotent leur rentabilité avec Daftime</p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-70">
-            {LOGOS.map((l, i) => (
-              <span key={i} className="text-sm font-semibold text-muted-foreground">{l}</span>
-            ))}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
+            {LOGOS.map((l) => <Logo key={l.name} name={l.name} src={l.src} />)}
           </div>
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {STATS.map((s) => (
@@ -191,7 +198,8 @@ export default function LandingEcommerce() {
         </div>
       </section>
 
-      {/* Témoignages */}
+      {/* Témoignages — affichés uniquement s'il en existe de réels */}
+      {TESTIMONIALS.length > 0 && (
       <section className="bg-secondary/40 border-y">
         <div className="max-w-6xl mx-auto px-6 py-16">
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center">Ce qu'en disent les marques accompagnées</h2>
@@ -206,6 +214,7 @@ export default function LandingEcommerce() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Offre / prix */}
       <section className="max-w-3xl mx-auto px-6 py-16 text-center">
@@ -213,7 +222,7 @@ export default function LandingEcommerce() {
         <p className="text-muted-foreground mt-3">Dashboard personnalisé + analyse mensuelle d'un expert. Tout compris.</p>
         <div className="mt-6 inline-flex items-baseline gap-2">
           <span className="text-muted-foreground">À partir de</span>
-          <span className="text-4xl font-semibold tracking-tight">{PRICE_FROM} €</span>
+          <span className="text-4xl font-semibold tracking-tight">{PRICE_FROM} {CURRENCY}</span>
           <span className="text-muted-foreground">/ mois</span>
         </div>
         <ul className="mt-6 inline-flex flex-col gap-2 text-left text-sm">
@@ -325,6 +334,18 @@ function DashboardPreview() {
         <Sparkles className="w-4 h-4 text-accent" /> Diagnostic : 2 forces · 5 alertes
       </div>
     </div>
+  );
+}
+
+// Logo client : image en niveaux de gris, repli sur le nom si le fichier est absent.
+function Logo({ name, src }: { name: string; src: string }) {
+  const [err, setErr] = useState(false);
+  if (err) return <span className="text-sm font-semibold text-muted-foreground">{name}</span>;
+  return (
+    <img
+      src={src} alt={name} title={name} loading="lazy" onError={() => setErr(true)}
+      className="h-7 w-auto max-w-[130px] object-contain opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition"
+    />
   );
 }
 
