@@ -330,11 +330,11 @@ function DashboardPreview() {
             ))}
           </div>
 
-          {/* Courbe de CA */}
+          {/* Courbe de CA — réel vs prévisionnel */}
           <div className="rounded-xl border p-3">
             <div className="flex items-baseline justify-between mb-1">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Chiffre d'affaires · 6 mois</span>
-              <span className="text-[10px] font-semibold text-emerald-600">+12 %</span>
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Chiffre d'affaires · réel vs prévu</span>
+              <span className="text-[10px] font-semibold text-amber-600">−6 % vs prév.</span>
             </div>
             <svg viewBox="0 0 320 88" className="w-full h-20" preserveAspectRatio="none">
               <defs>
@@ -343,10 +343,17 @@ function DashboardPreview() {
                   <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <polygon points="6,70 68,64 130,54 192,52 254,38 314,26 314,88 6,88" fill="url(#lpArea)" />
-              <polyline points="6,70 68,64 130,54 192,52 254,38 314,26" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="314" cy="26" r="3.5" fill="hsl(var(--primary))" stroke="white" strokeWidth="2" />
+              <polygon points="6,72 70,63 132,57 194,49 256,40 314,28 314,88 6,88" fill="url(#lpArea)" />
+              {/* Prévisionnel (pointillés) */}
+              <polyline points="6,64 70,55 132,46 194,40 256,28 314,16" fill="none" stroke="hsl(var(--accent))" strokeWidth="1.8" strokeDasharray="4 3" strokeLinecap="round" />
+              {/* Réel (plein) */}
+              <polyline points="6,72 70,63 132,57 194,49 256,40 314,28" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="314" cy="28" r="3.5" fill="hsl(var(--primary))" stroke="white" strokeWidth="2" />
             </svg>
+            <div className="flex items-center gap-3 mt-1.5 text-[9px] text-muted-foreground font-medium">
+              <span className="flex items-center gap-1"><span className="inline-block w-3.5 h-[2px] rounded" style={{ background: 'hsl(var(--primary))' }} /> Réel</span>
+              <span className="flex items-center gap-1"><span className="inline-block w-3.5 border-t-2 border-dashed" style={{ borderColor: 'hsl(var(--accent))' }} /> Prévisionnel</span>
+            </div>
           </div>
 
           {/* Charges + entonnoir */}
@@ -354,13 +361,14 @@ function DashboardPreview() {
             <div className="rounded-xl border p-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Structure des charges</div>
               <div className="flex items-center gap-3">
-                <div className="relative w-14 h-14 rounded-full flex-shrink-0" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 50%, hsl(var(--accent)) 50% 80%, hsl(var(--muted-foreground)/0.35) 80% 100%)' }}>
+                <div className="relative w-14 h-14 rounded-full flex-shrink-0" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 43%, hsl(var(--accent)) 43% 72%, #14b8a6 72% 86%, hsl(var(--muted-foreground)/0.35) 86% 100%)' }}>
                   <div className="absolute inset-[5px] rounded-full bg-card" />
                 </div>
-                <div className="text-[10px] space-y-1">
-                  <Leg color="hsl(var(--primary))" label="Pub" val="50 %" />
-                  <Leg color="hsl(var(--accent))" label="COGS" val="30 %" />
-                  <Leg color="hsl(var(--muted-foreground)/0.35)" label="Autres" val="20 %" />
+                <div className="text-[9px] space-y-0.5">
+                  <Leg color="hsl(var(--primary))" label="Publicité" val="43 %" />
+                  <Leg color="hsl(var(--accent))" label="Achats (COGS)" val="29 %" />
+                  <Leg color="#14b8a6" label="Logistique" val="14 %" />
+                  <Leg color="hsl(var(--muted-foreground)/0.35)" label="PSP & autres" val="14 %" />
                 </div>
               </div>
             </div>
