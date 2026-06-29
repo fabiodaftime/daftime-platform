@@ -24,15 +24,13 @@ const STATS = [
   { value: '35 M€', label: 'de CA piloté' },
   { value: '5', label: 'juridictions couvertes' }, // FR · PT · UAE · US · HK
 ];
-// Logos clients (autorisation OK). NB : surtout resto/agence/services — pertinence
-// e-commerce à valider ; on les affiche tels que fournis.
+// Logos clients (autorisation OK). Déposer les fichiers dans public/logos/ avec CES noms exacts.
 const LOGOS: { name: string; src: string }[] = [
-  { name: 'TotalEnergies', src: '/logos/totalenergies.svg' },
-  { name: 'Chicken Street', src: '/logos/chicken-street.svg' },
-  { name: 'Skullis', src: '/logos/skullis.svg' },
-  { name: 'Café Crème', src: '/logos/cafe-creme.webp' },
-  { name: 'Miga Agence', src: '/logos/miga.jpeg' },
-  { name: 'Luxilo', src: '/logos/luxilo.jpg' },
+  { name: 'Luxilo', src: '/logos/luxilo.png' },
+  { name: 'Café Crème', src: '/logos/cafe-creme.png' },
+  { name: 'Skalis', src: '/logos/skalis.png' },
+  { name: 'Chicken Street', src: '/logos/chicken-street.png' },
+  { name: 'Bocuse', src: '/logos/bocuse.png' },
 ];
 // Pas de témoignage e-commerce réel pour l'instant → section masquée (on ne met PAS de faux).
 const TESTIMONIALS: { quote: string; name: string; role: string }[] = [];
