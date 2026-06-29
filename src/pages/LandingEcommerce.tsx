@@ -24,13 +24,15 @@ const STATS = [
   { value: '35 M€', label: 'de CA piloté' },
   { value: '5', label: 'juridictions couvertes' }, // FR · PT · UAE · US · HK
 ];
-// Logos clients (autorisation OK). Déposer les fichiers dans public/logos/ avec CES noms exacts.
+// Logos clients (autorisation OK) — chemins alignés sur les fichiers réels de public/logos/.
 const LOGOS: { name: string; src: string }[] = [
-  { name: 'Luxilo', src: '/logos/luxilo.png' },
-  { name: 'Café Crème', src: '/logos/cafe-creme.png' },
+  { name: 'TotalEnergies', src: '/logos/total.jpg' },
+  { name: 'Wonda', src: '/logos/wonda.jpg' },
   { name: 'Skalis', src: '/logos/skalis.png' },
-  { name: 'Chicken Street', src: '/logos/chicken-street.png' },
   { name: 'Bocuse', src: '/logos/bocuse.png' },
+  { name: 'Chicken Street', src: '/logos/chickenstreet.png' },
+  { name: 'Café Crème', src: '/logos/cafécrème.jpg' },
+  { name: 'Luxilo', src: '/logos/luxilo.jpg' },
 ];
 // Pas de témoignage e-commerce réel pour l'instant → section masquée (on ne met PAS de faux).
 const TESTIMONIALS: { quote: string; name: string; role: string }[] = [];
@@ -342,7 +344,7 @@ function Logo({ name, src }: { name: string; src: string }) {
   return (
     <img
       src={src} alt={name} title={name} loading="lazy" onError={() => setErr(true)}
-      className="h-7 w-auto max-w-[130px] object-contain opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition"
+      className="h-8 w-auto max-w-[120px] object-contain opacity-90 hover:opacity-100 transition"
     />
   );
 }
