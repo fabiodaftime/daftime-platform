@@ -27,12 +27,10 @@ const STATS = [
 // Logos clients (autorisation OK) — chemins alignés sur les fichiers réels de public/logos/.
 const LOGOS: { name: string; src: string }[] = [
   { name: 'TotalEnergies', src: '/logos/total.jpg' },
-  { name: 'Wonda', src: '/logos/wonda.jpg' },
   { name: 'Skalis', src: '/logos/skalis.png' },
   { name: 'Bocuse', src: '/logos/bocuse.png' },
   { name: 'Chicken Street', src: '/logos/chickenstreet.png' },
   { name: 'Café Crème', src: '/logos/cafécrème.jpg' },
-  { name: 'Luxilo', src: '/logos/luxilo.jpg' },
 ];
 // Pas de témoignage e-commerce réel pour l'instant → section masquée (on ne met PAS de faux).
 const TESTIMONIALS: { quote: string; name: string; role: string }[] = [];
