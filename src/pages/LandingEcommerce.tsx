@@ -20,7 +20,7 @@ import { trackLead } from '@/lib/tracking';
 const PRICE_FROM = '700';
 const CURRENCY = '$'; // USD — devise de facturation
 const STATS = [
-  { value: '40', label: 'marques accompagnées' },
+  { value: '+40', label: 'marques accompagnées' },
   { value: '35 M€', label: 'de CA piloté' },
   { value: '5', label: 'juridictions couvertes' }, // FR · PT · UAE · US · HK
 ];
@@ -53,17 +53,17 @@ const BENEFITS = [
 ];
 
 const STEPS = [
-  { icon: FileSpreadsheet, t: 'Vous déposez vos exports', d: 'Shopify, Stripe/PayPal, régies pub, relevés bancaires. 10 minutes, une fois par mois.' },
+  { icon: FileSpreadsheet, t: 'Récupération de vos exports', d: 'Shopify, Stripe/PayPal, FB Manager, relevés bancaires.' },
   { icon: Sparkles, t: 'On fiabilise & on réconcilie', d: 'On normalise et recoupe toutes vos sources — zéro double-comptage, des chiffres justes.' },
-  { icon: TrendingUp, t: 'Vous recevez dashboard + analyse', d: 'Un dashboard clair et personnalisé, plus l’analyse et les conseils d’un expert pour décider.' },
+  { icon: TrendingUp, t: 'Call d’1h avec un expert', d: 'Présentation de la data, lecture des chiffres et aide au pilotage.' },
 ];
 
 const FAQ = [
-  { q: 'Combien de temps ça me prend chaque mois ?', a: 'Environ 10 minutes : vous déposez vos exports, on s’occupe du reste. Vous recevez votre dashboard et l’analyse.' },
+  { q: 'Dois-je changer mes outils ?', a: 'Non. On se branche sur votre stack actuelle (Shopify, Stripe/PayPal, FB Manager, banque, compta). Vous ne migrez rien, on s’occupe de tout recouper.' },
   { q: 'Mes données sont-elles en sécurité ?', a: 'Oui. Espace sécurisé, accès restreint, conformité RGPD. Vos fichiers ne servent qu’à produire vos rapports.' },
-  { q: 'Quelles sources gérez-vous ?', a: 'Shopify, Stripe, PayPal, Whop, régies publicitaires (Meta/Google), exports comptables et relevés bancaires. On s’adapte à votre stack.' },
-  { q: 'Est-ce adapté à ma taille ?', a: 'Si vous faites de la pub et voulez piloter votre rentabilité réelle, oui — de la marque en croissance au e-commerce établi.' },
-  { q: 'Quel est le tarif ?', a: `À partir de ${PRICE_FROM} ${CURRENCY}/mois, sans engagement. On en parle ensemble pendant l’audit offert pour caler la bonne formule.` },
+  { q: 'Quelles sources gérez-vous ?', a: 'Tout : Shopify, Stripe, PayPal, Whop, FB Manager & régies pub, exports comptables, relevés bancaires… On s’adapte à votre stack et on recoupe l’ensemble.' },
+  { q: 'Est-ce adapté à ma taille ?', a: 'À partir d’environ 1 000 $/jour de CA, il y a presque toujours de quoi optimiser — et un vrai intérêt à s’entourer sur la partie finance. Si vous faites de la pub et voulez piloter votre rentabilité réelle, c’est pour vous.' },
+  { q: 'Quel est le tarif ?', a: `À partir de ${PRICE_FROM} ${CURRENCY}/mois, sans engagement. On cale la bonne formule ensemble lors de l’échange.` },
 ];
 
 export default function LandingEcommerce() {
@@ -79,7 +79,7 @@ export default function LandingEcommerce() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <BrandLockup />
           <Button size="sm" onClick={() => book('nav')} className="hidden sm:inline-flex">
-            <CalendarCheck className="w-4 h-4 mr-2" /> Audit offert
+            <CalendarCheck className="w-4 h-4 mr-2" /> Découvrir la solution
           </Button>
         </div>
       </header>
@@ -93,24 +93,24 @@ export default function LandingEcommerce() {
               <ShoppingBagDot /> Pour les marques e-commerce
             </div>
             <h1 className="mt-5 text-4xl sm:text-5xl font-semibold leading-[1.08] tracking-tight">
-              Votre e-commerce fait du CA.<br />
+              Votre shop fait du CA.<br />
               Mais gagne-t-il <span className="relative whitespace-nowrap">vraiment<span className="absolute left-0 -bottom-1 w-full h-2.5 bg-accent/40 -z-10" /></span> de l'argent&nbsp;?
             </h1>
             <p className="text-lg text-muted-foreground mt-6 max-w-xl">
-              Daftime réconcilie Shopify, Stripe, votre pub et votre banque en un dashboard clair —
-              et un expert vous dit chaque mois où vous gagnez et où vous perdez&nbsp;:
-              <strong className="text-foreground"> marge réelle, ROAS rentable, BFR, trésorerie.</strong>
+              Daftime réconcilie Shopify, Stripe, FB Manager, banques et comptabilité en un dashboard clair —
+              et un expert vous dit et vous conseille chaque mois&nbsp;: où vous gagnez, où vous perdez, et comment piloter.
+              <strong className="text-foreground"> Marge réelle, ROAS, BFR, AOV, trésorerie.</strong>
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
               <Button onClick={() => book('hero')} className="h-12 px-6 text-base">
-                <CalendarCheck className="w-4 h-4 mr-2" /> Réserver mon audit gratuit
+                <CalendarCheck className="w-4 h-4 mr-2" /> Découvrir la solution gratuitement
               </Button>
               <Button variant="outline" onClick={() => navigate('/auth')} className="h-12 px-6 text-base">
                 Accéder à mon espace <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
             </div>
             <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-600" /> Audit de 30 min · 100&nbsp;% gratuit · sans engagement
+              <Check className="w-4 h-4 text-emerald-600" /> Échange gratuit avec un expert · sans engagement
             </p>
             {/* Bandeau de confiance */}
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export default function LandingEcommerce() {
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="max-w-2xl">
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Le CA ne dit pas si vous êtes rentable.</h2>
-          <p className="text-muted-foreground mt-3">Comme la plupart des e-commerçants, vous pilotez sans doute à l'instinct&nbsp;:</p>
+          <p className="text-muted-foreground mt-3">Comme vous le savez, un shop ne se pilote pas à l'instinct&nbsp;:</p>
         </div>
         <div className="mt-8 grid sm:grid-cols-2 gap-4">
           {PAINS.map((p) => (
@@ -216,7 +216,7 @@ export default function LandingEcommerce() {
 
       {/* Offre / prix */}
       <section className="max-w-3xl mx-auto px-6 py-16 text-center">
-        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Un pilotage de niveau DAF, sans recruter de DAF</h2>
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Un pilotage S-Tier, sans payer un CFO 100k$</h2>
         <p className="text-muted-foreground mt-3">Dashboard personnalisé + analyse mensuelle d'un expert. Tout compris.</p>
         <div className="mt-6 inline-flex items-baseline gap-2">
           <span className="text-muted-foreground">À partir de</span>
@@ -230,7 +230,7 @@ export default function LandingEcommerce() {
         </ul>
         <div className="mt-8">
           <Button onClick={() => book('pricing')} className="h-12 px-6 text-base">
-            <CalendarCheck className="w-4 h-4 mr-2" /> Réserver mon audit gratuit
+            <CalendarCheck className="w-4 h-4 mr-2" /> Découvrir la solution gratuitement
           </Button>
           <p className="text-sm text-muted-foreground mt-3 flex items-center justify-center gap-2"><Lock className="w-3.5 h-3.5" /> Données sécurisées · RGPD · sans engagement</p>
         </div>
@@ -259,10 +259,10 @@ export default function LandingEcommerce() {
         <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-accent/10 blur-3xl" />
         <div className="max-w-3xl mx-auto px-6 py-16 relative flex flex-col items-center text-center gap-5">
           <ShieldCheck className="w-8 h-8 text-accent" />
-          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Sachez en 30 minutes où va votre argent</h2>
-          <p className="text-primary-foreground/75 max-w-lg">Audit offert : on regarde vos chiffres ensemble et on vous montre votre vraie rentabilité. Sans engagement.</p>
+          <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Sachez précisément où va votre argent</h2>
+          <p className="text-primary-foreground/75 max-w-lg">Échange offert avec un expert : on regarde vos chiffres ensemble et on vous montre votre vraie rentabilité. Sans engagement.</p>
           <Button onClick={() => book('cta_final')} variant="secondary" className="h-12 px-6 text-base">
-            <CalendarCheck className="w-4 h-4 mr-2" /> Réserver mon audit gratuit
+            <CalendarCheck className="w-4 h-4 mr-2" /> Découvrir la solution gratuitement
           </Button>
         </div>
       </section>
