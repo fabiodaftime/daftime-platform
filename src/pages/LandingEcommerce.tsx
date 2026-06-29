@@ -296,7 +296,7 @@ function DashboardPreview() {
     { l: 'CA du mois', v: '136 840 €', dot: '', note: '+12 % vs M-1', noteCls: 'text-emerald-600' },
     { l: 'ROAS', v: '1,98', dot: 'bg-red-500', note: 'trop faible vs coûts' },
     { l: 'Conversion', v: '3,06 %', dot: 'bg-emerald-500', note: 'sain' },
-    { l: 'Marge nette', v: '−2 %', dot: 'bg-red-500', note: 'à redresser' },
+    { l: 'Marge nette', v: '−2 %', dot: 'bg-red-500', note: 'vs +4 % M-1' },
     { l: 'Panier moyen', v: '72,79 €', dot: 'bg-amber-500', note: 'à surveiller' },
     { l: 'Trésorerie', v: '28 670 €', dot: '', note: '−9 400 € sur le mois', noteCls: 'text-muted-foreground' },
   ];
@@ -399,7 +399,7 @@ function DashboardPreview() {
 
       {/* Badges flottants */}
       <div className="absolute -bottom-3 -left-3 bg-card border rounded-xl shadow-lg px-3 py-2 text-xs font-semibold flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-accent" /> Le CA monte, pas le résultat
+        <Sparkles className="w-4 h-4 text-accent" /> CA en hausse, marge en baisse
       </div>
       <div className="absolute -top-3 -right-3 bg-card border rounded-xl shadow-lg px-3 py-1.5 text-[11px] font-semibold flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full bg-red-500" /> ROAS faible : prix ou ads à revoir
