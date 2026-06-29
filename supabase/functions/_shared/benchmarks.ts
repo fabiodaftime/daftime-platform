@@ -18,6 +18,9 @@ const ECOM: Record<string, B> = {
   taux_marge_brute:   { dir: "high", good: 45,  warn: 30,  ref: "e-commerce 40-60 %" },
   marge_ebitda:       { dir: "high", good: 10,  warn: 0,   ref: "viser > 10 %" },
   marge_nette:        { dir: "high", good: 8,   warn: 0,   ref: "viser > 8 %" },
+  psp_fee_rate:       { dir: "low",  good: 2.5, warn: 3.5, ref: "frais PSP ~2-3 %" },
+  bfr_days:           { dir: "low",  good: 30,  warn: 60,  ref: "BFR < 30 j de CA" },
+  stock_days:         { dir: "low",  good: 60,  warn: 90,  ref: "rotation stock" },
 };
 
 // Repères génériques (toute activité) — surtout les marges.

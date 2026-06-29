@@ -220,17 +220,33 @@ function buildPlan(sections: Sec[], a: Avail): DashPlan {
   if (resIds.length) prof.push(W({ type: "table", title: "Compte de résultat", metrics: resIds }));
   if (prof.length >= 3) pages.push({ title: "Rentabilité & charges", widgets: prof });
 
-  // 4) COMMANDES, CLIENTS & TRÉSORERIE.
+  // 4) COMMANDES & CLIENTS.
   const ops: Widget[] = [];
-  const kOps = pick("orders", "units", "aov", "total_customers", "repeat_rate", "cash_end").slice(0, 6);
+  const kOps = pick("orders", "units", "aov", "total_customers", "repeat_rate", "new_customer_share").slice(0, 6);
   if (kOps.length) ops.push(W({ type: "kpi_row", items: kOps.map((m) => ({ metric: m })) }));
   const cmd = pick("gross_sales", "refunds", "orders", "units");
   if (cmd.length >= 2) ops.push(W({ type: "bar", title: "Commandes & retours", metrics: cmd }));
   const cli = pick("new_customers", "total_customers", "returning_customers");
   if (cli.length >= 2) ops.push(W({ type: "bar", title: "Clients", metrics: cli }));
+  const opsTable = [...secIds(/commande|retour/i), ...secIds(/client|valeur|ltv/i)];
+  if (opsTable.length) ops.push(W({ type: "table", title: "Commandes & clients", metrics: opsTable }));
+  if (ops.length >= 3) pages.push({ title: "Commandes & clients", widgets: ops });
+
+  // 5) TRÉSORERIE, PSP & BFR.
+  const fin: Widget[] = [];
+  const kFin = pick("cash_end", "bfr", "bfr_days", "psp_balance", "psp_fee_rate", "psp_payout").slice(0, 6);
+  if (kFin.length) fin.push(W({ type: "kpi_row", items: kFin.map((m) => ({ metric: m })) }));
+  const fees = pick("payment_fees", "platform_fees").filter((x) => a.pos.has(x));
+  if (fees.length >= 2) fin.push(W({ type: "treemap", title: "Frais (PSP & plateforme)", metrics: fees }));
   const tre = pick("cash_start", "cash_end", "cash_variation");
-  if (tre.length >= 2) ops.push(W({ type: "bar", title: "Trésorerie", metrics: tre }));
-  if (ops.length >= 3) pages.push({ title: "Commandes, clients & trésorerie", widgets: ops });
+  if (tre.length >= 2) fin.push(W({ type: "bar", title: "Trésorerie", metrics: tre }));
+  const pspBar = pick("psp_payout", "psp_balance", "payment_fees");
+  if (pspBar.length >= 2) fin.push(W({ type: "bar", title: "Encaissements PSP", metrics: pspBar }));
+  const bfrComp = pick("inventory_value", "receivables", "payables", "bfr");
+  if (bfrComp.length >= 2) fin.push(W({ type: "bar", title: "Composantes du BFR", metrics: bfrComp }));
+  const finTable = [...secIds(/tr[eé]sor|cash/i), ...secIds(/psp|encaiss/i)];
+  if (finTable.length) fin.push(W({ type: "table", title: "Trésorerie, PSP & BFR", metrics: finTable }));
+  if (fin.length >= 2) pages.push({ title: "Trésorerie, PSP & BFR", widgets: fin });
 
   // FILET : si peu de pages e-commerce (autre métier), garantir une structure générique riche.
   if (pages.length < 2) {
