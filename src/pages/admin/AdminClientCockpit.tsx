@@ -5,10 +5,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { BenchmarksPanel } from '@/components/generic/BenchmarksPanel';
+import { DataAudit } from '@/components/generic/DataAudit';
 import { StandardizedTableEditor } from '@/components/generic/StandardizedTableEditor';
 import { StandardizedReview } from '@/components/generic/StandardizedReview';
 import { DashboardChat } from '@/components/generic/DashboardChat';
@@ -76,7 +77,7 @@ export default function AdminClientCockpit() {
   const [history, setHistory] = useState<any[]>([]);
   const [guidanceText, setGuidanceText] = useState('');
   const [transcript, setTranscript] = useState('');
-  const [tab, setTab] = useState<'home' | 'data' | 'context' | 'custom' | 'dashboard'>('home');
+  const [tab, setTab] = useState<'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard'>('home');
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
   const OP_LABELS: Record<string, string> = {
@@ -367,6 +368,7 @@ export default function AdminClientCockpit() {
   const TABS = [
     { id: 'home' as const, label: 'Accueil', icon: <Home className="w-4 h-4" /> },
     { id: 'data' as const, label: 'Données', icon: <Wand2 className="w-4 h-4" /> },
+    { id: 'audit' as const, label: 'Audit', icon: <FileSearch className="w-4 h-4" /> },
     { id: 'context' as const, label: 'Contexte', icon: <BookOpen className="w-4 h-4" /> },
     { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -610,6 +612,14 @@ export default function AdminClientCockpit() {
           </div>
         </Section>
         </>)}
+
+        {tab === 'audit' && (
+        <Section icon={<FileSearch className="w-4 h-4" />} title="Audit de la donnée (lecture seule)">
+          {sd?.data
+            ? <DataAudit data={sd.data} />
+            : <p className="text-sm text-muted-foreground">Standardisez d'abord les données (onglet « Données ») pour les auditer.</p>}
+        </Section>
+        )}
 
         {tab === 'custom' && (
         <Section icon={<BookOpen className="w-4 h-4" />} title="Consignes dashboard (reprises chaque mois)">
