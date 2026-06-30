@@ -77,6 +77,7 @@ export default function AdminClientCockpit() {
   const [history, setHistory] = useState<any[]>([]);
   const [guidanceText, setGuidanceText] = useState('');
   const [transcript, setTranscript] = useState('');
+  const [auditMsg, setAuditMsg] = useState('');
   const [tab, setTab] = useState<'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard'>('home');
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
@@ -282,6 +283,15 @@ export default function AdminClientCockpit() {
       })),
     }));
   };
+
+  // Correction de l'extraction par chat (depuis l'audit) : ré-extrait/corrige via les fichiers, nouvelle version.
+  const correctData = () => run('audit-correct', async () => {
+    const message = auditMsg.trim();
+    if (!message) return;
+    await invokeFn('chat-standardize', { client_id: id, period, message });
+    setAuditMsg('');
+    await loadStandardized();
+  });
 
   // Recalcule les dérivés + rejoue les vérifications côté serveur (formules = source unique).
   const recompute = () => run('recompute', async () => {
@@ -614,10 +624,27 @@ export default function AdminClientCockpit() {
         </>)}
 
         {tab === 'audit' && (
-        <Section icon={<FileSearch className="w-4 h-4" />} title="Audit de la donnée (lecture seule)">
+        <Section icon={<FileSearch className="w-4 h-4" />} title="Audit de la donnée">
           {sd?.data
             ? <DataAudit data={sd.data} />
             : <p className="text-sm text-muted-foreground">Standardisez d'abord les données (onglet « Données ») pour les auditer.</p>}
+          {sd?.data && (
+            <div className="mt-4 border-t pt-3">
+              <div className="text-xs text-muted-foreground mb-1.5">
+                Corriger l'extraction par l'IA — ex. « pour le CA tu as pris la colonne Gross, prends plutôt Net », « le poste pub vient du mauvais fichier ». L'IA ré-extrait depuis les fichiers et enregistre une nouvelle version.
+              </div>
+              <div className="flex gap-2">
+                <input value={auditMsg} onChange={(e) => setAuditMsg(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') correctData(); }}
+                  placeholder="Votre correction…"
+                  className="flex-1 bg-background border rounded px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30" disabled={busy === 'audit-correct'} />
+                <Button size="sm" onClick={correctData} disabled={!!busy || !auditMsg.trim()}>
+                  {busy === 'audit-correct' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Correction…</> : 'Corriger'}
+                </Button>
+              </div>
+              {isTemplate && <p className="text-[11px] text-muted-foreground mt-1.5">Astuce : après une correction de valeur, va dans « Données » → « Recalculer » pour recalculer exactement les ratios dérivés.</p>}
+            </div>
+          )}
         </Section>
         )}
 

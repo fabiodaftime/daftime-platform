@@ -143,7 +143,7 @@ function stripePayments(rows: string[][], ctx: ParseCtx): ParsedExtract {
   if (n) v["new_subs"] = n;
   return { parser: "stripe_payments", role: "payment", source_type: "sales_export", currency: ctx.reporting, values: v,
     revenueCandidate: Math.round(received * 100) / 100,
-    sources: { new_subs: "Stripe — nouvelles souscriptions du mois", ca: "Stripe — paiements reçus du mois" }, dedupGroup: "stripe_recv", count: used,
+    sources: { new_subs: `décompte des lignes «Description» = "subscription creation" · ${n} ligne(s)`, ca: `Σ colonne «Amount» (converti en ${ctx.reporting}) · filtre statut=Paid & mois ${ctx.period} · ${used} paiement(s)` }, dedupGroup: "stripe_recv", count: used,
     note: `Réception Stripe : ${Math.round(received).toLocaleString("fr-FR")} ${ctx.reporting} (${used} paiements) — réception, hors CA par défaut (passe le doc en rôle « CA » pour le compter).` };
 }
 
@@ -175,7 +175,7 @@ function quaderno(rows: string[][], ctx: ParseCtx): ParsedExtract {
   const recap = Object.entries(byMethod).map(([m, x]) => `${m} ${Math.round(x).toLocaleString("fr-FR")}`).join(", ");
   return { parser: "quaderno", role: "revenue", source_type: "invoice", currency: ctx.reporting, values: {},
     revenueCandidate: Math.round(total * 100) / 100,
-    sources: { ca: "Quaderno — factures émises du mois (original_amount)" }, dedupGroup: "quaderno_ca", count: used,
+    sources: { ca: `Σ colonne «original_amount» (converti en ${ctx.reporting}) · filtre status=paid, hors avoirs, mois ${ctx.period} · ${used} facture(s)` }, dedupGroup: "quaderno_ca", count: used,
     note: recap ? `CA facturé par moyen de paiement : ${recap}.` : undefined };
 }
 
@@ -193,7 +193,7 @@ function whopExport(rows: string[][], ctx: ParseCtx): ParsedExtract {
   }
   return { parser: "whop_export", role: "payment", source_type: "sales_export", currency: ctx.reporting, values: {},
     revenueCandidate: Math.round(received * 100) / 100,
-    sources: { ca: "Whop — paiements reçus du mois" }, dedupGroup: "whop_recv", count: used,
+    sources: { ca: `Σ colonne «Payment Amount» (converti en ${ctx.reporting}) · filtre Status=paid & mois ${ctx.period} · ${used} paiement(s)` }, dedupGroup: "whop_recv", count: used,
     note: `Réception Whop : ${Math.round(received).toLocaleString("fr-FR")} ${ctx.reporting} (${used} paiements) — réception, hors CA par défaut (passe le doc en rôle « CA » pour le compter).` };
 }
 
@@ -222,7 +222,11 @@ function ebury(rows: string[][], ctx: ParseCtx): ParsedExtract {
   if (Object.keys(balByCur).length) add(v, "cash_end", cash);
   for (const k of Object.keys(v)) v[k] = Math.round(v[k] * 100) / 100;
   return { parser: "ebury", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v,
-    sources: { contractors: "Ebury — Salary/Payroll", cash_end: "Ebury — solde par devise" },
+    sources: {
+      contractors: `Σ débits «Amount» où Description = Salary/Payroll (converti en ${ctx.reporting}) · mois ${ctx.period}`,
+      other_opex: `Σ autres débits «Amount» (hors salaires, converti en ${ctx.reporting}) · mois ${ctx.period}`,
+      cash_end: `solde «Balance» le plus récent du mois, sommé par devise (converti en ${ctx.reporting})`,
+    },
     dedupGroup: "ebury", count: used };
 }
 
@@ -256,11 +260,13 @@ function bankSigned(rows: string[][], ctx: ParseCtx, name: string): ParsedExtrac
   for (const { bal, cur } of Object.values(lastBal)) { cash += convert(bal, cur, ctx.factor); nAcc++; }
   if (nAcc) add(v, "cash_end", Math.round(cash * 100) / 100);
   for (const k of Object.keys(v)) v[k] = Math.round(v[k] * 100) / 100;
-  const src = (label: string) => `${name} — ${label}`;
+  const src = (cat: string) => `Σ débits «${h[iAmt] ?? 'Amount'}» classés « ${cat} » (converti en ${ctx.reporting}) · mois ${ctx.period}`;
+  void name;
   return { parser: "bank_signed", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, count: used,
     sources: { cogs: src("achats fournisseurs"), ads_total: src("publicité"), marketing: src("publicité"), payroll: src("salaires"),
       platform_fees: src("outils/SaaS"), financial_result: src("frais de change"), fin_result: src("frais de change"),
-      other_opex: src("autres dépenses"), cash_end: src("solde de clôture") } };
+      other_opex: src("autres dépenses"),
+      cash_end: `dernier solde «Balance» du mois par compte, sommé (converti en ${ctx.reporting}) · ${nAcc} compte(s)` } };
 }
 
 // ---- Shopify (exports analytics) ----------------------------------------------

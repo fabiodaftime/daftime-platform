@@ -10,14 +10,18 @@ import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_s
 import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles } from "../_shared/readFiles.ts";
 
-const SYSTEM = `Tu es un analyste financier qui AFFINE des données standardisées avec l'utilisateur, en dialogue.
-Tu reçois les données actuelles (structure sections/rows), le contexte, les fichiers, et une instruction.
-L'utilisateur peut : signaler qu'une donnée ne sera pas disponible, corriger/ajouter/retirer une ligne, renommer une section, etc.
-RÈGLES :
-- N'invente JAMAIS un chiffre. Si une donnée est déclarée indisponible, retire-la des données et ajoute un libellé clair dans "missing_items".
-- Conserve la structure tabulaire { sections: [ { key, label, rows: [ { label, value, unit } ] } ] }.
-- Réponds UNIQUEMENT avec un JSON valide :
-  { "data": { "sections": [...] }, "missing_items": [ "..." ], "summary": "résumé des changements" }`;
+const SYSTEM = `Tu es un analyste financier qui AFFINE / CORRIGE des données standardisées, en dialogue. Tu as accès aux FICHIERS sources : tu peux donc RÉ-EXTRAIRE une valeur depuis une AUTRE colonne / ligne / feuille si on te le demande (ex. « pour le CA, prends la colonne Net et non Gross »).
+
+Chaque ligne a la forme { "id", "label", "value", "unit" } et parfois { "derived": true, "formula", "source", "trace", "confidence" }.
+
+RÈGLES STRICTES :
+- PRÉSERVE EXACTEMENT la structure : mêmes sections (key, label), mêmes lignes avec leur "id" et "unit", et garde les champs "derived"/"formula" inchangés. Ne renomme/supprime une ligne ou section QUE si l'instruction le demande.
+- N'invente JAMAIS un chiffre : toute valeur vient des fichiers fournis.
+- RÉ-EXTRACTION : si on te demande de prendre une autre colonne/source pour un poste, recalcule sa valeur DEPUIS le fichier, mets à jour sa "source" pour décrire la nouvelle opération (ex. « Σ colonne «Net» … »), et "confidence":"manual".
+- COHÉRENCE DES DÉRIVÉS : si tu changes une valeur d'INPUT (ligne SANS "formula"), recalcule les lignes DÉRIVÉES impactées en appliquant leur "formula" (sur les mêmes ids), et conserve leurs autres champs.
+- Donnée indisponible → retire la ligne et ajoute un libellé clair dans "missing_items".
+- Réponds UNIQUEMENT en JSON valide :
+  { "data": { "sections": [ { "key","label","rows":[ {"id","label","value","unit", ...champs conservés } ] } ] }, "missing_items": [ "..." ], "summary": "ce qui a changé, en une phrase" }`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
