@@ -55,7 +55,7 @@ export function buildStandardized(
     rows: cat.lines.filter((l) => l.section === sec.key && v[l.id] != null).map((l) => ({
       id: l.id, label: l.label, value: v[l.id],
       unit: l.unit === 'CUR' ? currency : (l.unit ?? ''),
-      ...(l.formula ? { derived: true } : {}),
+      ...(l.formula ? { derived: true, formula: l.formula } : {}),
       ...(l.total ? { type: 'total' } : {}),
       ...(l.note ? { note: l.note } : {}),
       ...(sources[l.id] ? { source: sources[l.id] } : {}),
