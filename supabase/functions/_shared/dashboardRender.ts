@@ -34,6 +34,16 @@ export interface DashPlan { pages: { key?: string; title: string; widgets: Widge
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const periodLabel = (p: string) => { try { return new Date(p).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }); } catch { return p; } };
+// Anti-injection CSS : les couleurs/police viennent de la marque (client) → on n'accepte que des valeurs sûres.
+const FALLBACK_PAL = ["#4f46e5", "#ec4899", "#f59e0b", "#10b981", "#0ea5e9", "#a855f7"];
+const safeColor = (c: unknown, fallback: string): string => {
+  const s = String(c ?? "").trim();
+  if (/^#[0-9a-fA-F]{3,8}$/.test(s)) return s;
+  if (/^(rgb|hsl)a?\([0-9.,%\s/]+\)$/i.test(s)) return s;
+  if (/^[a-zA-Z]{1,20}$/.test(s)) return s;
+  return fallback;
+};
+const safeFontFamily = (f: unknown): string => (String(f ?? "").replace(/[^a-zA-Z0-9 ,"'\-]/g, "").trim().slice(0, 80)) || "Inter, system-ui, sans-serif";
 
 function fmt(value: number | null | undefined, unit = "", currency = "EUR"): string {
   if (value == null || !isFinite(value)) return "n/d";
@@ -59,7 +69,10 @@ const toEN = (n: string) => COUNTRY_EN[n.trim().toLowerCase()] ?? n.trim();
 
 export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const th = resolveTheme(ctx.brand, ctx.theme ?? plan.theme ?? {});
-  const { primary, accent, palette } = th;
+  const primary = safeColor(th.primary, "#4f46e5");
+  const accent = safeColor(th.accent, "#ec4899");
+  const palette = (Array.isArray(th.palette) && th.palette.length ? th.palette : FALLBACK_PAL).map((c, i) => safeColor(c, FALLBACK_PAL[i % FALLBACK_PAL.length]));
+  const font = safeFontFamily(th.font);
   const charts: any[] = [];
   let cid = 0;
   const M = ctx.metrics;
@@ -502,9 +515,10 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const heroDecor = (th.header === "gradient" || th.header === "solid" || th.header === "dark");
   const glass = th.background === "glass" || th.kpi === "glass";
   const logo = (ctx.brand as { logo?: string; logo_url?: string } | null)?.logo ?? (ctx.brand as { logo_url?: string } | null)?.logo_url;
-  const fontLink = th.googleFont ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${th.googleFont.replace(/ /g, "+")}:wght@400;500;600;700&display=swap">` : "";
+  const safeFont = (th.googleFont ?? "").replace(/[^a-zA-Z0-9 ]/g, "").trim().slice(0, 40); // anti-injection dans l'URL
+  const fontLink = safeFont ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${safeFont.replace(/ /g, "+")}:wght@400;500;600;700&display=swap">` : "";
 
-  const chartsJs = `const CHARTS=${JSON.stringify(charts)};const PALETTE=${JSON.stringify(palette)};const PRIMARY=${JSON.stringify(primary)};const INK='${th.ink}',MUT='${th.muted}',GRID='${th.grid}',SURF='${th.surface}',DARK=${th.dark};const CS=${JSON.stringify(th.chart)};const FONT=${JSON.stringify(th.font)};const TIPBG=DARK?'#0b0e1a':'#171a2b';const made={};
+  const chartsJs = `const CHARTS=${JSON.stringify(charts)};const PALETTE=${JSON.stringify(palette)};const PRIMARY=${JSON.stringify(primary)};const INK='${th.ink}',MUT='${th.muted}',GRID='${th.grid}',SURF='${th.surface}',DARK=${th.dark};const CS=${JSON.stringify(th.chart)};const FONT=${JSON.stringify(font)};const TIPBG=DARK?'#0b0e1a':'#171a2b';const made={};
 function nf(v){return (v==null||isNaN(v))?'–':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:0});}
 function sval(p){var v=p.value;return (v&&v.length!==undefined)?v[v.length-1]:v;}
 function axisTip(ps){if(!ps||!ps.length)return '';var s='<b>'+(ps[0].axisValueLabel||ps[0].name||'')+'</b>';for(var i=0;i<ps.length;i++){if(ps[i].seriesName&&ps[i].seriesName.indexOf('series')===0&&ps.length===1){s+='<br/>'+ps[i].marker+' <b>'+nf(sval(ps[i]))+'</b>';}else{s+='<br/>'+ps[i].marker+' '+ps[i].seriesName+' : <b>'+nf(sval(ps[i]))+'</b>';}}return s;}
@@ -562,7 +576,7 @@ window.addEventListener('load',function(){
 ${fontLink}
 <style>
 :root{--p:${primary};--a:${accent};--bg:${th.bg};--card:${th.surface};--bd:${th.border};--mut:${th.muted};--ink:${th.ink};--r:${th.radius}px}
-*{box-sizing:border-box}body{margin:0;font-family:${th.font};font-size:15px;line-height:1.55;background:${bgCss};color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+*{box-sizing:border-box}body{margin:0;font-family:${font};font-size:15px;line-height:1.55;background:${bgCss};color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 .dash{max-width:1500px;margin:0 auto;padding:0 30px 56px}
 header.hero{${headerCss};border-top:4px solid var(--a);border-radius:0 0 24px 24px;padding:30px 34px 28px;margin:0 -30px 26px;position:relative;overflow:hidden}
 ${heroDecor ? `header.hero::after{content:'';position:absolute;right:-50px;top:-50px;width:230px;height:230px;border-radius:50%;background:var(--a);opacity:.14}` : ""}
@@ -657,6 +671,6 @@ header.hero h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;lin
   <main>${main}</main>
   <footer class="foot">${esc(ctx.client)} · ${esc(periodLabel(ctx.period))} · ${esc(ctx.currency)} — Document confidentiel</footer>
 </div>
-<script>${chartsJs}</script>
+<script>${chartsJs.replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\!--")}</script>
 </body></html>`;
 }

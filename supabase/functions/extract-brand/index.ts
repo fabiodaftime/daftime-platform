@@ -8,6 +8,18 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 
+// Anti-SSRF : on ne récupère que des URLs http(s) vers des hôtes PUBLICS (pas localhost / IP privées / metadata).
+function isPublicHttpUrl(raw: string): boolean {
+  let u: URL;
+  try { u = new URL(raw); } catch { return false; }
+  if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || host.endsWith(".local") || host === "metadata.google.internal") return false;
+  if (/^(127\.|10\.|192\.168\.|169\.254\.|0\.|::1$|::$|fc|fd|fe80:)/i.test(host)) return false;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return false;
+  return true;
+}
+
 const SYSTEM = `Tu es un directeur artistique. À partir de la source fournie (capture d'écran, PDF, ou HTML/CSS d'un site web), déduis la CHARTE GRAPHIQUE de la marque pour alimenter un dashboard.
 Réponds UNIQUEMENT avec un objet JSON valide :
 {
@@ -42,9 +54,10 @@ Deno.serve(async (req) => {
       content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: pdf_base64 } });
       content.push({ type: "text", text: "Déduis la charte graphique de ce document." });
     } else if (url) {
+      if (!isPublicHttpUrl(url)) return json({ error: "URL invalide ou non autorisée (https + hôte public requis)." }, 400);
       let html = "";
       try {
-        const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 DaftimeBot" } });
+        const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 DaftimeBot" }, redirect: "follow", signal: AbortSignal.timeout(8000) });
         html = (await r.text()).slice(0, 60_000);
       } catch (_e) { /* ignore */ }
       if (!html) return json({ error: "impossible de récupérer l'URL fournie" }, 400);
