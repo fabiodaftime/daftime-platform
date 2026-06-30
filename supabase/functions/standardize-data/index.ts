@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
       const llmDocs: typeof usable = [];
       for (const doc of usable) {
         const p = doc.kind === "text" ? parseFile(doc.name, (doc as { content: string }).content, pctx) : null;
-        if (p) parsed.push(p); else llmDocs.push(doc);
+        if (p) { p.file = doc.name; parsed.push(p); } else llmDocs.push(doc);
       }
       // Dédup par groupe (Stripe multi-mois, Ebury -EUR vs all_currencies…) : on garde le plus complet.
       const best = new Map<string, ParsedExtract>();

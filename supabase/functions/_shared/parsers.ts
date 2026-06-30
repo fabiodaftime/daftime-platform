@@ -23,6 +23,7 @@ export type DocRole = "revenue" | "payment" | "bank" | "internal" | "analytics" 
 export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
 export interface ParsedExtract {
   parser: string;
+  file?: string;               // nom du fichier source (renseigné par l'orchestrateur après parseFile)
   role: DocRole;
   source_type: SourceType;
   currency: string;            // = reporting (déjà converti)
@@ -304,8 +305,13 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     if (Object.keys(prod).length) breakdowns.top_products = { label: "Top produits (CA net)", rows: topN(prod) };
     if (Object.keys(daily).length) breakdowns.daily_sales = { label: "Ventes par jour", rows: Object.entries(daily).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([label, value]) => ({ label, value: Math.round(value * 100) / 100 })) };
     // le fichier riche (avec Gross sales) prime au dédoublonnage
-    return mk("revenue", v, { ca: `Shopify (${name}) — net sales`, orders: "Shopify — commandes distinctes du mois" },
-      { revenueCandidate: v.ca, dedupGroup: "shopify_ca", count: iGross >= 0 ? 1_000_000 : orders.size, breakdowns });
+    return mk("revenue", v, {
+      ca: `Σ colonne «Net sales» · mois ${ctx.period} · ${orders.size} commande(s)`,
+      orders: `décompte des «Order name» distincts (Net sales>0) · mois ${ctx.period}`,
+      ...(iGross >= 0 ? { gross_sales: `Σ colonne «Gross sales» · mois ${ctx.period}` } : {}),
+      ...(iRet >= 0 ? { refunds: `−Σ colonne «Returns» · mois ${ctx.period}` } : {}),
+      ...(units ? { units: `décompte des lignes avec «Product title…» · mois ${ctx.period}` } : {}),
+    }, { revenueCandidate: v.ca, dedupGroup: "shopify_ca", count: iGross >= 0 ? 1_000_000 : orders.size, breakdowns });
   }
   // Sessions par PAYS ("Sessions by location") → breakdown (et PAS de valeur sessions pour éviter le double-comptage).
   if (has(h, "Session country")) {
@@ -321,13 +327,13 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
   if (has(h, "Sessions") && (has(h, "Online store visitors") || has(h, "Conversion rate"))) {
     const iDate = idx(h, "Day"), iSess = idx(h, "Sessions");
     // add_to_carts vient UNIQUEMENT du rapport "Customer behavior" (évite tout double comptage).
-    return mk("analytics", { sessions: sumCol(iSess, iDate) }, { sessions: "Shopify — sessions du mois" }, { dedupGroup: "shopify_sessions", count: data.length });
+    return mk("analytics", { sessions: sumCol(iSess, iDate) }, { sessions: `Σ colonne «Sessions» · mois ${ctx.period}` }, { dedupGroup: "shopify_sessions", count: data.length });
   }
   // Comportement (totaux mensuels du funnel : une seule ligne)
   if (has(h, "Sessions with cart additions") && has(h, "Sessions that completed checkout") && !has(h, "Day")) {
     const iCart = idx(h, "Sessions with cart additions"); const c = toNum((data[0] ?? [])[iCart]);
     const v: Record<string, number> = {}; if (c != null) v.add_to_carts = c;
-    return mk("analytics", v, { add_to_carts: "Shopify — sessions avec ajout panier (mois)" }, { dedupGroup: "shopify_sessions_carts", count: 1_000_000 });
+    return mk("analytics", v, { add_to_carts: `colonne «Sessions with cart additions» (total mensuel)` }, { dedupGroup: "shopify_sessions_carts", count: 1_000_000 });
   }
   // Nouveaux vs récurrents (tableau de synthèse, pas la série temporelle)
   if (has(h, "New or returning customer") && has(h, "Customers") && !has(h, "Day")) {
@@ -335,7 +341,7 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     let nw = 0, ret = 0;
     for (const r of data) { const n = toNum(r[iCust]); if (n == null) continue; if (/new/i.test(r[iType] ?? "")) nw += n; else if (/return/i.test(r[iType] ?? "")) ret += n; }
     return mk("analytics", { new_customers: nw, returning_customers: ret, total_customers: nw + ret },
-      { new_customers: "Shopify — nouveaux clients", returning_customers: "Shopify — clients récurrents" }, { dedupGroup: "shopify_customers", count: 1_000_000 });
+      { new_customers: `Σ «Customers» où type=New · mois ${ctx.period}`, returning_customers: `Σ «Customers» où type=Returning · mois ${ctx.period}` }, { dedupGroup: "shopify_customers", count: 1_000_000 });
   }
   // Paiements (PSP) : "Net payments by gateway/method" → réception, PAS le CA (+ ventes par pays si dispo).
   if ((has(h, "Payment gateway") || has(h, "Payment method")) && has(h, "Net payments")) {
