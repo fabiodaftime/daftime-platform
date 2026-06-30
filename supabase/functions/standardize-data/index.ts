@@ -169,18 +169,23 @@ Deno.serve(async (req) => {
       for (const e of parsed) if (e.dedupGroup) { const c = best.get(e.dedupGroup); if (!c || (e.count ?? 0) > (c.count ?? 0)) best.set(e.dedupGroup, e); }
       const keptParsed = parsed.filter((e) => !e.dedupGroup || best.get(e.dedupGroup) === e);
 
-      // Somme des contributions parsées (déjà en devise de reporting). Provenance = 1re source rencontrée.
+      // Somme des contributions parsées (déjà en devise de reporting). On garde le DÉTAIL par document (trace).
       const parsedValues: Record<string, number> = {};
       const parsedSources: Record<string, string> = {};
+      const traces: Record<string, { src: string; value: number }[]> = {};
+      const traceSrc = (e: ParsedExtract, k: string) => (e.sources[k] ? `${e.file} — ${e.sources[k]}` : `${e.file} (${e.parser})`);
       for (const e of keptParsed) for (const [k, val] of Object.entries(e.values)) {
         parsedValues[k] = Math.round(((parsedValues[k] ?? 0) + val) * 100) / 100;
         if (!parsedSources[k]) parsedSources[k] = e.sources[k] ?? e.parser;
+        if (!traces[k]) traces[k] = [];
+        traces[k].push({ src: traceSrc(e, k), value: Math.round(val * 100) / 100 });
       }
       // CA = somme des revenueCandidate des documents dont le RÔLE EFFECTIF est "revenue" (ex. Quaderno).
       const revenueDocs = keptParsed.filter((e) => effRoleOf(e) === "revenue" && typeof e.revenueCandidate === "number");
       if (revenueDocs.length) {
         parsedValues["ca"] = Math.round(revenueDocs.reduce((s, e) => s + (e.revenueCandidate ?? 0), 0) * 100) / 100;
         parsedSources["ca"] = revenueDocs.map((e) => e.sources.ca ?? e.parser).join(" + ");
+        traces["ca"] = revenueDocs.map((e) => ({ src: e.sources.ca ? `${e.file} — ${e.sources.ca}` : `${e.file} (${e.parser})`, value: Math.round((e.revenueCandidate ?? 0) * 100) / 100 }));
       }
 
       // 2) GAP-FILL IA (contrat STRICT via tool use) : sur les fichiers NON reconnus (PDF/scan/inconnu),
@@ -236,6 +241,12 @@ Deno.serve(async (req) => {
             } catch { return null; }
           })).filter((x): x is FileExtract => !!x)
         : [];
+      // Trace des contributions IA (pour les postes non couverts par un parser, qui prime).
+      for (const ex of llmExtracts) for (const [k, val] of Object.entries(ex.values)) {
+        if (parsedValues[k] != null) continue;
+        if (!traces[k]) traces[k] = [];
+        traces[k].push({ src: ex.sources[k] ?? `${ex.file} (IA)`, value: val });
+      }
       const recLLM = reconcile(llmExtracts, labelOf, { factor, monetaryIds, reporting: currency });
 
       // 3) FUSION : les parsers (exacts) priment ; l'IA complète les trous.
@@ -244,7 +255,7 @@ Deno.serve(async (req) => {
       const confidence: Record<string, string> = { ...recLLM.confidence };
       for (const k of Object.keys(parsedValues)) confidence[k] = "parsed";
 
-      const built = buildStandardized(tpl, values, sources, currency);
+      const built = buildStandardized(tpl, values, sources, currency, traces);
       const data = built.data as { sections: { rows: Record<string, unknown>[] }[]; flags: unknown[]; meta?: Record<string, unknown> };
       for (const sec of data.sections) for (const row of sec.rows) { const c = confidence[row.id as string]; if (c) row.confidence = c; }
 

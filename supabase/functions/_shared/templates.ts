@@ -31,6 +31,7 @@ export function buildStandardized(
   inputs: Record<string, number>,
   sources: Record<string, string>,
   currency: string,
+  traces?: Record<string, { src: string; value: number }[]>,
 ): { data: Record<string, unknown>; flags: { id: string; label: string; severity: string }[] } {
   const v: Record<string, number> = {};
   for (const [k, val] of Object.entries(inputs)) if (typeof val === 'number' && isFinite(val)) v[k] = val;
@@ -59,6 +60,7 @@ export function buildStandardized(
       ...(l.total ? { type: 'total' } : {}),
       ...(l.note ? { note: l.note } : {}),
       ...(sources[l.id] ? { source: sources[l.id] } : {}),
+      ...(traces?.[l.id]?.length ? { trace: traces[l.id] } : {}),
     })),
   })).filter((s) => s.rows.length > 0);
 

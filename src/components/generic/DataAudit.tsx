@@ -4,9 +4,10 @@
 import { useMemo, useState } from 'react';
 import { FileText, ShieldCheck, Info, CircleHelp, GitMerge, FunctionSquare, Copy, Check, AlertTriangle } from 'lucide-react';
 
+interface Trace { src: string; value: number }
 interface Row {
   id: string; label: string; value: number | string | null; unit?: string;
-  derived?: boolean; formula?: string; type?: string; note?: string; source?: string;
+  derived?: boolean; formula?: string; type?: string; note?: string; source?: string; trace?: Trace[];
   confidence?: 'parsed' | 'single' | 'corroborated' | 'conflict' | 'manual';
 }
 interface Classif { parser?: string; file?: string; role?: string; effRole?: string; manual?: boolean; revenueCandidate?: number | null; note?: string }
@@ -51,6 +52,21 @@ export function DataAudit({ data }: { data: any }) {
   }, [sections]);
 
   const allRows = useMemo(() => sections.flatMap((s) => s.rows.map((r) => ({ ...r, section: s.label }))), [sections]);
+  const rowById = useMemo(() => { const m: Record<string, Row> = {}; for (const s of sections) for (const r of s.rows) m[r.id] = r; return m; }, [sections]);
+  const fileOf = (src: string) => src.split(' — ')[0].split(' (')[0].trim();
+  const inputsOf = (formula: string) => [...new Set((formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) ?? []).filter((t) => !FUNCS.has(t)))];
+  // Remonte (récursivement) les documents qui nourrissent une formule.
+  const docsOf = (formula: string, seen = new Set<string>()): string[] => {
+    const files = new Set<string>();
+    for (const id of inputsOf(formula)) {
+      if (seen.has(id)) continue; seen.add(id);
+      const row = rowById[id];
+      if (row?.derived && row.formula) docsOf(row.formula, seen).forEach((f) => files.add(f));
+      else if (row?.trace?.length) row.trace.forEach((t) => files.add(fileOf(t.src)));
+      else if (row?.source) files.add(fileOf(row.source));
+    }
+    return [...files];
+  };
   const ql = q.trim().toLowerCase();
   const rows = ql ? allRows.filter((r) => `${r.label} ${r.id} ${r.section}`.toLowerCase().includes(ql)) : allRows;
 
@@ -146,7 +162,16 @@ export function DataAudit({ data }: { data: any }) {
                     {r.derived && r.formula ? (
                       <span className="inline-flex items-start gap-1.5">
                         <FunctionSquare className="w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/60" />
-                        <span><code className="text-[11px] text-foreground/80">{r.formula}</code>{typeof r.value === 'number' && <span className="block text-[11px]">= {expand(r.formula, valById)} = <b className="text-foreground">{nf(r.value)}</b></span>}</span>
+                        <span>
+                          <code className="text-[11px] text-foreground/80">{r.formula}</code>
+                          {typeof r.value === 'number' && <span className="block text-[11px]">= {expand(r.formula, valById)} = <b className="text-foreground">{nf(r.value)}</b></span>}
+                          {(() => { const d = docsOf(r.formula); return d.length ? <span className="block text-[10px] text-muted-foreground/70">à partir de : {d.join(', ')}</span> : null; })()}
+                        </span>
+                      </span>
+                    ) : r.trace?.length ? (
+                      <span>
+                        {r.trace.length > 1 && <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70">Cumul · {r.trace.length} docs</span>}
+                        {r.trace.map((t, j) => <span key={j} className="block text-[11px]">{t.src} <b className="text-foreground tabular-nums">{nf(t.value)}</b></span>)}
                       </span>
                     ) : (r.source ?? '—')}
                   </td>
