@@ -264,7 +264,7 @@ function bankSigned(rows: string[][], ctx: ParseCtx, name: string): ParsedExtrac
   const src = (cat: string) => `Σ débits «${h[iAmt] ?? 'Amount'}» classés « ${cat} » (converti en ${ctx.reporting}) · mois ${ctx.period}`;
   void name;
   return { parser: "bank_signed", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, count: used,
-    sources: { cogs: src("achats fournisseurs"), ads_total: src("publicité"), marketing: src("publicité"), payroll: src("salaires"),
+    sources: { cogs: src("achats fournisseurs"), ads_total: src("publicité"), marketing: src("publicité"), ad_spend: src("publicité"), payroll: src("salaires"),
       platform_fees: src("outils/SaaS"), financial_result: src("frais de change"), fin_result: src("frais de change"),
       other_opex: src("autres dépenses"),
       cash_end: `dernier solde «Balance» du mois par compte, sommé (converti en ${ctx.reporting}) · ${nAcc} compte(s)` } };
@@ -341,7 +341,7 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     let nw = 0, ret = 0;
     for (const r of data) { const n = toNum(r[iCust]); if (n == null) continue; if (/new/i.test(r[iType] ?? "")) nw += n; else if (/return/i.test(r[iType] ?? "")) ret += n; }
     return mk("analytics", { new_customers: nw, returning_customers: ret, total_customers: nw + ret },
-      { new_customers: `Σ «Customers» où type=New · mois ${ctx.period}`, returning_customers: `Σ «Customers» où type=Returning · mois ${ctx.period}` }, { dedupGroup: "shopify_customers", count: 1_000_000 });
+      { new_customers: `Σ «Customers» où type=New · mois ${ctx.period}`, returning_customers: `Σ «Customers» où type=Returning · mois ${ctx.period}`, total_customers: `nouveaux + récurrents · mois ${ctx.period}` }, { dedupGroup: "shopify_customers", count: 1_000_000 });
   }
   // Paiements (PSP) : "Net payments by gateway/method" → réception, PAS le CA (+ ventes par pays si dispo).
   if ((has(h, "Payment gateway") || has(h, "Payment method")) && has(h, "Net payments")) {
