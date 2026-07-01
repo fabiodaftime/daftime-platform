@@ -3,13 +3,17 @@
 // s'ils sont présents — sinon no-op silencieux. Aucun ID ici : les snippets se posent dans index.html.
 //
 // ⚙️  POUR ACTIVER LE TRACKING (à faire avant de lancer les ads) :
-//   1. Coller le snippet Meta Pixel et/ou Google Ads (gtag) dans index.html (<head>).
-//   2. Côté Meta : l'événement "Lead" se déclenche au clic CTA ; configure-le comme conversion.
-//   3. Côté Google Ads : crée une action de conversion et déclenche-la sur l'événement "book_appointment".
-//   NB : la prise de RDV se fait dans un iframe Google Calendar → on ne peut pas détecter la
-//        confirmation finale. On optimise donc sur l'INTENTION (ouverture du planning), qui est
-//        un très bon proxy. Pour une conversion "RDV confirmé" exacte, ajoute une page de
-//        confirmation (redirect après réservation) et déclenche l'event dessus.
+//   1. Le snippet Meta Pixel est déjà posé dans index.html (<head>) → fbq('init', <ID>) + PageView.
+//      (Ajouter le snippet Google Ads/gtag de la même manière si besoin.)
+//   2. DEUX niveaux d'événements côté Meta :
+//        • "Lead"     → se déclenche au CLIC sur un CTA (intention de RDV). Bon proxy d'optimisation.
+//        • "Schedule" → se déclenche quand le RDV est RÉELLEMENT confirmé dans cal.com
+//                       (via l'événement bookingSuccessful de l'embed cal.com — voir src/lib/cal.ts).
+//      → Configure "Schedule" comme conversion principale (le vrai RDV pris), "Lead" en secondaire.
+//   3. Côté Google Ads : action de conversion sur l'événement "book_appointment" (clic) et/ou
+//      "appointment_booked" (RDV confirmé).
+//   NB : cal.com (relié à Google Calendar) EXPOSE la confirmation via postMessage → on capte le vrai
+//        RDV pris. Un iframe Google Calendar « nu » ne le permettrait pas (on serait limité à l'intention).
 
 type Params = Record<string, unknown>;
 
@@ -33,4 +37,10 @@ export function track(event: string, params: Params = {}): void {
 export function trackLead(source: string): void {
   try { window.fbq?.('track', 'Lead', { source }); } catch { /* noop */ }
   track('book_appointment', { source });
+}
+
+/** RDV réellement confirmé dans cal.com → conversion (Meta "Schedule" + event générique). */
+export function trackSchedule(params: Params = {}): void {
+  try { window.fbq?.('track', 'Schedule', params); } catch { /* noop */ }
+  track('appointment_booked', params);
 }
