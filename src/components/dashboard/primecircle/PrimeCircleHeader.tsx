@@ -20,7 +20,7 @@ export function PrimeCircleHeader({ data, selectedMonth, onMonthChange }: Props)
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => navigate('/')}
+          onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
           className="pc-back-btn"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

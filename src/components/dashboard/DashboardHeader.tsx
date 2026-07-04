@@ -18,7 +18,7 @@ export function DashboardHeader({ companyName, logoUrl, period = 'YTD 2024' }: D
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => navigate('/')}
+            onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
             className="text-dashboard-text hover:bg-dashboard-card-hover"
           >
             <ArrowLeft className="w-5 h-5" />

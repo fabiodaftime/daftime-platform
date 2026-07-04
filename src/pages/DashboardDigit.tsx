@@ -55,7 +55,7 @@ export default function DashboardDigit() {
       <header className="digit-header">
         <div className="digit-header-inner">
           <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')} style={{ color: '#536471' }}>
+            <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} style={{ color: '#536471' }}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>

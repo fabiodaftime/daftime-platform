@@ -73,7 +73,7 @@ export default function AdminAdvisors() {
   };
 
   return (
-    <AppShell title="Conseillers" maxWidth="max-w-4xl" onBack={() => navigate('/')}
+    <AppShell title="Conseillers" maxWidth="max-w-4xl" onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
       actions={<Button variant="ghost" size="sm" onClick={addDraft} className="text-primary-foreground hover:bg-white/10"><Plus className="w-4 h-4 mr-1" /> Ajouter</Button>}>
       <div className="space-y-4">
         {error && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}

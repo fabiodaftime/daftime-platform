@@ -1,7 +1,7 @@
 // Espace client : layout sidebar (menu à gauche), bandeau de bienvenue + conseiller,
 // statut du mois, plein écran & export PDF. RLS = isolation + "publié uniquement".
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
+import { legacyDashboardRoute } from '@/lib/staff';
 import { ADVISOR, DEFAULT_DOCS } from '@/lib/config';
 
 const BUCKET = 'client-files';
@@ -214,6 +215,10 @@ function ChatPanel({ chat, input, setInput, busy, onSend, compact = false }: {
 export default function ClientSpace() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  // Client legacy : son dashboard vient de la génération Lovable (composant TSX + tables legacy),
+  // pas de la table `dashboards`. On le redirige donc vers sa route legacy dédiée.
+  const [legacyRedirecting, setLegacyRedirecting] = useState(false);
 
   const [tab, setTab] = useState<(typeof NAV)[number]['key']>('accueil');
   // Bandeau de bienvenue : affiché une fois par session de connexion (refermable).
@@ -258,10 +263,18 @@ export default function ClientSpace() {
 
   const loadClient = useCallback(async () => {
     const { data } = await supabase.from('clients' as any)
-      .select('id, name, currency, logo_url, activity_types:activity_type_id(slug, config), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
+      .select('id, name, currency, logo_url, legacy_company_id, activity_types:activity_type_id(slug, config), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
       .eq('id', id).maybeSingle();
+    // Client legacy → redirection vers son dashboard legacy (généré via Lovable), même route que le staff.
+    const legacyId = (data as { legacy_company_id?: string | null } | null)?.legacy_company_id;
+    if (legacyId) {
+      setLegacyRedirecting(true);
+      const { data: co } = await supabase.from('companies').select('layout_type').eq('id', legacyId).maybeSingle();
+      navigate(legacyDashboardRoute((co as { layout_type?: string } | null)?.layout_type, legacyId), { replace: true });
+      return;
+    }
     setClient(data);
-  }, [id]);
+  }, [id, navigate]);
 
   const loadAvailable = useCallback(async () => {
     const { data } = await supabase.from('dashboards' as any).select('period')
@@ -339,7 +352,7 @@ export default function ClientSpace() {
     setShowBanner(false);
   };
 
-  if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
+  if (!client) return <div className="p-8 text-muted-foreground">{legacyRedirecting ? 'Ouverture de votre dashboard…' : 'Chargement…'}</div>;
 
   const cfgDocs = (client as any)?.activity_types?.config?.documents as string[] | undefined;
   const requiredDocs = (Array.isArray(cfgDocs) && cfgDocs.length) ? cfgDocs : DEFAULT_DOCS;

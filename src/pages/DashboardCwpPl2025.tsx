@@ -231,7 +231,7 @@ export default function DashboardCwpPl2025() {
           <button
             type="button"
             className="currency-badge"
-            onClick={() => navigate("/")}
+            onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
             aria-label="Retour à la page d'accueil"
             title="Retour"
             style={{ cursor: "pointer" }}

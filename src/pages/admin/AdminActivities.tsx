@@ -43,7 +43,7 @@ export default function AdminActivities() {
   };
 
   return (
-    <AppShell title="Activités & templates" maxWidth="max-w-4xl" onBack={() => navigate('/')}>
+    <AppShell title="Activités & templates" maxWidth="max-w-4xl" onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}>
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
           Chaque type d'activité peut porter un <strong>catalogue d'indicateurs</strong> (postes extraits + KPIs calculés) utilisé par le moteur de standardisation et de génération. Les catalogues détaillés sont pour l'instant définis dans le code.

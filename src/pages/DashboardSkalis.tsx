@@ -788,7 +788,7 @@ const DashboardSkalis = () => {
               <Menu size={18} />
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--sk-t3)' }}
             >
               <ArrowLeft size={16} />

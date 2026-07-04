@@ -141,7 +141,7 @@ export default function DashboardBocuse() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => navigate('/')}
+              onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
               className="text-white hover:bg-white/10"
             >
               <ArrowLeft className="w-5 h-5" />

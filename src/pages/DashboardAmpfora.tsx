@@ -16,7 +16,7 @@ export default function DashboardAmpfora() {
           borderBottom: '1px solid #E8E0D3',
         }}
       >
-        <Button variant="ghost" size="sm" onClick={() => navigate('/')} style={{ color: '#0A1628' }}>
+        <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} style={{ color: '#0A1628' }}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Retour
         </Button>

@@ -25,7 +25,7 @@ export default function DashboardNowmade() {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => navigate('/')}
+          onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
           className="nowmade-back-btn"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

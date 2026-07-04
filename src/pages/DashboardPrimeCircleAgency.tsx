@@ -45,7 +45,7 @@ export default function DashboardPrimeCircleAgency() {
       <header className="pca-header">
         <div className="pca-header-inner">
           <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="pca-back-btn">
+            <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} className="pca-back-btn">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>

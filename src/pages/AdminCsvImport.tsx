@@ -928,7 +928,7 @@ export default function AdminCsvImport() {
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Retour
             </Button>
             <h1 className="text-2xl font-semibold mt-2">Import CSV</h1>

@@ -115,7 +115,7 @@ export default function AdminEntityInputs() {
     <div style={{ minHeight: '100vh', background: '#F5F0E8', padding: '24px 32px' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Retour
           </Button>
           <h1 style={{ margin: 0, fontFamily: 'serif', fontSize: 28, color: '#0A1628', flex: 1 }}>

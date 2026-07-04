@@ -329,7 +329,7 @@ export default function AdminUsers() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/')}
+              onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
               className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               <ArrowLeft className="w-5 h-5" />

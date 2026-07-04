@@ -1,7 +1,7 @@
 // Cockpit d'un client générique : contexte → fichiers → charte → standardisation →
 // génération dashboard → workflow de statut → chat d'itération (Phase 3, jalon de preuve).
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -78,7 +78,12 @@ export default function AdminClientCockpit() {
   const [guidanceText, setGuidanceText] = useState('');
   const [transcript, setTranscript] = useState('');
   const [auditMsg, setAuditMsg] = useState('');
-  const [tab, setTab] = useState<'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard'>('home');
+  // Onglet actif stocké dans l'URL (?tab=…) : le bouton « retour » du navigateur restaure
+  // l'onglet où l'on était (ex. Audit) au lieu de repartir sur Home.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard';
+  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard') =>
+    setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('tab', t); return p; }, { replace: true });
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
   const OP_LABELS: Record<string, string> = {
@@ -407,7 +412,7 @@ export default function AdminClientCockpit() {
     <AppShell
       title={client.name}
       maxWidth="max-w-6xl"
-      onBack={() => navigate('/admin/clients')}
+      onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
       actions={
         <>
           <Button variant="ghost" size="sm" onClick={() => navigate(`/client/${id}`)} className="text-primary-foreground hover:bg-white/10">

@@ -33,7 +33,7 @@ export default function DashboardHotelX() {
         <div className="hx-header-accent" />
         <div className="hx-header-body">
           <div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')} style={{color:'rgba(245,240,232,.6)',marginBottom:'.3rem'}}>
+            <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} style={{color:'rgba(245,240,232,.6)',marginBottom:'.3rem'}}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour
             </Button>

@@ -126,7 +126,7 @@ export default function DashboardPCGroup() {
         <div className="pcg-header-top">
           <div className="pcg-brand">
             <div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="pcg-back-btn">
+              <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} className="pcg-back-btn">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Retour
               </Button>

@@ -60,7 +60,7 @@ export default function AdminClients() {
   };
 
   return (
-    <AppShell title="Clients — pipeline IA" onBack={() => navigate('/')}>
+    <AppShell title="Clients — pipeline IA" onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}>
       <div className="space-y-8">
         <section className="border rounded-lg p-5">
           <h2 className="font-semibold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Nouveau client</h2>

@@ -1,7 +1,7 @@
 // Plateforme staff Daftime : menu (Accueil / Production / Clients / Configuration)
 // + Accueil performance cabinet + suivi de production mensuelle. Legacy et IA unifiés.
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ interface Client {
 // Filtres de la vue Clients : implantations + catégories transverses.
 const CLIENT_FILTERS = [
   ...LOCATIONS,
+  { key: 'a_categoriser', label: 'À catégoriser', flag: '🏷️' },
   { key: 'test', label: 'Test & fictifs', flag: '🧪' },
   { key: 'ponctuel', label: 'Ponctuel', flag: '📌' },
 ];
@@ -56,9 +57,17 @@ export default function AdminHome() {
   const [missingByClient, setMissingByClient] = useState<Record<string, number>>({});
   const [advisorById, setAdvisorById] = useState<Record<string, string>>({});
   const [activity, setActivity] = useState<any[]>([]);
-  const [view, setView] = useState<'accueil' | 'production' | 'clients'>('accueil');
-  const [loc, setLoc] = useState<string>('dubai');
-  const [open, setOpen] = useState<{ clients: boolean; config: boolean }>({ clients: false, config: false });
+  // Onglet actif (view) + filtre (loc) stockés dans l'URL : le bouton « retour » du navigateur
+  // restaure ainsi la vue d'où l'on vient (ex. Clients → Test & fictifs) au lieu de repartir à zéro.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = (searchParams.get('view') ?? 'accueil') as 'accueil' | 'production' | 'clients';
+  const loc = searchParams.get('filter') ?? 'dubai';
+  const setView = (v: 'accueil' | 'production' | 'clients') =>
+    setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('view', v); return p; }, { replace: true });
+  // Sélection d'un onglet Clients : écrit view + filtre en une seule mise à jour d'URL.
+  const goClients = (filter: string) =>
+    setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('view', 'clients'); p.set('filter', filter); return p; }, { replace: true });
+  const [open, setOpen] = useState<{ clients: boolean; config: boolean }>(() => ({ clients: view === 'clients', config: false }));
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -93,11 +102,17 @@ export default function AdminHome() {
     setClients((cs) => cs.map((c) => (c.id === clientId ? { ...c, location } : c)));
     await supabase.from('clients' as any).update({ location }).eq('id', clientId);
   };
+  // Classement rapide d'un client « à catégoriser » (sort de l'inbox une fois classé).
+  const changeCategory = async (clientId: string, category: string) => {
+    setClients((cs) => cs.map((c) => (c.id === clientId ? { ...c, category } : c)));
+    await supabase.from('clients' as any).update({ category }).eq('id', clientId);
+  };
 
   const monthNum = Number(currentPeriod().slice(5, 7));
   const isProd = (c: Client) => (c.category ?? 'production') === 'production';
   const dueThisMonth = (c: Client) => isProd(c) && (c.cadence !== 'quarterly' || (c.cadence_months ?? []).includes(monthNum));
   const matchesFilter = (c: Client, key: string) => {
+    if (key === 'a_categoriser') return c.category === 'a_categoriser';
     if (key === 'test') return c.category === 'test';
     if (key === 'ponctuel') return c.category === 'ponctuel';
     return isProd(c) && (c.location ?? 'dubai') === key;
@@ -109,6 +124,7 @@ export default function AdminHome() {
   const prodCount = clients.filter(isProd).length;
   const testCount = clients.filter((c) => c.category === 'test').length;
   const ponctCount = clients.filter((c) => c.category === 'ponctuel').length;
+  const toClassifyCount = clients.filter((c) => c.category === 'a_categoriser').length;
 
   // Production mensuelle = clients IA, en production, dus ce mois (mensuels + trimestriels du mois).
   const statusFor = (c: Client) => (c.legacy_company_id ? (prodStatusByClient[c.id] ?? 'a_produire') : (statusByClient[c.id] ?? 'a_produire'));
@@ -170,7 +186,7 @@ export default function AdminHome() {
                 {CLIENT_FILTERS.map((l) => {
                   const active = view === 'clients' && loc === l.key;
                   return (
-                    <button key={l.key} onClick={() => { setView('clients'); setLoc(l.key); }}
+                    <button key={l.key} onClick={() => goClients(l.key)}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}>
                       <span className="text-base leading-none">{l.flag}</span> {l.label}<span className="ml-auto text-xs">{countForFilter(l.key)}</span>
                     </button>
@@ -206,7 +222,7 @@ export default function AdminHome() {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { icon: <Briefcase className="w-4 h-4" />, label: 'Clients', value: clients.length, sub: `${prodCount} prod · ${testCount} test · ${ponctCount} ponct.` },
+                  { icon: <Briefcase className="w-4 h-4" />, label: 'Clients', value: clients.length, sub: `${prodCount} prod${toClassifyCount ? ` · ${toClassifyCount} à classer` : ''} · ${testCount} test · ${ponctCount} ponct.` },
                   { icon: <ClipboardList className="w-4 h-4" />, label: 'À produire ce mois', value: dueProd.length },
                   { icon: <FileCheck2 className="w-4 h-4" />, label: 'Publiés ce mois', value: publishedCount, sub: `sur ${dueProd.length}` },
                   { icon: <AlertTriangle className="w-4 h-4" />, label: 'Pièces manquantes', value: missingClients, sub: 'clients concernés' },
@@ -262,7 +278,7 @@ export default function AdminHome() {
                     {LOCATIONS.map((l) => {
                       const n = countForFilter(l.key); const w = prodCount ? (n / prodCount) * 100 : 0;
                       return (
-                        <button key={l.key} onClick={() => { setView('clients'); setLoc(l.key); setOpen((o) => ({ ...o, clients: true })); }} className="w-full text-left group">
+                        <button key={l.key} onClick={() => { goClients(l.key); setOpen((o) => ({ ...o, clients: true })); }} className="w-full text-left group">
                           <div className="flex justify-between text-sm mb-1"><span>{l.flag} {l.label}</span><span className="tabular-nums text-muted-foreground">{n}</span></div>
                           <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary group-hover:bg-primary/80" style={{ width: `${Math.max(w, 2)}%` }} /></div>
                         </button>
@@ -367,9 +383,20 @@ export default function AdminHome() {
                           <div className="text-xs text-muted-foreground mt-1 truncate">{c.activity_types?.name ?? (legacy ? 'Dashboard sur-mesure' : 'Activité non définie')} · {c.currency}{c.cadence === 'quarterly' ? ' · Trimestriel' : ''}</div>
                         </button>
                         <div className="mt-3 flex items-center justify-between gap-2">
-                          <select value={c.location ?? 'dubai'} onChange={(e) => changeLocation(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
-                            {LOCATIONS.map((l) => <option key={l.key} value={l.key}>{l.flag} {l.label}</option>)}
-                          </select>
+                          <div className="flex items-center gap-1.5">
+                            <select value={c.location ?? 'dubai'} onChange={(e) => changeLocation(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
+                              {LOCATIONS.map((l) => <option key={l.key} value={l.key}>{l.flag} {l.label}</option>)}
+                            </select>
+                            {c.category === 'a_categoriser' && (
+                              <select value={c.category} onChange={(e) => changeCategory(c.id, e.target.value)}
+                                className="text-xs h-7 rounded border border-amber-300 bg-amber-50 text-amber-800 px-1.5 outline-none">
+                                <option value="a_categoriser" disabled>🏷️ Classer…</option>
+                                <option value="production">✅ Production</option>
+                                <option value="test">🧪 Test</option>
+                                <option value="ponctuel">📌 Ponctuel</option>
+                              </select>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1">
                             <button onClick={() => navigate(`/admin/clients/${c.id}/settings`)} title="Réglages" className="p-1 text-muted-foreground hover:text-foreground"><Settings className="w-3.5 h-3.5" /></button>
                             <button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button>

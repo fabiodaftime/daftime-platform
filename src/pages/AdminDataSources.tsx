@@ -198,7 +198,7 @@ export default function AdminDataSources() {
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+            <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}>
               <ArrowLeft className="h-4 w-4 mr-1" /> Retour
             </Button>
             <div>

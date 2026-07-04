@@ -71,7 +71,7 @@ export default function DashboardRichissime() {
       </button>
       {sidebarOpen && <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} />}
       <div className={`fixed inset-y-0 left-0 z-40 transform transition-transform lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <RichissimeSidebar companyName={company.name} logoUrl={company.logo_url} navItems={NAV_ITEMS} activePage={activePage} onPageChange={(p) => { setActivePage(p); setSidebarOpen(false); }} onBack={() => navigate('/')} onClose={() => setSidebarOpen(false)} />
+        <RichissimeSidebar companyName={company.name} logoUrl={company.logo_url} navItems={NAV_ITEMS} activePage={activePage} onPageChange={(p) => { setActivePage(p); setSidebarOpen(false); }} onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} onClose={() => setSidebarOpen(false)} />
       </div>
 
       <div className="flex-1 min-w-0">

@@ -145,7 +145,7 @@ export default function DashboardLabarile() {
           navItems={NAV_ITEMS}
           activePage={activePage}
           onPageChange={(page) => { setActivePage(page); setSidebarOpen(false); }}
-          onBack={() => navigate('/')}
+          onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
           onClose={() => setSidebarOpen(false)}
         />
       </div>

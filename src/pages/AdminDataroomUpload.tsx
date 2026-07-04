@@ -103,7 +103,7 @@ export default function AdminDataroomUpload() {
   return (
     <div style={{ minHeight: '100vh', background: '#FAF7F2', fontFamily: 'Poppins, system-ui, sans-serif', color: '#1A1D56' }}>
       <header style={{ background: '#1A1D56', color: '#fff', padding: '18px 32px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/')} style={{ color: '#fff' }}>
+        <Button variant="ghost" size="sm" onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))} style={{ color: '#fff' }}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Retour
         </Button>
         <div style={{ fontWeight: 600, fontSize: 16 }}>Data room Ampfora — Dépôt des documents</div>

@@ -12,6 +12,7 @@ import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
 
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 const CATEGORIES = [
+  { key: 'a_categoriser', label: 'À catégoriser' },
   { key: 'production', label: 'Production (réel)' },
   { key: 'test', label: 'Test / fictif' },
   { key: 'ponctuel', label: 'Ponctuel' },
@@ -92,7 +93,7 @@ export default function AdminClientSettings() {
     <AppShell
       title={`Réglages — ${client.name}`}
       maxWidth="max-w-3xl"
-      onBack={() => navigate('/')}
+      onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
       actions={
         <Button variant="ghost" size="sm" onClick={openDashboard} className="text-primary-foreground hover:bg-white/10">
           {legacy ? <ExternalLink className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}

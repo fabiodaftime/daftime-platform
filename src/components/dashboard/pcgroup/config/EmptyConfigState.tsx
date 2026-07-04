@@ -187,7 +187,7 @@ export function EmptyConfigState({ reason, isSuperAdmin }: EmptyConfigStateProps
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/')}
+            onClick={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
             style={{ color: '#F5F0E8' }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
