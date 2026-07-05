@@ -1,22 +1,33 @@
 // Helpers partagés pour la zone "clients génériques" (pipeline IA — Phase 3).
 import { supabase } from '@/integrations/supabase/client';
 
-/** Invoque une edge function et remonte proprement le message d'erreur serveur. */
-export async function invokeFn<T = any>(name: string, body: unknown): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(name, { body });
-  if (error) {
-    let msg = error.message ?? 'Erreur';
-    try {
-      const ctx = (error as any).context;
-      if (ctx && typeof ctx.json === 'function') {
-        const j = await ctx.json();
-        if (j?.error) msg = j.error;
-      }
-    } catch { /* ignore */ }
-    throw new Error(msg);
-  }
-  if (data && (data as any).error) throw new Error((data as any).error);
-  return data as T;
+/** Invoque une edge function et remonte proprement le message d'erreur serveur.
+ *  Garde-fou anti « spinner infini » : timeout client (défaut 180 s) → erreur claire au lieu
+ *  d'attendre indéfiniment (l'appel serveur, lui, se termine de son côté). */
+export async function invokeFn<T = any>(name: string, body: unknown, timeoutMs = 180_000): Promise<T> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(
+      () => reject(new Error('Délai dépassé : le traitement IA a mis trop de temps. Réessaie (ou allège / réduis les documents).')),
+      timeoutMs,
+    ),
+  );
+  const call = (async (): Promise<T> => {
+    const { data, error } = await supabase.functions.invoke(name, { body });
+    if (error) {
+      let msg = error.message ?? 'Erreur';
+      try {
+        const ctx = (error as any).context;
+        if (ctx && typeof ctx.json === 'function') {
+          const j = await ctx.json();
+          if (j?.error) msg = j.error;
+        }
+      } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+    if (data && (data as any).error) throw new Error((data as any).error);
+    return data as T;
+  })();
+  return Promise.race([call, timeout]);
 }
 
 /** Lit un fichier en base64 (sans le préfixe data:...;base64,). */

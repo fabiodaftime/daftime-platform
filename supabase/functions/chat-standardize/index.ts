@@ -49,7 +49,11 @@ Deno.serve(async (req) => {
       .from("standardized_data").select("*").eq("client_id", client_id).eq("period", period).eq("is_current", true).maybeSingle();
     const { data: files } = await admin
       .from("files").select("*").eq("client_id", client_id).eq("period", period);
-    const docs = await readClientFiles(admin, files ?? []);
+    // Ici on n'exploite que le TEXTE des fichiers (Excel/CSV/txt) — inutile de télécharger et
+    // d'encoder les PDF/images (lourds, plusieurs Mo) qui ne sont de toute façon pas passés au modèle.
+    const textFiles = (files ?? []).filter((f: { original_name?: string | null }) =>
+      /\.(xlsx|xls|csv|tsv|txt|md|json)$/i.test(String(f.original_name ?? "")));
+    const docs = await readClientFiles(admin, textFiles);
 
     const messages: AnthropicMessage[] = [
       ...history,
@@ -59,7 +63,7 @@ Deno.serve(async (req) => {
           `CONTEXTE:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\n` +
           `DONNÉES ACTUELLES:\n${JSON.stringify(sd?.data ?? { sections: [] }, null, 2)}\n\n` +
           `PIÈCES MANQUANTES ACTUELLES:\n${JSON.stringify(sd?.missing_items ?? [], null, 2)}\n\n` +
-          `FICHIERS (${docs.length}):\n${docs.map((d) => `### ${d.name}\n${d.content}`).join("\n\n") || "(aucun)"}\n\n` +
+          `FICHIERS (${docs.length}):\n${docs.map((d) => `### ${d.name}\n${d.kind === "text" ? d.content : `(non lu : ${(d as { reason?: string }).reason ?? "ignoré"})`}`).join("\n\n") || "(aucun)"}\n\n` +
           `INSTRUCTION:\n${message}`,
       },
     ];
@@ -69,6 +73,7 @@ Deno.serve(async (req) => {
       system: SYSTEM,
       messages,
       max_tokens: 8000,
+      signal: AbortSignal.timeout(150_000), // échec propre si l'appel LLM traîne, au lieu d'un 500 opaque
     });
     const parsed = extractJson<{ data?: unknown; missing_items?: unknown[]; summary?: string }>(out);
 
