@@ -127,26 +127,31 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* Modale RDV — iframe cal.com montée en PERMANENCE (préchargée) → ouverture quasi instantanée. */}
-      <div
-        className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 transition-opacity duration-200 ${bookingOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={() => setBookingOpen(false)}
-        aria-hidden={!bookingOpen}
-      >
+      {/* Modale RDV — montée uniquement à l'ouverture (pas d'overlay permanent → aucun blocage
+          de scroll sur mobile). Preconnect cal.com (index.html) pour accélérer + spinner de chargement. */}
+      {bookingOpen && (
         <div
-          className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setBookingOpen(false)}
         >
-          <button
-            onClick={() => setBookingOpen(false)}
-            aria-label="Fermer"
-            className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 border flex items-center justify-center hover:bg-muted"
+          <div
+            className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="w-4 h-4" />
-          </button>
-          <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
+            <button
+              onClick={() => setBookingOpen(false)}
+              aria-label="Fermer"
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 border flex items-center justify-center hover:bg-muted"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="relative w-full h-full border-0" />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
