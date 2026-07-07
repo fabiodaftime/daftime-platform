@@ -279,17 +279,20 @@ export default function LandingEcommerce() {
         </div>
       </footer>
 
-      {/* Modale RDV */}
-      {bookingOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setBookingOpen(false)}>
-          <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setBookingOpen(false)} aria-label="Fermer" className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 border flex items-center justify-center hover:bg-muted">
-              <X className="w-4 h-4" />
-            </button>
-            <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
-          </div>
+      {/* Modale RDV — l'iframe cal.com est montée en PERMANENCE (préchargée dès l'arrivée sur la page),
+          on ne fait qu'afficher/masquer l'overlay au clic → ouverture quasi instantanée. */}
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 transition-opacity duration-200 ${bookingOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setBookingOpen(false)}
+        aria-hidden={!bookingOpen}
+      >
+        <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => setBookingOpen(false)} aria-label="Fermer" className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 border flex items-center justify-center hover:bg-muted">
+            <X className="w-4 h-4" />
+          </button>
+          <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="w-full h-full border-0" />
         </div>
-      )}
+      </div>
     </div>
   );
 }
