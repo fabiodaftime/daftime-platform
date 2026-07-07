@@ -31,7 +31,7 @@ export function BookingModal({ open, onClose }: { open: boolean; onClose: () => 
             rel="noopener noreferrer"
             className="shrink-0 flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-12 bg-amber-50 text-amber-800 border-b border-amber-200"
           >
-            📱 Réservation plus fiable dans votre navigateur — appuyez pour l'ouvrir →
+            📱 Le calendrier ne s'affiche pas ? Appuyez ici pour l'ouvrir →
           </a>
         )}
 
