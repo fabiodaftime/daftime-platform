@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
-  ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck, X,
+  ArrowRight, Users, LineChart, ShieldCheck, CalendarCheck,
   ShoppingBag, Building2, GraduationCap, Cloud, UtensilsCrossed, Briefcase, Network, Rocket, Megaphone,
 } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { WorldMap } from '@/components/landing/WorldMap';
 import { BrandLockup } from '@/components/layout/BrandLockup';
-import { BOOKING_SCHEDULE_URL } from '@/lib/config';
+import { BookingModal } from '@/components/booking/BookingModal';
 
 const FEATURES = [
   { icon: Users, title: "Accompagnement d'experts", desc: 'Des professionnels du conseil financier à vos côtés au quotidien.' },
@@ -127,31 +127,8 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* Modale RDV — montée uniquement à l'ouverture (pas d'overlay permanent → aucun blocage
-          de scroll sur mobile). Preconnect cal.com (index.html) pour accélérer + spinner de chargement. */}
-      {bookingOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
-          onClick={() => setBookingOpen(false)}
-        >
-          <div
-            className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setBookingOpen(false)}
-              aria-label="Fermer"
-              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-background/90 border flex items-center justify-center hover:bg-muted"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-            <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="relative w-full h-full border-0" />
-          </div>
-        </div>
-      )}
+      {/* Modale RDV (partagée) — filet de sécurité in-app inclus. */}
+      <BookingModal open={bookingOpen} onClose={() => setBookingOpen(false)} />
     </div>
   );
 }

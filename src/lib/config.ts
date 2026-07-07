@@ -5,6 +5,10 @@
 // - ADVISOR : RDV avec le conseiller (clients existants, espace client).
 export const BOOKING_SCHEDULE_URL =
   'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min?embed=true&theme=light';
+// Version « plein onglet » (sans embed) — repli fiable dans les navigateurs in-app (Insta/FB),
+// où les iframes tiers sont souvent bridés.
+export const BOOKING_SCHEDULE_FULL_URL =
+  'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min';
 export const BOOKING_ADVISOR_URL =
   'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-clientele-daftime-advisory?embed=true&theme=light';
 
