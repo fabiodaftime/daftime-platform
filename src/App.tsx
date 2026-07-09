@@ -1,4 +1,7 @@
 import { lazy, Suspense } from "react";
+// Landing pub en EAGER (dans le bundle principal) : pas d'aller-retour réseau supplémentaire au
+// chargement de /ecommerce → meilleur FCP/LCP sur la page qui reçoit le trafic pub.
+import LandingEcommerce from "./pages/LandingEcommerce";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,7 +12,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 // Pages en lazy-loading : chaque route devient un chunk séparé (chargé à la demande).
 // → la landing ne télécharge plus toute l'app (dashboards, admin, recharts…), d'où un FCP/LCP bien plus rapide.
 const Index = lazy(() => import("./pages/Index"));
-const LandingEcommerce = lazy(() => import("./pages/LandingEcommerce"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
