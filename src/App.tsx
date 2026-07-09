@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,48 +6,56 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import LandingEcommerce from "./pages/LandingEcommerce";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import UpdatePassword from "./pages/UpdatePassword";
-import Profile from "./pages/Profile";
-import Dashboard from "./pages/Dashboard";
-import DashboardBocuse from "./pages/DashboardBocuse";
-import DashboardLabarile from "./pages/DashboardLabarile";
-import DashboardRichissime from "./pages/DashboardRichissime";
-import DashboardCwpPl2025 from "./pages/DashboardCwpPl2025";
-import DashboardNowmade from "./pages/DashboardNowmade";
-import DashboardPrimeCircle from "./pages/DashboardPrimeCircle";
-import DashboardPrimeCircleAgency from "./pages/DashboardPrimeCircleAgency";
-import DashboardDigit from "./pages/DashboardDigit";
-import DashboardDigitCore from "./pages/DashboardDigitCore";
-import DashboardSpy from "./pages/DashboardSpy";
-import DashboardComment from "./pages/DashboardComment";
-import DashboardPCGroup from "./pages/DashboardPCGroup";
-import DashboardNexus from "./pages/DashboardNexus";
-import DashboardHotelX from "./pages/DashboardHotelX";
-import DashboardSkalis from "./pages/DashboardSkalis";
-import DashboardAmpfora from "./pages/DashboardAmpfora";
-import CompanyForm from "./pages/CompanyForm";
-import AdminUsers from "./pages/AdminUsers";
-import AdminPCGroupDiagnostics from "./pages/AdminPCGroupDiagnostics";
-import AdminPCGroupEntities from "./pages/AdminPCGroupEntities";
-import AdminEntityInputs from "./pages/AdminEntityInputs";
-import AdminDataSources from "./pages/AdminDataSources";
-import AdminCsvImport from "./pages/AdminCsvImport";
-import AdminLabarileImport from "./pages/AdminLabarileImport";
-import AdminDataroomUpload from "./pages/AdminDataroomUpload";
-import AdminClients from "./pages/admin/AdminClients";
-import AdminClientCockpit from "./pages/admin/AdminClientCockpit";
-import AdminClientSettings from "./pages/admin/AdminClientSettings";
-import AdminAdvisors from "./pages/admin/AdminAdvisors";
-import AdminActivities from "./pages/admin/AdminActivities";
-import AdminCatalog from "./pages/admin/AdminCatalog";
-import ClientSpace from "./pages/ClientSpace";
-import NotFound from "./pages/NotFound";
+// Pages en lazy-loading : chaque route devient un chunk séparé (chargé à la demande).
+// → la landing ne télécharge plus toute l'app (dashboards, admin, recharts…), d'où un FCP/LCP bien plus rapide.
+const Index = lazy(() => import("./pages/Index"));
+const LandingEcommerce = lazy(() => import("./pages/LandingEcommerce"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const DashboardBocuse = lazy(() => import("./pages/DashboardBocuse"));
+const DashboardLabarile = lazy(() => import("./pages/DashboardLabarile"));
+const DashboardRichissime = lazy(() => import("./pages/DashboardRichissime"));
+const DashboardCwpPl2025 = lazy(() => import("./pages/DashboardCwpPl2025"));
+const DashboardNowmade = lazy(() => import("./pages/DashboardNowmade"));
+const DashboardPrimeCircle = lazy(() => import("./pages/DashboardPrimeCircle"));
+const DashboardPrimeCircleAgency = lazy(() => import("./pages/DashboardPrimeCircleAgency"));
+const DashboardDigit = lazy(() => import("./pages/DashboardDigit"));
+const DashboardDigitCore = lazy(() => import("./pages/DashboardDigitCore"));
+const DashboardSpy = lazy(() => import("./pages/DashboardSpy"));
+const DashboardComment = lazy(() => import("./pages/DashboardComment"));
+const DashboardPCGroup = lazy(() => import("./pages/DashboardPCGroup"));
+const DashboardNexus = lazy(() => import("./pages/DashboardNexus"));
+const DashboardHotelX = lazy(() => import("./pages/DashboardHotelX"));
+const DashboardSkalis = lazy(() => import("./pages/DashboardSkalis"));
+const DashboardAmpfora = lazy(() => import("./pages/DashboardAmpfora"));
+const CompanyForm = lazy(() => import("./pages/CompanyForm"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const AdminPCGroupDiagnostics = lazy(() => import("./pages/AdminPCGroupDiagnostics"));
+const AdminPCGroupEntities = lazy(() => import("./pages/AdminPCGroupEntities"));
+const AdminEntityInputs = lazy(() => import("./pages/AdminEntityInputs"));
+const AdminDataSources = lazy(() => import("./pages/AdminDataSources"));
+const AdminCsvImport = lazy(() => import("./pages/AdminCsvImport"));
+const AdminLabarileImport = lazy(() => import("./pages/AdminLabarileImport"));
+const AdminDataroomUpload = lazy(() => import("./pages/AdminDataroomUpload"));
+const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
+const AdminClientCockpit = lazy(() => import("./pages/admin/AdminClientCockpit"));
+const AdminClientSettings = lazy(() => import("./pages/admin/AdminClientSettings"));
+const AdminAdvisors = lazy(() => import("./pages/admin/AdminAdvisors"));
+const AdminActivities = lazy(() => import("./pages/admin/AdminActivities"));
+const AdminCatalog = lazy(() => import("./pages/admin/AdminCatalog"));
+const ClientSpace = lazy(() => import("./pages/ClientSpace"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -55,6 +64,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/ecommerce" element={<LandingEcommerce />} />
             <Route path="/auth" element={<Auth />} />
@@ -335,6 +345,7 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
