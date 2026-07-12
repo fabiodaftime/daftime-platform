@@ -3,7 +3,7 @@
 // promesse spécifique, preuve sociale, bénéfices chiffrés, levée d'objections, tracking.
 //
 // 👉 À REMPLIR avant de lancer les ads : PRICE_FROM, STATS, LOGOS, TESTIMONIALS (données RÉELLES).
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,7 @@ import { BrandLockup } from '@/components/layout/BrandLockup';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
 import { trackLead } from '@/lib/tracking';
+import { initCalTracking } from '@/lib/cal';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Valeurs RÉELLES (ne rien inventer : la fausse preuve tue la confiance)
@@ -69,6 +70,9 @@ const FAQ = [
 export default function LandingEcommerce() {
   const navigate = useNavigate();
   const [bookingOpen, setBookingOpen] = useState(false);
+
+  // Écoute la confirmation de RDV cal.com (gratuit) → conversion Meta "Schedule".
+  useEffect(() => { initCalTracking(); }, []);
 
   const book = (source: string) => { trackLead(source); setBookingOpen(true); };
 

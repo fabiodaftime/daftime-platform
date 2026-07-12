@@ -12,7 +12,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 // Pages en lazy-loading : chaque route devient un chunk séparé (chargé à la demande).
 // → la landing ne télécharge plus toute l'app (dashboards, admin, recharts…), d'où un FCP/LCP bien plus rapide.
 const Index = lazy(() => import("./pages/Index"));
-const RdvConfirme = lazy(() => import("./pages/RdvConfirme"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
@@ -70,7 +69,6 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/ecommerce" element={<LandingEcommerce />} />
-            <Route path="/rdv-confirme" element={<RdvConfirme />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/auth/update-password" element={<UpdatePassword />} />
