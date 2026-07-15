@@ -394,11 +394,12 @@ function BeforeAfter({ title, tone, rows }: { title: string; tone: 'bad' | 'good
   );
 }
 
-// Photo Fabio — placeholder /fabio.jpg, repli sur initiales si absente.
+// Photo Fabio (bucket public Supabase) — repli sur initiales si l'image ne charge pas.
+const FABIO_PHOTO = 'https://emsixhbnlvnhpfleecln.supabase.co/storage/v1/object/public/advisors/fabiophoto.jpeg';
 function Avatar() {
   const [err, setErr] = useState(false);
   if (err) {
     return <div className="w-24 h-24 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">FV</div>;
   }
-  return <img src="/fabio.jpg" alt="Fabio Vieira" onError={() => setErr(true)} className="w-24 h-24 rounded-full object-cover border" />;
+  return <img src={FABIO_PHOTO} alt="Fabio Vieira" loading="lazy" onError={() => setErr(true)} className="w-24 h-24 rounded-full object-cover border" />;
 }
