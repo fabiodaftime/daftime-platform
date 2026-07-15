@@ -33,14 +33,23 @@ export function track(event: string, params: Params = {}): void {
   if (import.meta.env.DEV) console.debug('[track]', event, params);
 }
 
-/** Clic sur un CTA de prise de RDV → intention de lead (Meta "Lead" + event générique). */
+/** Lead capturé (formulaire « dashboard gratuit » soumis avec succès) → conversion Meta "Lead". */
 export function trackLead(source: string): void {
   try { window.fbq?.('track', 'Lead', { source }); } catch { /* noop */ }
-  track('book_appointment', { source });
+  track('lead', { source });
 }
 
 /** RDV réellement confirmé dans cal.com → conversion (Meta "Schedule" + event générique). */
 export function trackSchedule(params: Params = {}): void {
   try { window.fbq?.('track', 'Schedule', params); } catch { /* noop */ }
   track('appointment_booked', params);
+}
+
+/** Intérêt marqué (ex. scroll 50 % de la landing) → Meta "ViewContent". Une seule fois par session. */
+let viewContentFired = false;
+export function trackViewContent(params: Params = {}): void {
+  if (viewContentFired) return;
+  viewContentFired = true;
+  try { window.fbq?.('track', 'ViewContent', params); } catch { /* noop */ }
+  track('view_content', params);
 }
