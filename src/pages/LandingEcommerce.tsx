@@ -89,9 +89,9 @@ export default function LandingEcommerce() {
 
           {/* Teaser 3 KPI — voir le produit avant de scroller */}
           <div className="mt-6 grid grid-cols-3 gap-2">
-            <TeaserKpi label="Marge nette" value="−2 %" tone="bad" />
-            <TeaserKpi label="ROAS" value="1,98" tone="bad" />
-            <TeaserKpi label="Cash" value="−9 400 €" tone="warn" />
+            <TeaserKpi label="ROAS" value="1,98" sub="point mort : 2,8" tone="bad" />
+            <TeaserKpi label="Marge" value="−2 %" sub="vs +4 % M-1" tone="bad" />
+            <TeaserKpi label="AOV" value="72,79 €" sub="−4 % vs M-1" tone="warn" />
           </div>
         </div>
       </section>
@@ -124,8 +124,8 @@ export default function LandingEcommerce() {
           <div className="mt-8 max-w-2xl mx-auto">
             <h3 className="text-center text-lg font-semibold">Le même shop, 3 mois plus tard.</h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <BeforeAfter title="Avril" tone="bad" rows={[['Marge', '−2 %'], ['ROAS', '1,98'], ['Cash', '28 670 €']]} />
-              <BeforeAfter title="Juillet" tone="good" rows={[['Marge', '+7 %'], ['ROAS', '3,1'], ['Cash', '61 200 €']]} />
+              <BeforeAfter title="Juin" tone="bad" rows={[['Marge', '−2 %'], ['ROAS', '1,98'], ['Cash', '28 670 €']]} />
+              <BeforeAfter title="Septembre" tone="good" rows={[['Marge', '+7 %'], ['ROAS', '3,1'], ['Cash', '61 200 €']]} />
             </div>
             <div className="mt-4 rounded-2xl border bg-card p-5">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Les 3 décisions prises</div>
@@ -155,11 +155,15 @@ export default function LandingEcommerce() {
         <div className="max-w-xl mx-auto px-4 py-12 flex flex-col items-center text-center">
           <Avatar />
           <div className="mt-4 font-semibold text-lg">Fabio Vieira</div>
-          <p className="mt-2 text-muted-foreground text-[15px] leading-relaxed max-w-md">
+          <div className="text-xs text-muted-foreground">Founder · Daftime Advisory</div>
+          <p className="mt-3 text-muted-foreground text-[15px] leading-relaxed max-w-md">
             Spécialisé e-commerce. Issu de l’expertise comptable, orienté conseil et CFO part-time.
             Je vis entre Dubaï, Lisbonne et Lyon. Je bricole pas des tableurs&nbsp;: je lis des shops toute la journée.
           </p>
-          <p className="mt-4 font-medium">« C’est moi qui regarde tes chiffres. »</p>
+          <p className="mt-3 text-[15px] leading-relaxed max-w-md">
+            Chaque mois, c’est <b>moi ou un de nos analystes spécialisés e-commerce</b> qui lit et interprète tes chiffres. Jamais un algo, jamais un template.
+          </p>
+          <p className="mt-4 font-medium max-w-md">« Un founder doit passer son temps sur son produit et son acquisition. Pas dans un tableur. »</p>
         </div>
       </section>
 
@@ -260,20 +264,20 @@ function DashboardDemo() {
     { l: 'ROAS', v: '1,98', verdict: 'point mort à 2,8', tone: 'bad' as const },
     { l: 'AOV', v: '72,79 €', verdict: 'à surveiller', tone: 'warn' as const },
     { l: 'Part de réachat', v: '22 %', verdict: 'ta croissance durable', tone: 'good' as const },
-    { l: 'Cash', v: '−9 330 €', verdict: 'point bas dans 6 sem.', tone: 'warn' as const },
+    { l: 'Cash', v: '28 670 €', verdict: '−9 330 € ce mois · point bas à venir', tone: 'warn' as const },
   ];
   const costs = [
-    { label: 'Publicité', val: '51 %', color: 'hsl(var(--primary))' },
-    { label: 'Achats (COGS)', val: '27 %', color: 'hsl(var(--accent))' },
-    { label: 'Logistique', val: '13 %', color: '#14b8a6' },
-    { label: 'PSP & autres', val: '9 %', color: 'hsl(var(--muted-foreground)/0.4)' },
+    { label: 'Achats produit (COGS)', val: '40 %', color: 'hsl(var(--primary))' },
+    { label: 'Publicité', val: '38 %', color: 'hsl(var(--accent))' },
+    { label: 'Livraison', val: '15 %', color: '#14b8a6' },
+    { label: 'Frais de paiement', val: '9 %', color: 'hsl(var(--muted-foreground)/0.4)' },
   ];
   return (
     <div className="rounded-2xl border bg-card shadow-xl overflow-hidden">
       {/* En-tête */}
       <div className="bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between">
         <div>
-          <div className="text-[10px] uppercase tracking-widest opacity-60">E-commerce · Avril 2026</div>
+          <div className="text-[10px] uppercase tracking-widest opacity-60">E-commerce · Juin 2026</div>
           <div className="font-semibold text-sm">Ta marque</div>
         </div>
         <span className="text-[10px] font-semibold bg-white/15 rounded-full px-2.5 py-1 flex items-center gap-1.5">
@@ -332,10 +336,10 @@ function DashboardDemo() {
 
         {/* Coûts en % du CA : liste chiffrée (mobile) + donut (desktop) */}
         <div className="rounded-xl border p-3">
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Coûts · % du CA</div>
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Où part chaque 100 € de CA</div>
           <div className="flex items-center gap-4">
             {/* Donut : desktop seulement (illisible en petit) */}
-            <div className="relative w-16 h-16 shrink-0 hidden sm:block" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 51%, hsl(var(--accent)) 51% 78%, #14b8a6 78% 91%, hsl(var(--muted-foreground)/0.4) 91% 100%)', borderRadius: '9999px' }}>
+            <div className="relative w-16 h-16 shrink-0 hidden sm:block" style={{ background: 'conic-gradient(hsl(var(--primary)) 0 39%, hsl(var(--accent)) 39% 76%, #14b8a6 76% 91%, hsl(var(--muted-foreground)/0.4) 91% 100%)', borderRadius: '9999px' }}>
               <div className="absolute inset-[6px] rounded-full bg-card" />
             </div>
             <div className="flex-1 space-y-1.5">
@@ -347,6 +351,9 @@ function DashboardDemo() {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="mt-2.5 pt-2.5 border-t text-[12px] font-medium text-red-600">
+            102 € dépensés pour 100 € vendus → tu perds 2 € à chaque vente.
           </div>
         </div>
       </div>
@@ -361,11 +368,12 @@ function dotCls(t: 'good' | 'bad' | 'warn') {
   return t === 'good' ? 'bg-emerald-500' : t === 'bad' ? 'bg-red-500' : 'bg-amber-500';
 }
 
-function TeaserKpi({ label, value, tone }: { label: string; value: string; tone: 'bad' | 'warn' | 'good' }) {
+function TeaserKpi({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone: 'bad' | 'warn' | 'good' }) {
   return (
     <div className="rounded-xl border bg-card p-2.5 text-center">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold truncate">{label}</div>
       <div className={`text-lg font-bold mt-0.5 tabular-nums ${toneCls(tone)}`}>{value}</div>
+      {sub && <div className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{sub}</div>}
     </div>
   );
 }
