@@ -34,7 +34,7 @@ export interface PostImportValidationResult {
   recomputeReport: PCARecomputeReport;
 }
 
-const STORAGE_KEY = 'lovable.postImportValidation.last';
+const STORAGE_KEY = 'daftime.postImportValidation.last';
 
 export function runPostImportValidation(opts: { source: string; inserted: number }): PostImportValidationResult {
   const integrityReport = validatePCAIntegrity();

@@ -216,7 +216,7 @@ export default function ClientSpace() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  // Client legacy : son dashboard vient de la génération Lovable (composant TSX + tables legacy),
+  // Client legacy : son dashboard vient de la génération legacy (composant TSX + tables legacy),
   // pas de la table `dashboards`. On le redirige donc vers sa route legacy dédiée.
   const [legacyRedirecting, setLegacyRedirecting] = useState(false);
 
@@ -265,7 +265,7 @@ export default function ClientSpace() {
     const { data } = await supabase.from('clients' as any)
       .select('id, name, currency, logo_url, legacy_company_id, activity_types:activity_type_id(slug, config), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
       .eq('id', id).maybeSingle();
-    // Client legacy → redirection vers son dashboard legacy (généré via Lovable), même route que le staff.
+    // Client legacy → redirection vers son dashboard legacy (généré via l'app legacy), même route que le staff.
     const legacyId = (data as { legacy_company_id?: string | null } | null)?.legacy_company_id;
     if (legacyId) {
       setLegacyRedirecting(true);

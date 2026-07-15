@@ -57,7 +57,7 @@ export default function LandingEcommerce() {
       <header className="sticky top-0 z-40 h-14 bg-white/95 backdrop-blur border-b">
         <div className="max-w-6xl mx-auto px-4 h-full flex items-center justify-between">
           <img src={daftimeLogo} alt="Daftime Advisory" className="h-8 w-auto" />
-          <button onClick={() => navigate('/auth')} className="text-sm text-muted-foreground hover:text-foreground">
+          <button onClick={() => navigate('/auth')} className="text-[13px] font-normal text-muted-foreground/70 hover:text-foreground transition-colors">
             Accéder à mon espace
           </button>
         </div>
@@ -81,7 +81,7 @@ export default function LandingEcommerce() {
             {CTA}
           </Button>
           <p className="mt-2.5 text-xs text-center text-muted-foreground">
-            <span className="text-foreground font-medium">20 min de call pour caler</span>, puis ton dashboard livré sous 2 jours. Gratuit.
+            <span className="text-foreground font-medium">20 min de call</span>, puis ton dashboard livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> — zéro pitch, tu décides après.
           </p>
           <p className="mt-1 text-xs text-muted-foreground text-center">
             Pensé pour les shops qui font 1 000 $/jour et plus. En dessous, un tableur suffit.
@@ -95,6 +95,13 @@ export default function LandingEcommerce() {
           </div>
         </div>
       </section>
+
+      {/* ── Barre de confiance ── */}
+      <div className="border-y bg-secondary/30">
+        <p className="max-w-lg mx-auto px-4 py-3 text-center text-xs text-muted-foreground">
+          <b className="text-foreground">+40 shops</b> accompagnés · <b className="text-foreground">50 M€</b> de CA e-commerce suivi
+        </p>
+      </div>
 
       {/* ── DASHBOARD DÉMO — la pièce maîtresse ── */}
       <section className="bg-secondary/40 border-y">
@@ -212,6 +219,9 @@ export default function LandingEcommerce() {
               <span className="tabular-nums font-semibold text-xl">700 $ <span className="text-sm font-normal text-muted-foreground">/ mois</span></span>
             </div>
           </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <b className="text-foreground">Ton premier dashboard est offert.</b> Tu le gardes quoi qu'il arrive — tu continues à 700 $/mois seulement si ça t'apporte de la valeur.
+          </p>
           <ul className="mt-5 inline-flex flex-col gap-2 text-left text-sm">
             {['Dashboard sur-mesure chaque mois', '1h de revue en visio avec ton analyste', 'Les 3 points d’attention + ton plan', 'Toutes tes sources réconciliées', 'Sans engagement'].map((x) => (
               <li key={x} className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> {x}</li>
@@ -272,9 +282,9 @@ export default function LandingEcommerce() {
 function DashboardDemo() {
   const kpis = [
     { l: 'CA du mois', v: '136 840 €', verdict: '+12 % vs M-1', tone: 'good' as const },
-    { l: 'Marge nette · CM3', v: '−2 %', verdict: 'le vrai chiffre', tone: 'bad' as const },
-    { l: 'ROAS', v: '1,98', verdict: 'point mort à 2,8', tone: 'bad' as const },
-    { l: 'AOV', v: '72,79 €', verdict: 'à surveiller', tone: 'warn' as const },
+    { l: 'Marge nette · CM3', v: '−2 %', verdict: 'vs +4 % M-1', tone: 'bad' as const },
+    { l: 'ROAS', v: '1,98', verdict: 'point mort : 2,8', tone: 'bad' as const },
+    { l: 'AOV', v: '72,79 €', verdict: '−4 % vs M-1', tone: 'warn' as const },
     { l: 'Part de réachat', v: '22 %', verdict: 'ta croissance durable', tone: 'good' as const },
     { l: 'Cash', v: '28 670 €', verdict: '−9 330 € ce mois · point bas à venir', tone: 'warn' as const },
   ];
