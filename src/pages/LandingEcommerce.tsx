@@ -4,7 +4,7 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck, Lock, Video, Target, Compass, type LucideIcon } from 'lucide-react';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
@@ -16,11 +16,11 @@ const CTA = 'Recevoir mon dashboard gratuit';
 const STEPS = [
   { n: 1, t: 'Tu réserves ton call', d: '20 min pour faire le point sur ton shop. On voit ensemble ce qui coince.' },
   { n: 2, t: 'On récupère tes accès', d: 'Shopify, Stripe, Meta Ads, relevés bancaires. On te guide, ça prend 5 min.' },
-  { n: 3, t: 'Tu reçois ton dashboard', d: 'Ta vraie situation, livrée sous 2 jours. Où tu gagnes, où tu perds, quoi faire. Tu le gardes.' },
+  { n: 3, t: 'On le décortique ensemble', d: 'Ton dashboard livré sous 2 jours, puis 1h de revue avec ton analyste : où tu gagnes, où tu perds, quoi faire. Tu le gardes.' },
 ];
 
 const FAQ = [
-  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h. On configure tes accès une fois au début — ensuite zéro export à faire, on récupère tout et on te livre.' },
+  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h : surtout la revue mensuelle avec ton analyste, où on décortique tes chiffres ensemble. Les accès sont configurés une fois au début, zéro export à faire.' },
   { q: 'Mes chiffres sont un bordel total, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
   { q: 'Et si je veux arrêter ?', a: 'Sans engagement. Tu résilies quand tu veux, tu gardes tes dashboards.' },
@@ -139,6 +139,22 @@ export default function LandingEcommerce() {
         </div>
       </section>
 
+      {/* ── LE RITUEL MENSUEL (l'humain) ── */}
+      <section className="px-4 py-14">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center max-w-xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Le dashboard, c’est la moitié du taf.</h2>
+            <p className="mt-2 text-muted-foreground text-sm">L’autre moitié : <b className="text-foreground">1h par mois</b> où on s’assoit avec toi pour tout décortiquer et décider ensemble.</p>
+          </div>
+          <div className="mt-8 space-y-4">
+            <RitualRow icon={Video} t="1h de revue en visio, chaque mois" d="Ton analyste passe tes chiffres en revue avec toi, ligne par ligne. On t’explique le pourquoi, tu poses tes questions — jusqu’à ce que tout soit clair." />
+            <RitualRow icon={Target} t="Les 3 points d’attention du mois" d="Pas 40 KPI à déchiffrer seul. Les 2-3 trucs qui comptent vraiment ce mois-ci, et quoi faire concrètement." />
+            <RitualRow icon={Compass} t="Un plan pour le mois d’après" d="Tu repars pas avec des graphes, tu repars avec des décisions : où couper, où pousser, quoi renégocier." />
+          </div>
+          <p className="mt-6 text-center text-sm text-muted-foreground">C’est <b className="text-foreground">moi ou un analyste spécialisé e-commerce</b> qui mène la revue. Jamais un algo.</p>
+        </div>
+      </section>
+
       {/* ── ORIGIN STORY (manifeste) ── */}
       <section className="px-4 py-14">
         <div className="max-w-xl mx-auto text-center">
@@ -201,7 +217,7 @@ export default function LandingEcommerce() {
             </div>
           </div>
           <ul className="mt-5 inline-flex flex-col gap-2 text-left text-sm">
-            {['Dashboard sur-mesure', 'Analyse & reco chaque mois', 'Toutes tes sources réconciliées', 'Sans engagement'].map((x) => (
+            {['Dashboard sur-mesure chaque mois', '1h de revue en visio avec ton analyste', 'Les 3 points d’attention + ton plan', 'Toutes tes sources réconciliées', 'Sans engagement'].map((x) => (
               <li key={x} className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> {x}</li>
             ))}
           </ul>
@@ -374,6 +390,18 @@ function TeaserKpi({ label, value, sub, tone }: { label: string; value: string; 
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold truncate">{label}</div>
       <div className={`text-lg font-bold mt-0.5 tabular-nums ${toneCls(tone)}`}>{value}</div>
       {sub && <div className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{sub}</div>}
+    </div>
+  );
+}
+
+function RitualRow({ icon: Icon, t, d }: { icon: LucideIcon; t: string; d: string }) {
+  return (
+    <div className="flex gap-4 rounded-2xl border bg-card p-5">
+      <div className="w-10 h-10 shrink-0 rounded-xl bg-accent/15 text-primary flex items-center justify-center"><Icon className="w-5 h-5" /></div>
+      <div>
+        <h3 className="font-semibold">{t}</h3>
+        <p className="text-muted-foreground text-sm mt-1">{d}</p>
+      </div>
     </div>
   );
 }
