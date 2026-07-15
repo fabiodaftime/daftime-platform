@@ -81,7 +81,7 @@ export default function LandingEcommerce() {
             {CTA}
           </Button>
           <p className="mt-2.5 text-xs text-center text-muted-foreground">
-            <span className="text-foreground font-medium">20 min de call</span>, puis ton dashboard livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> — zéro pitch, tu décides après.
+            <span className="text-foreground font-medium">20 min de call</span>, puis ton dashboard livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> <span className="whitespace-nowrap">(normalement 700 $/mois)</span> — zéro pitch, tu décides après.
           </p>
           <p className="mt-1 text-xs text-muted-foreground text-center">
             Pensé pour les shops qui font 1 000 $/jour et plus. En dessous, un tableur suffit.
