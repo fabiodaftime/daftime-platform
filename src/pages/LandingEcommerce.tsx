@@ -1,30 +1,22 @@
 // Landing E-COMMERCE (Meta Ads → 100 % mobile). Conçue MOBILE-FIRST (375px d'abord).
 // Offre : premier dashboard financier OFFERT (formulaire lead), pas de call de vente.
 // Sans témoignage → la DÉMONSTRATION du produit est la preuve. Ton direct, tutoiement.
-import { useState, useEffect, type FormEvent, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import {
-  X, ArrowRight, Check, Loader2, ShieldCheck, Lock,
-} from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck, Lock } from 'lucide-react';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
-import { supabase } from '@/integrations/supabase/client';
+import { BookingModal } from '@/components/booking/BookingModal';
 import { trackLead, trackViewContent } from '@/lib/tracking';
+import { initCalTracking } from '@/lib/cal';
 
 const CTA = 'Recevoir mon dashboard gratuit';
 
-const REVENUE_OPTIONS = [
-  { value: '<30k', label: 'Moins de 30k€ / mois' },
-  { value: '30-100k', label: '30k€ – 100k€ / mois' },
-  { value: '100-300k', label: '100k€ – 300k€ / mois' },
-  { value: '300k+', label: 'Plus de 300k€ / mois' },
-];
-
 const STEPS = [
-  { n: 1, t: 'Tu nous donnes tes accès', d: 'Shopify, Stripe, Meta Ads, relevés bancaires. C’est tout ce qu’on te demande.' },
-  { n: 2, t: 'On fiabilise et on réconcilie', d: 'On normalise tout. Zéro double-comptage. Des chiffres justes.' },
-  { n: 3, t: 'Tu reçois ton dashboard + un call d’1h', d: 'On te présente ta vraie situation. Où tu gagnes, où tu perds, quoi faire le mois prochain.' },
+  { n: 1, t: 'Tu réserves ton call', d: '20 min pour faire le point sur ton shop. On voit ensemble ce qui coince.' },
+  { n: 2, t: 'On récupère tes accès', d: 'Shopify, Stripe, Meta Ads, relevés bancaires. On te guide, ça prend 5 min.' },
+  { n: 3, t: 'Tu reçois ton dashboard', d: 'Ta vraie situation, livrée sous 7 jours. Où tu gagnes, où tu perds, quoi faire. Tu le gardes.' },
 ];
 
 const FAQ = [
@@ -38,10 +30,14 @@ const FAQ = [
 
 export default function LandingEcommerce() {
   const navigate = useNavigate();
-  const [lead, setLead] = useState<{ open: boolean; source: string }>({ open: false, source: '' });
+  const [booking, setBooking] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
 
-  const openLead = (source: string) => setLead({ open: true, source });
+  // Le "dashboard gratuit" démarre par un call de cadrage → on ouvre le calendrier cal.com.
+  // Clic = intention (Meta "Lead") ; RDV confirmé = conversion (Meta "Schedule", via initCalTracking).
+  const openLead = (source: string) => { trackLead(source); setBooking(true); };
+
+  useEffect(() => { initCalTracking(); }, []);
 
   // Sticky CTA après le 1er scroll + ViewContent au scroll 50 % (une fois).
   useEffect(() => {
@@ -84,7 +80,10 @@ export default function LandingEcommerce() {
           <Button onClick={() => openLead('hero')} className="mt-6 w-full h-12 text-base font-semibold">
             {CTA}
           </Button>
-          <p className="mt-2.5 text-xs text-muted-foreground text-center">
+          <p className="mt-2.5 text-xs text-center text-muted-foreground">
+            <span className="text-foreground font-medium">20 min de call pour caler</span>, puis ton dashboard livré sous 7 jours. Gratuit.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground text-center">
             Pensé pour les shops qui passent 30k€/mois. En dessous, un tableur suffit.
           </p>
 
@@ -248,84 +247,7 @@ export default function LandingEcommerce() {
         <Button onClick={() => openLead('sticky')} variant="secondary" className="w-full h-12 text-base font-semibold">{CTA}</Button>
       </div>
 
-      <LeadModal open={lead.open} source={lead.source} onClose={() => setLead({ open: false, source: '' })} />
-    </div>
-  );
-}
-
-// ───────────────────────── Formulaire lead (modale) ─────────────────────────
-function LeadModal({ open, source, onClose }: { open: boolean; source: string; onClose: () => void }) {
-  const [email, setEmail] = useState('');
-  const [shop, setShop] = useState('');
-  const [rev, setRev] = useState('');
-  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
-
-  if (!open) return null;
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setState('sending');
-    const { error } = await supabase.from('ecommerce_leads' as any).insert({
-      email: email.trim(),
-      shop_url: shop.trim() || null,
-      monthly_revenue: rev || null,
-      source,
-    });
-    if (error) { setState('error'); return; }
-    trackLead(source);
-    setState('done');
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-black/60" onClick={onClose}>
-      <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} aria-label="Fermer" className="absolute top-3 right-3 w-9 h-9 rounded-full border flex items-center justify-center hover:bg-muted">
-          <X className="w-4 h-4" />
-        </button>
-
-        {state === 'done' ? (
-          <div className="text-center py-4">
-            <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4"><Check className="w-7 h-7" /></div>
-            <h3 className="text-xl font-semibold">Bien reçu 🎉</h3>
-            <p className="mt-2 text-muted-foreground text-sm">On te livre ton dashboard sous 7 jours. Check tes mails, on revient vers toi pour tes accès.</p>
-            <Button onClick={onClose} className="mt-5 w-full h-11">Fermer</Button>
-          </div>
-        ) : (
-          <form onSubmit={submit}>
-            <h3 className="text-xl font-semibold pr-8">Reçois ton dashboard gratuit</h3>
-            <p className="mt-1 text-sm text-muted-foreground">3 infos, et on s’occupe du reste.</p>
-
-            <div className="mt-5 space-y-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">Email</label>
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="toi@ton-shop.com"
-                  className="mt-1 w-full h-11 rounded-lg border bg-background px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary/30" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">URL de ton shop</label>
-                <input type="text" value={shop} onChange={(e) => setShop(e.target.value)} placeholder="ton-shop.com"
-                  className="mt-1 w-full h-11 rounded-lg border bg-background px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary/30" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">CA mensuel approx.</label>
-                <select value={rev} onChange={(e) => setRev(e.target.value)}
-                  className="mt-1 w-full h-11 rounded-lg border bg-background px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary/30">
-                  <option value="">— Choisis —</option>
-                  {REVENUE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {state === 'error' && <p className="mt-3 text-sm text-destructive">Oups, une erreur. Réessaie dans un instant.</p>}
-
-            <Button type="submit" disabled={state === 'sending' || !email.trim()} className="mt-5 w-full h-12 text-base font-semibold">
-              {state === 'sending' ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Envoi…</> : CTA}
-            </Button>
-            <p className="mt-3 text-xs text-muted-foreground text-center">Livré sous 7 jours. Tu le gardes, même si tu ne prends rien.</p>
-          </form>
-        )}
-      </div>
+      <BookingModal open={booking} onClose={() => setBooking(false)} />
     </div>
   );
 }
