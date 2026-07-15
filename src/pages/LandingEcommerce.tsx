@@ -16,11 +16,11 @@ const CTA = 'Recevoir mon dashboard gratuit';
 const STEPS = [
   { n: 1, t: 'Tu réserves ton call', d: '20 min pour faire le point sur ton shop. On voit ensemble ce qui coince.' },
   { n: 2, t: 'On récupère tes accès', d: 'Shopify, Stripe, Meta Ads, relevés bancaires. On te guide, ça prend 5 min.' },
-  { n: 3, t: 'On le décortique ensemble', d: 'Ton dashboard livré sous 2 jours, puis 1h de revue avec ton analyste : où tu gagnes, où tu perds, quoi faire. Tu le gardes.' },
+  { n: 3, t: 'On le décortique ensemble', d: 'Ton dashboard livré sous 2 jours, puis 1h de revue avec ton analyste : où tu gagnes, où tu perds, sur quoi agir. Tu le gardes.' },
 ];
 
 const FAQ = [
-  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h : surtout la revue mensuelle avec ton analyste, où on décortique tes chiffres ensemble. Les accès sont configurés une fois au début, zéro export à faire.' },
+  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h en visio avec ton analyste, c’est tout. Le reste — récupération des données, génération du dashboard — c’est géré de notre côté.' },
   { q: 'Mes chiffres sont un bordel total, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
   { q: 'Et si je veux arrêter ?', a: 'Sans engagement. Tu résilies quand tu veux, tu gardes tes dashboards.' },
@@ -74,7 +74,7 @@ export default function LandingEcommerce() {
             Mais est-ce qu’il gagne <span className="relative whitespace-nowrap">vraiment<span className="absolute left-0 -bottom-0.5 w-full h-2 bg-accent/40 -z-10" /></span> de l’argent&nbsp;?
           </h1>
           <p className="mt-4 text-base text-muted-foreground">
-            On réconcilie Shopify, Stripe, Meta Ads, ta banque et ta compta. Chaque mois, un expert te dit où tu gagnes, où tu perds, et quoi faire.
+            On réconcilie Shopify, Stripe, Meta Ads, ta banque et ta compta. Chaque mois, un expert t’aide à décrypter tes chiffres : où tu gagnes, où tu perds, sur quoi agir.
           </p>
 
           <Button onClick={() => openLead('hero')} className="mt-6 w-full h-12 text-base font-semibold">
@@ -116,7 +116,7 @@ export default function LandingEcommerce() {
               <Reason>Sous ce seuil, <b>chaque euro de pub creuse le trou</b>. Tu ne scales pas ta marque, tu scales une fuite.</Reason>
             </ul>
             <p className="mt-4 text-sm text-muted-foreground">
-              Personne n’achète un graphique. Ce que tu achètes, c’est que quelqu’un lise tes chiffres à ta place — et te dise quoi faire.
+              Personne n’achète un graphique. Ce que tu achètes, c’est quelqu’un qui interprète tes chiffres pour toi et t’aide à piloter.
             </p>
           </div>
 
@@ -139,19 +139,19 @@ export default function LandingEcommerce() {
         </div>
       </section>
 
-      {/* ── LE RITUEL MENSUEL (l'humain) ── */}
+      {/* ── L'ACCOMPAGNEMENT (l'humain + le quotidien) ── */}
       <section className="px-4 py-14">
         <div className="max-w-2xl mx-auto">
           <div className="text-center max-w-xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Le dashboard, c’est la moitié du taf.</h2>
-            <p className="mt-2 text-muted-foreground text-sm">L’autre moitié : <b className="text-foreground">1h par mois</b> où on s’assoit avec toi pour tout décortiquer et décider ensemble.</p>
+            <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bien plus qu’un dashboard.</h2>
+            <p className="mt-2 text-muted-foreground text-sm">Un vrai point chaque mois, et de quoi garder la main au quotidien — sans te noyer dans les chiffres.</p>
           </div>
           <div className="mt-8 space-y-4">
-            <RitualRow icon={Video} t="1h de revue en visio, chaque mois" d="Ton analyste passe tes chiffres en revue avec toi, ligne par ligne. On t’explique le pourquoi, tu poses tes questions — jusqu’à ce que tout soit clair." />
-            <RitualRow icon={Target} t="Les 3 points d’attention du mois" d="Pas 40 KPI à déchiffrer seul. Les 2-3 trucs qui comptent vraiment ce mois-ci, et quoi faire concrètement." />
-            <RitualRow icon={Compass} t="Un plan pour le mois d’après" d="Tu repars pas avec des graphes, tu repars avec des décisions : où couper, où pousser, quoi renégocier." />
+            <RitualRow icon={Video} t="Un gros point chaque mois — 1h en visio" d="On décortique ton dashboard ensemble, ligne par ligne. Les 3 points d’attention du mois, et un plan pour le mois d’après. Tu poses toutes tes questions." />
+            <RitualRow icon={Target} t="Les KPI à suivre au quotidien, de ton côté" d="On te dit quels 3-4 chiffres regarder chaque jour (2 min), adaptés à TON shop. Tu gardes la main, sans checker 40 métriques." />
+            <RitualRow icon={Compass} t="Un humain qui t’aide à piloter" d="Moi ou un analyste spécialisé e-commerce, qui interprète tes chiffres pour toi et t’aide à décider. Jamais un algo, jamais un template." />
           </div>
-          <p className="mt-6 text-center text-sm text-muted-foreground">C’est <b className="text-foreground">moi ou un analyste spécialisé e-commerce</b> qui mène la revue. Jamais un algo.</p>
+          <p className="mt-6 text-center text-sm text-muted-foreground">Le dashboard, c’est l’outil. La vraie valeur, c’est l’interprétation et les décisions qu’on prend ensemble.</p>
         </div>
       </section>
 
@@ -159,7 +159,7 @@ export default function LandingEcommerce() {
       <section className="px-4 py-14">
         <div className="max-w-xl mx-auto text-center">
           <p className="text-xl sm:text-2xl font-medium leading-relaxed tracking-tight">
-            On est la branche conseil d’un cabinet comptable qui suit <b>+40 e-commerçants</b>. On voit passer <b>35 M€ de CA</b> par an.
+            On est la branche conseil d’un cabinet comptable qui suit <b>+40 e-commerçants</b>. Rien que dans l’e-commerce, on voit passer <b>50 M€ de CA</b> par an.
             Et on s’est rendu compte d’un truc&nbsp;: presque aucun d’eux ne connaît sa vraie marge.
             <span className="block mt-3 text-primary">Alors on a construit ce dashboard.</span>
           </p>
@@ -173,11 +173,7 @@ export default function LandingEcommerce() {
           <div className="mt-4 font-semibold text-lg">Fabio Vieira</div>
           <div className="text-xs text-muted-foreground">Founder · Daftime Advisory</div>
           <p className="mt-3 text-muted-foreground text-[15px] leading-relaxed max-w-md">
-            Spécialisé e-commerce. Issu de l’expertise comptable, orienté conseil et CFO part-time.
-            Je vis entre Dubaï, Lisbonne et Lyon. Je bricole pas des tableurs&nbsp;: je lis des shops toute la journée.
-          </p>
-          <p className="mt-3 text-[15px] leading-relaxed max-w-md">
-            Chaque mois, c’est <b>moi ou un de nos analystes spécialisés e-commerce</b> qui lit et interprète tes chiffres. Jamais un algo, jamais un template.
+            Spécialisé e-commerce, issu de l’expertise comptable. Entre Dubaï, Lisbonne et Lyon.
           </p>
           <p className="mt-4 font-medium max-w-md">« Un founder doit passer son temps sur son produit et son acquisition. Pas dans un tableur. »</p>
         </div>
