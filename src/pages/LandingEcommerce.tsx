@@ -16,16 +16,16 @@ const CTA = 'Recevoir mon dashboard gratuit';
 const STEPS = [
   { n: 1, t: 'Tu réserves ton call', d: '20 min pour faire le point sur ton shop. On voit ensemble ce qui coince.' },
   { n: 2, t: 'On récupère tes accès', d: 'Shopify, Stripe, Meta Ads, relevés bancaires. On te guide, ça prend 5 min.' },
-  { n: 3, t: 'Tu reçois ton dashboard', d: 'Ta vraie situation, livrée sous 7 jours. Où tu gagnes, où tu perds, quoi faire. Tu le gardes.' },
+  { n: 3, t: 'Tu reçois ton dashboard', d: 'Ta vraie situation, livrée sous 2 jours. Où tu gagnes, où tu perds, quoi faire. Tu le gardes.' },
 ];
 
 const FAQ = [
-  { q: 'Ça me prend combien de temps chaque mois ?', a: '30 min. Tu nous envoies tes exports, on fait le reste.' },
+  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h. On configure tes accès une fois au début — ensuite zéro export à faire, on récupère tout et on te livre.' },
   { q: 'Mes chiffres sont un bordel total, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
   { q: 'Et si je veux arrêter ?', a: 'Sans engagement. Tu résilies quand tu veux, tu gardes tes dashboards.' },
   { q: 'Mes données sont en sécurité ?', a: 'Oui. Espace sécurisé, accès restreint, conformité RGPD. Tes fichiers ne servent qu’à produire tes rapports.' },
-  { q: 'Vous êtes qui exactement ?', a: 'Un cabinet comptable spécialisé e-commerce. La personne qui regarde tes chiffres, c’est Fabio (section plus haut).' },
+  { q: 'Vous êtes qui exactement ?', a: 'La branche conseil d’un cabinet comptable, spécialisée e-commerce. La personne qui regarde tes chiffres, c’est Fabio (section plus haut).' },
 ];
 
 export default function LandingEcommerce() {
@@ -81,17 +81,17 @@ export default function LandingEcommerce() {
             {CTA}
           </Button>
           <p className="mt-2.5 text-xs text-center text-muted-foreground">
-            <span className="text-foreground font-medium">20 min de call pour caler</span>, puis ton dashboard livré sous 7 jours. Gratuit.
+            <span className="text-foreground font-medium">20 min de call pour caler</span>, puis ton dashboard livré sous 2 jours. Gratuit.
           </p>
           <p className="mt-1 text-xs text-muted-foreground text-center">
-            Pensé pour les shops qui passent 30k€/mois. En dessous, un tableur suffit.
+            Pensé pour les shops qui font 1 000 $/jour et plus. En dessous, un tableur suffit.
           </p>
 
           {/* Teaser 3 KPI — voir le produit avant de scroller */}
           <div className="mt-6 grid grid-cols-3 gap-2">
             <TeaserKpi label="Marge nette" value="−2 %" tone="bad" />
             <TeaserKpi label="ROAS" value="1,98" tone="bad" />
-            <TeaserKpi label="Trésorerie" value="−9 400 €" tone="warn" />
+            <TeaserKpi label="Cash" value="−9 400 €" tone="warn" />
           </div>
         </div>
       </section>
@@ -109,14 +109,14 @@ export default function LandingEcommerce() {
 
           {/* Le raisonnement annoté — c'est ça qui vend */}
           <div className="mt-8 max-w-2xl mx-auto rounded-2xl border bg-card p-5 sm:p-6">
-            <div className="text-xs font-semibold uppercase tracking-wide text-red-600">Marge nette : −2 %</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-primary">La lecture du mois</div>
             <ul className="mt-3 space-y-2.5 text-[15px] leading-snug">
-              <Reason>Tu perds <b>2 700 €</b> ce mois-ci. Alors que ton CA monte de <b>+12 %</b>.</Reason>
-              <Reason>La cause : <b>51 %</b> de ton CA part en pub, pour un ROAS de <b>1,98</b>.</Reason>
-              <Reason>À ce niveau de marge brute, il te faut un ROAS de <b>2,8 minimum</b>.</Reason>
+              <Reason><b>+12 % de CA</b>, et pourtant tu perds <b>2 700 €</b>. Le CA raconte une histoire, la marge dit la vérité.</Reason>
+              <Reason>Ton ROAS tourne à <b>1,98</b>. Ton point mort, lui, est à <b>2,8</b> (= 1 ÷ ta marge après produit, livraison et frais de paiement).</Reason>
+              <Reason>Sous ce seuil, <b>chaque euro de pub creuse le trou</b>. Tu ne scales pas ta marque, tu scales une fuite.</Reason>
             </ul>
             <p className="mt-4 text-sm text-muted-foreground">
-              Personne n’achète un graphique. Ce que tu achètes, c’est que quelqu’un lise tes chiffres à ta place.
+              Personne n’achète un graphique. Ce que tu achètes, c’est que quelqu’un lise tes chiffres à ta place — et te dise quoi faire.
             </p>
           </div>
 
@@ -124,15 +124,15 @@ export default function LandingEcommerce() {
           <div className="mt-8 max-w-2xl mx-auto">
             <h3 className="text-center text-lg font-semibold">Le même shop, 3 mois plus tard.</h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <BeforeAfter title="Avril" tone="bad" rows={[['Marge', '−2 %'], ['ROAS', '1,98'], ['Trésorerie', '28 670 €']]} />
-              <BeforeAfter title="Juillet" tone="good" rows={[['Marge', '+7 %'], ['ROAS', '3,1'], ['Trésorerie', '61 200 €']]} />
+              <BeforeAfter title="Avril" tone="bad" rows={[['Marge', '−2 %'], ['ROAS', '1,98'], ['Cash', '28 670 €']]} />
+              <BeforeAfter title="Juillet" tone="good" rows={[['Marge', '+7 %'], ['ROAS', '3,1'], ['Cash', '61 200 €']]} />
             </div>
             <div className="mt-4 rounded-2xl border bg-card p-5">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Les 3 décisions prises</div>
               <ul className="space-y-2.5 text-sm">
-                <Decision n={1}>Coupé 2 campagnes à ROAS &lt; 1,5 <span className="text-muted-foreground">(−8 400 €/mois de pub)</span></Decision>
-                <Decision n={2}>Renégocié le COGS fournisseur <span className="text-muted-foreground">(−4 pts)</span></Decision>
-                <Decision n={3}>Relevé le panier moyen via bundle <span className="text-muted-foreground">(+11 €)</span></Decision>
+                <Decision n={1}>Réalloué le budget vers les angles au-dessus du point mort, coupé ce qui perdait <span className="text-muted-foreground">(ROAS blended 1,98 → 3,1)</span></Decision>
+                <Decision n={2}>Renégocié le COGS fournisseur <span className="text-muted-foreground">(+4 pts de marge par commande)</span></Decision>
+                <Decision n={3}>Monté l’AOV avec un bundle <span className="text-muted-foreground">(+11 € → le point mort pub redescend)</span></Decision>
               </ul>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function LandingEcommerce() {
       <section className="px-4 py-14">
         <div className="max-w-xl mx-auto text-center">
           <p className="text-xl sm:text-2xl font-medium leading-relaxed tracking-tight">
-            On est le cabinet comptable de <b>+40 e-commerçants</b>. On voit passer <b>35 M€ de CA</b> par an.
+            On est la branche conseil d’un cabinet comptable qui suit <b>+40 e-commerçants</b>. On voit passer <b>35 M€ de CA</b> par an.
             Et on s’est rendu compte d’un truc&nbsp;: presque aucun d’eux ne connaît sa vraie marge.
             <span className="block mt-3 text-primary">Alors on a construit ce dashboard.</span>
           </p>
@@ -156,8 +156,8 @@ export default function LandingEcommerce() {
           <Avatar />
           <div className="mt-4 font-semibold text-lg">Fabio Vieira</div>
           <p className="mt-2 text-muted-foreground text-[15px] leading-relaxed max-w-md">
-            Cabinet comptable, +40 e-commerçants accompagnés. DSCG, basé entre Dubaï et le Portugal.
-            Je bricole pas des tableurs&nbsp;: je lis des shops toute la journée.
+            Spécialisé e-commerce. Issu de l’expertise comptable, orienté conseil et CFO part-time.
+            Je vis entre Dubaï, Lisbonne et Lyon. Je bricole pas des tableurs&nbsp;: je lis des shops toute la journée.
           </p>
           <p className="mt-4 font-medium">« C’est moi qui regarde tes chiffres. »</p>
         </div>
@@ -178,7 +178,7 @@ export default function LandingEcommerce() {
               </div>
             ))}
           </div>
-          <p className="mt-6 text-center text-sm font-semibold text-primary">Premier dashboard livré sous 7 jours.</p>
+          <p className="mt-6 text-center text-sm font-semibold text-primary">Premier dashboard livré sous 2 jours.</p>
         </div>
       </section>
 
@@ -256,11 +256,11 @@ export default function LandingEcommerce() {
 function DashboardDemo() {
   const kpis = [
     { l: 'CA du mois', v: '136 840 €', verdict: '+12 % vs M-1', tone: 'good' as const },
-    { l: 'Marge nette', v: '−2 %', verdict: 'vs +4 % le mois dernier', tone: 'bad' as const },
-    { l: 'ROAS', v: '1,98', verdict: 'trop faible vs tes coûts', tone: 'bad' as const },
-    { l: 'Conversion', v: '3,06 %', verdict: 'sain', tone: 'good' as const },
-    { l: 'Panier moyen', v: '72,79 €', verdict: 'à surveiller', tone: 'warn' as const },
-    { l: 'Trésorerie nette', v: '−9 330 €', verdict: 'cash + créances − dettes', tone: 'warn' as const },
+    { l: 'Marge nette · CM3', v: '−2 %', verdict: 'le vrai chiffre', tone: 'bad' as const },
+    { l: 'ROAS', v: '1,98', verdict: 'point mort à 2,8', tone: 'bad' as const },
+    { l: 'AOV', v: '72,79 €', verdict: 'à surveiller', tone: 'warn' as const },
+    { l: 'Part de réachat', v: '22 %', verdict: 'ta croissance durable', tone: 'good' as const },
+    { l: 'Cash', v: '−9 330 €', verdict: 'point bas dans 6 sem.', tone: 'warn' as const },
   ];
   const costs = [
     { label: 'Publicité', val: '51 %', color: 'hsl(var(--primary))' },
@@ -295,6 +295,16 @@ function DashboardDemo() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Cascade de marge CM1 → CM2 → CM3 — le cœur de la lecture */}
+        <div className="rounded-xl border p-3">
+          <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-2">Ta marge en cascade · sur 100 € de CA</div>
+          <div className="space-y-2">
+            <CascadeRow label="CM1 · après achat produit" val="60 €" pct={60} tone="good" />
+            <CascadeRow label="CM2 · après livraison + paiement" val="36 €" pct={36} tone="warn" note="→ point mort pub = 1 ÷ 36 % = 2,8" />
+            <CascadeRow label="CM3 · après pub" val="−2 €" pct={4} tone="bad" note="le vrai chiffre : tu perds sur chaque 100 € vendus" />
+          </div>
         </div>
 
         {/* CA réel vs prévu — ne déborde pas */}
@@ -356,6 +366,22 @@ function TeaserKpi({ label, value, tone }: { label: string; value: string; tone:
     <div className="rounded-xl border bg-card p-2.5 text-center">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold truncate">{label}</div>
       <div className={`text-lg font-bold mt-0.5 tabular-nums ${toneCls(tone)}`}>{value}</div>
+    </div>
+  );
+}
+
+function CascadeRow({ label, val, pct, tone, note }: { label: string; val: string; pct: number; tone: 'good' | 'warn' | 'bad'; note?: string }) {
+  const bar = tone === 'good' ? 'bg-emerald-500' : tone === 'warn' ? 'bg-amber-500' : 'bg-red-500';
+  return (
+    <div>
+      <div className="flex items-baseline justify-between text-[12px]">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={`font-bold tabular-nums ${toneCls(tone)}`}>{val}</span>
+      </div>
+      <div className="h-2 rounded-full bg-muted mt-1 overflow-hidden">
+        <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.max(pct, 4)}%` }} />
+      </div>
+      {note && <div className="text-[10px] text-muted-foreground mt-0.5">{note}</div>}
     </div>
   );
 }
