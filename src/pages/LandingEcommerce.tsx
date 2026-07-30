@@ -25,7 +25,7 @@ const FAQ = [
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
   { q: 'Et si je veux arrêter ?', a: 'Sans engagement. Tu résilies quand tu veux, tu gardes tes dashboards.' },
   { q: 'Mes données sont en sécurité ?', a: 'Oui. Espace sécurisé, accès restreint, conformité RGPD. Tes fichiers ne servent qu’à produire tes rapports.' },
-  { q: 'Vous êtes qui exactement ?', a: 'La branche conseil d’un cabinet comptable, spécialisée e-commerce. La personne qui regarde tes chiffres, c’est Fabio (section plus haut).' },
+  { q: 'Vous êtes qui exactement ?', a: 'La branche conseil de Daftime Accounting, un cabinet comptable spécialisé e-commerce. La personne qui regarde tes chiffres, c’est Fabio (section plus haut).' },
 ];
 
 export default function LandingEcommerce() {
@@ -166,7 +166,7 @@ export default function LandingEcommerce() {
       <section className="px-4 py-14">
         <div className="max-w-xl mx-auto text-center">
           <p className="text-xl sm:text-2xl font-medium leading-relaxed tracking-tight">
-            On est la branche conseil d’un cabinet comptable qui suit <b>+40 e-commerçants</b>. Rien que dans l’e-commerce, on voit passer <b>50 M€ de CA</b> par an.
+            On est la branche conseil de <b>Daftime Accounting</b>, le cabinet comptable qui suit <b>+40 e-commerçants</b>. Rien que dans l’e-commerce, on voit passer <b>50 M€ de CA</b> par an.
             Et on s’est rendu compte d’un truc&nbsp;: presque aucun d’eux ne connaît sa vraie marge.
             <span className="block mt-3 text-primary">Alors on a construit ce dashboard.</span>
           </p>
@@ -262,9 +262,14 @@ export default function LandingEcommerce() {
 
       {/* ── FOOTER ── */}
       <footer className="bg-primary text-primary-foreground/60 border-t border-white/10 pb-20 sm:pb-8">
-        <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col items-center gap-4 text-center">
           <img src={daftimeLogoWhite} alt="Daftime" className="h-7 w-auto" />
-          <p className="text-xs">© 2026 Daftime Advisory. Tous droits réservés.</p>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
+            <button onClick={() => navigate('/mentions-legales')} className="hover:text-primary-foreground transition-colors">Mentions légales</button>
+            <button onClick={() => navigate('/confidentialite')} className="hover:text-primary-foreground transition-colors">Politique de confidentialité</button>
+            <a href="mailto:fabio@daftime.ae" className="hover:text-primary-foreground transition-colors">Contact</a>
+          </nav>
+          <p className="text-xs">© 2026 Daftime Advisory - FZCO · Dubai. Tous droits réservés.</p>
         </div>
       </footer>
 
