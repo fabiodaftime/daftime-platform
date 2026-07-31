@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 // Landing pub en EAGER (dans le bundle principal) : pas d'aller-retour réseau supplémentaire au
 // chargement de /ecommerce → meilleur FCP/LCP sur la page qui reçoit le trafic pub.
 import LandingEcommerce from "./pages/LandingEcommerce";
+const LandingEcommerce2 = lazy(() => import("./pages/LandingEcommerce2"));
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -71,6 +72,7 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/ecommerce" element={<LandingEcommerce />} />
+            <Route path="/ecommerce-2" element={<LandingEcommerce2 />} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/confidentialite" element={<Confidentialite />} />
             <Route path="/auth" element={<Auth />} />
