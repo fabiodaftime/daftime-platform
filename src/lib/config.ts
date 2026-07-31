@@ -9,6 +9,9 @@ export const BOOKING_SCHEDULE_URL =
 // où les iframes tiers sont souvent bridés.
 export const BOOKING_SCHEDULE_FULL_URL =
   'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min';
+// « calLink » cal.com (user/event, sans domaine ni params) — sert au préchargement Cal("preload").
+export const BOOKING_SCHEDULE_CALLINK =
+  'fabio-vieira-daftime-advisory/rendez-vous-decouverte-daftime-advisory-30min';
 export const BOOKING_ADVISOR_URL =
   'https://cal.com/fabio-vieira-daftime-advisory/rendez-vous-clientele-daftime-advisory?embed=true&theme=light';
 

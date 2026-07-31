@@ -5,6 +5,7 @@
 //   2) un écouteur postMessage brut (filet de sécurité) sur les messages venant de cal.com.
 // À appeler une fois au montage d'une page contenant un embed cal.com.
 import { trackSchedule } from './tracking';
+import { BOOKING_SCHEDULE_CALLINK } from './config';
 
 declare global {
   interface Window {
@@ -46,6 +47,9 @@ export function initCalTracking(): void {
   try {
     window.Cal?.('init', { origin: 'https://cal.com' });
     window.Cal?.('on', { action: 'bookingSuccessful', callback: () => onBookingSuccess() });
+    // Préchargement : réchauffe la page de résa en arrière-plan dès le montage → ouverture quasi
+    // instantanée au clic (les assets cal.com sont déjà en cache), sans perdre le tracking.
+    window.Cal?.('preload', { calLink: BOOKING_SCHEDULE_CALLINK });
   } catch { /* noop */ }
 
   // 2) Filet de sécurité : message brut émis par l'iframe cal.com.
