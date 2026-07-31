@@ -10,8 +10,6 @@ import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
 import { trackLead, trackViewContent } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
-import { isInAppBrowser } from '@/lib/inApp';
-import { BOOKING_SCHEDULE_FULL_URL } from '@/lib/config';
 
 const CTA = 'Recevoir mon dashboard gratuit';
 
@@ -35,14 +33,10 @@ export default function LandingEcommerce() {
   const [booking, setBooking] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
 
-  // Le "dashboard gratuit" démarre par un call de cadrage → on ouvre le calendrier cal.com.
+  // Le "dashboard gratuit" démarre par un call de cadrage → on ouvre le calendrier cal.com (modale rapide).
   // Clic = intention (Meta "Lead") ; RDV confirmé = conversion (Meta "Schedule", via initCalTracking).
-  // In-app (Insta/FB) : l'iframe cal.com se charge mal → on ouvre la page cal.com en plein onglet (fiable).
-  const openLead = (source: string) => {
-    trackLead(source);
-    if (isInAppBrowser()) window.open(BOOKING_SCHEDULE_FULL_URL, '_blank', 'noopener');
-    else setBooking(true);
-  };
+  // Si l'iframe ne charge pas (rare, in-app), la modale affiche un lien "ouvrir dans le navigateur" en filet.
+  const openLead = (source: string) => { trackLead(source); setBooking(true); };
 
   useEffect(() => { initCalTracking(); }, []);
 
