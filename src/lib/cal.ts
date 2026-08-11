@@ -14,12 +14,16 @@ declare global {
 }
 
 let initialized = false;
-let lastFiredAt = 0; // dédoublonnage (évite de compter 2× la même conversion)
+// Verrou permanent : au plus UNE conversion "Schedule" par chargement de page.
+// cal.com émet `bookingSuccessful` plusieurs fois (API + postMessage, puis ré-émission à l'écran
+// de confirmation, parfois au-delà de quelques secondes) → une simple fenêtre temporelle laisse
+// passer un doublon. Un visiteur ne réserve jamais 2 RDV distincts dans la même session, donc on
+// ne compte qu'une fois, quel que soit le nombre de messages reçus.
+let scheduleFired = false;
 
 function onBookingSuccess(): void {
-  const now = Date.now();
-  if (now - lastFiredAt < 5000) return;
-  lastFiredAt = now;
+  if (scheduleFired) return;
+  scheduleFired = true;
   trackSchedule({ source: 'cal.com' });
 }
 
