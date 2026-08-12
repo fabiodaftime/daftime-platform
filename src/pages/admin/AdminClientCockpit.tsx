@@ -14,6 +14,7 @@ import { StandardizedTableEditor } from '@/components/generic/StandardizedTableE
 import { StandardizedReview } from '@/components/generic/StandardizedReview';
 import { DashboardChat } from '@/components/generic/DashboardChat';
 import { DashboardFrame } from '@/components/generic/DashboardFrame';
+import { ForcedWidgetsPanel } from '@/components/generic/ForcedWidgetsPanel';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
@@ -715,6 +716,17 @@ export default function AdminClientCockpit() {
           </Button>}>
           {genActive && <p className="text-sm text-primary mb-3 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />L'IA construit le dashboard et rédige l'analyse — ≈ 1 min. Vous pouvez quitter la page, il se chargera tout seul.</p>}
           {!sd && <p className="text-sm text-muted-foreground mb-3">Standardisez d'abord les données pour générer un dashboard.</p>}
+          <details className="mb-3">
+            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">⚙️ Graphiques obligatoires (toujours inclus)</summary>
+            <div className="mt-2">
+              <ForcedWidgetsPanel
+                clientId={id!}
+                dataJson={dash?.data_json}
+                initial={(client?.forced_widgets ?? []) as never}
+                onChange={(fw) => setClient((c: any) => (c ? { ...c, forced_widgets: fw } : c))}
+              />
+            </div>
+          </details>
           {dash ? (
             <>
               <div className="flex items-center gap-3 mb-3 text-sm">

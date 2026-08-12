@@ -310,6 +310,23 @@ function ensureDensity(plan: DashPlan, a: Avail, sections: Sec[], min = 4): Dash
   return { pages, theme: plan.theme };
 }
 
+// Widgets OBLIGATOIRES (config client `forced_widgets`) : garantit leur présence dans le plan,
+// UNIQUEMENT s'ils sont rendables ce mois-ci (données présentes) — jamais de widget vide.
+// Dédup par signature (type + metrics/breakdown) : si l'IA l'a déjà mis, on ne double pas.
+function ensureForced(plan: DashPlan, forced: Widget[], a: Avail): DashPlan {
+  if (!forced?.length || !plan.pages?.length) return plan;
+  const sig = (w: Widget) => `${w.type}:${(w.metrics ?? []).slice().sort().join(",") || w.breakdown || ""}`;
+  const pages = plan.pages.map((p) => ({ ...p, widgets: [...(p.widgets ?? [])] }));
+  const present = new Set(pages.flatMap((p) => p.widgets.map(sig)));
+  for (const w of forced) {
+    if (!w?.type || !renders(w, a) || present.has(sig(w))) continue;
+    const at = pages[0].widgets.findIndex((x) => x.type === "kpi_row"); // après le kpi_row si présent
+    pages[0].widgets.splice(at >= 0 ? at + 1 : 0, 0, w);
+    present.add(sig(w));
+  }
+  return { ...plan, pages };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -328,7 +345,7 @@ Deno.serve(async (req) => {
     if (!sd) return json({ error: "aucune donnée standardisée pour ce client/mois (lance d'abord standardize-data)" }, 404);
 
     const { data: client } = await admin.from("clients")
-      .select("name, currency, brand, dashboard_guidance, benchmarks, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
+      .select("name, currency, brand, dashboard_guidance, benchmarks, forced_widgets, activity_types:activity_type_id(slug, config)").eq("id", client_id).maybeSingle();
     const clientBench = ((client as { benchmarks?: Record<string, unknown> } | null)?.benchmarks ?? {}) as Record<string, import("../_shared/benchmarks.ts").BenchOverride>;
 
     const meta = (sd.data as { meta?: { template?: string; validated?: boolean; validation?: { ok?: boolean; blocking?: string[] } } })?.meta;
@@ -354,6 +371,18 @@ Deno.serve(async (req) => {
     const prevPlan = (prevDash?.data_json as { plan?: DashPlan } | null)?.plan ?? null;
     const prevTheme = (prevDash?.data_json as { theme?: unknown } | null)?.theme ?? null;
     const guidance = ((client as { dashboard_guidance?: string } | null)?.dashboard_guidance ?? "").trim();
+
+    // Graphiques OBLIGATOIRES du client (config `forced_widgets`) — nettoyés en Widget[] sûrs.
+    const forcedRaw = ((client as { forced_widgets?: unknown } | null)?.forced_widgets ?? []) as Array<Record<string, unknown>>;
+    const forcedWidgets: Widget[] = Array.isArray(forcedRaw)
+      ? forcedRaw.filter((w) => w && typeof w.type === "string").map((w) => ({
+          type: w.type as Widget["type"],
+          title: typeof w.title === "string" && w.title.trim() ? (w.title as string) : undefined,
+          breakdown: typeof w.breakdown === "string" ? (w.breakdown as string) : undefined,
+          metrics: Array.isArray(w.metrics) ? (w.metrics as unknown[]).filter((x) => typeof x === "string") as string[] : undefined,
+          line: typeof w.line === "string" ? (w.line as string) : undefined,
+        }))
+      : [];
 
     const breakdowns = (sd.data as { breakdowns?: Record<string, { label: string; rows: { label: string; value: number; unit?: string }[] }> })?.breakdowns;
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
@@ -456,6 +485,7 @@ Deno.serve(async (req) => {
         (diag ? `\n📊 DIAGNOSTIC SECTORIEL (repères marché — APPUIE-TOI DESSUS dans les callouts, cite le repère et dis si c'est bon ou problématique) :\n${diag}\n` : "") +
         `\nEXIGENCES : 3 à 4 pages à ANGLES DISTINCTS ; CHAQUE page = un kpi_row + AU MOINS 6 graphes qui afficheront vraiment des données + 1 callout d'analyse. EXPLOITE toute la richesse (unit economics, acquisition, conversion, LTV/fidélisation, rentabilité, trésorerie) — pas seulement CA/marge. Varie les types.\n` +
         (guidance ? `\nCONSIGNES CLIENT (prioritaires) :\n${guidance}\n` : "") +
+        (forcedWidgets.length ? `\nGRAPHIQUES OBLIGATOIRES (à INCLURE impérativement, bien intégrés dans les pages) :\n${forcedWidgets.map((w) => `- ${w.type}${w.breakdown ? ` (breakdown: ${w.breakdown})` : w.metrics?.length ? ` (metrics: ${w.metrics.join(", ")})` : ""}${w.title ? ` — « ${w.title} »` : ""}`).join("\n")}\n` : "") +
         (prevTheme ? `\nTHÈME À CONSERVER : ${JSON.stringify(prevTheme)}\n` : "") +
         `\nMARQUE : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie"}` }];
       try {
@@ -478,6 +508,8 @@ Deno.serve(async (req) => {
         const at = plan.pages[0].widgets.findIndex((w) => w.type === "kpi_row");
         plan.pages[0].widgets.splice(at >= 0 ? at + 1 : 0, 0, { type: "scorecard", title: "Diagnostic du mois" } as Widget);
       }
+      // Widgets OBLIGATOIRES du client — garantis en dernier (après validate/densité/scorecard).
+      plan = ensureForced(plan, forcedWidgets, a);
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
       const html = await renderDashboardWithFx(
