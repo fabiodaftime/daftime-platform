@@ -5,7 +5,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { BenchmarksPanel } from '@/components/generic/BenchmarksPanel';
@@ -16,7 +16,7 @@ import { DashboardChat } from '@/components/generic/DashboardChat';
 import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
-import { invokeFn, currentPeriod, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
+import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
 
 const BUCKET = 'client-files';
@@ -63,6 +63,7 @@ export default function AdminClientCockpit() {
 
   const [client, setClient] = useState<any>(null);
   const [period, setPeriod] = useState(currentPeriod());
+  const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: 'running' | 'success' | 'error'; text: string } | null>(null);
@@ -186,14 +187,19 @@ export default function AdminClientCockpit() {
     return () => { stop = true; clearInterval(iv); };
   }, [id, period, loadStandardized, loadDashboard]);
 
-  // À l'ouverture d'un client, se placer sur le dernier mois travaillé (dashboard, sinon données).
+  // À l'ouverture d'un client : lister les mois travaillés (dashboards + données) et se placer sur le plus récent.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: d } = await supabase.from('dashboards' as any).select('period').eq('client_id', id).order('period', { ascending: false }).limit(1).maybeSingle();
-      if (!cancelled && (d as any)?.period) { setPeriod((d as any).period); return; }
-      const { data: s } = await supabase.from('standardized_data' as any).select('period').eq('client_id', id).order('period', { ascending: false }).limit(1).maybeSingle();
-      if (!cancelled && (s as any)?.period) setPeriod((s as any).period);
+      const [{ data: dRows }, { data: sRows }] = await Promise.all([
+        supabase.from('dashboards' as any).select('period').eq('client_id', id),
+        supabase.from('standardized_data' as any).select('period').eq('client_id', id),
+      ]);
+      if (cancelled) return;
+      const periods = [...new Set([...((dRows as any[]) ?? []), ...((sRows as any[]) ?? [])].map((r) => r.period))]
+        .sort((a, b) => (a < b ? 1 : -1)); // décroissant (plus récent d'abord)
+      setAvailablePeriods(periods);
+      if (periods.length) setPeriod(periods[0]);
     })();
     return () => { cancelled = true; };
   }, [id]);
@@ -421,11 +427,25 @@ export default function AdminClientCockpit() {
           <Button variant="ghost" size="icon" onClick={removeClient} className="text-primary-foreground hover:bg-white/10" title="Supprimer le client">
             <Trash2 className="w-4 h-4" />
           </Button>
-          <label className="hidden sm:flex text-sm items-center gap-1.5 text-primary-foreground/90">
-            Mois
+          <div className="hidden sm:flex items-center gap-1.5">
+            <Button variant="ghost" size="icon" onClick={() => setPeriod(shiftPeriod(period, -1))} aria-label="Mois précédent" className="text-primary-foreground hover:bg-white/10 h-8 w-8">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="h-8 rounded-md bg-background text-foreground px-2 text-sm font-medium capitalize min-w-[130px]"
+              title="Mois travaillés"
+            >
+              {!availablePeriods.includes(period) && <option value={period}>{periodLabel(period)}</option>}
+              {availablePeriods.map((p) => <option key={p} value={p}>{periodLabel(p)}</option>)}
+            </select>
+            <Button variant="ghost" size="icon" onClick={() => setPeriod(shiftPeriod(period, 1))} aria-label="Mois suivant" className="text-primary-foreground hover:bg-white/10 h-8 w-8">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
             <input type="month" value={period.slice(0, 7)} onChange={(e) => setPeriod(`${e.target.value}-01`)}
-              className="text-foreground rounded px-2 py-1 text-sm" />
-          </label>
+              className="text-foreground rounded px-2 py-1 text-sm h-8" title="Aller à un autre mois (ou en créer un nouveau)" />
+          </div>
         </>
       }
     >
