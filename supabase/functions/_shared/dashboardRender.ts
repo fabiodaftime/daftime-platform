@@ -4,6 +4,7 @@
 
 import { type Theme, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
 import { assess, type BenchOverride } from "./benchmarks.ts";
+import { ratesToReporting } from "./fx.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
 export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
@@ -17,6 +18,7 @@ export interface RenderCtx {
   history: { months: string[]; series: Record<string, (number | null)[]>; labels: Record<string, string> };
   breakdowns?: Record<string, Breakdown>;
   targets?: Record<string, number>;
+  fxRate?: number; // taux AED pour 1 EUR (bascule devise) — injecté par renderDashboardWithFx ; repli constant sinon
 }
 export interface Widget {
   type:
@@ -534,8 +536,10 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const eyebrow = ACT[ctx.activity ?? ""] ?? "Rapport financier";
   // Bascule devise (indicatif) : proposée uniquement pour EUR/AED ; sinon on garde l'affichage simple.
   const altCur = ctx.currency === "EUR" ? "AED" : ctx.currency === "AED" ? "EUR" : null;
+  const fxRate = typeof ctx.fxRate === "number" && isFinite(ctx.fxRate) && ctx.fxRate > 0 ? ctx.fxRate : 3.9663;
+  const curTitle = `1 EUR ≈ ${fxRate.toLocaleString("fr-FR", { maximumFractionDigits: 3 })} AED — conversion indicative`;
   const curToggle = altCur
-    ? `<div class="cur-switch" title="Bascule indicative EUR/AED"><button data-cur="${esc(ctx.currency)}" class="on">${esc(ctx.currency)}</button><button data-cur="${esc(altCur)}">${esc(altCur)}</button></div>`
+    ? `<div class="cur-switch" title="${esc(curTitle)}"><button data-cur="${esc(ctx.currency)}" class="on">${esc(ctx.currency)}</button><button data-cur="${esc(altCur)}">${esc(altCur)}</button></div>`
     : `<div class="hero-cur">${esc(ctx.currency)}</div>`;
 
   const bgCss = th.background === "gradient"
@@ -619,7 +623,7 @@ document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)r
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrill();});
 document.querySelectorAll('.tbl').forEach(function(tbl){[].forEach.call(tbl.querySelectorAll('th'),function(th,ci){th.style.cursor='pointer';th.title='Trier';var dir=1;th.addEventListener('click',function(){var tb=tbl.querySelector('tbody');if(!tb)return;var rows=[].slice.call(tb.querySelectorAll('tr')).filter(function(r){return r.className.indexOf('tot')<0;});rows.sort(function(a,b){var A=a.children[ci],B=b.children[ci];if(!A||!B)return 0;var na=parseFloat((A.textContent||'').replace(/[^0-9,.-]/g,'').replace(',','.'));var nb=parseFloat((B.textContent||'').replace(/[^0-9,.-]/g,'').replace(',','.'));if(!isNaN(na)&&!isNaN(nb))return (na-nb)*dir;return ((A.textContent||'')>(B.textContent||'')?1:-1)*dir;});dir*=-1;rows.forEach(function(r){tb.appendChild(r);});});});});
 /* ── Phase 2 : bascule devise EUR ⇄ AED (indicatif — AED arrimé USD, EUR/AED ≈ 3,97) ── */
-var FXR=3.9663;
+var FXR=${typeof ctx.fxRate === "number" && isFinite(ctx.fxRate) && ctx.fxRate > 0 ? ctx.fxRate : 3.9663};
 function fmtCur(v,cur){try{return new Intl.NumberFormat('fr-FR',{style:'currency',currency:cur,maximumFractionDigits:0}).format(v);}catch(e){return Math.round(v).toLocaleString('fr-FR')+' '+cur;}}
 function convCur(v,base,target){if(base===target)return v;if(base==='EUR'&&target==='AED')return v*FXR;if(base==='AED'&&target==='EUR')return v/FXR;return v;}
 function setCur(target){[].forEach.call(document.querySelectorAll('.cv'),function(el){var base=el.getAttribute('data-c'),v=parseFloat(el.getAttribute('data-v'));if(isNaN(v))return;if(!((base==='EUR'||base==='AED')&&(target==='EUR'||target==='AED')))return;el.textContent=fmtCur(convCur(v,base,target),target);});[].forEach.call(document.querySelectorAll('.cur-switch button'),function(b){b.classList.toggle('on',b.getAttribute('data-cur')===target);});}
@@ -744,4 +748,17 @@ header.hero h1{margin:0;font-size:clamp(21px,1.5vw+1rem,28px);font-weight:700;le
 <aside id="drill" class="drawer" aria-hidden="true"><div class="drawer-bg"></div><div class="drawer-panel"><button class="drawer-x" aria-label="Fermer">×</button><div class="drawer-h" id="drill-h"></div><div class="drawer-body" id="drill-body"></div></div></aside>
 <script>${detokMoney(chartsJs).replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\!--")}</script>
 </body></html>`;
+}
+
+// Variante async : calcule le taux EUR/AED (BCE + parité USD/AED via fx.ts) puis rend.
+// À utiliser depuis les edge functions (generate-dashboard, restyle-dashboard, dashboard-chat).
+export async function renderDashboardWithFx(ctx: RenderCtx, plan: DashPlan): Promise<string> {
+  let fxRate = ctx.fxRate;
+  if (fxRate == null) {
+    try {
+      const { factor } = await ratesToReporting(ctx.period, "AED"); // factor.EUR = nombre d'AED pour 1 EUR
+      if (typeof factor.EUR === "number" && isFinite(factor.EUR) && factor.EUR > 0) fxRate = factor.EUR;
+    } catch { /* repli : constante embarquée dans le rendu */ }
+  }
+  return renderDashboard({ ...ctx, fxRate }, plan);
 }

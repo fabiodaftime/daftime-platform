@@ -10,7 +10,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
-import { renderDashboard, type Metric, type DashPlan } from "../_shared/dashboardRender.ts";
+import { renderDashboardWithFx, type Metric, type DashPlan } from "../_shared/dashboardRender.ts";
 import { type Theme } from "../_shared/dashboardTheme.ts";
 
 const SYSTEM = `Tu es l'assistant d'un DASHBOARD FINANCIER déjà généré pour un client. Tu fais DEUX choses selon la demande :
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     if (!plan.pages.length) return json({ action: "answer", answer: parsed.summary ?? "Aucune modification valide à appliquer." });
 
     const theme: Theme = { ...(dj.theme ?? {}), ...(parsed.theme ?? {}), icons: { ...((dj.theme ?? {}).icons ?? {}), ...((parsed.theme ?? {}).icons ?? {}) } };
-    const html = renderDashboard(
+    const html = await renderDashboardWithFx(
       { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity, benchmarks,
         brand: client?.brand as any, theme, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets },
       { pages: plan.pages as any, theme },

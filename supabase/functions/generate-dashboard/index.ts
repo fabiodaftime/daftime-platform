@@ -9,7 +9,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
-import { renderDashboard, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
+import { renderDashboardWithFx, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
 import { assess } from "../_shared/benchmarks.ts";
 
 const PLAN_SYSTEM = (activity: string) => `Tu es un ANALYSTE FINANCIER SENIOR et le CONSEILLER de ce client "${activity}". Tu ne « poses pas des graphes » : tu produis un RAPPORT MENSUEL qui RACONTE UNE HISTOIRE — où en est l'entreprise ce mois-ci, ce qui va, ce qui ne va pas, et quoi faire. Le dashboard est livré à un dirigeant qui paie pour du CONSEIL, pas pour une galerie de graphiques.
@@ -480,7 +480,7 @@ Deno.serve(async (req) => {
       }
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
-      const html = renderDashboard(
+      const html = await renderDashboardWithFx(
         { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
         plan,
       );

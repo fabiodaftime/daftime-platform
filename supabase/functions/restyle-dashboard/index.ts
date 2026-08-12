@@ -7,7 +7,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
-import { renderDashboard, type Metric } from "../_shared/dashboardRender.ts";
+import { renderDashboardWithFx, type Metric } from "../_shared/dashboardRender.ts";
 import { type Theme } from "../_shared/dashboardTheme.ts";
 
 const SYSTEM = `Tu ajustes le THÈME VISUEL d'un dashboard financier selon l'instruction de l'utilisateur.
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       summary = parsed.summary ?? "Thème mis à jour.";
     }
 
-    const html = renderDashboard(
+    const html = await renderDashboardWithFx(
       { client: dataJson.client ?? client?.name ?? "", period: dataJson.period ?? (dash as any).period, currency: dataJson.currency ?? client?.currency ?? "EUR", activity: dataJson.activity, benchmarks,
         brand: client?.brand as any, theme, metrics, history: dataJson.history ?? { months: [], series: {}, labels: {} }, breakdowns: dataJson.breakdowns, targets: dataJson.targets },
       { pages: dataJson.plan!.pages as any, theme },
