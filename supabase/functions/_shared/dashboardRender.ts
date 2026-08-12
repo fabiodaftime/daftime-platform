@@ -45,15 +45,25 @@ const safeColor = (c: unknown, fallback: string): string => {
 };
 const safeFontFamily = (f: unknown): string => (String(f ?? "").replace(/[^a-zA-Z0-9 ,"'\-]/g, "").trim().slice(0, 80)) || "Inter, system-ui, sans-serif";
 
+// Bascule devise : fmt() encapsule chaque MONTANT dans un jeton ASCII [[CV:CODE:VALEUR:TEXTE]].
+// ASCII pur : traverse JSON.stringify() ET esc() sans alteration, et ne peut pas collisionner avec les donnees.
+// -> spanifyMoney : corps HTML (spans .cv togglables) ; detokMoney : libelles de graphes / attributs (texte brut).
+const CUR_TOK = /\[\[CV:([A-Z]{3}):(-?[\d.]+):([^\]]*)\]\]/g;
+const spanifyMoney = (s: string) => s.replace(CUR_TOK, (_m, cur, val, out) => `<span class=\"cv\" data-c=\"${cur}\" data-v=\"${val}\">${out}</span>`);
+const detokMoney = (s: string) => s.replace(CUR_TOK, (_m, _c, _v, out) => out);
+
 function fmt(value: number | null | undefined, unit = "", currency = "EUR"): string {
   if (value == null || !isFinite(value)) return "n/d";
   if (unit === "%") return `${value.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
   if (unit === "x") return `${value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}×`;
   if (unit === "j") return `${value.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} j`;
   if (unit === "" || unit == null) return value.toLocaleString("fr-FR", { maximumFractionDigits: 0 });
-  try { return new Intl.NumberFormat("fr-FR", { style: "currency", currency: unit && unit.length === 3 ? unit : currency, maximumFractionDigits: 0 }).format(value); }
+  const cur = unit && unit.length === 3 ? unit : currency;
+  try { const out = new Intl.NumberFormat("fr-FR", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(value); return `[[CV:${cur}:${value}:${out}]]`; }
   catch { return `${value.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} ${unit}`; }
 }
+// Montant en texte BRUT (jeton retiré) — pour les attributs HTML et libellés où on ne peut pas injecter de <span>.
+const fmtPlain = (value: number | null | undefined, unit = "", currency = "EUR"): string => detokMoney(fmt(value, unit, currency));
 const changeHtml = (pct?: number | null) =>
   pct == null ? "" : `<span class="chg ${pct >= 0 ? "up" : "down"}">${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}%</span>`;
 
@@ -415,7 +425,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const rows = repRows(w, { positive: true }).slice(0, 8);
         if (rows.length < 2) return "";
         const total = rows.reduce((s, r) => s + r.value, 0) || 1;
-        const seg = rows.map((r, i) => `<div class="sh-seg" style="width:${((r.value / total) * 100).toFixed(2)}%;background:${col(i)}" title="${esc(r.label)} : ${esc(fmt(r.value, r.unit ?? "", ctx.currency))}"></div>`).join("");
+        const seg = rows.map((r, i) => `<div class="sh-seg" style="width:${((r.value / total) * 100).toFixed(2)}%;background:${col(i)}" title="${esc(r.label)} : ${esc(fmtPlain(r.value, r.unit ?? "", ctx.currency))}"></div>`).join("");
         const leg = rows.map((r, i) => `<div class="sh-li"><span class="sh-dot" style="background:${col(i)}"></span>${esc(r.label)} <b>${((r.value / total) * 100).toFixed(1)}%</b></div>`).join("");
         return `<div class="card"><div class="card-t">${esc(repLabel(w, "Répartition"))}</div><div class="sh-bar">${seg}</div><div class="sh-leg">${leg}</div></div>`;
       }
@@ -439,7 +449,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         if (!ids.length) return "";
         return `<div class="card"><div class="card-t">${esc(w.title ?? "Objectifs")}</div><div class="blt">${ids.slice(0, 6).map((id, i) => {
           const m = M[id]; const t = ctx.targets![id]; const v = m.value ?? 0; const pct = Math.min(100, Math.round((v / t) * 100)); const c = col(i); const ok = v >= t;
-          return `<div class="blt-row"><div class="blt-h"><span>${esc(m.label)}</span><span class="blt-vv">${esc(fmt(v, m.unit, ctx.currency))} <span class="blt-pct ${ok ? "ok" : ""}">${pct}%</span></span></div><div class="blt-track"><div class="blt-fill" style="width:${pct}%;background:${c}"></div><div class="blt-tgt" title="cible ${esc(fmt(t, m.unit, ctx.currency))}"></div></div></div>`;
+          return `<div class="blt-row"><div class="blt-h"><span>${esc(m.label)}</span><span class="blt-vv">${esc(fmt(v, m.unit, ctx.currency))} <span class="blt-pct ${ok ? "ok" : ""}">${pct}%</span></span></div><div class="blt-track"><div class="blt-fill" style="width:${pct}%;background:${c}"></div><div class="blt-tgt" title="cible ${esc(fmtPlain(t, m.unit, ctx.currency))}"></div></div></div>`;
         }).join("")}</div></div>`;
       }
       case "rings": {
@@ -522,6 +532,11 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
     `<section class="page ${i === 0 ? "on" : ""}" data-i="${i}"><div class="page-h"><h2>${esc(p.title)}</h2><span class="page-meta">${esc(periodLabel(ctx.period))}</span></div><div class="grid">${p.cells}</div></section>`).join("");
   const ACT: Record<string, string> = { ecommerce: "E-commerce", immobilier: "Immobilier", coaching: "Coaching", formation: "Formation", saas: "SaaS", hotellerie: "Hôtellerie", restauration: "Restauration" };
   const eyebrow = ACT[ctx.activity ?? ""] ?? "Rapport financier";
+  // Bascule devise (indicatif) : proposée uniquement pour EUR/AED ; sinon on garde l'affichage simple.
+  const altCur = ctx.currency === "EUR" ? "AED" : ctx.currency === "AED" ? "EUR" : null;
+  const curToggle = altCur
+    ? `<div class="cur-switch" title="Bascule indicative EUR/AED"><button data-cur="${esc(ctx.currency)}" class="on">${esc(ctx.currency)}</button><button data-cur="${esc(altCur)}">${esc(altCur)}</button></div>`
+    : `<div class="hero-cur">${esc(ctx.currency)}</div>`;
 
   const bgCss = th.background === "gradient"
     ? `radial-gradient(1100px 420px at 100% -8%, ${accent}14, transparent), linear-gradient(180deg, ${primary}0d, transparent 28%), ${th.bg}`
@@ -603,6 +618,12 @@ function closeDrill(){var dr=document.getElementById('drill');if(dr){dr.classLis
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;var k=t.closest('.kpi-drill');if(k&&k.getAttribute('data-drill')){openDrill(k.getAttribute('data-drill'));return;}if(t.closest('.drawer-bg')||t.closest('.drawer-x'))closeDrill();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrill();});
 document.querySelectorAll('.tbl').forEach(function(tbl){[].forEach.call(tbl.querySelectorAll('th'),function(th,ci){th.style.cursor='pointer';th.title='Trier';var dir=1;th.addEventListener('click',function(){var tb=tbl.querySelector('tbody');if(!tb)return;var rows=[].slice.call(tb.querySelectorAll('tr')).filter(function(r){return r.className.indexOf('tot')<0;});rows.sort(function(a,b){var A=a.children[ci],B=b.children[ci];if(!A||!B)return 0;var na=parseFloat((A.textContent||'').replace(/[^0-9,.-]/g,'').replace(',','.'));var nb=parseFloat((B.textContent||'').replace(/[^0-9,.-]/g,'').replace(',','.'));if(!isNaN(na)&&!isNaN(nb))return (na-nb)*dir;return ((A.textContent||'')>(B.textContent||'')?1:-1)*dir;});dir*=-1;rows.forEach(function(r){tb.appendChild(r);});});});});
+/* ── Phase 2 : bascule devise EUR ⇄ AED (indicatif — AED arrimé USD, EUR/AED ≈ 3,97) ── */
+var FXR=3.9663;
+function fmtCur(v,cur){try{return new Intl.NumberFormat('fr-FR',{style:'currency',currency:cur,maximumFractionDigits:0}).format(v);}catch(e){return Math.round(v).toLocaleString('fr-FR')+' '+cur;}}
+function convCur(v,base,target){if(base===target)return v;if(base==='EUR'&&target==='AED')return v*FXR;if(base==='AED'&&target==='EUR')return v/FXR;return v;}
+function setCur(target){[].forEach.call(document.querySelectorAll('.cv'),function(el){var base=el.getAttribute('data-c'),v=parseFloat(el.getAttribute('data-v'));if(isNaN(v))return;if(!((base==='EUR'||base==='AED')&&(target==='EUR'||target==='AED')))return;el.textContent=fmtCur(convCur(v,base,target),target);});[].forEach.call(document.querySelectorAll('.cur-switch button'),function(b){b.classList.toggle('on',b.getAttribute('data-cur')===target);});}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.cur-switch button');if(b)setCur(b.getAttribute('data-cur'));});
 `;
 
   return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -622,6 +643,9 @@ header.hero h1{margin:0;font-size:clamp(21px,1.5vw+1rem,28px);font-weight:700;le
 .hero-right{text-align:right;flex:0 0 auto}
 .hero-period{font-size:clamp(14px,.6vw+.7rem,17px);font-weight:600;text-transform:capitalize}
 .hero-cur{font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.55;margin-top:3px}
+.cur-switch{display:inline-flex;gap:2px;margin-top:6px;background:rgba(255,255,255,.14);border-radius:999px;padding:3px;vertical-align:middle}
+.cur-switch button{border:0;background:transparent;color:inherit;opacity:.6;font:inherit;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 11px;border-radius:999px;cursor:pointer;transition:all .15s}
+.cur-switch button.on{background:#fff;color:#141a45;opacity:1}
 .tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 22px}
 .tab{border:1px solid var(--bd);background:var(--card);padding:8px 16px;font:inherit;font-size:13px;font-weight:600;color:var(--mut);cursor:pointer;border-radius:999px;transition:all .15s}
 .tab:hover{color:var(--ink);border-color:var(--mut)} .tab.on{color:#fff;background:var(--p);border-color:var(--p);box-shadow:0 4px 13px ${primary}40}
@@ -712,12 +736,12 @@ header.hero h1{margin:0;font-size:clamp(21px,1.5vw+1rem,28px);font-weight:700;le
 .drawer-sec{margin-bottom:20px}.drawer-st{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:10px}
 </style></head><body class="${glass ? "glassbg" : ""}">
 <div class="dash">
-  <header class="hero"><div class="hero-row">${logo ? `<img src="${esc(logo)}" alt="" style="height:44px;max-width:150px;object-fit:contain;background:#fff;border-radius:10px;padding:5px 9px">` : ""}<div class="hero-id"><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(ctx.client)}</h1></div><div class="hero-right"><div class="hero-period">${esc(periodLabel(ctx.period))}</div><div class="hero-cur">${esc(ctx.currency)}</div></div></div></header>
+  <header class="hero"><div class="hero-row">${logo ? `<img src="${esc(logo)}" alt="" style="height:44px;max-width:150px;object-fit:contain;background:#fff;border-radius:10px;padding:5px 9px">` : ""}<div class="hero-id"><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(ctx.client)}</h1></div><div class="hero-right"><div class="hero-period">${esc(periodLabel(ctx.period))}</div>${curToggle}</div></div></header>
   <nav class="tabs">${nav}</nav>
-  <main>${main}</main>
+  <main>${spanifyMoney(main)}</main>
   <footer class="foot">${esc(ctx.client)} · ${esc(periodLabel(ctx.period))} · ${esc(ctx.currency)} — Document confidentiel</footer>
 </div>
 <aside id="drill" class="drawer" aria-hidden="true"><div class="drawer-bg"></div><div class="drawer-panel"><button class="drawer-x" aria-label="Fermer">×</button><div class="drawer-h" id="drill-h"></div><div class="drawer-body" id="drill-body"></div></div></aside>
-<script>${chartsJs.replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\!--")}</script>
+<script>${detokMoney(chartsJs).replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\!--")}</script>
 </body></html>`;
 }
