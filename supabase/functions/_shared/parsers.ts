@@ -345,13 +345,45 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
   }
   // Paiements (PSP) : "Net payments by gateway/method" → réception, PAS le CA (+ ventes par pays si dispo).
   if ((has(h, "Payment gateway") || has(h, "Payment method")) && has(h, "Net payments")) {
-    const iNet = idx(h, "Net payments"), iCtry = idx(h, "Billing country");
-    let s = 0; const byCtry: Record<string, number> = {};
-    for (const r of data) { const n = toNum(r[iNet]); if (n == null) continue; s += n; if (iCtry >= 0) { const c = (r[iCtry] ?? "").trim(); if (c) byCtry[c] = (byCtry[c] ?? 0) + n; } }
-    const breakdowns = Object.keys(byCtry).length ? { sales_by_country: { label: "Encaissements par pays", rows: topN(byCtry) } } : undefined;
-    return mk("payment", {}, {}, { note: `Réception PSP (Shopify Payments) : ${Math.round(s).toLocaleString("fr-FR")} ${ctx.reporting} — réception, pas le CA.`, breakdowns });
+    const iNet = idx(h, "Net payments"), iCtry = idx(h, "Billing country"), iMethod = idx(h, "Payment method", "Payment gateway");
+    let s = 0; const byCtry: Record<string, number> = {}; const byMethod: Record<string, number> = {};
+    for (const r of data) {
+      const n = toNum(r[iNet]); if (n == null) continue; s += n;
+      if (iCtry >= 0) { const c = (r[iCtry] ?? "").trim(); if (c) byCtry[c] = (byCtry[c] ?? 0) + n; }
+      if (iMethod >= 0) { const mth = (r[iMethod] ?? "").trim(); if (mth) byMethod[mth] = (byMethod[mth] ?? 0) + n; }
+    }
+    const breakdowns: Record<string, Breakdown> = {};
+    if (Object.keys(byCtry).length) breakdowns.sales_by_country = { label: "Encaissements par pays", rows: topN(byCtry) };
+    if (Object.keys(byMethod).length) breakdowns.payments_by_method = { label: "Encaissements par méthode", rows: topN(byMethod) };
+    return mk("payment", {}, {}, { note: `Réception PSP (Shopify Payments) : ${Math.round(s).toLocaleString("fr-FR")} ${ctx.reporting} — réception, pas le CA.`, breakdowns: Object.keys(breakdowns).length ? breakdowns : undefined });
   }
-  // Autres exports analytics (recherches, one-time customers, séries temporelles, localisation…) : ignorés proprement (pas d'IA).
+  // FALLBACK ENRICHI : tout export « dimension → total » (recherches, remises, canaux, appareils…)
+  // devient un BREAKDOWN exploitable. On EXCLUT les taux/% et les séries temporelles (une somme y serait fausse).
+  {
+    const lname = name.toLowerCase();
+    const isRateOrTime = /\brate\b|conversion|over time|par jour|per day|%/.test(lname) || h.some((x) => /rate|%/.test(x.toLowerCase()));
+    const firstIsDate = data.length > 0 && /^\s*(\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4})/.test(data[0]?.[0] ?? "");
+    if (!isRateOrTime && !firstIsDate && h.length >= 2 && data.length >= 2) {
+      // Colonne valeur = dernière colonne majoritairement numérique ; dimension = 1re colonne (texte).
+      let iVal = -1;
+      for (let c = h.length - 1; c >= 1; c--) {
+        const sample = data.slice(0, 6);
+        if (sample.filter((r) => toNum(r[c]) != null).length >= Math.min(2, sample.length)) { iVal = c; break; }
+      }
+      if (iVal > 0) {
+        const agg: Record<string, number> = {};
+        for (const r of data) { const k = (r[0] ?? "").trim(); const n = toNum(r[iVal]); if (k && n != null && n !== 0) agg[k] = (agg[k] ?? 0) + n; }
+        if (Object.keys(agg).length >= 2) {
+          const label = (name.replace(/\.[a-z0-9]+$/i, "").replace(/\s*-\s*\d{4}.*$/, "").trim() || "Répartition").slice(0, 60);
+          const slug = "shopify_" + (label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "analytics");
+          return mk("analytics", {}, {}, {
+            breakdowns: { [slug]: { label, rows: topN(agg, 10) } },
+            note: `Export « ${label} » → répartition auto (${Object.keys(agg).length} lignes).`,
+          });
+        }
+      }
+    }
+  }
   return mk("analytics", {}, {}, { note: `Export Shopify analytique (${name}) — non agrégé (info uniquement).` });
 }
 
