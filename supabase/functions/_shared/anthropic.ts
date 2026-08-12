@@ -36,7 +36,8 @@ export async function callAnthropic(opts: {
     body: JSON.stringify({
       model: opts.model,
       max_tokens: opts.max_tokens ?? 4096,
-      ...(opts.temperature != null ? { temperature: opts.temperature } : {}),
+      // `temperature` n'est plus envoyé : déprécié sur les modèles récents (Anthropic 400
+      // « temperature is deprecated for this model »). Paramètre conservé dans la signature pour compat.
       system: opts.system,
       messages: opts.messages,
     }),
