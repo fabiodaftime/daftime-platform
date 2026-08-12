@@ -22,9 +22,24 @@ export async function insertVersion(
   table: string,
   key: KeyCols,
   row: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  // 1) l'ancienne version courante ne l'est plus
-  await applyKey(admin.from(table).update({ is_current: false }), key).eq("is_current", true);
+  opts?: {
+    // Garde-fou anti-régression : si la nouvelle version est PLUS PAUVRE que la courante,
+    // on l'enregistre quand même (traçabilité) mais SANS la rendre courante — l'ancienne reste en place.
+    demoteIfPoorer?: (candidate: Record<string, unknown>, current: Record<string, unknown>) => boolean;
+  },
+): Promise<Record<string, unknown> & { _demoted?: boolean }> {
+  // 0) éventuel garde-fou : on lit la version courante et on compare la richesse.
+  let demote = false;
+  if (opts?.demoteIfPoorer) {
+    const { data: cur } = await applyKey(
+      admin.from(table).select("*").eq("is_current", true).limit(1),
+      key,
+    ).maybeSingle();
+    if (cur) demote = opts.demoteIfPoorer(row, cur as Record<string, unknown>);
+  }
+
+  // 1) l'ancienne version courante ne l'est plus — SAUF si la nouvelle est démote (plus pauvre).
+  if (!demote) await applyKey(admin.from(table).update({ is_current: false }), key).eq("is_current", true);
 
   // 2) prochaine version
   const { data: last } = await applyKey(
@@ -33,12 +48,23 @@ export async function insertVersion(
   ).maybeSingle();
   const version = ((last as { version?: number } | null)?.version ?? 0) + 1;
 
-  // 3) insertion de la nouvelle version courante
+  // 3) insertion (courante seulement si non démote)
   const { data, error } = await admin
     .from(table)
-    .insert({ ...row, ...key, version, is_current: true })
+    .insert({ ...row, ...key, version, is_current: !demote })
     .select()
     .single();
   if (error) throw error;
-  return data as Record<string, unknown>;
+  return { ...(data as Record<string, unknown>), _demoted: demote };
+}
+
+// Richesse d'une ligne standardized_data : « plus pauvre » = perd des breakdowns (même période/docs
+// → régression) ou perd toutes ses sections. Sert de garde-fou anti-écrasement.
+export function poorerStandardized(cand: Record<string, unknown>, cur: Record<string, unknown>): boolean {
+  const nb = (r: Record<string, unknown>) => Object.keys(((r?.data as { breakdowns?: object })?.breakdowns) ?? {}).length;
+  const ns = (r: Record<string, unknown>) => (((r?.data as { sections?: unknown[] })?.sections) ?? []).length;
+  if (nb(cand) < nb(cur)) return true;                 // perd des breakdowns
+  if (nb(cur) > 0 && nb(cand) === 0) return true;      // en avait, plus aucun
+  if (ns(cur) > 0 && ns(cand) === 0) return true;      // perd toutes les sections
+  return false;
 }

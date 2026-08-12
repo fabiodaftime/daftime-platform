@@ -13,6 +13,19 @@ export interface CatalogLine {
 export interface CatalogCheck { id: string; label: string; severity: 'error' | 'warn'; expr: string }
 export interface Catalog { slug?: string; sections: { key: string; label: string }[]; lines: CatalogLine[]; checks: CatalogCheck[] }
 
+// « Magazine de data » par secteur : les breakdowns qui DOIVENT sortir si les documents le permettent.
+// Sert de référentiel de complétude (présent vs manquant) et de socle anti-régression.
+// Surchargé par activity_types.config.expected_breakdowns si défini.
+export const EXPECTED_BREAKDOWNS: Record<string, { key: string; label: string }[]> = {
+  ecommerce: [
+    { key: "sales_by_country", label: "Ventes / encaissements par pays" },
+    { key: "sessions_by_country", label: "Sessions par pays" },
+    { key: "top_products", label: "Top produits" },
+    { key: "daily_sales", label: "Ventes par jour" },
+    { key: "payments_by_method", label: "Encaissements par méthode" },
+  ],
+};
+
 // Lit un catalogue depuis activity_types.config (null si non défini / incomplet).
 export function getCatalog(config: any): Catalog | null {
   if (config && Array.isArray(config.lines) && config.lines.length && Array.isArray(config.sections)) {

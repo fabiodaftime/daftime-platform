@@ -7,7 +7,7 @@
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
-import { insertVersion } from "../_shared/versioning.ts";
+import { insertVersion, poorerStandardized } from "../_shared/versioning.ts";
 import { readClientFiles } from "../_shared/readFiles.ts";
 
 const SYSTEM = `Tu es un analyste financier qui AFFINE / CORRIGE des données standardisées, en dialogue. Tu as accès aux FICHIERS sources : tu peux donc RÉ-EXTRAIRE une valeur depuis une AUTRE colonne / ligne / feuille si on te le demande (ex. « pour le CA, prends la colonne Net et non Gross »).
@@ -77,13 +77,16 @@ Deno.serve(async (req) => {
     });
     const parsed = extractJson<{ data?: unknown; missing_items?: unknown[]; summary?: string }>(out);
 
+    // FUSION : le chat ne renvoie que les `sections` — on PRÉSERVE breakdowns/meta/reste de la donnée
+    // courante pour ne rien perdre (sinon la nouvelle version « oublie » les breakdowns → régression).
+    const mergedData = { ...((sd?.data as Record<string, unknown>) ?? {}), ...((parsed.data as Record<string, unknown>) ?? {}) };
     const saved = await insertVersion(admin, "standardized_data", { client_id, period }, {
       activity_type_id: client.activity_type_id,
-      data: parsed.data ?? { sections: [] },
+      data: mergedData,
       missing_items: parsed.missing_items ?? [],
       source: "ai",
       created_by: user.id,
-    });
+    }, { demoteIfPoorer: poorerStandardized });
 
     return json({ ok: true, standardized_data: saved, summary: parsed.summary ?? "", usage });
   } catch (e) {

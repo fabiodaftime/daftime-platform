@@ -7,9 +7,9 @@
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, callAnthropicTool, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
-import { insertVersion } from "../_shared/versioning.ts";
+import { insertVersion, poorerStandardized } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
-import { getCatalog, inputLines, buildStandardized, type CatalogLine } from "../_shared/templates.ts";
+import { getCatalog, inputLines, buildStandardized, EXPECTED_BREAKDOWNS, type CatalogLine } from "../_shared/templates.ts";
 import { reconcile, type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
@@ -291,6 +291,20 @@ Deno.serve(async (req) => {
       for (const e of keptParsed) if (e.breakdowns) for (const [k, v] of Object.entries(e.breakdowns)) if (!breakdowns[k]) breakdowns[k] = v;
       if (Object.keys(breakdowns).length) (data as { breakdowns?: unknown }).breakdowns = breakdowns;
 
+      // « Magazine de data » sectoriel : ce que ce secteur DOIT produire vs ce qui est présent ce mois.
+      const cfgExpected = (at?.config as { expected_breakdowns?: { key: string; label: string }[] })?.expected_breakdowns;
+      const expected = Array.isArray(cfgExpected) ? cfgExpected : (EXPECTED_BREAKDOWNS[activity] ?? []);
+      if (expected.length) {
+        const missing = expected.filter((e) => !breakdowns[e.key]);
+        (data.meta as Record<string, unknown>).completeness = {
+          expected: expected.map((e) => e.key),
+          present: expected.filter((e) => breakdowns[e.key]).map((e) => e.key),
+          missing: missing.map((e) => e.key),
+        };
+        if (missing.length) flags.push({ id: "_completeness", severity: "info",
+          label: `Vues sectorielles manquantes ce mois : ${missing.map((e) => e.label).join(", ")} — vérifie les exports correspondants.` });
+      }
+
       dataToSave = data;
       missing = lines.filter((l) => l.core && values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);
       usage = { parsers: keptParsed.length, llm: llmExtracts.length };
@@ -317,9 +331,12 @@ Deno.serve(async (req) => {
       missing_items: missing ?? [],
       source: "ai",
       created_by: user.id,
-    });
+    }, { demoteIfPoorer: poorerStandardized });
 
-    return json({ ok: true, standardized_data: saved, usage });
+    // Si la nouvelle version est PLUS PAUVRE que la courante, elle est enregistrée mais non appliquée.
+    const demoted = (saved as { _demoted?: boolean })._demoted === true;
+    return json({ ok: true, standardized_data: saved, usage, demoted,
+      ...(demoted ? { warning: "Version enregistrée mais NON appliquée : elle est plus pauvre (moins de breakdowns) que la version courante. L'ancienne, plus riche, est conservée." } : {}) });
   } catch (e) {
     console.error("standardize-data:", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
