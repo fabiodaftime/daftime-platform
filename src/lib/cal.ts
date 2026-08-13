@@ -27,8 +27,10 @@ function onBookingSuccess(): void {
   trackSchedule({ source: 'cal.com' });
 }
 
-export function initCalTracking(): void {
-  if (initialized || typeof window === 'undefined') return;
+export function initCalTracking(callink: string = BOOKING_SCHEDULE_CALLINK): void {
+  if (typeof window === 'undefined') return;
+  // Déjà initialisé (ex. navigation SPA vers une autre landing) : on précharge juste l'event ciblé.
+  if (initialized) { try { window.Cal?.('preload', { calLink: callink }); } catch { /* noop */ } return; }
   initialized = true;
 
   // 1) Chargement de l'embed cal.com (expose window.Cal) + écoute de l'événement de réservation.
@@ -53,7 +55,7 @@ export function initCalTracking(): void {
     window.Cal?.('on', { action: 'bookingSuccessful', callback: () => onBookingSuccess() });
     // Préchargement : réchauffe la page de résa en arrière-plan dès le montage → ouverture quasi
     // instantanée au clic (les assets cal.com sont déjà en cache), sans perdre le tracking.
-    window.Cal?.('preload', { calLink: BOOKING_SCHEDULE_CALLINK });
+    window.Cal?.('preload', { calLink: callink });
   } catch { /* noop */ }
 
   // 2) Filet de sécurité : message brut émis par l'iframe cal.com.

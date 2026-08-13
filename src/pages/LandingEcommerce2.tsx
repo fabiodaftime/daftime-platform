@@ -12,6 +12,7 @@ import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
 import { trackLead, trackViewContent } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
+import { resolveBooking } from '@/lib/config';
 
 const CTA = 'Recevoir mon dashboard gratuit';
 
@@ -42,14 +43,14 @@ const FAQ = [
   { q: 'C’est pour moi ?', a: 'Si tu fais au moins 1 000 $/jour de CA et que tu fais de la pub, oui.' },
 ];
 
-export default function LandingEcommerce2() {
+export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}) {
   const navigate = useNavigate();
   const [booking, setBooking] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
 
-  const openLead = (source: string) => { trackLead(source); setBooking(true); };
+  const openLead = (source: string) => { trackLead(advisor ? `${source}_${advisor}` : source); setBooking(true); };
 
-  useEffect(() => { initCalTracking(); }, []);
+  useEffect(() => { initCalTracking(resolveBooking(advisor).callink); }, [advisor]);
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
@@ -242,7 +243,7 @@ export default function LandingEcommerce2() {
         <Button onClick={() => openLead('sticky')} variant="secondary" className="w-full h-12 text-base font-bold">{CTA}</Button>
       </div>
 
-      <BookingModal open={booking} onClose={() => setBooking(false)} />
+      <BookingModal open={booking} onClose={() => setBooking(false)} advisor={advisor} />
     </div>
   );
 }

@@ -72,7 +72,9 @@ const App = () => (
           <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/ecommerce" element={<LandingEcommerce />} />
+            <Route path="/ecommerce-f" element={<LandingEcommerce advisor="fred" />} />
             <Route path="/ecommerce-2" element={<LandingEcommerce2 />} />
+            <Route path="/ecommerce-2-f" element={<LandingEcommerce2 advisor="fred" />} />
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/confidentialite" element={<Confidentialite />} />
             <Route path="/auth" element={<Auth />} />

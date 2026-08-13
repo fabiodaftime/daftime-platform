@@ -10,6 +10,7 @@ import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
 import { trackLead, trackViewContent } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
+import { resolveBooking } from '@/lib/config';
 
 const CTA = 'Recevoir mon dashboard gratuit';
 
@@ -28,7 +29,7 @@ const FAQ = [
   { q: 'Vous êtes qui exactement ?', a: 'La branche conseil de Daftime Accounting, un cabinet comptable spécialisé e-commerce. La personne qui regarde tes chiffres, c’est Fabio (section plus haut).' },
 ];
 
-export default function LandingEcommerce() {
+export default function LandingEcommerce({ advisor }: { advisor?: string } = {}) {
   const navigate = useNavigate();
   const [booking, setBooking] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
@@ -36,9 +37,9 @@ export default function LandingEcommerce() {
   // Le "dashboard gratuit" démarre par un call de cadrage → on ouvre le calendrier cal.com (modale rapide).
   // Clic = intention (Meta "Lead") ; RDV confirmé = conversion (Meta "Schedule", via initCalTracking).
   // Si l'iframe ne charge pas (rare, in-app), la modale affiche un lien "ouvrir dans le navigateur" en filet.
-  const openLead = (source: string) => { trackLead(source); setBooking(true); };
+  const openLead = (source: string) => { trackLead(advisor ? `${source}_${advisor}` : source); setBooking(true); };
 
-  useEffect(() => { initCalTracking(); }, []);
+  useEffect(() => { initCalTracking(resolveBooking(advisor).callink); }, [advisor]);
 
   // Sticky CTA après le 1er scroll + ViewContent au scroll 50 % (une fois).
   useEffect(() => {
@@ -279,7 +280,7 @@ export default function LandingEcommerce() {
         <Button onClick={() => openLead('sticky')} variant="secondary" className="w-full h-12 text-base font-semibold">{CTA}</Button>
       </div>
 
-      <BookingModal open={booking} onClose={() => setBooking(false)} />
+      <BookingModal open={booking} onClose={() => setBooking(false)} advisor={advisor} />
     </div>
   );
 }

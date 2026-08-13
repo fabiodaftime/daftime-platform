@@ -4,12 +4,13 @@
 // - FILET DE SÉCURITÉ : lien « ouvrir dans le navigateur » (plein onglet) toujours présent, et
 //   bannière proactive si on détecte un navigateur in-app (Insta/FB) où l'iframe peut coincer.
 import { X } from 'lucide-react';
-import { BOOKING_SCHEDULE_URL, BOOKING_SCHEDULE_FULL_URL } from '@/lib/config';
+import { resolveBooking } from '@/lib/config';
 import { isInAppBrowser } from '@/lib/inApp';
 
-export function BookingModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function BookingModal({ open, onClose, advisor }: { open: boolean; onClose: () => void; advisor?: string }) {
   if (!open) return null;
   const inApp = isInAppBrowser();
+  const booking = resolveBooking(advisor); // event cal.com selon le canal (ex. « fred »)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div
@@ -26,7 +27,7 @@ export function BookingModal({ open, onClose }: { open: boolean; onClose: () => 
 
         {inApp && (
           <a
-            href={BOOKING_SCHEDULE_FULL_URL}
+            href={booking.fullUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-12 bg-amber-50 text-amber-800 border-b border-amber-200"
@@ -39,11 +40,11 @@ export function BookingModal({ open, onClose }: { open: boolean; onClose: () => 
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
-          <iframe src={BOOKING_SCHEDULE_URL} title="Prendre rendez-vous" className="relative w-full h-full border-0" />
+          <iframe src={booking.url} title="Prendre rendez-vous" className="relative w-full h-full border-0" />
         </div>
 
         <a
-          href={BOOKING_SCHEDULE_FULL_URL}
+          href={booking.fullUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0 text-center text-xs py-2 border-t bg-muted/40 text-muted-foreground hover:text-primary"
