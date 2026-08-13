@@ -39,7 +39,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
   // Si l'iframe ne charge pas (rare, in-app), la modale affiche un lien "ouvrir dans le navigateur" en filet.
   const openLead = (source: string) => { trackLead(advisor ? `${source}_${advisor}` : source); setBooking(true); };
 
-  useEffect(() => { initCalTracking(resolveBooking(advisor).callink); }, [advisor]);
+  useEffect(() => { initCalTracking(resolveBooking(advisor).url); }, [advisor]);
 
   // Sticky CTA après le 1er scroll + ViewContent au scroll 50 % (une fois).
   useEffect(() => {

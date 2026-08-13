@@ -50,7 +50,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
 
   const openLead = (source: string) => { trackLead(advisor ? `${source}_${advisor}` : source); setBooking(true); };
 
-  useEffect(() => { initCalTracking(resolveBooking(advisor).callink); }, [advisor]);
+  useEffect(() => { initCalTracking(resolveBooking(advisor).url); }, [advisor]);
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
