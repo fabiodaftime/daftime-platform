@@ -101,11 +101,10 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={addSku}><Plus className="w-3.5 h-3.5 mr-1" /> Ajouter un SKU</Button>
-          {!!productSeed?.length && (
-            <Button variant="outline" size="sm" onClick={seedFromSales} title="Ajoute les produits vendus (issus des exports), coûts à compléter">
-              ✨ Pré-remplir depuis les ventes ({productSeed.length})
-            </Button>
-          )}
+          <Button variant="outline" size="sm" onClick={seedFromSales} disabled={!productSeed?.length}
+            title={productSeed?.length ? 'Ajoute les produits vendus (issus des exports), coûts à compléter' : 'Génère d\'abord un dashboard pour récupérer la liste des produits vendus'}>
+            ✨ Pré-remplir depuis les ventes{productSeed?.length ? ` (${productSeed.length})` : ''}
+          </Button>
         </div>
         <div className="mt-3">
           <S label="Importer un CSV (sku, produit, packaging, transport, douane — une ligne par SKU)">

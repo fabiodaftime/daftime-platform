@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { ShopOnboardingPanel } from '@/components/generic/ShopOnboardingPanel';
+import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { BenchmarksPanel } from '@/components/generic/BenchmarksPanel';
@@ -579,6 +580,10 @@ export default function AdminClientCockpit() {
         )}
 
         {tab === 'data' && (<>
+        <details className="mb-4 border rounded-lg p-3 bg-muted/30">
+          <summary className="cursor-pointer text-sm font-medium">📋 Documents à demander (aide-mémoire closer)</summary>
+          <div className="mt-3"><DocChecklistPanel activitySlug={(client as any)?.activity_types?.slug} /></div>
+        </details>
         <Section icon={<FileUp className="w-4 h-4" />} title={`Fichiers du mois (${files.length})`}>
           <label className="inline-block">
             <input type="file" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadFiles(e.target.files); e.currentTarget.value = ''; }} />
