@@ -302,7 +302,12 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     if (iGross >= 0) v.gross_sales = Math.round(gross * 100) / 100;
     if (iRet >= 0) v.refunds = Math.round(-ret * 100) / 100; // Returns négatifs → remboursements positifs
     const breakdowns: Record<string, { label: string; rows: { label: string; value: number }[] }> = {};
-    if (Object.keys(prod).length) breakdowns.top_products = { label: "Top produits (CA net)", rows: topN(prod) };
+    if (Object.keys(prod).length) {
+      breakdowns.top_products = { label: "Top produits (CA net)", rows: topN(prod) };
+      // Catalogue COMPLET (jusqu'à 300 SKU) — sert au pré-remplissage de l'onboarding (coûts par SKU).
+      breakdowns.products_catalog = { label: "Catalogue produits (ventes du mois)",
+        rows: Object.entries(prod).sort((a, b) => b[1] - a[1]).slice(0, 300).map(([label, value]) => ({ label, value: Math.round(value * 100) / 100 })) };
+    }
     if (Object.keys(daily).length) breakdowns.daily_sales = { label: "Ventes par jour", rows: Object.entries(daily).sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([label, value]) => ({ label, value: Math.round(value * 100) / 100 })) };
     // le fichier riche (avec Gross sales) prime au dédoublonnage
     return mk("revenue", v, {

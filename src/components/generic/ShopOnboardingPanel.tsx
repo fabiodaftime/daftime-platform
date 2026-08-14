@@ -22,8 +22,8 @@ const S = ({ label, children }: { label: string; children: ReactNode }) => (
 );
 const inputCls = 'h-8 w-full rounded border bg-background px-2 text-sm';
 
-export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, onSaved }: {
-  clientId: string; initialProfile: Profile; initialCosts: Costs; onSaved?: (p: Profile, c: Costs) => void;
+export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, productSeed, onSaved }: {
+  clientId: string; initialProfile: Profile; initialCosts: Costs; productSeed?: string[]; onSaved?: (p: Profile, c: Costs) => void;
 }) {
   const [p, setP] = useState<Profile>(initialProfile ?? {});
   const [c, setC] = useState<Costs>(initialCosts ?? {});
@@ -38,6 +38,11 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, on
   const setSku = (i: number, patch: Partial<SkuCost>) => setC((prev) => ({ ...prev, sku_costs: (prev.sku_costs ?? []).map((r, j) => j === i ? { ...r, ...patch } : r) }));
   const addSku = () => setC((prev) => ({ ...prev, sku_costs: [...(prev.sku_costs ?? []), { sku: '' }] }));
   const rmSku = (i: number) => setC((prev) => ({ ...prev, sku_costs: (prev.sku_costs ?? []).filter((_, j) => j !== i) }));
+  const seedFromSales = () => {
+    const existing = new Set((c.sku_costs ?? []).map((r) => r.sku.trim().toLowerCase()));
+    const rows = (productSeed ?? []).filter((s) => s && !existing.has(s.trim().toLowerCase())).map((s) => ({ sku: s }));
+    if (rows.length) setC((prev) => ({ ...prev, sku_costs: [...(prev.sku_costs ?? []), ...rows] }));
+  };
   const importCsv = () => {
     const rows = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => l.split(/[,;\t]/).map((x) => x.trim()));
     const start = rows.length && /sku|réf|ref|product/i.test(rows[0][0]) ? 1 : 0; // saute l'en-tête éventuel
@@ -94,7 +99,14 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, on
             </div>
           ))}
         </div>
-        <Button variant="outline" size="sm" className="mt-2" onClick={addSku}><Plus className="w-3.5 h-3.5 mr-1" /> Ajouter un SKU</Button>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={addSku}><Plus className="w-3.5 h-3.5 mr-1" /> Ajouter un SKU</Button>
+          {!!productSeed?.length && (
+            <Button variant="outline" size="sm" onClick={seedFromSales} title="Ajoute les produits vendus (issus des exports), coûts à compléter">
+              ✨ Pré-remplir depuis les ventes ({productSeed.length})
+            </Button>
+          )}
+        </div>
         <div className="mt-3">
           <S label="Importer un CSV (sku, produit, packaging, transport, douane — une ligne par SKU)">
             <textarea className="w-full text-xs border rounded p-2 bg-background font-mono" rows={3} value={csv} onChange={(e) => setCsv(e.target.value)} placeholder="TSHIRT-BLK-M, 8.50, 0.40, 1.20, 0.30" />

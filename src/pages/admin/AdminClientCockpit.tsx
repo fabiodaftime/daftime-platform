@@ -717,6 +717,7 @@ export default function AdminClientCockpit() {
               clientId={id!}
               initialProfile={(client?.shop_profile ?? {}) as never}
               initialCosts={(client?.cost_params ?? {}) as never}
+              productSeed={(((dash?.data_json as any)?.breakdowns?.products_catalog?.rows ?? (dash?.data_json as any)?.breakdowns?.top_products?.rows ?? []) as any[]).map((r) => r?.label).filter(Boolean)}
               onSaved={(sp, cp) => setClient((c: any) => (c ? { ...c, shop_profile: sp, cost_params: cp } : c))}
             />
           </Section>
