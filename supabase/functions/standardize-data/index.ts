@@ -10,6 +10,7 @@ import { callAnthropic, callAnthropicTool, extractJson, MODELS, type AnthropicMe
 import { insertVersion, poorerStandardized } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
 import { getCatalog, inputLines, buildStandardized, EXPECTED_BREAKDOWNS, type CatalogLine } from "../_shared/templates.ts";
+import { classifyGap } from "../_shared/conceptSources.ts";
 import { reconcile, type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
@@ -274,16 +275,27 @@ Deno.serve(async (req) => {
       flags.push(...recLLM.conflicts);
       data.flags = flags;
 
-      // VALIDATION BLOQUANTE : champs clés (core) présents + aucun check d'erreur du catalogue.
-      const coreMissing = lines.filter((l) => l.core && values[l.id] == null).map((l) => l.label);
+      // VALIDATION + TRI DES ABSENCES (doctrine H7) : chaque champ core manquant est CLASSÉ.
+      // On ne BLOQUE que sur les vrais bugs (donnée censée être dans un export, introuvable) ;
+      // paramétrage / donnée-client / historique / dérivé → dashboard PARTIEL + trou explicite.
+      const gaps = lines.filter((l) => l.core && values[l.id] == null).map((l) => {
+        const g = classifyGap(l.id);
+        return { concept: l.id, label: l.label, statut: g.statut, ask: g.ask ?? null };
+      });
       const errorIssues = (flags as { severity?: string; label?: string }[]).filter((f) => f.severity === "error").map((f) => f.label ?? "");
-      const blocking = [...coreMissing.map((l) => `Champ clé manquant : ${l}`), ...errorIssues];
-      if (blocking.length) flags.push({ id: "_invalid", severity: "error", label: `Validation bloquante : ${blocking.join(" · ")}. Le dashboard ne sera pas généré tant que ce n'est pas corrigé.` });
+      const bugGaps = gaps.filter((g) => g.statut === "missing_bug");
+      const blocking = [...bugGaps.map((g) => `Champ clé introuvable : ${g.label}`), ...errorIssues];
+      if (blocking.length) flags.push({ id: "_invalid", severity: "error", label: `Bloquant (à corriger) : ${blocking.join(" · ")}.` });
+      const paramGaps = gaps.filter((g) => g.statut === "missing_param");
+      if (paramGaps.length) flags.push({ id: "_param_needed", severity: "warn", label: `À paramétrer (onboarding) : ${paramGaps.map((g) => g.label).join(", ")}. Le dashboard s'affiche en partiel en attendant.` });
+      const askGaps = gaps.filter((g) => g.statut === "missing_obtainable");
+      if (askGaps.length) flags.push({ id: "_ask_client", severity: "warn", label: `À demander au client : ${askGaps.map((g) => g.label).join(", ")}.` });
 
       data.meta = { ...(data.meta ?? {}), fx: { reporting: currency, source: fxSource, detected, factor },
         classification: keptParsed.map((e) => ({ parser: e.parser, file: e.file, role: e.role, effRole: effRoleOf(e), manual: !!manualByName.get(e.file)?.role, revenueCandidate: e.revenueCandidate ?? null, note: e.note })),
         sources_count: keptParsed.length + llmExtracts.length,
         period, currency, entity: (client as { name?: string }).name ?? null,
+        gaps,
         validation: { ok: blocking.length === 0, blocking } };
 
       // Breakdowns dimensionnels (ventes par pays, top produits…) collectés depuis les parsers.
@@ -306,7 +318,12 @@ Deno.serve(async (req) => {
       }
 
       dataToSave = data;
-      missing = lines.filter((l) => l.core && values[l.id] == null).map((l) => `${l.label} — non trouvé dans les fichiers fournis`);
+      missing = gaps.map((g) =>
+        g.statut === "missing_param" ? `${g.label} — à paramétrer${g.ask ? ` : ${g.ask}` : ""}`
+        : g.statut === "missing_obtainable" ? `${g.label} — à demander au client`
+        : g.statut === "needs_history" ? `${g.label} — nécessite de l'historique`
+        : g.statut === "derived" ? `${g.label} — non calculé (dépend d'un input manquant)`
+        : `${g.label} — introuvable dans les fichiers (à vérifier)`);
       usage = { parsers: keptParsed.length, llm: llmExtracts.length };
     } else {
       // GÉNÉRIQUE (activités sans template) : l'IA produit directement la structure.
