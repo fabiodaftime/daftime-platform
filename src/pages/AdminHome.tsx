@@ -6,11 +6,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   Search, Plus, Users, Upload, Building2, ChevronRight, ChevronDown, Settings,
-  Home, Briefcase, FileCheck2, Clock, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle,
+  Home, Briefcase, FileCheck2, Clock, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle, Target,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
 import { currentPeriod, periodLabel, STATUS_LABELS } from '@/lib/genericApi';
+import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
+import { DOC_CHECKLIST } from '@/lib/docChecklist';
 
 interface Client {
   id: string; name: string; currency: string; location: string;
@@ -60,9 +62,9 @@ export default function AdminHome() {
   // Onglet actif (view) + filtre (loc) stockés dans l'URL : le bouton « retour » du navigateur
   // restaure ainsi la vue d'où l'on vient (ex. Clients → Test & fictifs) au lieu de repartir à zéro.
   const [searchParams, setSearchParams] = useSearchParams();
-  const view = (searchParams.get('view') ?? 'accueil') as 'accueil' | 'production' | 'clients';
+  const view = (searchParams.get('view') ?? 'accueil') as 'accueil' | 'production' | 'clients' | 'commercial';
   const loc = searchParams.get('filter') ?? 'dubai';
-  const setView = (v: 'accueil' | 'production' | 'clients') =>
+  const setView = (v: 'accueil' | 'production' | 'clients' | 'commercial') =>
     setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('view', v); return p; }, { replace: true });
   // Sélection d'un onglet Clients : écrit view + filtre en une seule mise à jour d'URL.
   const goClients = (filter: string) =>
@@ -70,6 +72,7 @@ export default function AdminHome() {
   const [open, setOpen] = useState<{ clients: boolean; config: boolean }>(() => ({ clients: view === 'clients', config: false }));
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
+  const [checklistSlug, setChecklistSlug] = useState('ecommerce'); // vue Commercial : activité sélectionnée
 
   useEffect(() => {
     (async () => {
@@ -194,6 +197,8 @@ export default function AdminHome() {
                 })}
               </div>
             )}
+
+            {item(view === 'commercial', <Target className="w-4 h-4 shrink-0" />, 'Commercial', () => setView('commercial'))}
 
             {item(false, <Settings className="w-4 h-4 shrink-0" />, 'Configuration',
               () => setOpen((o) => ({ ...o, config: !o.config })),
@@ -407,6 +412,27 @@ export default function AdminHome() {
                   })}
                 </div>
               )}
+            </>
+          )}
+
+          {/* ───────── COMMERCIAL ───────── */}
+          {view === 'commercial' && (
+            <>
+              <div>
+                <h1 className="text-xl font-semibold">Commercial — Checklists documents</h1>
+                <p className="text-sm text-muted-foreground">Ce qu'il faut demander au prospect, par activité. Copie-colle pour l'envoyer.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(DOC_CHECKLIST).map(([slug, c]) => (
+                  <button key={slug} onClick={() => setChecklistSlug(slug)}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition ${checklistSlug === slug ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'}`}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+              <div className="rounded-xl border bg-card p-5">
+                <DocChecklistPanel activitySlug={checklistSlug} />
+              </div>
             </>
           )}
         </div>
