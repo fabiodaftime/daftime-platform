@@ -5,7 +5,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { ShopOnboardingPanel } from '@/components/generic/ShopOnboardingPanel';
 import { AppShell } from '@/components/layout/AppShell';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { BenchmarksPanel } from '@/components/generic/BenchmarksPanel';
@@ -83,8 +84,8 @@ export default function AdminClientCockpit() {
   // Onglet actif stocké dans l'URL (?tab=…) : le bouton « retour » du navigateur restaure
   // l'onglet où l'on était (ex. Audit) au lieu de repartir sur Home.
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard';
-  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard') =>
+  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard' | 'shop';
+  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard' | 'shop') =>
     setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('tab', t); return p; }, { replace: true });
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
@@ -393,6 +394,7 @@ export default function AdminClientCockpit() {
     { id: 'audit' as const, label: 'Audit', icon: <FileSearch className="w-4 h-4" /> },
     { id: 'context' as const, label: 'Contexte', icon: <BookOpen className="w-4 h-4" /> },
     { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
+    { id: 'shop' as const, label: 'Paramètres shop', icon: <SlidersHorizontal className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
@@ -707,6 +709,17 @@ export default function AdminClientCockpit() {
             </div>
           </div>
         </Section>
+        )}
+
+        {tab === 'shop' && (
+          <Section icon={<SlidersHorizontal className="w-4 h-4" />} title="Paramètres du shop (onboarding)">
+            <ShopOnboardingPanel
+              clientId={id!}
+              initialProfile={(client?.shop_profile ?? {}) as never}
+              initialCosts={(client?.cost_params ?? {}) as never}
+              onSaved={(sp, cp) => setClient((c: any) => (c ? { ...c, shop_profile: sp, cost_params: cp } : c))}
+            />
+          </Section>
         )}
 
         {tab === 'dashboard' && (<>
