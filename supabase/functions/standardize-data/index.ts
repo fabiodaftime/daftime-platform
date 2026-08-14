@@ -323,6 +323,14 @@ Deno.serve(async (req) => {
       const parsed = extractJson<{ data?: unknown; missing_items?: unknown[] }>(res.text);
       dataToSave = parsed.data ?? {};
       missing = parsed.missing_items ?? [];
+      // Alerte : chemin DÉGRADÉ (aucun catalogue) alors que l'activité est connue → extraction appauvrie
+      // (ni parsers, ni breakdowns, ni cascade). Rend le problème visible au lieu de le masquer.
+      if (activity && activity !== "inconnu") {
+        console.warn(`standardize-data: chemin générique pour activité « ${activity} » (pas de catalogue)`);
+        const d = dataToSave as { flags?: unknown[] };
+        d.flags = [...(Array.isArray(d.flags) ? d.flags : []),
+          { id: "_degraded", severity: "warn", label: `Extraction en mode générique (pas de catalogue pour l'activité « ${activity} ») — données appauvries (pas de breakdowns, pas de cascade). Vérifie la configuration de l'activité.` }];
+      }
     }
 
     const saved = await insertVersion(admin, "standardized_data", { client_id, period }, {

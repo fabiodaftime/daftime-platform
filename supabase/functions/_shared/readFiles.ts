@@ -12,7 +12,10 @@ export type FileItem =
   | { kind: "image"; name: string; base64: string; mediaType: string }
   | { kind: "skipped"; name: string; reason: string };
 
-const TEXT_CAP = 40_000;                 // caractères max par fichier texte/Excel
+// Le PARSING déterministe reçoit le fichier ENTIER (sinon CA/commandes sous-comptés en silence).
+// Seul le payload envoyé au LLM est plafonné (tokens) — avec un marqueur explicite de troncature.
+const PARSE_CAP = 8_000_000;             // garde-fou mémoire (~8 Mo) — au-delà, rarissime, on signale
+const LLM_TEXT_CAP = 40_000;             // caractères max par fichier DANS le payload LLM uniquement
 const PDF_MAX = 15 * 1024 * 1024;        // 15 Mo
 const IMG_MAX = 5 * 1024 * 1024;         // 5 Mo
 const IMG_TYPES: Record<string, string> = {
@@ -38,9 +41,9 @@ export async function readClientFiles(
         const content = wb.SheetNames
           .map((sn) => `# Feuille: ${sn}\n${XLSX.utils.sheet_to_csv(wb.Sheets[sn])}`)
           .join("\n\n");
-        out.push({ kind: "text", name, content: content.slice(0, TEXT_CAP) });
+        out.push({ kind: "text", name, content: content.slice(0, PARSE_CAP) });
       } else if (/\.(csv|tsv|txt|md|json)$/.test(lower)) {
-        out.push({ kind: "text", name, content: (await blob.text()).slice(0, TEXT_CAP) });
+        out.push({ kind: "text", name, content: (await blob.text()).slice(0, PARSE_CAP) });
       } else if (lower.endsWith(".pdf")) {
         const buf = new Uint8Array(await blob.arrayBuffer());
         if (buf.byteLength > PDF_MAX) {
@@ -70,7 +73,11 @@ export function filesToContentBlocks(items: FileItem[]): unknown[] {
   const blocks: unknown[] = [];
   for (const it of items) {
     if (it.kind === "text") {
-      blocks.push({ type: "text", text: `### ${it.name}\n${it.content}` });
+      // Plafond LLM uniquement (les totaux exacts sont calculés à part sur le fichier complet).
+      const text = it.content.length > LLM_TEXT_CAP
+        ? it.content.slice(0, LLM_TEXT_CAP) + `\n[… fichier tronqué pour l'analyse IA : ${LLM_TEXT_CAP} caractères sur ${it.content.length} affichés. NE déduis AUCUN total depuis cet extrait — les montants exacts sont calculés par le moteur sur le fichier entier.]`
+        : it.content;
+      blocks.push({ type: "text", text: `### ${it.name}\n${text}` });
     } else if (it.kind === "pdf") {
       blocks.push({ type: "text", text: `### ${it.name} (PDF ci-dessous) :` });
       blocks.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: it.base64 } });
