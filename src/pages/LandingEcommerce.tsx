@@ -163,7 +163,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Bien plus qu’un dashboard.</h2>
             <p className="mt-2 text-muted-foreground text-sm">Un vrai point chaque mois, et de quoi garder la main au quotidien — sans te noyer dans les chiffres.</p>
           </div>
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 rounded-2xl border bg-card divide-y divide-border">
             <RitualRow icon={Video} t="Un gros point chaque mois — 1h en visio" d="On décortique ton dashboard ensemble, ligne par ligne. Les 3 points d’attention du mois, et un plan pour le mois d’après. Tu poses toutes tes questions." />
             <RitualRow icon={Target} t="Les KPI à suivre au quotidien, de ton côté" d="On te dit quels 3-4 chiffres regarder chaque jour (2 min), adaptés à TON shop. Tu gardes la main, sans checker 40 métriques." />
             <RitualRow icon={Compass} t="Un humain qui t’aide à piloter" d="Moi ou un analyste spécialisé e-commerce, qui interprète tes chiffres pour toi et t’aide à décider. Jamais un algo, jamais un template." />
@@ -200,17 +200,15 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
       <section className="px-4 py-14">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center">Comment ça se passe</h2>
-          <div className="mt-8 space-y-4">
+          <ol className="mt-8 ml-3 border-l-2 border-primary/25 space-y-7">
             {STEPS.map((s) => (
-              <div key={s.n} className="flex gap-4 rounded-2xl border bg-card p-5">
-                <div className="w-9 h-9 shrink-0 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-semibold">{s.n}</div>
-                <div>
-                  <h3 className="font-semibold">{s.t}</h3>
-                  <p className="text-muted-foreground text-sm mt-1">{s.d}</p>
-                </div>
-              </div>
+              <li key={s.n} className="relative pl-7">
+                <span className="absolute -left-[14px] -top-0.5 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-sm">{s.n}</span>
+                <h3 className="font-semibold">{s.t}</h3>
+                <p className="text-muted-foreground text-sm mt-1">{s.d}</p>
+              </li>
             ))}
-          </div>
+          </ol>
           <p className="mt-6 text-center text-sm font-semibold text-primary">Premier dashboard livré sous 2 jours.</p>
         </div>
       </section>
@@ -421,8 +419,8 @@ function TeaserKpi({ label, value, sub, tone }: { label: string; value: string; 
 
 function RitualRow({ icon: Icon, t, d }: { icon: LucideIcon; t: string; d: string }) {
   return (
-    <div className="flex gap-4 rounded-2xl border bg-card p-5">
-      <div className="w-10 h-10 shrink-0 rounded-xl bg-accent/15 text-primary flex items-center justify-center"><Icon className="w-5 h-5" /></div>
+    <div className="flex gap-4 p-5 items-start">
+      <Icon className="w-6 h-6 shrink-0 mt-1 text-primary" strokeWidth={2.2} />
       <div>
         <h3 className="font-semibold">{t}</h3>
         <p className="text-muted-foreground text-sm mt-1">{d}</p>
