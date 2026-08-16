@@ -139,10 +139,10 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
             <h2 className="text-3xl font-extrabold tracking-tight">Nous, on te sort le vrai chiffre.</h2>
             <p className="mt-3 text-muted-foreground">Pas 40 métriques. Ce qui compte, en clair.</p>
           </div>
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 rounded-2xl border bg-card divide-y divide-border">
             {BENEFITS.map((b) => (
-              <div key={b.t} className="flex gap-4 rounded-2xl border bg-card p-5">
-                <div className="w-12 h-12 shrink-0 rounded-2xl bg-accent/15 text-primary flex items-center justify-center"><b.icon className="w-6 h-6" /></div>
+              <div key={b.t} className="flex gap-4 p-5 items-start">
+                <b.icon className="w-6 h-6 shrink-0 mt-1 text-primary" strokeWidth={2.2} />
                 <div>
                   <h3 className="font-bold text-lg">{b.t}</h3>
                   <p className="text-muted-foreground text-[15px] mt-1">{b.d}</p>
@@ -157,17 +157,15 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
       <section className="bg-secondary/50 border-y px-5 py-14">
         <div className="max-w-lg mx-auto">
           <h2 className="text-3xl font-extrabold tracking-tight text-center">Simple comme bonjour.</h2>
-          <div className="mt-8 space-y-4">
+          <ol className="mt-8 ml-3 border-l-2 border-primary/25 space-y-7">
             {STEPS.map((s) => (
-              <div key={s.n} className="flex gap-4 items-center rounded-2xl bg-card border p-5">
-                <div className="w-11 h-11 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-bold">{s.n}</div>
-                <div>
-                  <h3 className="font-bold">{s.t}</h3>
-                  <p className="text-muted-foreground text-sm mt-0.5">{s.d}</p>
-                </div>
-              </div>
+              <li key={s.n} className="relative pl-7">
+                <span className="absolute -left-[14px] -top-0.5 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-sm">{s.n}</span>
+                <h3 className="font-bold">{s.t}</h3>
+                <p className="text-muted-foreground text-sm mt-0.5">{s.d}</p>
+              </li>
             ))}
-          </div>
+          </ol>
           <p className="mt-6 text-center text-sm font-bold text-primary flex items-center justify-center gap-2">
             <Clock className="w-4 h-4" /> Ton dashboard livré sous 2 jours.
           </p>
