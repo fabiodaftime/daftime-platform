@@ -22,7 +22,13 @@ const STEPS = [
 
 const FAQ = [
   { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. Le premier dashboard est offert pour te montrer concrètement la valeur — tu le gardes même si tu ne continues pas. Ensuite c’est 700 $/mois, sans engagement, résiliable quand tu veux.' },
-  { q: 'Je sais sortir le même dashboard avec l’IA. Pourquoi payer ?', a: 'Et tu as raison — la visualisation, c’est la couche facile. Le vrai enjeu est en dessous : réconcilier tes différentes sources, mapper ta structure comme il faut et sortir une data consolidée correcte et propre. Une réconciliation approximative ou un mauvais mapping, et l’IA te sort une visualisation impeccable… basée sur du faux. Ce que tu paies, c’est un expert qui structure ta data pour qu’elle soit cohérente, puis l’analyse, la comprend et te l’explique — en te recommandant ce qui compte vraiment de suivre. Il situe ta marge, ton ROAS et ton AOV face à ton secteur, et te propose les bons leviers : si c’est l’emailing, TikTok Shop ou Google Ads, il t’oriente vers le spécialiste adéquat. Bref : de l’expertise, du temps, de l’interprétation, du conseil et de l’aide au pilotage. Le travail d’un directeur financier — pour le prix de moins d’une journée du sien, par mois.' },
+  { q: 'Je sais sortir le même dashboard avec l’IA. Pourquoi payer ?', a: [
+    'Et tu as raison — la visualisation, c’est la couche facile.',
+    'Le vrai enjeu est en dessous : réconcilier tes différentes sources, mapper ta structure comme il faut et sortir une data consolidée correcte et propre. Une réconciliation approximative ou un mauvais mapping, et l’IA te sort une visualisation impeccable… basée sur du faux.',
+    'Ce que tu paies, c’est un expert qui structure ta data pour qu’elle soit cohérente, puis l’analyse, la comprend et te l’explique — en te recommandant ce qui compte vraiment de suivre.',
+    'Il situe ta marge, ton ROAS et ton AOV face à ton secteur, et te propose les bons leviers : si c’est l’emailing, TikTok Shop ou Google Ads, il t’oriente vers le spécialiste adéquat.',
+    'Bref : de l’expertise, du temps, de l’interprétation, du conseil et de l’aide au pilotage. Le travail d’un directeur financier — pour le prix de moins d’une journée du sien, par mois.',
+  ] },
   { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h par mois en call avec un expert, plus quelques points ponctuels si tu as besoin de clarifier ou d’un coup de main. Le reste — récupération des données, génération du dashboard — c’est géré de notre côté.' },
   { q: 'Mes chiffres sont un bordel total, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
@@ -247,7 +253,9 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
                   {f.q}
                   <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
                 </summary>
-                <p className="text-muted-foreground text-sm mt-3">{f.a}</p>
+                {Array.isArray(f.a)
+                  ? <div className="mt-3 space-y-2.5">{f.a.map((p, i) => <p key={i} className="text-muted-foreground text-sm">{p}</p>)}</div>
+                  : <p className="text-muted-foreground text-sm mt-3">{f.a}</p>}
               </details>
             ))}
           </div>
