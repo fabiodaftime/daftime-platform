@@ -10,7 +10,7 @@ import {
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
-import { trackLead, trackViewContent } from '@/lib/tracking';
+import { trackLead, trackViewContent, trackFaqOpen } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
 import { resolveBooking } from '@/lib/config';
 
@@ -37,6 +37,7 @@ const STEPS = [
 
 const FAQ = [
   { q: 'Ça coûte combien ?', a: 'Ton premier dashboard est offert. Ensuite, 700 $/mois si tu veux continuer — sans engagement.' },
+  { q: 'C’est offert, c’est quoi le piège ?', a: 'Aucun. On t’offre le premier pour te prouver la valeur — tu le gardes quoi qu’il arrive. Tu continues seulement si ça t’apporte quelque chose.' },
   { q: 'Ça me prend combien de temps ?', a: '1h par mois, la revue avec ton expert. On gère tout le reste.' },
   { q: 'Mes chiffres sont un bordel, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
@@ -202,7 +203,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
           <h2 className="text-3xl font-extrabold tracking-tight text-center mb-8">Les questions qu’on te pose tout le temps.</h2>
           <div className="space-y-3">
             {FAQ.map((f) => (
-              <details key={f.q} className="group rounded-2xl border bg-card p-5">
+              <details key={f.q} onToggle={(e) => { if (e.currentTarget.open) trackFaqOpen(f.q, 'ecommerce2'); }} className="group rounded-2xl border bg-card p-5">
                 <summary className="flex items-center justify-between gap-3 cursor-pointer font-bold list-none">
                   {f.q}
                   <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
@@ -211,6 +212,8 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
               </details>
             ))}
           </div>
+          {/* CTA au pic d'intention : juste après la levée d'objections. */}
+          <Button onClick={() => openLead('faq')} className="mt-8 w-full h-14 text-lg font-bold">{CTA}</Button>
         </div>
       </section>
 

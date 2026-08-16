@@ -22,15 +22,24 @@ declare global {
     fbq?: (...args: unknown[]) => void;
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
+    clarity?: (...args: unknown[]) => void;
   }
 }
 
-/** Événement générique → relayé vers GTM / Meta / GA4 si dispo. */
+/** Événement générique → relayé vers GTM / Meta / GA4 / Clarity si dispo. */
 export function track(event: string, params: Params = {}): void {
   try { (window.dataLayer ||= []).push({ event, ...params }); } catch { /* noop */ }
   try { window.gtag?.('event', event, params); } catch { /* noop */ }
   try { window.fbq?.('trackCustom', event, params); } catch { /* noop */ }
+  try { window.clarity?.('event', event); } catch { /* noop */ }
   if (import.meta.env.DEV) console.debug('[track]', event, params);
+}
+
+/** Question de FAQ ouverte → on apprend QUELLE objection capte l'attention (dwell time Clarity).
+ *  Pose un tag Clarity filtrable (segmenter les replays par question) + event générique Meta/GA4. */
+export function trackFaqOpen(question: string, page: string): void {
+  try { window.clarity?.('set', 'faq_ouverte', question); } catch { /* noop */ }
+  track('faq_open', { question, page });
 }
 
 /** Lead capturé (formulaire « dashboard gratuit » soumis avec succès) → conversion Meta "Lead". */

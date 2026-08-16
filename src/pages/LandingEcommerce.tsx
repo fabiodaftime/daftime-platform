@@ -8,7 +8,7 @@ import { ArrowRight, Check, ShieldCheck, Lock, Video, Target, Compass, type Luci
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { BookingModal } from '@/components/booking/BookingModal';
-import { trackLead, trackViewContent } from '@/lib/tracking';
+import { trackLead, trackViewContent, trackFaqOpen } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
 import { resolveBooking } from '@/lib/config';
 
@@ -21,6 +21,7 @@ const STEPS = [
 ];
 
 const FAQ = [
+  { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. Le premier dashboard est offert pour te montrer concrètement la valeur — tu le gardes même si tu ne continues pas. Ensuite c’est 700 $/mois, sans engagement, résiliable quand tu veux.' },
   { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h en visio avec ton analyste, c’est tout. Le reste — récupération des données, génération du dashboard — c’est géré de notre côté.' },
   { q: 'Mes chiffres sont un bordel total, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
@@ -240,7 +241,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
           <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-8">Les vraies questions</h2>
           <div className="space-y-3">
             {FAQ.map((f) => (
-              <details key={f.q} className="group rounded-2xl border bg-card p-5">
+              <details key={f.q} onToggle={(e) => { if (e.currentTarget.open) trackFaqOpen(f.q, 'ecommerce'); }} className="group rounded-2xl border bg-card p-5">
                 <summary className="flex items-center justify-between gap-3 cursor-pointer font-medium list-none">
                   {f.q}
                   <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
@@ -249,6 +250,8 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
               </details>
             ))}
           </div>
+          {/* CTA au pic d'intention : juste après la levée d'objections. */}
+          <Button onClick={() => openLead('faq')} className="mt-8 w-full h-12 text-base font-semibold">{CTA}</Button>
         </div>
       </section>
 
