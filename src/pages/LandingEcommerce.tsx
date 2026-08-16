@@ -21,7 +21,7 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. Le premier dashboard est offert pour te montrer concrètement la valeur — tu le gardes même si tu ne continues pas. Ensuite c’est 700 $/mois, sans engagement, résiliable quand tu veux.' },
+  { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. Le premier dashboard est offert pour te montrer concrètement la valeur — tu le gardes même si tu ne continues pas. Ensuite c’est à partir de 700 $/mois, sans engagement, résiliable quand tu veux.' },
   { q: 'Je sais sortir le même dashboard avec l’IA. Pourquoi payer ?', a: [
     'Et tu as raison — la visualisation, c’est la couche facile.',
     'Le vrai enjeu est en dessous : réconcilier tes différentes sources, mapper ta structure comme il faut et sortir une data consolidée correcte et propre. Une réconciliation approximative ou un mauvais mapping, et l’IA te sort une visualisation impeccable… basée sur du faux.',
@@ -91,7 +91,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
             {CTA}
           </Button>
           <p className="mt-2.5 text-xs text-center text-muted-foreground">
-            <span className="text-foreground font-medium">20 min de call</span>, puis ton dashboard livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> <span className="whitespace-nowrap">(normalement 700 $/mois)</span> — zéro pitch, tu décides après.
+            <span className="text-foreground font-medium">20 min de call</span>, puis ton dashboard livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> <span className="whitespace-nowrap">(normalement à partir de 700 $/mois)</span> — zéro pitch, tu décides après.
           </p>
           <p className="mt-1 text-xs text-muted-foreground text-center">
             Pensé pour les shops qui font 1 000 $/jour et plus. En dessous, un tableur suffit.
@@ -224,11 +224,11 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
             </div>
             <div className="flex items-center justify-between">
               <span className="font-semibold">Daftime</span>
-              <span className="tabular-nums font-semibold text-xl">700 $ <span className="text-sm font-normal text-muted-foreground">/ mois</span></span>
+              <span className="tabular-nums font-semibold text-xl"><span className="text-sm font-normal text-muted-foreground">à partir de </span>700 $ <span className="text-sm font-normal text-muted-foreground">/ mois</span></span>
             </div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            <b className="text-foreground">Ton premier dashboard est offert.</b> Tu le gardes quoi qu'il arrive — tu continues à 700 $/mois seulement si ça t'apporte de la valeur.
+            <b className="text-foreground">Ton premier dashboard est offert.</b> Tu le gardes quoi qu'il arrive — tu continues à partir de 700 $/mois seulement si ça t'apporte de la valeur.
           </p>
           <ul className="mt-5 inline-flex flex-col gap-2 text-left text-sm">
             {['Dashboard sur-mesure chaque mois', '1h de revue en visio avec ton analyste', 'Les 3 points d’attention + ton plan', 'Toutes tes sources réconciliées', 'Sans engagement'].map((x) => (

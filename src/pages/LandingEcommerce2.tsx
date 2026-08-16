@@ -36,7 +36,7 @@ const STEPS = [
 ];
 
 const FAQ = [
-  { q: 'Ça coûte combien ?', a: 'Ton premier dashboard est offert. Ensuite, 700 $/mois si tu veux continuer — sans engagement.' },
+  { q: 'Ça coûte combien ?', a: 'Ton premier dashboard est offert. Ensuite, à partir de 700 $/mois si tu veux continuer — sans engagement.' },
   { q: 'C’est offert, c’est quoi le piège ?', a: 'Aucun. On t’offre le premier pour te prouver la valeur — tu le gardes quoi qu’il arrive. Tu continues seulement si ça t’apporte quelque chose.' },
   { q: 'Je sais sortir le même dashboard avec l’IA. Pourquoi payer ?', a: [
     'Et tu as raison — la visualisation, c’est la couche facile.',
@@ -176,7 +176,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
       <section className="px-5 py-14">
         <div className="max-w-md mx-auto text-center">
           <h2 className="text-3xl font-extrabold tracking-tight">Ton premier dashboard, offert.</h2>
-          <p className="mt-3 text-lg text-muted-foreground">Normalement <b className="text-foreground">700 $/mois</b>. Le premier est <b className="text-foreground">gratuit</b>.</p>
+          <p className="mt-3 text-lg text-muted-foreground">Normalement <b className="text-foreground">à partir de 700 $/mois</b>. Le premier est <b className="text-foreground">gratuit</b>.</p>
           <ul className="mt-6 inline-flex flex-col gap-2.5 text-left">
             {['Ton dashboard financier sur-mesure', '1h de revue avec un expert e-commerce', 'Tu le gardes, quoi qu’il arrive'].map((x) => (
               <li key={x} className="flex items-center gap-3 text-[15px]"><Check className="w-5 h-5 text-emerald-600 shrink-0" /> {x}</li>
@@ -184,7 +184,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
           </ul>
           <Button onClick={() => openLead('offer')} className="mt-8 w-full h-14 text-lg font-bold">{CTA}</Button>
           <p className="mt-4 text-sm text-muted-foreground">
-            Tu continues à 700 $/mois <b className="text-foreground">seulement si ça t’aide</b>. Sinon, tu ne dois rien.
+            Tu continues à partir de 700 $/mois <b className="text-foreground">seulement si ça t’aide</b>. Sinon, tu ne dois rien.
           </p>
         </div>
       </section>
