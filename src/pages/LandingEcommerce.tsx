@@ -22,7 +22,8 @@ const STEPS = [
 
 const FAQ = [
   { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. Le premier dashboard est offert pour te montrer concrètement la valeur — tu le gardes même si tu ne continues pas. Ensuite c’est 700 $/mois, sans engagement, résiliable quand tu veux.' },
-  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h en visio avec ton analyste, c’est tout. Le reste — récupération des données, génération du dashboard — c’est géré de notre côté.' },
+  { q: 'J’ai déjà bricolé un dashboard avec l’IA. Pourquoi payer ?', a: 'Le graphique, c’est la partie visible — et de loin la plus simple. Le vrai travail est ailleurs : réconcilier Shopify, Stripe, Meta et ta banque en une seule vérité, repérer le coût mal classé qui fausse toute ta marge, et te dire quoi décider ce mois-ci. Ça, c’est un expert e-commerce qui connaît ton shop, pas un template. Le dashboard, tu le gardes — ce que tu paies, c’est le cerveau qui le lit.' },
+  { q: 'Ça me prend combien de temps chaque mois ?', a: '1 à 2h par mois en call avec un expert, plus quelques points ponctuels si tu as besoin de clarifier ou d’un coup de main. Le reste — récupération des données, génération du dashboard — c’est géré de notre côté.' },
   { q: 'Mes chiffres sont un bordel total, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
   { q: 'Et si je veux arrêter ?', a: 'Sans engagement. Tu résilies quand tu veux, tu gardes tes dashboards.' },

@@ -38,7 +38,8 @@ const STEPS = [
 const FAQ = [
   { q: 'Ça coûte combien ?', a: 'Ton premier dashboard est offert. Ensuite, 700 $/mois si tu veux continuer — sans engagement.' },
   { q: 'C’est offert, c’est quoi le piège ?', a: 'Aucun. On t’offre le premier pour te prouver la valeur — tu le gardes quoi qu’il arrive. Tu continues seulement si ça t’apporte quelque chose.' },
-  { q: 'Ça me prend combien de temps ?', a: '1h par mois, la revue avec ton expert. On gère tout le reste.' },
+  { q: 'Je peux pas le faire avec l’IA ?', a: 'Le graphique, oui. Le reste, non : réconcilier tes sources sans te planter, voir le coût mal rangé qui fausse ta marge, et savoir quoi décider ce mois-ci. Ça, c’est un expert qui connaît ton shop — pas un template. L’outil, c’est la partie facile ; le cerveau qui le lit, c’est ce que tu paies.' },
+  { q: 'Ça me prend combien de temps ?', a: '1 à 2h par mois en call avec ton expert, plus des points ponctuels si besoin de clarifier ou d’un coup de main. On gère tout le reste.' },
   { q: 'Mes chiffres sont un bordel, c’est grave ?', a: 'Non. C’est le cas de 90 % des shops qu’on reprend.' },
   { q: 'Je dois changer d’outils ?', a: 'Non. On s’adapte à ce que tu utilises déjà.' },
   { q: 'C’est pour moi ?', a: 'Si tu fais au moins 1 000 $/jour de CA et que tu fais de la pub, oui.' },
