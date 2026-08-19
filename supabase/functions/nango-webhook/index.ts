@@ -16,12 +16,14 @@ import { serviceClient } from "../_shared/supabaseClients.ts";
 const NANGO_SECRET_KEY = Deno.env.get("NANGO_SECRET_KEY") ?? "";
 const INSECURE = Deno.env.get("NANGO_WEBHOOK_INSECURE") === "true";
 
-// integration id Nango -> notre libelle provider (inverse de nango-connect-session).
+// Integration ID Nango -> notre libelle provider. Convention identite (voir nango-connect-session) :
+// l'Integration ID saisi dans Nango vaut deja notre libelle, donc on le reutilise tel quel
+// (cette map ne sert que de garde-fou / documentation).
 const PROVIDER_FROM_INTEGRATION: Record<string, string> = {
-  "shopify": "shopify",
-  "facebook-ads": "meta",
-  "google-ads": "google_ads",
-  "tiktok-ads": "tiktok",
+  shopify: "shopify",
+  meta: "meta",
+  google_ads: "google_ads",
+  tiktok: "tiktok",
 };
 
 async function verifySignature(raw: string, header: string | null): Promise<boolean> {

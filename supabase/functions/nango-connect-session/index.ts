@@ -12,13 +12,16 @@ import { requireStaff } from "../_shared/guard.ts";
 const NANGO_API_URL = Deno.env.get("NANGO_API_URL") ?? "https://api.nango.dev";
 const NANGO_SECRET_KEY = Deno.env.get("NANGO_SECRET_KEY") ?? "";
 
-// provider (notre libelle) -> integration id configure dans Nango.
-// ⚠️ a aligner avec les integration ids reels crees dans ton dashboard Nango.
+// provider (notre libelle) -> Integration ID (unique key) a saisir dans Nango.
+// Convention : on garde l'IDENTITE -> quand tu crees l'integration dans Nango, mets le champ
+// "Integration ID / unique key" a EXACTEMENT cette valeur (le PROVIDER sous-jacent, lui, est
+//  choisi dans le guide : shopify=Shopify, meta=Meta Marketing API, google_ads=Google Ads,
+//  tiktok=TikTok Ads). Ainsi aucun mapping a maintenir.
 const NANGO_INTEGRATION: Record<string, string> = {
   shopify: "shopify",
-  meta: "facebook-ads",
-  google_ads: "google-ads",
-  tiktok: "tiktok-ads",
+  meta: "meta",
+  google_ads: "google_ads",
+  tiktok: "tiktok",
 };
 
 Deno.serve(async (req) => {
