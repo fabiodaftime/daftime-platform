@@ -13,7 +13,9 @@
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabaseClients.ts";
 
-const NANGO_SECRET_KEY = Deno.env.get("NANGO_SECRET_KEY") ?? "";
+// Signing key DEDIEE des webhooks Nango (Environment Settings > Webhooks > Signing key).
+// Fallback sur NANGO_SECRET_KEY pour les anciens environnements qui signaient avec la cle API.
+const NANGO_WEBHOOK_SECRET = Deno.env.get("NANGO_WEBHOOK_SECRET") ?? Deno.env.get("NANGO_SECRET_KEY") ?? "";
 const INSECURE = Deno.env.get("NANGO_WEBHOOK_INSECURE") === "true";
 
 // Integration ID Nango -> notre libelle provider. Convention identite (voir nango-connect-session) :
@@ -28,9 +30,9 @@ const PROVIDER_FROM_INTEGRATION: Record<string, string> = {
 
 async function verifySignature(raw: string, header: string | null): Promise<boolean> {
   if (INSECURE) return true;
-  if (!header || !NANGO_SECRET_KEY) return false;
+  if (!header || !NANGO_WEBHOOK_SECRET) return false;
   const key = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(NANGO_SECRET_KEY),
+    "raw", new TextEncoder().encode(NANGO_WEBHOOK_SECRET),
     { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
   );
   const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw));
@@ -44,7 +46,8 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const raw = await req.text();
-  const ok = await verifySignature(raw, req.headers.get("X-Nango-Signature"));
+  const sigHeader = req.headers.get("X-Nango-Signature") ?? req.headers.get("X-Nango-Hmac-Sha256");
+  const ok = await verifySignature(raw, sigHeader);
   if (!ok) return json({ error: "Signature invalide" }, 401);
 
   let evt: Record<string, unknown>;
