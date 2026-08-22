@@ -26,11 +26,14 @@ declare global {
   }
 }
 
-/** Événement générique → relayé vers GTM / Meta / GA4 / Clarity si dispo. */
-export function track(event: string, params: Params = {}): void {
+/** Événement générique → relayé vers GTM / Meta / GA4 / Clarity si dispo.
+ *  `opts.skipMeta` : ne PAS renvoyer un event custom au pixel Meta — utilisé par les wrappers
+ *  d'événements STANDARD (Lead/Schedule/ViewContent) qui envoient déjà leur event standard à Meta,
+ *  pour éviter un doublon côté pixel (double-comptage des conversions). */
+export function track(event: string, params: Params = {}, opts: { skipMeta?: boolean } = {}): void {
   try { (window.dataLayer ||= []).push({ event, ...params }); } catch { /* noop */ }
   try { window.gtag?.('event', event, params); } catch { /* noop */ }
-  try { window.fbq?.('trackCustom', event, params); } catch { /* noop */ }
+  if (!opts.skipMeta) { try { window.fbq?.('trackCustom', event, params); } catch { /* noop */ } }
   try { window.clarity?.('event', event); } catch { /* noop */ }
   if (import.meta.env.DEV) console.debug('[track]', event, params);
 }
@@ -45,13 +48,13 @@ export function trackFaqOpen(question: string, page: string): void {
 /** Lead capturé (formulaire « dashboard gratuit » soumis avec succès) → conversion Meta "Lead". */
 export function trackLead(source: string): void {
   try { window.fbq?.('track', 'Lead', { source }); } catch { /* noop */ }
-  track('lead', { source });
+  track('lead', { source }, { skipMeta: true });
 }
 
 /** RDV réellement confirmé dans cal.com → conversion (Meta "Schedule" + event générique). */
 export function trackSchedule(params: Params = {}): void {
   try { window.fbq?.('track', 'Schedule', params); } catch { /* noop */ }
-  track('appointment_booked', params);
+  track('appointment_booked', params, { skipMeta: true });
 }
 
 /** Intérêt marqué (ex. scroll 50 % de la landing) → Meta "ViewContent". Une seule fois par session. */
@@ -60,5 +63,5 @@ export function trackViewContent(params: Params = {}): void {
   if (viewContentFired) return;
   viewContentFired = true;
   try { window.fbq?.('track', 'ViewContent', params); } catch { /* noop */ }
-  track('view_content', params);
+  track('view_content', params, { skipMeta: true });
 }
