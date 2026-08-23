@@ -4,7 +4,7 @@
 // DÉONTOLOGIE OCC : aucune formulation ne porte d'appréciation sur un autre
 // cabinet. Tout est écrit du point de vue du vécu de l'entrepreneur.
 
-import { ACCOUNTANT, PRICING } from './config';
+import { ACCOUNTANT, OFFICES, PRICING } from './config';
 
 /** Titre du hero selon `?a=1..4` — un angle par publicité Meta. */
 export const HERO_VARIANTS = {
@@ -55,7 +55,10 @@ export const PROOF = [
   },
   { label: 'Tout se passe en français', detail: 'Échanges, documents commentés, point mensuel' },
   { label: 'Déclarations annuelles comprises', detail: 'Modelo 22 et IES dans le forfait' },
-  { label: 'Équipe à Lisbonne', detail: 'Présence locale, pas une plateforme à distance' },
+  {
+    label: OFFICES.count,
+    detail: `${OFFICES.where}, pas une plateforme à distance`,
+  },
 ] as const;
 
 /** Ligne de réassurance affichée juste sous le bouton du hero. */
@@ -136,7 +139,7 @@ export const SERVICES = [
  * elle est associée du cabinet.
  */
 export const DUO = {
-  title: 'Une équipe à Lisbonne, un groupe derrière',
+  title: 'Une équipe sur place, un groupe derrière',
   members: [
     {
       label: `${ACCOUNTANT.name} et son équipe`,
@@ -145,12 +148,12 @@ export const DUO = {
         `l’Ordem dos Contabilistas Certificados (${ACCOUNTANT.licence.toLowerCase()}). C’est elle ` +
         'qui engage sa responsabilité sur tes comptes et signe tes déclarations : au Portugal, ' +
         'c’est une obligation légale, pas une option de confort. Son équipe tient ta comptabilité ' +
-        'au quotidien, depuis Lisbonne.',
+        `au quotidien depuis nos deux bureaux : ${OFFICES.where}.`,
     },
     {
       label: 'Le groupe Daftime',
       body:
-        'Derrière l’équipe de Lisbonne, le groupe accompagne des dirigeants dont l’activité ne ' +
+        'Derrière les équipes portugaises, le groupe accompagne des dirigeants dont l’activité ne ' +
         'tient pas dans un seul pays. Français, portugais, anglais : tu poses ta question dans ta ' +
         'langue. Et parce que nous connaissons le référentiel portugais comme la logique fiscale ' +
         'française, nous voyons tout de suite quand une décision prise d’un côté a des ' +

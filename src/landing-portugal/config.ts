@@ -66,6 +66,16 @@ export const FLAGS = {
 } as const;
 
 // ─────────────────────────────────────────────────────────────── Mentions ──
+/**
+ * Implantations au Portugal. Repris par le bandeau de preuve et le bloc équipe.
+ * `where` est la formulation affichée telle quelle — au singulier ou au pluriel
+ * selon le nombre de bureaux, à ajuster ici si une implantation change.
+ */
+export const OFFICES = {
+  count: 'Deux bureaux au Portugal',
+  where: 'Lisbonne et région de Porto',
+} as const;
+
 /** L'associée du cabinet — c'est elle qui signe les déclarations. */
 export const ACCOUNTANT = {
   name: 'Patrícia Ferreira',
