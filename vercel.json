@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/((?!assets/|dashboards/|.*\\..*).*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/portugal", "destination": "/portugal/index.html" },
+    { "source": "/portugal/confidentialite", "destination": "/portugal/confidentialite.html" },
+    { "source": "/((?!assets/|dashboards/|portugal/|.*\\..*).*)", "destination": "/index.html" }
+  ]
 }

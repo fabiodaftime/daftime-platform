@@ -14,4 +14,16 @@ export default defineConfig(() => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        // Application (landings e-commerce, dashboards, admin, espace client) — SPA react-router.
+        main: path.resolve(__dirname, "index.html"),
+        // Landing publicitaire Portugal — entrée autonome, hors SPA : elle doit tenir
+        // un FCP < 2 s sur mobile et porter ses propres meta (lang fr, Open Graph).
+        // Voir src/portugal.tsx.
+        portugal: path.resolve(__dirname, "portugal/index.html"),
+      },
+    },
+  },
 }));

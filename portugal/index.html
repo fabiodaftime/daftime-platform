@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+  Entrée HTML autonome de la landing Portugal (voir build.rollupOptions dans vite.config.ts).
+  Elle est volontairement séparée de index.html : lang="fr", Open Graph propres,
+  et surtout AUCUN traceur posé en dur — le pixel n'est injecté qu'après consentement
+  (src/landing-portugal/pixel.ts). C'est la différence de fond avec l'application.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1A1D56" />
+
+    <!-- Préconnexion cal.com : l'iframe de RDV est montée au scroll, on ouvre la connexion avant -->
+    <link rel="preconnect" href="https://cal.com" crossorigin />
+    <link rel="preconnect" href="https://app.cal.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cal.com" />
+
+    <!-- Polices : une seule famille (Poppins), 3 graisses, en chargement NON bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      />
+    </noscript>
+
+    <link rel="canonical" href="https://www.daftime-advisory-platform.com/portugal" />
+    <title>Comptabilité au Portugal, en français — Daftime Portugal</title>
+    <meta
+      name="description"
+      content="Cabinet franco-portugais pour entrepreneurs français installés au Portugal : contabilista certificada portugaise, interlocuteur francophone, déclarations annuelles comprises. Réserve 20 minutes."
+    />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph — URL d'image ABSOLUE + dimensions (aperçu fiable Facebook/LinkedIn) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Daftime Portugal" />
+    <meta property="og:title" content="Ta compta portugaise, expliquée en français" />
+    <meta
+      property="og:description"
+      content="Contabilista certificada portugaise + interlocuteur francophone. IVA, IRC, Modelo 22, IES : déclarations annuelles comprises. 20 minutes pour faire le point."
+    />
+    <meta property="og:url" content="https://www.daftime-advisory-platform.com/portugal" />
+    <meta
+      property="og:image"
+      content="https://www.daftime-advisory-platform.com/og-portugal.png"
+    />
+    <meta
+      property="og:image:secure_url"
+      content="https://www.daftime-advisory-platform.com/og-portugal.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Daftime Portugal — comptabilité franco-portugaise" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ta compta portugaise, expliquée en français" />
+    <meta
+      name="twitter:description"
+      content="Contabilista certificada portugaise + interlocuteur francophone. Déclarations annuelles comprises."
+    />
+    <meta
+      name="twitter:image"
+      content="https://www.daftime-advisory-platform.com/og-portugal.png"
+    />
+
+    <!-- Favicons auto-hébergés (mêmes fichiers que l'application) -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="256x256" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <!-- Vérification de domaine Meta (Business Manager) -->
+    <meta name="facebook-domain-verification" content="bah4ze2xh3iduliiw7n4oyac5xfupg" />
+
+    <!--
+      PAS de snippet Meta Pixel ici, et c'est volontaire : il est injecté par JS
+      après acceptation du bandeau. Ne pas le recopier depuis index.html.
+    -->
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/portugal.tsx"></script>
+  </body>
+</html>
