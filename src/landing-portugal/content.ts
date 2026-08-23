@@ -147,9 +147,9 @@ export const DUO = {
         `Patrícia est ${ACCOUNTANT.role.toLowerCase()} de Daftime Portugal, ${ACCOUNTANT.title} ` +
         `inscrite à l’Ordem dos Contabilistas Certificados (${ACCOUNTANT.licence.toLowerCase()}) : ` +
         'c’est elle qui engage sa responsabilité sur tes comptes et signe tes déclarations. ' +
-        `Fabio, ${PARTNER.role}, est ton interlocuteur sur les décisions — rémunération, ` +
-        'structure, arbitrages. Et leur équipe tient ta comptabilité au quotidien depuis nos deux ' +
-        `bureaux : ${OFFICES.where}.`,
+        `Fabio est ${PARTNER.role} : c’est lui que tu as au téléphone, il cadre ton besoin, te ` +
+        'dit ce qui est faisable et à quel prix, et reste ton point d’entrée ensuite. Leur équipe ' +
+        `tient ta comptabilité au quotidien depuis nos deux bureaux : ${OFFICES.where}.`,
     },
     {
       label: 'Le groupe Daftime',

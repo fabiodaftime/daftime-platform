@@ -69,7 +69,7 @@ export const FLAGS = {
 /** L'associé côté Daftime, présenté avec Patrícia dans le bloc équipe. */
 export const PARTNER = {
   name: 'Fabio Vieira',
-  role: 'fondateur de Daftime',   // ⚠️ À CONFIRMER — titre affiché sur la page
+  role: 'associé et directeur commercial',
 } as const;
 
 /**
