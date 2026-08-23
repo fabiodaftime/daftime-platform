@@ -66,6 +66,12 @@ export const FLAGS = {
 } as const;
 
 // ─────────────────────────────────────────────────────────────── Mentions ──
+/** L'associé côté Daftime, présenté avec Patrícia dans le bloc équipe. */
+export const PARTNER = {
+  name: 'Fabio Vieira',
+  role: 'fondateur de Daftime',   // ⚠️ À CONFIRMER — titre affiché sur la page
+} as const;
+
 /**
  * Implantations au Portugal. Repris par le bandeau de preuve et le bloc équipe.
  * `where` est la formulation affichée telle quelle — au singulier ou au pluriel

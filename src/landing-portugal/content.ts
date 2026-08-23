@@ -4,7 +4,7 @@
 // DÉONTOLOGIE OCC : aucune formulation ne porte d'appréciation sur un autre
 // cabinet. Tout est écrit du point de vue du vécu de l'entrepreneur.
 
-import { ACCOUNTANT, OFFICES, PRICING } from './config';
+import { ACCOUNTANT, OFFICES, PARTNER, PRICING } from './config';
 
 /** Titre du hero selon `?a=1..4` — un angle par publicité Meta. */
 export const HERO_VARIANTS = {
@@ -142,13 +142,14 @@ export const DUO = {
   title: 'Une équipe sur place, un groupe derrière',
   members: [
     {
-      label: `${ACCOUNTANT.name} et son équipe`,
+      label: `${ACCOUNTANT.name} et ${PARTNER.name}`,
       body:
-        `${ACCOUNTANT.role} de Daftime Portugal, Patrícia est ${ACCOUNTANT.title} inscrite à ` +
-        `l’Ordem dos Contabilistas Certificados (${ACCOUNTANT.licence.toLowerCase()}). C’est elle ` +
-        'qui engage sa responsabilité sur tes comptes et signe tes déclarations : au Portugal, ' +
-        'c’est une obligation légale, pas une option de confort. Son équipe tient ta comptabilité ' +
-        `au quotidien depuis nos deux bureaux : ${OFFICES.where}.`,
+        `Patrícia est ${ACCOUNTANT.role.toLowerCase()} de Daftime Portugal, ${ACCOUNTANT.title} ` +
+        `inscrite à l’Ordem dos Contabilistas Certificados (${ACCOUNTANT.licence.toLowerCase()}) : ` +
+        'c’est elle qui engage sa responsabilité sur tes comptes et signe tes déclarations. ' +
+        `Fabio, ${PARTNER.role}, est ton interlocuteur sur les décisions — rémunération, ` +
+        'structure, arbitrages. Et leur équipe tient ta comptabilité au quotidien depuis nos deux ' +
+        `bureaux : ${OFFICES.where}.`,
     },
     {
       label: 'Le groupe Daftime',
