@@ -35,6 +35,22 @@ export type HeroVariantKey = keyof typeof HERO_VARIANTS;
 export const HERO_SUBTITLE =
   'Cabinet franco-portugais. Ta compta portugaise, expliquée en français.';
 
+/**
+ * Bandeau de crédibilité, juste sous le hero.
+ *
+ * Le pattern « Trust & Authority » place la preuve en position 2, avant même
+ * l'exposé du problème, et cite « credentials cachés » comme anti-pattern.
+ * Aucun élément inventé ici : la cédula est vérifiable auprès de l'OCC, le
+ * reste décrit le service tel qu'il est vendu. Pas de logo client, pas de
+ * chiffre d'accompagnement tant qu'il n'y en a pas de réel.
+ */
+export const PROOF = [
+  { label: 'Contabilista Certificada', detail: `Inscrite à l’OCC — ${ACCOUNTANT.licence.toLowerCase()}` },
+  { label: 'Tout se passe en français', detail: 'Échanges, documents commentés, point mensuel' },
+  { label: 'Déclarations annuelles comprises', detail: 'Modelo 22 et IES dans le forfait' },
+  { label: 'Cabinet à Lisbonne', detail: 'Présence locale, pas une plateforme à distance' },
+] as const;
+
 /** Ligne de réassurance affichée juste sous le bouton du hero. */
 export const HERO_REASSURANCE =
   '20 minutes en visio, en français. Sans engagement, et sans rien avoir à changer avant.';

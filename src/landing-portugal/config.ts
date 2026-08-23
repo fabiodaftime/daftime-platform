@@ -62,6 +62,13 @@ export const FLAGS = {
    *    à nouveau reportée). Un seul booléen, rien d'autre à toucher.
    */
   showEInvoicing: true,
+  /**
+   * Barre CTA collante en bas d'écran mobile, à partir de 60 % de hauteur
+   * de viewport scrollée. Même libellé et même action que les boutons en
+   * ligne — ce n'est pas un second CTA, c'est le même rendu atteignable.
+   * Convention des deux LP e-commerce du repo. Passer à `false` pour la retirer.
+   */
+  stickyMobileCta: true,
 } as const;
 
 /** Date de l'échéance facturation électronique, affichée dans le bloc ci-dessus. */

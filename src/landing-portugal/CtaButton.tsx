@@ -24,14 +24,16 @@ export function CtaButton({
     trackLead(`portugal_${placement}`);
     const target = document.getElementById(BOOKING_ANCHOR);
     if (!target) return;
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Defilement instantane si l'utilisateur a desactive les animations systeme.
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   };
 
   return (
     <Button
       onClick={go}
       variant={variant}
-      className={`h-14 w-full px-7 text-base font-semibold sm:h-12 sm:w-auto ${className}`}
+      className={`h-14 w-full touch-manipulation px-7 text-base font-semibold sm:h-12 sm:w-auto ${className}`}
     >
       <CalendarCheck className="mr-2 h-5 w-5" />
       {CTA_LABEL}

@@ -41,10 +41,10 @@ export function ConsentBanner({
           </a>
         </p>
         <div className="flex flex-shrink-0 gap-2">
-          <Button variant="outline" className="h-10 flex-1 sm:flex-none" onClick={onRefuse}>
+          <Button variant="outline" className="h-11 flex-1 touch-manipulation sm:flex-none" onClick={onRefuse}>
             Refuser
           </Button>
-          <Button className="h-10 flex-1 sm:flex-none" onClick={onAccept}>
+          <Button className="h-11 flex-1 touch-manipulation sm:flex-none" onClick={onAccept}>
             Accepter
           </Button>
         </div>
