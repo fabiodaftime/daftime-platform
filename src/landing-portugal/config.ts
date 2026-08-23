@@ -50,18 +50,12 @@ export const PRICING = {
     'Déclarations d’IVA périodiques',
     'Déclarations annuelles comprises : Modelo 22 (IRC) et IES',
     'Contabilista certificada portugaise inscrite à l’OCC',
-    'Interlocuteur francophone dédié',
+    'Échanges en français, en portugais ou en anglais',
   ],
 } as const;
 
 // ────────────────────────────────────────────────────────── Interrupteurs ──
 export const FLAGS = {
-  /**
-   * Bloc « Facturation électronique — 1er janvier 2027 ».
-   * ⚠️ À PASSER À `false` début 2027 (ou dès que l'échéance est dépassée /
-   *    à nouveau reportée). Un seul booléen, rien d'autre à toucher.
-   */
-  showEInvoicing: true,
   /**
    * Barre CTA collante en bas d'écran mobile, à partir de 60 % de hauteur
    * de viewport scrollée. Même libellé et même action que les boutons en
@@ -71,13 +65,19 @@ export const FLAGS = {
   stickyMobileCta: true,
 } as const;
 
-/** Date de l'échéance facturation électronique, affichée dans le bloc ci-dessus. */
-export const EINVOICING_DEADLINE = '1er janvier 2027';
-
 // ─────────────────────────────────────────────────────────────── Mentions ──
-/** Partenaire locale : la contabilista certificada qui signe les déclarations. */
+/** L'associée du cabinet — c'est elle qui signe les déclarations. */
 export const ACCOUNTANT = {
   name: 'Patrícia Ferreira',
+  /** Rôle dans le cabinet — c'est ce qui est mis en avant côté commercial. */
+  role: 'Associée et manager comptable',
+  /**
+   * Qualité professionnelle. Toujours affichée à côté du rôle, jamais à sa
+   * place : c'est le titre légal qui autorise la signature des déclarations
+   * au Portugal, et la cédula est vérifiable auprès de l'OCC. C'est la
+   * crédibilité la plus forte de la page — et ce qui rend vraie la phrase
+   * « c'est elle qui signe tes déclarations ».
+   */
   title: 'Contabilista Certificada',
   licence: 'Cédula profissional n.º 100171',
 } as const;
@@ -93,7 +93,9 @@ export const ACCOUNTANT = {
  */
 export const LEGAL = {
   name: ACCOUNTANT.name,
-  qualifier: `${ACCOUNTANT.title} — ${ACCOUNTANT.licence}`,
+  // Mentions légales : le rôle dans le cabinet ne remplace pas la qualité
+  // professionnelle, c'est elle qui identifie la personne responsable.
+  qualifier: `${ACCOUNTANT.role} · ${ACCOUNTANT.title} — ${ACCOUNTANT.licence}`,
   address: 'R. Braamcamp 52, 1250-051 Lisboa',
   country: 'Portugal',
   email: 'fabio@daftime.ae',

@@ -35,10 +35,10 @@ import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { Button } from '@/components/ui/button';
 import { trackFaqOpen, trackViewContent } from '@/lib/tracking';
 
-import { EINVOICING_DEADLINE, FLAGS, HOST, LEGAL, LINKS, PRICING } from '@/landing-portugal/config';
+import { FLAGS, HOST, LEGAL, LINKS, PRICING } from '@/landing-portugal/config';
 import {
-  DUO, EINVOICING, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS, PROBLEMS, PROOF, RNH,
-  SERVICES, type HeroVariantKey,
+  DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS, PROBLEMS, PROOF, RNH, SERVICES,
+  type HeroVariantKey,
 } from '@/landing-portugal/content';
 import { BOOKING_ANCHOR, CtaButton } from '@/landing-portugal/CtaButton';
 import { CalEmbed } from '@/landing-portugal/CalEmbed';
@@ -247,35 +247,6 @@ export default function LandingPortugal() {
           </div>
         </div>
       </section>
-
-      {/* ────────────────────────────────── Facturation électronique (FLAG) ──
-          Bloc éphémère : basculer FLAGS.showEInvoicing à false début 2027. */}
-      {FLAGS.showEInvoicing && (
-        <section className="border-t">
-          <div className="mx-auto max-w-3xl px-5 py-12 sm:py-14">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Échéance {EINVOICING_DEADLINE}
-            </p>
-            <h2 className="mt-3 text-xl font-semibold tracking-tight sm:text-2xl">
-              {EINVOICING.title}
-            </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-              {EINVOICING.body}
-            </p>
-            <ul className="mt-4 space-y-2">
-              {EINVOICING.bullets.map((b) => (
-                <li
-                  key={b}
-                  className="flex items-start gap-2.5 text-[15px] leading-relaxed text-muted-foreground"
-                >
-                  <ArrowRight className="mt-1 h-4 w-4 flex-shrink-0 text-primary" aria-hidden />
-                  {b}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
 
       {/* ──────────────────────────────────────────────────────────────── FAQ ──
           <details> natif plutôt qu'un accordéon Radix : zéro JS, accessible au

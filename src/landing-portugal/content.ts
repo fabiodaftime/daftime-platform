@@ -13,7 +13,11 @@ export const HERO_VARIANTS = {
     eyebrow: 'Comptabilité au Portugal',
     title: 'Tu as une société au Portugal. Est-ce que tu comprends ta comptabilité ?',
   },
-  // Pub 2 — échéance facturation électronique
+  // Pub 2 — échéance facturation électronique.
+  // ⚠️ ORPHELINE : la section « facturation électronique » a été retirée de la
+  //    page. Ce titre promet donc un contenu qui n'existe plus. Ne pas lancer
+  //    l'annonce 2 sur ?a=2 tant qu'on n'a pas remis un bloc correspondant,
+  //    ou réécrire ce titre sur un angle couvert par la page.
   2: {
     eyebrow: 'Facturation électronique',
     title: 'Au 1er janvier 2027, le PDF simple ne suffira plus pour facturer au Portugal.',
@@ -45,7 +49,10 @@ export const HERO_SUBTITLE =
  * chiffre d'accompagnement tant qu'il n'y en a pas de réel.
  */
 export const PROOF = [
-  { label: 'Contabilista Certificada', detail: `Inscrite à l’OCC — ${ACCOUNTANT.licence.toLowerCase()}` },
+  {
+    label: `${ACCOUNTANT.name}, associée`,
+    detail: `${ACCOUNTANT.title} inscrite à l’OCC — ${ACCOUNTANT.licence.toLowerCase()}`,
+  },
   { label: 'Tout se passe en français', detail: 'Échanges, documents commentés, point mensuel' },
   { label: 'Déclarations annuelles comprises', detail: 'Modelo 22 et IES dans le forfait' },
   { label: 'Cabinet à Lisbonne', detail: 'Présence locale, pas une plateforme à distance' },
@@ -122,21 +129,26 @@ export const SERVICES = [
 
 /** Le binôme — mis en avant sous les services. */
 export const DUO = {
-  title: 'Deux personnes sur ton dossier, pas une',
+  title: 'Deux compétences sur ton dossier, pas une',
   members: [
     {
-      label: `${ACCOUNTANT.name}, ${ACCOUNTANT.title}`,
+      // Le rôle dans le cabinet d'abord, la qualité professionnelle juste
+      // derrière : elle porte la crédibilité et rend vraie la phrase sur la
+      // signature des déclarations.
+      label: `${ACCOUNTANT.name} — ${ACCOUNTANT.role}`,
       body:
-        `Notre partenaire locale, inscrite à l’Ordem dos Contabilistas Certificados ` +
-        `(${ACCOUNTANT.licence.toLowerCase()}). C’est elle qui engage sa responsabilité sur tes ` +
-        'comptes et signe tes déclarations : au Portugal, c’est une obligation légale, pas une ' +
-        'option de confort.',
+        `${ACCOUNTANT.title} inscrite à l’Ordem dos Contabilistas Certificados ` +
+        `(${ACCOUNTANT.licence.toLowerCase()}), elle pilote ton dossier depuis Lisbonne. ` +
+        'C’est elle qui engage sa responsabilité sur tes comptes et signe tes déclarations : ' +
+        'au Portugal, c’est une obligation légale, pas une option de confort.',
     },
     {
-      label: 'Interlocuteur francophone',
+      label: 'Daftime — multilingue, multi-juridictions',
       body:
-        'Ton point de contact au quotidien. Il te traduit les documents, t’explique les ' +
-        `décisions et fait le lien avec ${ACCOUNTANT.name}. Tu n’as jamais à écrire en portugais.`,
+        'On accompagne des dirigeants dont l’activité ne tient pas dans un seul pays. Français, ' +
+        'portugais, anglais : tu poses ta question dans ta langue. Et parce qu’on connaît le ' +
+        'référentiel portugais comme la logique fiscale française, on voit tout de suite quand ' +
+        'une décision prise d’un côté a des conséquences de l’autre.',
     },
   ],
 } as const;
@@ -148,25 +160,10 @@ export const RNH = {
     'Le statut de résident non habituel dure dix ans à compter de l’année d’inscription. ' +
     'Il n’est pas renouvelable et il n’existe pas de prolongation. À l’issue de ces dix ans, ' +
     'tu bascules dans le régime de droit commun : barème progressif de l’IRS, jusqu’à 48 % sur ' +
-    'la tranche la plus haute. Le régime qui lui a succédé (IFICI) n’est pas ouvert aux anciens ' +
-    'bénéficiaires du RNH.',
+    'la tranche la plus haute.',
   kicker:
     'La marche se prépare dans les douze à vingt-quatre mois qui précèdent, pas le mois où elle ' +
     'arrive : structure de rémunération, arbitrage entre salaire et dividendes, forme de la société.',
-} as const;
-
-// ──────────────────────────────────────────────── Facturation électronique ──
-export const EINVOICING = {
-  title: 'Facturation électronique : ce qui change',
-  body:
-    'À cette date, une facture émise sous forme électronique devra porter une signature ou un ' +
-    'sceau électronique qualifié garantissant son authenticité et son intégrité. Un PDF simple, ' +
-    'envoyé par e-mail sans dispositif qualifié, ne suffira plus.',
-  bullets: [
-    'Ton outil de facturation doit être certifié par l’Autoridade Tributária et gérer la signature ou le sceau qualifié.',
-    'L’émission comme la conservation des factures sont concernées.',
-    'Changer d’outil le 2 janvier n’est pas une option : le passage se prépare en amont.',
-  ],
 } as const;
 
 // ───────────────────────────────────────────────────────────────────── FAQ ──
@@ -177,7 +174,8 @@ export const FAQ = [
       'Oui, dès lors que ta société relève de la comptabilité organisée, ce qui est le cas de la ' +
       'quasi-totalité des sociétés commerciales portugaises. Les déclarations fiscales doivent être ' +
       'établies et signées par un contabilista certificado inscrit à l’OCC, qui engage sa ' +
-      'responsabilité professionnelle. C’est exactement le rôle que tient notre contabilista.',
+      `responsabilité professionnelle. C’est exactement le rôle que tient ${ACCOUNTANT.name}, ` +
+      'associée du cabinet.',
   },
   {
     q: 'Comment se passe le changement de cabinet ?',
@@ -198,10 +196,10 @@ export const FAQ = [
     q: 'Que se passe-t-il à la fin de mon RNH ?',
     a:
       'Tu passes au barème progressif de l’IRS de droit commun, qui monte jusqu’à 48 % sur la ' +
-      'tranche supérieure. Le régime n’est pas renouvelable, et l’IFICI qui lui a succédé n’est pas ' +
-      'accessible aux anciens bénéficiaires du RNH. Ce qui se prépare, c’est la structure : comment ' +
-      'tu te rémunères, quel arbitrage entre salaire et dividendes, quelle forme de société. Un ' +
-      'sujet à ouvrir un à deux ans avant l’échéance.',
+      'tranche supérieure, et le régime n’est pas renouvelable. Ce qui se prépare, c’est la ' +
+      'structure : comment tu te rémunères, quel arbitrage entre salaire et dividendes, quelle ' +
+      'forme de société. Un sujet à ouvrir un à deux ans avant l’échéance — on regarde ta ' +
+      'situation pendant l’appel.',
   },
   {
     q: 'Combien ça coûte ?',
@@ -214,10 +212,11 @@ export const FAQ = [
   {
     q: 'Sous quel délai on démarre ?',
     a:
-      'Tu reçois une proposition dans les 48 heures qui suivent l’appel. Une fois signée, la reprise ' +
-      'du dossier prend en général deux à trois semaines, le temps de récupérer l’historique et ' +
-      'd’effectuer le changement de contabilista. Si une échéance déclarative tombe entre-temps, on ' +
-      's’organise pour qu’elle soit tenue.',
+      'Le devis part dans les 24 heures qui suivent l’appel. Ensuite, la date de bascule dépend ' +
+      'surtout de ton engagement avec ton comptable actuel : l’usage est d’attendre la fin de la ' +
+      'déclaration d’IVA en cours pour changer, ce qui évite de couper un exercice déclaratif en ' +
+      'deux. Si tu signes entre-temps, on prend la transition en main directement — récupération ' +
+      'de l’historique, changement de contabilista, coordination avec le cabinet sortant.',
   },
   {
     q: 'Je n’ai pas encore de société au Portugal, c’est trop tôt ?',
