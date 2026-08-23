@@ -84,7 +84,9 @@ export function CalEmbed({ onBooked }: { onBooked?: () => void }) {
         </a>
       )}
 
-      <div className="relative h-[680px] sm:h-[720px]">
+      {/* overscroll-contain : le scroll dans le calendrier ne doit pas
+          emporter la page derriere lui (scroll-chaining sur mobile). */}
+      <div className="relative h-[680px] overscroll-contain sm:h-[720px]">
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />

@@ -27,10 +27,12 @@ export function ConsentBanner({
       className="fixed inset-x-0 bottom-0 z-50 border-t bg-card/98 backdrop-blur supports-[backdrop-filter]:bg-card/90"
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-6">
+        {/* Texte tenu court : sur un écran de 375 px, chaque ligne coûte 24 px
+            de hauteur au-dessus du hero. La finalité reste nommée et le détail
+            complet est à un clic — ce que le RGPD demande. */}
         <p className="text-[13px] leading-relaxed text-muted-foreground">
-          On utilise un traceur de mesure d’audience publicitaire (Meta) pour savoir quelles
-          annonces amènent des rendez-vous. Il n’est déposé que si tu l’acceptes, et refuser
-          ne change rien à l’usage de la page.{' '}
+          Un traceur Meta mesure quelles publicités amènent des rendez-vous. Rien n’est déposé
+          sans ton accord.{' '}
           <a
             href={LINKS.privacy}
             target="_blank"

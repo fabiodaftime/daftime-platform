@@ -371,7 +371,7 @@ export default function LandingPortugal() {
               <p>
                 <a
                   href={`mailto:${LEGAL.email}`}
-                  className="underline underline-offset-2 hover:text-primary-foreground"
+                  className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary-foreground"
                 >
                   {LEGAL.email}
                 </a>
