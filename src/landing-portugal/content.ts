@@ -55,7 +55,7 @@ export const PROOF = [
   },
   { label: 'Tout se passe en français', detail: 'Échanges, documents commentés, point mensuel' },
   { label: 'Déclarations annuelles comprises', detail: 'Modelo 22 et IES dans le forfait' },
-  { label: 'Cabinet à Lisbonne', detail: 'Présence locale, pas une plateforme à distance' },
+  { label: 'Équipe à Lisbonne', detail: 'Présence locale, pas une plateforme à distance' },
 ] as const;
 
 /** Ligne de réassurance affichée juste sous le bouton du hero. */
@@ -127,28 +127,34 @@ export const SERVICES = [
   },
 ] as const;
 
-/** Le binôme — mis en avant sous les services. */
+/**
+ * Le duo — mis en avant sous les services.
+ *
+ * Les deux blocs décrivent la MÊME maison à deux échelles : l'équipe qui tient
+ * le dossier à Lisbonne, et le groupe derrière elle. Ne jamais les écrire comme
+ * deux parties qui collaborent — Patrícia n'est pas un prestataire externe,
+ * elle est associée du cabinet.
+ */
 export const DUO = {
-  title: 'Deux compétences sur ton dossier, pas une',
+  title: 'Une équipe à Lisbonne, un groupe derrière',
   members: [
     {
-      // Le rôle dans le cabinet d'abord, la qualité professionnelle juste
-      // derrière : elle porte la crédibilité et rend vraie la phrase sur la
-      // signature des déclarations.
-      label: `${ACCOUNTANT.name} — ${ACCOUNTANT.role}`,
+      label: `${ACCOUNTANT.name} et son équipe`,
       body:
-        `${ACCOUNTANT.title} inscrite à l’Ordem dos Contabilistas Certificados ` +
-        `(${ACCOUNTANT.licence.toLowerCase()}), elle pilote ton dossier depuis Lisbonne. ` +
-        'C’est elle qui engage sa responsabilité sur tes comptes et signe tes déclarations : ' +
-        'au Portugal, c’est une obligation légale, pas une option de confort.',
+        `${ACCOUNTANT.role} de Daftime Portugal, Patrícia est ${ACCOUNTANT.title} inscrite à ` +
+        `l’Ordem dos Contabilistas Certificados (${ACCOUNTANT.licence.toLowerCase()}). C’est elle ` +
+        'qui engage sa responsabilité sur tes comptes et signe tes déclarations : au Portugal, ' +
+        'c’est une obligation légale, pas une option de confort. Son équipe tient ta comptabilité ' +
+        'au quotidien, depuis Lisbonne.',
     },
     {
-      label: 'Daftime — multilingue, multi-juridictions',
+      label: 'Le groupe Daftime',
       body:
-        'On accompagne des dirigeants dont l’activité ne tient pas dans un seul pays. Français, ' +
-        'portugais, anglais : tu poses ta question dans ta langue. Et parce qu’on connaît le ' +
-        'référentiel portugais comme la logique fiscale française, on voit tout de suite quand ' +
-        'une décision prise d’un côté a des conséquences de l’autre.',
+        'Derrière l’équipe de Lisbonne, le groupe accompagne des dirigeants dont l’activité ne ' +
+        'tient pas dans un seul pays. Français, portugais, anglais : tu poses ta question dans ta ' +
+        'langue. Et parce que nous connaissons le référentiel portugais comme la logique fiscale ' +
+        'française, nous voyons tout de suite quand une décision prise d’un côté a des ' +
+        'conséquences de l’autre.',
     },
   ],
 } as const;
