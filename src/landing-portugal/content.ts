@@ -6,21 +6,20 @@
 
 import { ACCOUNTANT, OFFICES, PARTNER, PRICING } from './config';
 
-/** Titre du hero selon `?a=1..4` — un angle par publicité Meta. */
+/**
+ * Titre du hero selon `?a=` — un angle par publicité Meta.
+ *
+ * Numérotation volontairement non contiguë : l'angle 2 (échéance facturation
+ * électronique 2027) a été abandonné avec sa section. Les trois angles
+ * restants gardent leur numéro d'origine plutôt que d'être renumérotés, pour
+ * que « pub 3 » reste `?a=3` partout — brief, campagnes Meta et code.
+ * `?a=2` retombe sur la variante 1, comme n'importe quelle valeur invalide.
+ */
 export const HERO_VARIANTS = {
   // Pub 1 — comprendre sa compta (valeur par défaut)
   1: {
     eyebrow: 'Comptabilité au Portugal',
     title: 'Tu as une société au Portugal. Est-ce que tu comprends ta comptabilité ?',
-  },
-  // Pub 2 — échéance facturation électronique.
-  // ⚠️ ORPHELINE : la section « facturation électronique » a été retirée de la
-  //    page. Ce titre promet donc un contenu qui n'existe plus. Ne pas lancer
-  //    l'annonce 2 sur ?a=2 tant qu'on n'a pas remis un bloc correspondant,
-  //    ou réécrire ce titre sur un angle couvert par la page.
-  2: {
-    eyebrow: 'Facturation électronique',
-    title: 'Au 1er janvier 2027, le PDF simple ne suffira plus pour facturer au Portugal.',
   },
   // Pub 3 — prix et transparence
   3: {
