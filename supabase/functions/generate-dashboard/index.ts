@@ -31,19 +31,23 @@ ANTI-RÉPÉTITION (problème n°1 à éviter) :
   · Autres activités → décline des angles équivalents (acquisition/activité, production/livraison, rentabilité, trésorerie).
 - Si les données sont pauvres, fais MOINS de pages mais COHÉRENTES — jamais du remplissage répétitif.
 
-VARIÉTÉ & CHOIX DU GRAPHE selon la FORME de la donnée :
-- breakdown PAR PAYS → map, puis varie avec rose / polar / ranking.
-- breakdown PRODUITS / CATÉGORIES → treemap, pictorial, lollipop, share, sunburst (si libellés « Parent / Enfant »), ranking.
-- breakdown JOURNALIER (daily_sales) → calendar, histogram, area.
-- plusieurs KPIs d'un coup → radar, trend_grid, bullet/rings (si cibles), diverging.
-- historique ≥3 mois → area, stacked_area, river, combo (barres+courbe), slope, matrix, stacked, line.
-- chaîne P&L (CA→marge→EBITDA→résultat) → flow (sankey) ou waterfall (cascade) — une seule fois.
-- indicateur vs CIBLE → gauge, gauge_grid, bullet, rings.
-- DIRECTIVE DE VARIÉTÉ esthétique fournie dans le message : privilégie cette famille ce coup-ci, sans sacrifier la pertinence.
+LISIBILITÉ AVANT TOUT — choisis le graphe le PLUS CLAIR selon la forme de la donnée (jamais un type « pour faire joli ») :
+- breakdown PAR PAYS → map, sinon ranking.
+- breakdown MULTI-COLONNES (channel_performance, category_performance…) → matrix_table (OBLIGATOIRE : ne jamais montrer un CA par canal/catégorie sans sa marge).
+- breakdown PRODUITS / CATÉGORIES (mono-valeur) → treemap, share ou ranking.
+- breakdown JOURNALIER (daily_sales) → calendar ou area.
+- historique ≥3 mois → line, area, stacked_area, combo (barres+courbe), stacked, matrix.
+- comparaison de postes / structure → bar, donut, share.
+- chaîne P&L (CA→marge→EBITDA→résultat) → flow (sankey) OU waterfall — UNE SEULE fois dans TOUT le dashboard.
+- indicateur vs CIBLE → gauge — AU PLUS 1 à 2 jauges dans TOUT le dashboard.
 
-DENSITÉ : chaque page = un kpi_row (si pertinent) + 3 à 6 graphes VARIÉS + 1-2 callouts d'analyse. Dashboard de 2 à 4 pages distinctes. JAMAIS une page à 1 seul graphe.
-Le rendu est une grille 3 colonnes : juxtapose des graphes complémentaires (ex. funnel + share + gauge_grid).
-DONNÉE COURTE (historique < 3 mois) : n'utilise PAS les graphes temporels (line/area/river/combo/slope/matrix/stacked/stacked_area) — ils seraient vides. Construis avec les graphes « instantané » : bar, donut, rose, polar, treemap, pictorial, lollipop, share, ranking, map, gauge, gauge_grid, bullet, rings, radar, diverging, waterfall, flow, funnel, histogram, calendar. Mais décline des ANGLES différents, pas la même donnée répétée.
+COHÉRENCE (évite les graphes illisibles / trompeurs) :
+- Ne mélange JAMAIS des MONTANTS (€) et des POURCENTAGES/ratios (×) dans un même bar/donut/line — les échelles se cognent et le graphe ment.
+- Un bar/donut = des grandeurs COMPARABLES (même unité, même ordre de grandeur).
+- PEU de graphes forts et clairs > beaucoup de graphes variés. Ne répète pas la même donnée sous 3 formes.
+
+DENSITÉ : chaque page = un kpi_row (si pertinent) + 2 à 4 graphes CLAIRS + 1-2 callouts d'analyse. Dashboard de 2 à 4 pages distinctes. JAMAIS une page à 1 seul graphe.
+DONNÉE COURTE (historique < 3 mois) : n'utilise PAS les graphes temporels (line/area/combo/matrix/stacked/stacked_area) — ils seraient vides. Construis avec les graphes « instantané » : bar, donut, treemap, share, ranking, map, gauge, waterfall, flow, funnel, calendar, matrix_table. Décline des ANGLES différents, pas la même donnée répétée.
 N'invente AUCUN chiffre. N'utilise QUE des ids/breakdowns/cibles fournis. Pas de widget qui resterait vide.
 CONTINUITÉ : si une STRUCTURE du mois précédent est fournie, garde la même ossature (mêmes pages, mêmes grands choix) ; APPLIQUE les CONSIGNES (prioritaires). Sinon tu es libre.
 
@@ -276,16 +280,17 @@ function validatePlan(plan: DashPlan, a: Avail, sections: Sec[]): DashPlan {
 
 // Liste lisible des types de widgets qui afficheront des données ce mois-ci (selon la donnée réelle).
 function availableTypes(a: Avail, hasVerdicts = false, hasMatrix = false): string {
-  const t = ["kpi_row", "bar", "donut", "table", "funnel", "waterfall", "callout", "treemap", "rose", "polar", "pictorial", "lollipop", "share", "ranking"];
+  // Palette RESSERRÉE à des graphes lisibles et « business ». On a retiré les types gadgets
+  // (rose, polar, pictorial, lollipop, radar, sunburst, river, slope, diverging, histogram,
+  //  gauge_grid/bullet/rings) qui rendaient les dashboards illisibles et incohérents.
+  const t = ["kpi_row", "bar", "donut", "table", "funnel", "waterfall", "callout", "share", "ranking", "treemap"];
   if (hasVerdicts) t.push("scorecard");
   if (a.ids.has("ca") && a.ids.has("marge_brute") && a.ids.has("ebitda")) t.push("flow");
   if (a.months >= 2) t.push("line", "area", "stacked", "stacked_area", "combo", "trend_grid");
-  if (a.months >= 3) t.push("river", "matrix");
-  if (a.change.size) t.push("diverging", "comparison");
-  if (a.change.size >= 2) t.push("slope");
-  if (a.tgt.size) t.push("gauge", "gauge_grid", "bullet", "rings");
-  if (a.change.size || a.tgt.size) t.push("radar");
-  if (a.brk.size) t.push("map", "calendar", "histogram", "sunburst");
+  if (a.months >= 3) t.push("matrix");
+  if (a.change.size) t.push("comparison");
+  if (a.tgt.size) t.push("gauge"); // au plus 1-2 jauges (voir PLAN_SYSTEM)
+  if (a.brk.size) t.push("map", "calendar");
   if (hasMatrix) t.push("matrix_table"); // seulement si un breakdown À COLONNES existe (rétrocompat : clients sans → prompt inchangé)
   return t.join(", ");
 }
@@ -559,7 +564,7 @@ Deno.serve(async (req) => {
 
       // 2) FILETS : on supprime les widgets vides puis on garantit la densité (≥5 graphes/page) via le pool déterministe.
       plan = validatePlan(plan, a, sections);
-      plan = ensureDensity(plan, a, sections, 5);
+      plan = ensureDensity(plan, a, sections, 3);
       // Diagnostic du mois : on le place en tête de la 1re page (après le kpi_row) s'il n'y est pas déjà.
       if (hasVerdicts && plan.pages[0] && !plan.pages.some((p) => p.widgets.some((w) => w.type === "scorecard"))) {
         const at = plan.pages[0].widgets.findIndex((w) => w.type === "kpi_row");
