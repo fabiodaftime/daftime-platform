@@ -418,6 +418,28 @@ Deno.serve(async (req) => {
         (breakdowns as Record<string, unknown>)["channel_performance"] = { label: "Performance par canal", rows, columns, total_row: true };
       }
     }
+    // Breakdown composite « performance par catégorie » (marge par catégorie multi-colonnes) — Lot 4.
+    if (breakdowns && breakdowns["sales_by_category"] && !breakdowns["category_performance"]) {
+      const src = breakdowns as Record<string, { rows?: { label: string; value: number }[] }>;
+      const mp = (k: string): Record<string, number> => { const o: Record<string, number> = {}; for (const r of src[k]?.rows ?? []) o[r.label] = r.value; return o; };
+      const ca = mp("sales_by_category"); const labels = Object.keys(ca);
+      if (labels.length) {
+        const marge = mp("margin_by_category"); const hasMar = Object.keys(marge).length > 0;
+        const totalCA = labels.reduce((s, l) => s + (ca[l] || 0), 0) || 1;
+        const r1 = (n: number) => Math.round(n * 10) / 10;
+        const rows = labels.map((l) => {
+          const values: Record<string, number> = { ca: ca[l], share_ca: r1((ca[l] / totalCA) * 100) };
+          if (hasMar) { values.marge = marge[l]; if (ca[l]) values.taux_marge = r1((marge[l] / ca[l]) * 100); }
+          return { label: l, value: hasMar ? marge[l] : ca[l], values };
+        });
+        const columns: { key: string; label: string; unit: "CUR" | "%" | ""; emphasis?: boolean; sort?: boolean }[] = [
+          { key: "ca", label: "CA", unit: "CUR", emphasis: true }, { key: "share_ca", label: "% CA", unit: "%" },
+        ];
+        if (hasMar) columns.push({ key: "marge", label: "Marge", unit: "CUR", sort: true }, { key: "taux_marge", label: "Taux marge", unit: "%" });
+        else columns[0].sort = true;
+        (breakdowns as Record<string, unknown>)["category_performance"] = { label: "Performance par catégorie", rows, columns, total_row: true };
+      }
+    }
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
       label: s.label,
       rows: (s.rows ?? []).map((r) => {
