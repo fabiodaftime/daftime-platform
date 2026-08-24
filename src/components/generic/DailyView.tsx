@@ -4,7 +4,6 @@
 // Saisonnalité marquée → comparaisons à J-7 et à l'an dernier (J-1 n'a pas de sens sur ce métier).
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { Sunrise, ShoppingBag, Coins, TrendingUp } from 'lucide-react';
 
 type Row = { day: string; ca: number | null; orders: number | null; marge_estimee: number | null };
@@ -146,24 +145,26 @@ export function DailyView({ clientId, currency = 'EUR' }: { clientId: string; cu
         <div className="text-[11px] text-muted-foreground mt-1">CA des 30 derniers jours</div>
       </div>
 
-      {/* Tendance 24 mois */}
+      {/* Tendance 24 mois — barres maison (SVG/div), cohérent avec le reste du portail */}
       <div className="rounded-xl border bg-card p-5">
-        <h3 className="font-semibold mb-3">Tendance sur 24 mois</h3>
-        <div style={{ width: '100%', height: 220 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={m.monthly} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="dvCa" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="m" tick={{ fontSize: 11 }} interval={2} tickLine={false} axisLine={false} />
-              <Tooltip formatter={(v: number) => [fmtMoney(v, currency), 'CA']} labelStyle={{ fontSize: 12 }} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-              <Area type="monotone" dataKey="ca" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#dvCa)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <h3 className="font-semibold mb-3">Tendance du CA sur 24 mois</h3>
+        {(() => {
+          const maxCa = Math.max(...m.monthly.map((d) => d.ca), 1);
+          return (
+            <>
+              <div className="flex items-end gap-1 h-40">
+                {m.monthly.map((d, i) => (
+                  <div key={i} className="flex-1 flex items-end" title={`${d.m} · ${fmtMoney(d.ca, currency)}`}>
+                    <div className="w-full rounded-t bg-accent/70 hover:bg-accent transition-colors" style={{ height: `${Math.max(2, (d.ca / maxCa) * 100)}%` }} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-[10px] text-muted-foreground mt-1.5">
+                <span>{m.monthly[0]?.m}</span><span>{m.monthly[m.monthly.length - 1]?.m}</span>
+              </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );

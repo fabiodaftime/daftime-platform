@@ -216,7 +216,7 @@ function ChatPanel({ chat, input, setInput, busy, onSend, compact = false }: {
 
 export default function ClientSpace() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   // Client legacy : son dashboard vient de la génération legacy (composant TSX + tables legacy),
   // pas de la table `dashboards`. On le redirige donc vers sa route legacy dédiée.
@@ -456,6 +456,11 @@ export default function ClientSpace() {
   return (
     <AppShell title={client.name}>
       <div className="space-y-6">
+        {isSuperAdmin && (
+          <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition">
+            <ChevronLeft className="w-4 h-4" /> Retour (vue staff)
+          </button>
+        )}
         {error && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
         {/* Bandeau de bienvenue (1 fois par session, refermable) */}
