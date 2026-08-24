@@ -17,9 +17,9 @@ const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const dayLabel = (s: string) => { try { return new Date(s).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); } catch { return s; } };
 
-function Delta({ cur, ref, label }: { cur: number | null; ref: number | null; label: string }) {
-  if (cur == null || ref == null || ref === 0) return <span className="text-[11px] text-muted-foreground">{label} : n/d</span>;
-  const pct = ((cur - ref) / Math.abs(ref)) * 100;
+function Delta({ cur, base, label }: { cur: number | null; base: number | null; label: string }) {
+  if (cur == null || base == null || base === 0) return <span className="text-[11px] text-muted-foreground">{label} : n/d</span>;
+  const pct = ((cur - base) / Math.abs(base)) * 100;
   const up = pct >= 0;
   return <span className={`text-[11px] ${up ? 'text-emerald-600' : 'text-red-600'}`}>{up ? '▲' : '▼'} {Math.abs(pct).toFixed(0)}% {label}</span>;
 }
@@ -116,17 +116,17 @@ export function DailyView({ clientId, currency = 'EUR' }: { clientId: string; cu
         <div className="rounded-xl border bg-card p-4">
           <div className="text-xs text-muted-foreground flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5" /> Ventes (CA)</div>
           <div className="text-2xl font-semibold tabular-nums mt-1">{fmtMoney(m.yesterday?.ca ?? null, currency)}</div>
-          <div className="flex gap-3 mt-1"><Delta cur={m.yesterday?.ca ?? null} ref={m.wow?.ca ?? null} label="vs sem. préc." /><Delta cur={m.yesterday?.ca ?? null} ref={m.yoy?.ca ?? null} label="vs an dernier" /></div>
+          <div className="flex gap-3 mt-1"><Delta cur={m.yesterday?.ca ?? null} base={m.wow?.ca ?? null} label="vs sem. préc." /><Delta cur={m.yesterday?.ca ?? null} base={m.yoy?.ca ?? null} label="vs an dernier" /></div>
         </div>
         <div className="rounded-xl border bg-card p-4">
           <div className="text-xs text-muted-foreground flex items-center gap-1.5"><ShoppingBag className="w-3.5 h-3.5" /> Commandes <span className="text-[10px] opacity-70">estimé</span></div>
           <div className="text-2xl font-semibold tabular-nums mt-1">{fmtInt(m.yesterday?.orders ?? null)}</div>
-          <div className="flex gap-3 mt-1"><Delta cur={m.yesterday?.orders ?? null} ref={m.wow?.orders ?? null} label="vs sem. préc." /></div>
+          <div className="flex gap-3 mt-1"><Delta cur={m.yesterday?.orders ?? null} base={m.wow?.orders ?? null} label="vs sem. préc." /></div>
         </div>
         <div className="rounded-xl border bg-card p-4">
           <div className="text-xs text-muted-foreground flex items-center gap-1.5"><Coins className="w-3.5 h-3.5" /> Marge <span className="text-[10px] opacity-70">estimée</span></div>
           <div className="text-2xl font-semibold tabular-nums mt-1">{fmtMoney(m.yesterday?.marge_estimee ?? null, currency)}</div>
-          <div className="flex gap-3 mt-1"><Delta cur={m.yesterday?.marge_estimee ?? null} ref={m.yoy?.marge_estimee ?? null} label="vs an dernier" /></div>
+          <div className="flex gap-3 mt-1"><Delta cur={m.yesterday?.marge_estimee ?? null} base={m.yoy?.marge_estimee ?? null} label="vs an dernier" /></div>
         </div>
       </div>
 
@@ -138,8 +138,8 @@ export function DailyView({ clientId, currency = 'EUR' }: { clientId: string; cu
         </div>
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div><div className="text-xs text-muted-foreground">CA cumulé</div><div className="text-xl font-semibold tabular-nums">{fmtMoney(m.caMonth, currency)}</div></div>
-          <div><div className="text-xs text-muted-foreground">Même période, mois préc.</div><div className="text-xl font-semibold tabular-nums">{fmtMoney(m.caPrevMonth, currency)}</div><Delta cur={m.caMonth} ref={m.caPrevMonth} label="" /></div>
-          <div><div className="text-xs text-muted-foreground">Même période, an dernier</div><div className="text-xl font-semibold tabular-nums">{fmtMoney(m.caLastYear, currency)}</div><Delta cur={m.caMonth} ref={m.caLastYear} label="" /></div>
+          <div><div className="text-xs text-muted-foreground">Même période, mois préc.</div><div className="text-xl font-semibold tabular-nums">{fmtMoney(m.caPrevMonth, currency)}</div><Delta cur={m.caMonth} base={m.caPrevMonth} label="" /></div>
+          <div><div className="text-xs text-muted-foreground">Même période, an dernier</div><div className="text-xl font-semibold tabular-nums">{fmtMoney(m.caLastYear, currency)}</div><Delta cur={m.caMonth} base={m.caLastYear} label="" /></div>
         </div>
         <Sparkline values={m.spark} />
         <div className="text-[11px] text-muted-foreground mt-1">CA des 30 derniers jours</div>
