@@ -20,7 +20,8 @@ export interface ParseCtx {
 //  bank     = relevé bancaire → trésorerie (soldes) + charges (sorties).
 //  internal = mouvement interne (payout, virement entre comptes) → ignoré.
 export type DocRole = "revenue" | "payment" | "bank" | "internal" | "analytics" | "ads";
-export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
+export interface BreakdownColumn { key: string; label: string; unit?: "CUR" | "%" | "x" | "j" | ""; align?: "left" | "right"; emphasis?: boolean; sort?: boolean }
+export interface Breakdown { label: string; rows: { label: string; value: number; values?: Record<string, number>; unit?: string }[]; columns?: BreakdownColumn[]; total_row?: boolean }
 export interface ParsedExtract {
   parser: string;
   file?: string;               // nom du fichier source (renseigné par l'orchestrateur après parseFile)

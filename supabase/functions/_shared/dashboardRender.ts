@@ -7,7 +7,11 @@ import { assess, type BenchOverride } from "./benchmarks.ts";
 import { ratesToReporting } from "./fx.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
-export interface Breakdown { label: string; rows: { label: string; value: number; unit?: string }[] }
+// Colonne d'un breakdown MULTI-COLONNES (ex. perf par canal : CA, commission, marge…).
+export interface BreakdownColumn { key: string; label: string; unit?: "CUR" | "%" | "x" | "j" | ""; align?: "left" | "right"; emphasis?: boolean; sort?: boolean }
+// Ligne : `value` (scalaire, TOUJOURS renseigné → rétrocompat mono-métrique) + `values` optionnel (multi-colonnes).
+export interface BreakdownRow { label: string; value: number; values?: Record<string, number>; unit?: string }
+export interface Breakdown { label: string; rows: BreakdownRow[]; columns?: BreakdownColumn[]; total_row?: boolean }
 export interface RenderCtx {
   client: string; period: string; currency: string;
   activity?: string; // slug d'activité (ex. "ecommerce") → repères sectoriels
@@ -26,11 +30,14 @@ export interface Widget {
     // bibliothèque premium étendue (composée par l'IA quand ça s'y prête) :
     | "area" | "stacked_area" | "river" | "combo" | "slope" | "matrix"
     | "rose" | "polar" | "sunburst" | "pictorial" | "lollipop" | "share" | "histogram"
-    | "bullet" | "rings" | "gauge_grid" | "diverging" | "comparison" | "trend_grid" | "scorecard";
+    | "bullet" | "rings" | "gauge_grid" | "diverging" | "comparison" | "trend_grid" | "scorecard"
+    | "matrix_table"; // tableau multi-colonnes trié (perf par canal/produit) — lit un breakdown à colonnes
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   line?: string; // widget "combo" : id de la métrique tracée en courbe (2e axe)
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
   text?: string; tone?: "info" | "warn" | "good";
+  // matrix_table :
+  sort_by?: string; sort_dir?: "asc" | "desc"; highlight?: "best" | "worst" | "both"; total_row?: boolean;
 }
 export interface DashPlan { pages: { key?: string; title: string; widgets: Widget[] }[]; theme?: Theme }
 
@@ -90,7 +97,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const M = ctx.metrics;
   const has = (id: string) => M[id] && M[id].value != null;
   // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
-  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard"]);
+  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table"]);
   const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
@@ -521,6 +528,55 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const tone = w.tone ?? "info";
         const ic = tone === "good" ? "✓" : tone === "warn" ? "!" : "i";
         return `<div class="callout ${tone}"><span class="co-ic">${ic}</span><div>${w.title ? `<div class="co-t">${esc(w.title)}</div>` : ""}<div>${esc(w.text)}</div></div></div>`;
+      }
+      case "matrix_table": {
+        // Tableau MULTI-COLONNES trié (perf par canal/produit) : une ligne = un canal, N colonnes chiffrées.
+        // Rendu dans le corps HTML (via fmt → jetons [[CV:]]) → la bascule FX s'applique aux montants.
+        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
+        if (!bk || !bk.rows?.length || !bk.columns?.length) return "";
+        const cols = bk.columns;
+        const val = (r: BreakdownRow, key: string): number | undefined =>
+          r.values?.[key] ?? (key === (cols.find((c) => c.sort)?.key) ? r.value : undefined);
+        const sortCol = (w.sort_by && cols.find((c) => c.key === w.sort_by)) || cols.find((c) => c.sort) || cols.find((c) => c.emphasis) || cols[0];
+        const dir = w.sort_dir ?? "desc";
+        const rows = [...bk.rows].sort((a, b) => {
+          const av = val(a, sortCol.key), bv = val(b, sortCol.key);
+          const an = av == null ? -Infinity : av, bn = bv == null ? -Infinity : bv;
+          return dir === "asc" ? an - bn : bn - an;
+        });
+        const empCol = cols.find((c) => c.emphasis);
+        const empMax = empCol ? (Math.max(...rows.map((r) => Math.abs(val(r, empCol.key) ?? 0))) || 1) : 1;
+        const hiVals = rows.map((r) => val(r, sortCol.key) ?? 0);
+        const best = Math.max(...hiVals), worst = Math.min(...hiVals);
+        const wantBest = w.highlight === "best" || w.highlight === "both";
+        const wantWorst = w.highlight === "worst" || w.highlight === "both";
+        const unitCur = (u?: string) => (u === "CUR" ? ctx.currency : (u ?? ""));
+        const cell = (r: BreakdownRow, c: BreakdownColumn) => {
+          const v = val(r, c.key);
+          const inner = v == null ? "–" : fmt(v, unitCur(c.unit), ctx.currency);
+          if (empCol && c.key === empCol.key) {
+            const pct = Math.max(3, Math.round((Math.abs(v ?? 0) / empMax) * 100));
+            return `<td class="num" style="position:relative"><div style="position:absolute;left:0;top:2px;bottom:2px;width:${pct}%;background:${primary}22;border-radius:3px;z-index:0"></div><span style="position:relative;z-index:1">${esc(inner)}</span></td>`;
+          }
+          return `<td class="num">${esc(inner)}</td>`;
+        };
+        const head = `<thead><tr><th></th>${cols.map((c) => `<th class="num">${esc(c.label)}</th>`).join("")}</tr></thead>`;
+        const body = rows.map((sv) => {
+          const s = val(sv, sortCol.key) ?? 0;
+          const bg = wantBest && s === best ? "background:#10b9811f" : wantWorst && s === worst ? "background:#ef44441f" : "";
+          return `<tr${bg ? ` style="${bg}"` : ""}><td>${esc(sv.label)}</td>${cols.map((c) => cell(sv, c)).join("")}</tr>`;
+        }).join("");
+        let totalRow = "";
+        if ((w.total_row ?? bk.total_row) && rows.length) {
+          const additive = (c: BreakdownColumn) => (c.unit === "CUR" || c.unit === "" || c.unit == null) && c.key !== "aov"; // pas de somme pour %/x/j ni pour une moyenne (AOV)
+          const tot = (c: BreakdownColumn) => {
+            if (!additive(c)) return `<td class="num"></td>`;
+            const s = rows.reduce((acc, r) => acc + (val(r, c.key) ?? 0), 0);
+            return `<td class="num">${esc(fmt(s, unitCur(c.unit), ctx.currency))}</td>`;
+          };
+          totalRow = `<tr class="tot"><td>Total</td>${cols.map(tot).join("")}</tr>`;
+        }
+        return `<div class="card"><div class="card-t">${esc(w.title ?? bk.label)}</div><div style="overflow-x:auto"><table class="tbl">${head}<tbody>${body}${totalRow}</tbody></table></div></div>`;
       }
       default: return "";
     }

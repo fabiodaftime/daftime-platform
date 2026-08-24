@@ -81,6 +81,7 @@ Répartitions (BREAKDOWN) :
 - {"type":"lollipop","title":"...","breakdown":"clé"}            // bâtons-points — classement épuré (alternative à ranking)
 - {"type":"share","title":"...","breakdown":"clé"}               // barre 100% — part de chaque poste dans le total
 - {"type":"histogram","title":"...","breakdown":"clé"}           // distribution (ex. daily_sales) — dispersion des valeurs
+- {"type":"matrix_table","title":"...","breakdown":"clé","sort_by":"colonne?","highlight":"best|worst|both?","total_row":true} // TABLEAU MULTI-COLONNES d'un breakdown À COLONNES (ex. channel_performance) : 1 ligne par canal, colonnes CA / commission / taux de commission / marge contributive. ⚠️ OBLIGATOIRE quand un breakdown multi-colonnes de canaux de vente existe : ne JAMAIS présenter un CA par marketplace sans la commission ET la marge contributive correspondantes.
 Objectifs & variations (KPIs) :
 - {"type":"bullet","title":"...","metrics":["id", ...]}          // barres d'objectif compactes vs cible (ids AVEC cible)
 - {"type":"rings","title":"...","metrics":["id", ...]}           // anneaux de progression concentriques vs cibles (1-4 ids avec cible)
@@ -170,6 +171,8 @@ function renders(w: Widget, a: Avail): boolean {
     case "treemap": case "rose": case "share":
       return (!!w.breakdown && a.brk.has(w.breakdown)) || m.filter((x) => a.pos.has(x)).length >= 2;
     case "map": case "sunburst": case "histogram": case "calendar":
+      return !!w.breakdown && a.brk.has(w.breakdown);
+    case "matrix_table":
       return !!w.breakdown && a.brk.has(w.breakdown);
     case "callout": return !!(w.text && w.text.trim());
     case "scorecard": return true; // s'auto-valide au rendu (vide si < 3 verdicts)
@@ -272,7 +275,7 @@ function validatePlan(plan: DashPlan, a: Avail, sections: Sec[]): DashPlan {
 }
 
 // Liste lisible des types de widgets qui afficheront des données ce mois-ci (selon la donnée réelle).
-function availableTypes(a: Avail, hasVerdicts = false): string {
+function availableTypes(a: Avail, hasVerdicts = false, hasMatrix = false): string {
   const t = ["kpi_row", "bar", "donut", "table", "funnel", "waterfall", "callout", "treemap", "rose", "polar", "pictorial", "lollipop", "share", "ranking"];
   if (hasVerdicts) t.push("scorecard");
   if (a.ids.has("ca") && a.ids.has("marge_brute") && a.ids.has("ebitda")) t.push("flow");
@@ -283,6 +286,7 @@ function availableTypes(a: Avail, hasVerdicts = false): string {
   if (a.tgt.size) t.push("gauge", "gauge_grid", "bullet", "rings");
   if (a.change.size || a.tgt.size) t.push("radar");
   if (a.brk.size) t.push("map", "calendar", "histogram", "sunburst");
+  if (hasMatrix) t.push("matrix_table"); // seulement si un breakdown À COLONNES existe (rétrocompat : clients sans → prompt inchangé)
   return t.join(", ");
 }
 
@@ -385,6 +389,35 @@ Deno.serve(async (req) => {
       : [];
 
     const breakdowns = (sd.data as { breakdowns?: Record<string, { label: string; rows: { label: string; value: number; unit?: string }[] }> })?.breakdowns;
+    // Breakdown composite MULTI-COLONNES « performance par canal » — dérivé des breakdowns de canaux
+    // présents (sales/commissions/margin/orders by channel), sans exiger les 4. Calculé au rendu pour
+    // être dispo quelle que soit l'origine (fichiers, connecteurs, démo). Tri par marge contributive.
+    if (breakdowns && breakdowns["sales_by_channel"] && !breakdowns["channel_performance"]) {
+      const src = breakdowns as Record<string, { rows?: { label: string; value: number }[] }>;
+      const mp = (k: string): Record<string, number> => { const o: Record<string, number> = {}; for (const r of src[k]?.rows ?? []) o[r.label] = r.value; return o; };
+      const ca = mp("sales_by_channel"); const labels = Object.keys(ca);
+      if (labels.length) {
+        const commission = mp("commissions_by_channel"), margin = mp("margin_by_channel"), orders = mp("orders_by_channel");
+        const hasCom = Object.keys(commission).length > 0, hasMar = Object.keys(margin).length > 0, hasOrd = Object.keys(orders).length > 0;
+        const totalCA = labels.reduce((s, l) => s + (ca[l] || 0), 0) || 1;
+        const r1 = (n: number) => Math.round(n * 10) / 10, r2 = (n: number) => Math.round(n * 100) / 100;
+        const rows = labels.map((l) => {
+          const values: Record<string, number> = { ca: ca[l], share_ca: r1((ca[l] / totalCA) * 100) };
+          if (hasOrd) { values.orders = orders[l]; if (orders[l]) values.aov = r2(ca[l] / orders[l]); }
+          if (hasCom) { values.commission = commission[l]; if (ca[l]) values.commission_rate = r1((commission[l] / ca[l]) * 100); }
+          if (hasMar) { values.marge_contributive = margin[l]; if (ca[l]) values.taux_marge_contributive = r1((margin[l] / ca[l]) * 100); }
+          return { label: l, value: hasMar ? margin[l] : ca[l], values };
+        });
+        const columns: { key: string; label: string; unit: "CUR" | "%" | ""; emphasis?: boolean; sort?: boolean }[] = [
+          { key: "ca", label: "CA", unit: "CUR", emphasis: true }, { key: "share_ca", label: "% CA", unit: "%" },
+        ];
+        if (hasOrd) columns.push({ key: "orders", label: "Cmd", unit: "" }, { key: "aov", label: "Panier", unit: "CUR" });
+        if (hasCom) columns.push({ key: "commission", label: "Commission", unit: "CUR" }, { key: "commission_rate", label: "Taux comm.", unit: "%" });
+        if (hasMar) columns.push({ key: "marge_contributive", label: "Marge contrib.", unit: "CUR", sort: true }, { key: "taux_marge_contributive", label: "Taux MC", unit: "%" });
+        else columns[0].sort = true;
+        (breakdowns as Record<string, unknown>)["channel_performance"] = { label: "Performance par canal", rows, columns, total_row: true };
+      }
+    }
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
       label: s.label,
       rows: (s.rows ?? []).map((r) => {
@@ -469,7 +502,9 @@ Deno.serve(async (req) => {
       }).filter(Boolean) as string[];
       const diag = diagLines.join("\n");
       const hasVerdicts = diagLines.length >= 3;
-      const avTypes = availableTypes(a, hasVerdicts);
+      // matrix_table n'est proposé au LLM que si un breakdown À COLONNES existe → clients sans : prompt identique.
+      const hasColBk = !!breakdowns && Object.values(breakdowns).some((b) => Array.isArray((b as { columns?: unknown[] })?.columns) && (((b as { columns?: unknown[] }).columns as unknown[]).length > 0));
+      const avTypes = availableTypes(a, hasVerdicts, hasColBk);
 
       // 1) COMPOSITION (IA) : l'IA conçoit la structure ET l'analyse, MAIS uniquement avec les types
       //    DISPONIBLES (calculés depuis la donnée) → plus de graphe vide. Riche : ≥6 graphes/page.
