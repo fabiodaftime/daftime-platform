@@ -10,9 +10,10 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
-  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone,
+  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone, Sunrise,
 } from 'lucide-react';
 import { DashboardFrame } from '@/components/generic/DashboardFrame';
+import { DailyView } from '@/components/generic/DailyView';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { legacyDashboardRoute } from '@/lib/staff';
 import { ADVISOR, DEFAULT_DOCS } from '@/lib/config';
@@ -21,6 +22,7 @@ const BUCKET = 'client-files';
 
 const NAV = [
   { key: 'accueil', label: 'Accueil', icon: LayoutDashboard },
+  { key: 'quotidien', label: 'Quotidien', icon: Sunrise },
   { key: 'dashboard', label: 'Rapport complet', icon: FileBarChart2 },
   { key: 'documents', label: 'Mes documents', icon: FolderOpen },
   { key: 'assistant', label: 'Poser une question', icon: MessageCircle },
@@ -540,6 +542,8 @@ export default function ClientSpace() {
           {/* Contenu */}
           <div className="space-y-4">
             {(tab === 'accueil' || tab === 'dashboard') && MonthBar}
+
+            {tab === 'quotidien' && <DailyView clientId={id!} currency={client.currency} />}
 
             {tab === 'accueil' && (
               <div className="space-y-4">
