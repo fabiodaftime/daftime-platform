@@ -43,8 +43,6 @@ import {
 } from '@/landing-portugal/content';
 import { BOOKING_ANCHOR, CtaButton } from '@/landing-portugal/CtaButton';
 import { CalEmbed } from '@/landing-portugal/CalEmbed';
-import { ConsentBanner } from '@/landing-portugal/ConsentBanner';
-import { useConsent } from '@/landing-portugal/useConsent';
 
 /** `?a=1|3|4` → variante de hero. Paramètre absent ou invalide → variante 1. */
 function useHeroVariant() {
@@ -58,7 +56,6 @@ function useHeroVariant() {
 
 export default function LandingPortugal() {
   const hero = useHeroVariant();
-  const { consent, accept, refuse } = useConsent();
   const [booked, setBooked] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
 
@@ -381,20 +378,18 @@ export default function LandingPortugal() {
           Même libellé, même action : ce n'est pas un second CTA, c'est le CTA
           unique rendu atteignable en permanence sur le format où arrive
           l'essentiel du trafic Meta. FLAGS.stickyMobileCta pour la retirer.
-          Masquée tant que le bandeau de consentement est affiché (elles
-          occuperaient le même bas d'écran). */}
+*/}
       {FLAGS.stickyMobileCta && (
         <div
-          aria-hidden={!showSticky || consent === 'unknown'}
+          aria-hidden={!showSticky}
           className={`fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 p-3 backdrop-blur transition-transform duration-200 motion-reduce:transition-none sm:hidden ${
-            showSticky && consent !== 'unknown' ? 'translate-y-0' : 'translate-y-full'
+            showSticky ? 'translate-y-0' : 'translate-y-full'
           }`}
         >
           <CtaButton placement="sticky" />
         </div>
       )}
 
-      {consent === 'unknown' && <ConsentBanner onAccept={accept} onRefuse={refuse} />}
     </div>
   );
 }

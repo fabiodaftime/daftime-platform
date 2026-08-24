@@ -23,13 +23,10 @@ export const CAL = {
 } as const;
 
 // ────────────────────────────────────────────────────────────── Meta Pixel ──
-/**
- * ID du pixel Meta — le même que celui de l'application (index.html).
- * Différence importante : ici le pixel N'EST PAS posé dans le HTML. Il est
- * injecté par JS uniquement après acceptation du bandeau de consentement.
- * Mettre '' désactive tout le tracking de cette page (utile en recette).
- */
-export const META_PIXEL_ID = '2166358790810988';
+// L'ID du pixel n'est PAS ici : le snippet est pose en dur dans
+// portugal/index.html, comme dans index.html pour les LP e-commerce, afin de
+// partir avant React. Les evenements (Lead, Schedule, ViewContent, faq_open)
+// passent par src/lib/tracking.ts.
 
 // ───────────────────────────────────────────────────────────────── Tarifs ──
 /**

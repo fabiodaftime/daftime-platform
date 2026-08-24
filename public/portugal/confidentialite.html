@@ -102,7 +102,7 @@
         gap: 12px;
         align-items: center;
       }
-      button, .btn {
+      .btn {
         font: inherit;
         font-weight: 600;
         font-size: 14px;
@@ -111,12 +111,10 @@
         border: 1px solid var(--navy);
         background: var(--navy);
         color: #fff;
-        cursor: pointer;
         text-decoration: none;
         display: inline-block;
       }
       .btn.ghost { background: #fff; color: var(--navy); }
-      #done { color: #12744a; font-size: 14px; font-weight: 600; display: none; }
       footer {
         border-top: 1px solid var(--line);
         color: var(--muted);
@@ -178,8 +176,8 @@
                 navigation (affichage de la page, clic sur le bouton de réservation,
                 réservation confirmée)</td>
               <td>Mesurer l’efficacité de nos publicités et améliorer leur ciblage</td>
-              <td>Ton consentement (art. 6.1.a RGPD), recueilli via le bandeau et révocable à tout
-                moment</td>
+              <td>Intérêt légitime à mesurer et améliorer nos actions publicitaires
+                (art. 6.1.f RGPD)</td>
               <td>Selon les durées appliquées par Meta, au maximum 24 mois</td>
             </tr>
             <tr>
@@ -192,10 +190,10 @@
         </table>
       </div>
       <p>
-        Aucun traceur publicitaire n’est déposé avant que tu aies cliqué sur « Accepter ». Si tu
-        cliques sur « Refuser », aucun script Meta n’est chargé et aucun cookie publicitaire n’est
-        déposé. Ton choix est conservé dans le stockage local de ton navigateur, sur ton appareil
-        uniquement.
+        Ce site utilise le Pixel Meta (Facebook / Instagram) pour mesurer l’efficacité de nos
+        publicités. Il dépose des cookies et transmet certaines données à Meta Platforms. Tu peux
+        t’y opposer à tout moment via les paramètres de ton navigateur, via les préférences
+        publicitaires de ton compte Meta, ou en nous écrivant à l’adresse ci-dessous.
       </p>
 
       <h2>3. Qui reçoit ces données</h2>
@@ -239,16 +237,16 @@
         <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">CNIL</a>.
       </p>
 
-      <h2>6. Revenir sur ton choix de traceurs</h2>
+      <h2>6. Refuser la mesure publicitaire</h2>
       <p>
-        Le bouton ci-dessous efface ton choix : le bandeau de consentement te sera reposé à ta
-        prochaine visite sur la page.
+        Tu peux bloquer les cookies tiers dans les paramètres de ton navigateur, régler tes
+        préférences publicitaires depuis ton compte Meta, ou nous demander de cesser tout
+        traitement te concernant à
+        <a href="mailto:fabio@daftime.ae">fabio@daftime.ae</a>.
       </p>
 
       <div class="actions">
-        <button id="reset" type="button">Modifier mon choix de traceurs</button>
         <a class="btn ghost" href="/portugal">Retour à la page</a>
-        <span id="done">Choix effacé.</span>
       </div>
     </main>
 
@@ -256,14 +254,6 @@
 
     <script>
       document.getElementById('y').textContent = String(new Date().getFullYear());
-      document.getElementById('reset').addEventListener('click', function () {
-        try {
-          localStorage.removeItem('daftime_pt_consent');
-        } catch (e) {
-          /* stockage bloqué : il n'y avait rien à effacer */
-        }
-        document.getElementById('done').style.display = 'inline';
-      });
     </script>
   </body>
 </html>
