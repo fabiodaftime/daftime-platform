@@ -31,7 +31,8 @@ export interface Widget {
     | "area" | "stacked_area" | "river" | "combo" | "slope" | "matrix"
     | "rose" | "polar" | "sunburst" | "pictorial" | "lollipop" | "share" | "histogram"
     | "bullet" | "rings" | "gauge_grid" | "diverging" | "comparison" | "trend_grid" | "scorecard"
-    | "matrix_table"; // tableau multi-colonnes trié (perf par canal/produit) — lit un breakdown à colonnes
+    | "matrix_table" // tableau multi-colonnes trié (perf par canal/produit) — lit un breakdown à colonnes
+    | "scatter"; // nuage de points volume (CA) vs marge % — lit un breakdown à colonnes
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   line?: string; // widget "combo" : id de la métrique tracée en courbe (2e axe)
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
@@ -99,7 +100,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
   // callout = bandeau d'analyse → TOUJOURS pleine largeur (bande fine sur toute la largeur, jamais un bloc 1/3 épais).
   const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table", "callout"]);
-  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram"]);
+  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
   const chCard = (id: string, title: string, cls = "echart") => `<div class="card chartcard"><div class="card-t">${esc(title)}</div><div class="${cls}" id="${id}"></div></div>`;
@@ -555,11 +556,12 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const cell = (r: BreakdownRow, c: BreakdownColumn) => {
           const v = val(r, c.key);
           const inner = v == null ? "–" : fmt(v, unitCur(c.unit), ctx.currency);
+          const negCss = (typeof v === "number" && v < 0) ? "color:#dc2626;font-weight:600;" : ""; // valeur négative (perte) → rouge
           if (empCol && c.key === empCol.key) {
             const pct = Math.max(3, Math.round((Math.abs(v ?? 0) / empMax) * 100));
-            return `<td class="num" style="position:relative"><div style="position:absolute;left:0;top:2px;bottom:2px;width:${pct}%;background:${primary}22;border-radius:3px;z-index:0"></div><span style="position:relative;z-index:1">${esc(inner)}</span></td>`;
+            return `<td class="num" style="position:relative"><div style="position:absolute;left:0;top:2px;bottom:2px;width:${pct}%;background:${primary}22;border-radius:3px;z-index:0"></div><span style="position:relative;z-index:1;${negCss}">${esc(inner)}</span></td>`;
           }
-          return `<td class="num">${esc(inner)}</td>`;
+          return `<td class="num" style="${negCss}">${esc(inner)}</td>`;
         };
         const head = `<thead><tr><th></th>${cols.map((c) => `<th class="num">${esc(c.label)}</th>`).join("")}</tr></thead>`;
         const body = rows.map((sv) => {
@@ -578,6 +580,39 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
           totalRow = `<tr class="tot"><td>Total</td>${cols.map(tot).join("")}</tr>`;
         }
         return `<div class="card"><div class="card-t">${esc(w.title ?? bk.label)}</div><div style="overflow-x:auto"><table class="tbl">${head}<tbody>${body}${totalRow}</tbody></table></div></div>`;
+      }
+      case "scatter": {
+        // Nuage de points : X = volume (CA), Y = marge % → repère les gros volumes à FAIBLE marge.
+        // Lit un breakdown À COLONNES (channel_performance / category_performance…). SVG (corps HTML).
+        const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
+        if (!bk || !bk.rows?.length || !bk.columns?.length) return "";
+        const cols = bk.columns;
+        const uc = (u?: string) => (u === "CUR" ? ctx.currency : (u ?? ""));
+        const xCol = cols.find((c) => c.emphasis) || cols.find((c) => c.unit === "CUR") || cols[0];
+        const yCol = cols.find((c) => c.unit === "%");
+        if (!xCol || !yCol) return "";
+        const pts = bk.rows.map((r) => ({ label: r.label, x: r.values?.[xCol.key], y: r.values?.[yCol.key] }))
+          .filter((p) => typeof p.x === "number" && typeof p.y === "number") as { label: string; x: number; y: number }[];
+        if (pts.length < 2) return "";
+        const W = 320, H = 190, pl = 6, pr = 6, ptp = 8, pb = 16;
+        const maxX = Math.max(...pts.map((p) => p.x)) || 1;
+        const ys = pts.map((p) => p.y); const maxY = Math.max(...ys, 0), minY = Math.min(...ys, 0);
+        const sx = (v: number) => pl + (v / maxX) * (W - pl - pr);
+        const sy = (v: number) => (H - pb) - ((v - minY) / ((maxY - minY) || 1)) * (H - pb - ptp);
+        const zeroY = minY < 0 ? sy(0) : null;
+        const circles = pts.map((p) => {
+          const rr = 3 + (p.x / maxX) * 5;
+          const c = p.y < 0 ? "#dc2626" : accent;
+          return `<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="${rr.toFixed(1)}" fill="${c}" fill-opacity="0.65" stroke="${c}" stroke-width="1"><title>${esc(p.label)} — ${esc(fmtPlain(p.x, uc(xCol.unit), ctx.currency))} · ${esc(fmtPlain(p.y, "%"))}</title></circle>`;
+        }).join("");
+        const worst = pts.reduce((a, b) => (b.y < a.y ? b : a));
+        const big = pts.reduce((a, b) => (b.x > a.x ? b : a));
+        const lab = (p: { label: string; x: number; y: number }, color: string) =>
+          `<text x="${Math.min(sx(p.x) + 6, W - 40).toFixed(1)}" y="${(sy(p.y) + 3).toFixed(1)}" font-size="8" fill="${color}">${esc(p.label.slice(0, 20))}</text>`;
+        const svg = `<svg viewBox="0 0 ${W} ${H}" class="w-full" style="display:block">`
+          + (zeroY != null ? `<line x1="${pl}" y1="${zeroY.toFixed(1)}" x2="${W - pr}" y2="${zeroY.toFixed(1)}" stroke="#dc2626" stroke-dasharray="3 3" stroke-width="1"/>` : "")
+          + circles + lab(worst, "#dc2626") + (big !== worst ? lab(big, safeColor(accent, "#ec4899")) : "") + `</svg>`;
+        return `<div class="card"><div class="card-t">${esc(w.title ?? bk.label)}</div>${svg}<div style="font-size:10px;color:${th.muted};margin-top:4px">Horizontal : ${esc(xCol.label)} · Vertical : ${esc(yCol.label)} · taille ∝ ${esc(xCol.label)}</div></div>`;
       }
       default: return "";
     }

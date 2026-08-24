@@ -85,7 +85,8 @@ Répartitions (BREAKDOWN) :
 - {"type":"lollipop","title":"...","breakdown":"clé"}            // bâtons-points — classement épuré (alternative à ranking)
 - {"type":"share","title":"...","breakdown":"clé"}               // barre 100% — part de chaque poste dans le total
 - {"type":"histogram","title":"...","breakdown":"clé"}           // distribution (ex. daily_sales) — dispersion des valeurs
-- {"type":"matrix_table","title":"...","breakdown":"clé","sort_by":"colonne?","highlight":"best|worst|both?","total_row":true} // TABLEAU MULTI-COLONNES d'un breakdown À COLONNES (ex. channel_performance) : 1 ligne par canal, colonnes CA / commission / taux de commission / marge contributive. ⚠️ OBLIGATOIRE quand un breakdown multi-colonnes de canaux de vente existe : ne JAMAIS présenter un CA par marketplace sans la commission ET la marge contributive correspondantes.
+- {"type":"matrix_table","title":"...","breakdown":"clé","sort_by":"colonne?","highlight":"best|worst|both?","total_row":true} // TABLEAU MULTI-COLONNES d'un breakdown À COLONNES (ex. channel_performance, category_performance) : 1 ligne par canal/catégorie, colonnes CA / commission / taux / marge. ⚠️ OBLIGATOIRE quand un breakdown multi-colonnes existe : ne JAMAIS présenter un CA par canal/catégorie sans sa marge. (Valeurs négatives affichées en rouge.)
+- {"type":"scatter","title":"...","breakdown":"clé"} // NUAGE de points volume (CA) vs marge % d'un breakdown À COLONNES — repère d'un coup d'œil les gros volumes à FAIBLE marge (points sous 0 en rouge). Idéal en complément du matrix_table.
 Objectifs & variations (KPIs) :
 - {"type":"bullet","title":"...","metrics":["id", ...]}          // barres d'objectif compactes vs cible (ids AVEC cible)
 - {"type":"rings","title":"...","metrics":["id", ...]}           // anneaux de progression concentriques vs cibles (1-4 ids avec cible)
@@ -176,7 +177,7 @@ function renders(w: Widget, a: Avail): boolean {
       return (!!w.breakdown && a.brk.has(w.breakdown)) || m.filter((x) => a.pos.has(x)).length >= 2;
     case "map": case "sunburst": case "histogram": case "calendar":
       return !!w.breakdown && a.brk.has(w.breakdown);
-    case "matrix_table":
+    case "matrix_table": case "scatter":
       return !!w.breakdown && a.brk.has(w.breakdown);
     case "callout": return !!(w.text && w.text.trim());
     case "scorecard": return true; // s'auto-valide au rendu (vide si < 3 verdicts)
@@ -291,7 +292,7 @@ function availableTypes(a: Avail, hasVerdicts = false, hasMatrix = false): strin
   if (a.change.size) t.push("comparison");
   if (a.tgt.size) t.push("gauge"); // au plus 1-2 jauges (voir PLAN_SYSTEM)
   if (a.brk.size) t.push("map", "calendar");
-  if (hasMatrix) t.push("matrix_table"); // seulement si un breakdown À COLONNES existe (rétrocompat : clients sans → prompt inchangé)
+  if (hasMatrix) t.push("matrix_table", "scatter"); // seulement si un breakdown À COLONNES existe (rétrocompat : clients sans → prompt inchangé)
   return t.join(", ");
 }
 
