@@ -154,7 +154,7 @@ export function DailyView({ clientId, currency = 'EUR' }: { clientId: string; cu
             <>
               <div className="flex items-end gap-1 h-40">
                 {m.monthly.map((d, i) => (
-                  <div key={i} className="flex-1 flex items-end" title={`${d.m} · ${fmtMoney(d.ca, currency)}`}>
+                  <div key={i} className="flex-1 h-full flex items-end" title={`${d.m} · ${fmtMoney(d.ca, currency)}`}>
                     <div className="w-full rounded-t bg-accent/70 hover:bg-accent transition-colors" style={{ height: `${Math.max(2, (d.ca / maxCa) * 100)}%` }} />
                   </div>
                 ))}
