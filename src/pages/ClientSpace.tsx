@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { DailyView } from '@/components/generic/DailyView';
+import { KpiPins } from '@/components/generic/KpiPins';
 import { ErrorBoundary } from '@/components/generic/ErrorBoundary';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { legacyDashboardRoute } from '@/lib/staff';
@@ -549,7 +550,14 @@ export default function ClientSpace() {
           <div className="space-y-4">
             {(tab === 'accueil' || tab === 'dashboard') && MonthBar}
 
-            {tab === 'quotidien' && <ErrorBoundary label="quotidien"><DailyView clientId={id!} currency={client.currency} /></ErrorBoundary>}
+            {tab === 'quotidien' && (
+              <ErrorBoundary label="quotidien">
+                <div className="space-y-4">
+                  <KpiPins clientId={id!} currency={client.currency} />
+                  <DailyView clientId={id!} currency={client.currency} />
+                </div>
+              </ErrorBoundary>
+            )}
 
             {tab === 'accueil' && (
               <div className="space-y-4">
