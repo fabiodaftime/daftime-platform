@@ -14,7 +14,7 @@ import { trackLead, trackViewContent, trackFaqOpen } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
 import { resolveBooking } from '@/lib/config';
 
-const CTA = 'Recevoir mon dashboard gratuit';
+const CTA = 'Recevoir mon audit gratuit';
 
 const PAINS = [
   '« Mon CA monte, mais mon compte en banque suit pas. »',
@@ -32,12 +32,12 @@ const BENEFITS = [
 const STEPS = [
   { n: 1, t: 'Tu réserves ton call', d: '20 min pour faire le point sur ton shop.' },
   { n: 2, t: 'On branche tes outils', d: 'Shopify, Stripe, Meta Ads, banque. On te guide, 5 min.' },
-  { n: 3, t: 'Tu reçois ton dashboard', d: 'Livré sous 2 jours + 1h avec un expert pour tout t’expliquer.' },
+  { n: 3, t: 'Tu reçois ton audit', d: 'Livré sous 2 jours + 1h avec un expert pour tout t’expliquer.' },
 ];
 
 const FAQ = [
-  { q: 'Ça coûte combien ?', a: 'Ton premier dashboard est offert. Ensuite, à partir de 700 $/mois si tu veux continuer — sans engagement.' },
-  { q: 'C’est offert, c’est quoi le piège ?', a: 'Aucun. On t’offre le premier pour te prouver la valeur — tu le gardes quoi qu’il arrive. Tu continues seulement si ça t’apporte quelque chose.' },
+  { q: 'Ça coûte combien ?', a: 'Ton audit financier est offert. Ensuite, à partir de 700 $/mois si tu veux un suivi continu (ton directeur financier externalisé) — sans engagement.' },
+  { q: 'C’est offert, c’est quoi le piège ?', a: 'Aucun. On t’offre l’audit pour te prouver la valeur — tu repars avec, quoi qu’il arrive. Tu continues seulement si ça t’apporte quelque chose.' },
   { q: 'Je sais sortir le même dashboard avec l’IA. Pourquoi payer ?', a: [
     'Et tu as raison — la visualisation, c’est la couche facile.',
     'Le vrai enjeu est en dessous : réconcilier tes différentes sources, mapper ta structure comme il faut et sortir une data consolidée correcte et propre. Une réconciliation approximative ou un mauvais mapping, et l’IA te sort une visualisation impeccable… basée sur du faux.',
@@ -91,7 +91,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
             Mais <span className="text-accent">toi</span>, tu gagnes combien&nbsp;?
           </h1>
           <p className="mt-5 text-lg text-primary-foreground/80 leading-relaxed">
-            On regarde tes vrais chiffres et on te dit, en clair&nbsp;: où tu gagnes, où tu perds, et quoi changer.
+            Ton directeur financier externalisé, spécialisé e-commerce&nbsp;: on regarde tes vrais chiffres et on te dit, en clair, où tu gagnes, où tu perds, et quoi changer.
           </p>
           <Button onClick={() => openLead('hero')} variant="secondary" className="mt-7 w-full h-14 text-lg font-bold">
             {CTA}
@@ -167,7 +167,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
             ))}
           </ol>
           <p className="mt-6 text-center text-sm font-bold text-primary flex items-center justify-center gap-2">
-            <Clock className="w-4 h-4" /> Ton dashboard livré sous 2 jours.
+            <Clock className="w-4 h-4" /> Ton audit livré sous 2 jours.
           </p>
         </div>
       </section>
@@ -175,10 +175,10 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
       {/* OFFRE + RISK REVERSAL */}
       <section className="px-5 py-14">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight">Ton premier dashboard, offert.</h2>
-          <p className="mt-3 text-lg text-muted-foreground">Normalement <b className="text-foreground">à partir de 700 $/mois</b>. Le premier est <b className="text-foreground">gratuit</b>.</p>
+          <h2 className="text-3xl font-extrabold tracking-tight">Ton audit financier, offert.</h2>
+          <p className="mt-3 text-lg text-muted-foreground">Le suivi continu, c'est <b className="text-foreground">à partir de 700 $/mois</b>. L'audit est <b className="text-foreground">gratuit</b>.</p>
           <ul className="mt-6 inline-flex flex-col gap-2.5 text-left">
-            {['Ton dashboard financier sur-mesure', '1h de revue avec un expert e-commerce', 'Tu le gardes, quoi qu’il arrive'].map((x) => (
+            {['Ton audit financier complet', '1h de revue avec un expert e-commerce', 'Tu repars avec, quoi qu’il arrive'].map((x) => (
               <li key={x} className="flex items-center gap-3 text-[15px]"><Check className="w-5 h-5 text-emerald-600 shrink-0" /> {x}</li>
             ))}
           </ul>

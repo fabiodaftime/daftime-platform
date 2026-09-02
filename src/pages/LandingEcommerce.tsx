@@ -12,16 +12,16 @@ import { trackLead, trackViewContent, trackFaqOpen } from '@/lib/tracking';
 import { initCalTracking } from '@/lib/cal';
 import { resolveBooking } from '@/lib/config';
 
-const CTA = 'Recevoir mon dashboard gratuit';
+const CTA = 'Recevoir mon audit gratuit';
 
 const STEPS = [
   { n: 1, t: 'Tu réserves ton call', d: '20 min pour faire le point sur ton shop. On voit ensemble ce qui coince.' },
   { n: 2, t: 'On récupère tes accès', d: 'Shopify, Stripe, Meta Ads, relevés bancaires. On te guide, ça prend 5 min.' },
-  { n: 3, t: 'On le décortique ensemble', d: 'Ton dashboard livré sous 2 jours, puis 1h de revue avec ton analyste : où tu gagnes, où tu perds, sur quoi agir. Tu le gardes.' },
+  { n: 3, t: 'On le décortique ensemble', d: 'Ton audit financier livré sous 2 jours, puis 1h de revue avec ton analyste : où tu gagnes, où tu perds, sur quoi agir.' },
 ];
 
 const FAQ = [
-  { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. Le premier dashboard est offert pour te montrer concrètement la valeur — tu le gardes même si tu ne continues pas. Ensuite c’est à partir de 700 $/mois, sans engagement, résiliable quand tu veux.' },
+  { q: 'C’est vraiment gratuit, c’est quoi le piège ?', a: 'Aucun piège. L’audit financier est offert pour te montrer concrètement où part ton argent — sans engagement. Ensuite, si tu veux qu’on pilote avec toi en continu (ton directeur financier externalisé), c’est à partir de 700 $/mois, résiliable quand tu veux.' },
   { q: 'Je sais sortir le même dashboard avec l’IA. Pourquoi payer ?', a: [
     'Et tu as raison — la visualisation, c’est la couche facile.',
     'Le vrai enjeu est en dessous : réconcilier tes différentes sources, mapper ta structure comme il faut et sortir une data consolidée correcte et propre. Une réconciliation approximative ou un mauvais mapping, et l’IA te sort une visualisation impeccable… basée sur du faux.',
@@ -42,7 +42,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
   const [booking, setBooking] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
 
-  // Le "dashboard gratuit" démarre par un call de cadrage → on ouvre le calendrier cal.com (modale rapide).
+  // L'"audit gratuit" démarre par un call de cadrage → on ouvre le calendrier cal.com (modale rapide).
   // Clic = intention (Meta "Lead") ; RDV confirmé = conversion (Meta "Schedule", via initCalTracking).
   // Si l'iframe ne charge pas (rare, in-app), la modale affiche un lien "ouvrir dans le navigateur" en filet.
   const openLead = (source: string) => { trackLead(advisor ? `${source}_${advisor}` : source); setBooking(true); };
@@ -84,14 +84,14 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
             Mais est-ce qu’il gagne <span className="relative whitespace-nowrap">vraiment<span className="absolute left-0 -bottom-0.5 w-full h-2 bg-accent/40 -z-10" /></span> de l’argent&nbsp;?
           </h1>
           <p className="mt-4 text-base text-muted-foreground">
-            On réconcilie Shopify, Stripe, Meta Ads, ta banque et ta compta. Chaque mois, un expert t’aide à décrypter tes chiffres : où tu gagnes, où tu perds, sur quoi agir.
+            Ton directeur financier externalisé, spécialisé e-commerce. On réconcilie Shopify, Stripe, Meta Ads, ta banque et ta compta, et on te dit où tu gagnes, où tu perds, sur quoi agir.
           </p>
 
           <Button onClick={() => openLead('hero')} className="mt-6 w-full h-12 text-base font-semibold">
             {CTA}
           </Button>
           <p className="mt-2.5 text-xs text-center text-muted-foreground">
-            <span className="text-foreground font-medium">20 min de call</span>, puis ton dashboard livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> <span className="whitespace-nowrap">(normalement à partir de 700 $/mois)</span> — zéro pitch, tu décides après.
+            <span className="text-foreground font-medium">20 min de call</span>, puis ton audit financier livré sous 2 jours. <span className="text-foreground font-medium">Offert</span> — zéro pitch, tu décides après.
           </p>
           <p className="mt-1 text-xs text-muted-foreground text-center">
             Pensé pour les shops qui font 1 000 $/jour et plus. En dessous, un tableur suffit.
@@ -118,7 +118,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
         <div className="max-w-5xl mx-auto px-4 py-12">
           <div className="text-center max-w-xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">Voilà ce qu’on te livre.</h2>
-            <p className="mt-2 text-muted-foreground text-sm">Un vrai dashboard, lu et commenté par un expert. Pas un graphique de plus à interpréter seul.</p>
+            <p className="mt-2 text-muted-foreground text-sm">Le rendu de ton audit : tes vrais chiffres, lus et commentés par ton analyste. Pas un graphique de plus à interpréter seul.</p>
           </div>
 
           <div className="mt-8"><DashboardDemo /></div>
@@ -209,7 +209,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
               </li>
             ))}
           </ol>
-          <p className="mt-6 text-center text-sm font-semibold text-primary">Premier dashboard livré sous 2 jours.</p>
+          <p className="mt-6 text-center text-sm font-semibold text-primary">Ton audit livré sous 2 jours.</p>
         </div>
       </section>
 
@@ -228,7 +228,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
             </div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            <b className="text-foreground">Ton premier dashboard est offert.</b> Tu le gardes quoi qu'il arrive — tu continues à partir de 700 $/mois seulement si ça t'apporte de la valeur.
+            <b className="text-foreground">Ton audit financier est offert.</b> Tu repars avec, quoi qu'il arrive — tu continues à partir de 700 $/mois seulement si ça t'apporte de la valeur.
           </p>
           <ul className="mt-5 inline-flex flex-col gap-2 text-left text-sm">
             {['Dashboard sur-mesure chaque mois', '1h de revue en visio avec ton analyste', 'Les 3 points d’attention + ton plan', 'Toutes tes sources réconciliées', 'Sans engagement'].map((x) => (
@@ -267,7 +267,7 @@ export default function LandingEcommerce({ advisor }: { advisor?: string } = {})
         <div className="max-w-md mx-auto px-4 py-14 flex flex-col items-center text-center gap-4">
           <ShieldCheck className="w-8 h-8 text-accent" />
           <h2 className="text-2xl font-semibold tracking-tight">Sache exactement où va ton argent.</h2>
-          <p className="text-primary-foreground/75 text-sm">On te livre ton premier dashboard financier réel. Tu le gardes, même si tu ne prends rien ensuite.</p>
+          <p className="text-primary-foreground/75 text-sm">On te livre ton audit financier réel : où va vraiment ton argent. Sans engagement, même si tu ne prends rien ensuite.</p>
           <Button onClick={() => openLead('cta_final')} variant="secondary" className="w-full h-12 text-base font-semibold">{CTA}</Button>
         </div>
       </section>
