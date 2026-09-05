@@ -30,7 +30,7 @@
 //  plus hostile qui soit — un fondu de 12 px ne vaut pas ce risque.
 // ═══════════════════════════════════════════════════════════════════════════
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Check, Clock, ShieldCheck, Stamp } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck, Stamp } from 'lucide-react';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-en.png';
 import { Button } from '@/components/ui/button';
@@ -38,8 +38,8 @@ import { trackFaqOpen, trackViewContent } from '@/lib/tracking';
 
 import { FLAGS, HOST, LEGAL, LINKS, PRICING } from '@/landing-portugal/config';
 import {
-  DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS, PROBLEMS, PROOF, RNH, SERVICES,
-  type HeroVariantKey,
+  CTA_REASSURANCE, DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS, PROBLEMS, PROOF,
+  SERVICES, type HeroVariantKey,
 } from '@/landing-portugal/content';
 import { BOOKING_ANCHOR, CtaButton } from '@/landing-portugal/CtaButton';
 import { CalEmbed } from '@/landing-portugal/CalEmbed';
@@ -228,24 +228,6 @@ export default function LandingPortugal() {
         </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────── RNH ── */}
-      <section className="border-t bg-secondary/40">
-        <div className="mx-auto max-w-3xl px-5 py-14 sm:py-16">
-          <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" aria-hidden />
-            10 ans, non renouvelables
-          </p>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">{RNH.title}</h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{RNH.body}</p>
-          <p className="mt-4 border-l-2 border-accent pl-4 text-[15px] font-medium leading-relaxed">
-            {RNH.kicker}
-          </p>
-          <div className="mt-7">
-            <CtaButton placement="rnh" />
-          </div>
-        </div>
-      </section>
-
       {/* ──────────────────────────────────────────────────────────────── FAQ ──
           <details> natif plutôt qu'un accordéon Radix : zéro JS, accessible au
           clavier par défaut, et c'est ce qu'utilisent les deux autres LP.
@@ -273,6 +255,15 @@ export default function LandingPortugal() {
                 <p className="px-5 pb-5 text-[15px] leading-relaxed text-muted-foreground">{f.a}</p>
               </details>
             ))}
+          </div>
+
+          {/* CTA après la FAQ : le visiteur vient de lever ses objections,
+              c'est le pic d'intention. Même choix que /ecommerce-2. */}
+          <div className="mt-9 border-t pt-9">
+            <CtaButton placement="apres_faq" />
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+              {CTA_REASSURANCE}
+            </p>
           </div>
         </div>
       </section>
@@ -378,12 +369,15 @@ export default function LandingPortugal() {
           Même libellé, même action : ce n'est pas un second CTA, c'est le CTA
           unique rendu atteignable en permanence sur le format où arrive
           l'essentiel du trafic Meta. FLAGS.stickyMobileCta pour la retirer.
-*/}
+
+          `invisible` en plus de translate-y-full : sans elle, le bouton reste
+          dans l'ordre de tabulation alors que la barre est aria-hidden — un
+          manquement WCAG 4.1.2. */}
       {FLAGS.stickyMobileCta && (
         <div
           aria-hidden={!showSticky}
           className={`fixed inset-x-0 bottom-0 z-40 border-t bg-card/95 p-3 backdrop-blur transition-transform duration-200 motion-reduce:transition-none sm:hidden ${
-            showSticky ? 'translate-y-0' : 'translate-y-full'
+            showSticky ? 'translate-y-0' : 'invisible translate-y-full'
           }`}
         >
           <CtaButton placement="sticky" />

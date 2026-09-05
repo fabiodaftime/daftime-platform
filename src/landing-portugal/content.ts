@@ -67,6 +67,13 @@ export const HERO_REASSURANCE =
 /** Libellé unique du CTA — identique partout sur la page. */
 export const CTA_LABEL = 'Réserver 20 minutes';
 
+/**
+ * Micro-réassurance placée sous les CTA de milieu et de fin de page.
+ * Plus courte que celle du hero : à ce stade le visiteur a déjà lu l'offre,
+ * il lui manque juste la permission de cliquer.
+ */
+export const CTA_REASSURANCE = 'Sans engagement. Tu repars avec une réponse claire, même si tu ne travailles pas avec nous.';
+
 // ──────────────────────────────────────────────────────────────── Problème ──
 export const PROBLEMS = [
   {
@@ -160,19 +167,6 @@ export const DUO = {
         'conséquences de l’autre.',
     },
   ],
-} as const;
-
-// ───────────────────────────────────────────────────────────────────── RNH ──
-export const RNH = {
-  title: 'Ton RNH arrive à son terme',
-  body:
-    'Le statut de résident non habituel dure dix ans à compter de l’année d’inscription. ' +
-    'Il n’est pas renouvelable et il n’existe pas de prolongation. À l’issue de ces dix ans, ' +
-    'tu bascules dans le régime de droit commun : barème progressif de l’IRS, jusqu’à 48 % sur ' +
-    'la tranche la plus haute.',
-  kicker:
-    'La marche se prépare dans les douze à vingt-quatre mois qui précèdent, pas le mois où elle ' +
-    'arrive : structure de rémunération, arbitrage entre salaire et dividendes, forme de la société.',
 } as const;
 
 // ───────────────────────────────────────────────────────────────────── FAQ ──
