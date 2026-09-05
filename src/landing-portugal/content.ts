@@ -74,66 +74,102 @@ export const CTA_LABEL = 'Réserver 20 minutes';
 export const CTA_REASSURANCE = 'Sans engagement. Tu repars avec une réponse claire, même si tu ne travailles pas avec nous.';
 
 // ──────────────────────────────────────────────────────────────── Problème ──
+/**
+ * Les cinq points de friction réellement entendus au téléphone (source : appels
+ * de prospection). Pas des douleurs déduites : des phrases de clients.
+ *
+ * REGISTRE : première personne, comme sur les LP e-commerce. Le lecteur doit se
+ * reconnaître en une seconde, pas lire l'analyse de sa situation.
+ *
+ * DÉONTOLOGIE OCC : chaque point décrit le vécu de l'entrepreneur, jamais la
+ * performance d'un autre cabinet. « Je n'ai pas de réponse depuis dix jours »
+ * est recevable ; « les cabinets portugais ne répondent pas » ne le serait pas.
+ * Ne jamais généraliser en réécrivant ces lignes.
+ *
+ * Chaque point a sa réponse dans ANSWERS, dans le même ordre.
+ */
 export const PROBLEMS = [
   {
-    title: 'L’impôt, découvert trop tard',
+    title: '« J’ai monté ma société vite. Je ne sais pas si c’est la bonne forme. »',
     body:
-      'Le Modelo 22 se dépose au printemps qui suit la clôture, l’IRC se règle derrière. ' +
-      'Quand le montant arrive, l’exercice est fermé depuis des mois : il n’y a plus rien à arbitrer.',
+      'Unipessoal, Lda, statut d’indépendant : le choix s’est fait au moment de s’installer, ' +
+      'souvent sans arbitrage. Il conditionne pourtant ce que tu paies chaque année.',
   },
   {
-    title: 'Des documents signés sans être lus',
+    title: '« Mon comptable saisit mes factures. Pour le reste, je me débrouille. »',
     body:
-      'Balancete, Modelo 22, IES : des documents en portugais, dans un plan comptable (SNC) ' +
-      'qui n’est pas celui que tu connais. Tu signes parce qu’il faut signer.',
+      'La tenue est faite, les déclarations partent. Mais personne ne te dit comment te ' +
+      'rémunérer, quand un seuil se rapproche, ni ce qu’une décision va coûter.',
   },
   {
-    title: 'Un budget annuel impossible à anticiper',
+    title: '« On ne se comprend pas, alors j’ai arrêté de poser des questions. »',
     body:
-      'Des honoraires mensuels d’un côté, des prestations facturées au moment des déclarations ' +
-      'annuelles de l’autre. Le coût réel de l’année ne se lit qu’à la fin.',
+      'Entre la langue, le vocabulaire comptable portugais et des documents au format SNC, ' +
+      'l’échange s’appauvrit jusqu’à se limiter à l’envoi des pièces.',
+  },
+  {
+    title: '« Je ne sais pas exactement ce que je paie, ni pourquoi. »',
+    body:
+      'Des honoraires mensuels d’un côté, des prestations qui s’ajoutent au moment des ' +
+      'déclarations annuelles de l’autre. Le total de l’année ne se lit qu’à la fin.',
+  },
+  {
+    title: '« J’attends une réponse depuis dix jours. »',
+    body:
+      'Une question simple qui traîne, c’est une décision repoussée. Parfois une échéance ' +
+      'qui passe.',
   },
 ] as const;
 
-// ─────────────────────────────────────────────────────────── Ce qu’on fait ──
-export const SERVICES = [
+// ─────────────────────────────────────────────────────────── Ce que ça change ──
+/**
+ * Réponses aux cinq points ci-dessus, DANS LE MÊME ORDRE. Si tu modifies un
+ * PROBLEMS, modifie l'ANSWERS correspondant : c'est ce parallélisme qui fait
+ * l'argumentaire de la page.
+ *
+ * Orienté conséquence, pas catalogue d'obligations : la liste IVA / IRC / IES
+ * ne différencie de rien, tous les cabinets portugais la font. Elle figure déjà
+ * dans le bloc tarifaire, et une ligne de rappel suffit ici (COVERED).
+ */
+export const ANSWERS = [
   {
-    title: 'Comptabilité courante',
+    title: 'La structure, revue au départ ou corrigée en route',
     body:
-      'Tenue des livres au référentiel portugais (SNC), rapprochements bancaires, classement ' +
-      'des pièces, balancete mensuel.',
+      'On regarde ce que tu paies aujourd’hui avec ta forme actuelle, et ce que ça donnerait ' +
+      'autrement. Si le changement vaut le coup, on te le dit — et s’il ne le vaut pas, aussi.',
   },
   {
-    title: 'IVA',
+    title: 'Du conseil, pas seulement de la saisie',
     body:
-      'Déclarations périodiques d’IVA, mensuelles ou trimestrielles selon ton régime, ' +
-      'récapitulatifs intracommunautaires et suivi des échéances.',
+      'Rémunération, arbitrage entre salaire et dividendes, seuils d’IVA, investissements : ' +
+      'les décisions qui coûtent ou qui rapportent se prennent avant la clôture, pas après.',
   },
   {
-    title: 'IRC et Modelo 22',
+    title: 'Tout se passe en français',
     body:
-      'Détermination du résultat fiscal, calcul de l’IRC, préparation et dépôt du Modelo 22. ' +
-      'Le montant t’est annoncé avant l’échéance, pas après.',
+      'Tes documents te sont expliqués, pas seulement transmis. Tu n’as jamais à déchiffrer ' +
+      'un balancete ni à écrire en portugais.',
   },
   {
-    title: 'IES et dépôt des comptes',
+    title: 'Un forfait, annoncé d’avance',
     body:
-      'Informação Empresarial Simplificada : comptes annuels, annexes et dépôt légal. ' +
-      'Compris dans le forfait, jamais facturé en supplément.',
+      'Un montant mensuel qui couvre l’année entière, déclarations annuelles comprises. ' +
+      'Aucune ligne ne s’ajoute au moment du Modelo 22.',
   },
   {
-    title: 'Obligations sociales et déclaratives',
+    // ⚠️ ENGAGEMENT PUBLIC — à confirmer avant diffusion, et à tenir. Si le
+    //    délai n'est pas soutenable, ramener la promesse à ce qui l'est.
+    title: 'Une réponse sous 24 heures ouvrées',
     body:
-      'Salaires et déclarations associées, retenues à la source, échéancier annuel tenu à jour ' +
-      'et communiqué à l’avance.',
-  },
-  {
-    title: 'Le point mensuel, en français',
-    body:
-      'Ce que disent tes chiffres, ce qui arrive au calendrier, ce qu’il faut décider. ' +
-      'Dit simplement, sans jargon fiscal portugais.',
+      'Une question simple ne doit pas attendre une semaine. Tu écris en français, à une ' +
+      'personne qui connaît ton dossier.',
   },
 ] as const;
+
+/** Rappel compact des obligations couvertes — le détail est dans le bloc tarifaire. */
+export const COVERED =
+  'Comptabilité courante, IVA, IRC et Modelo 22, IES, obligations sociales : tout est compris ' +
+  'dans le forfait.';
 
 /**
  * Le duo — mis en avant sous les services.

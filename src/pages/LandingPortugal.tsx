@@ -46,8 +46,8 @@ import { trackFaqOpen, trackViewContent } from '@/lib/tracking';
 
 import { FLAGS, HOST, LEGAL, LINKS, PRICING } from '@/landing-portugal/config';
 import {
-  CTA_REASSURANCE, DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS, PROBLEMS, PROOF,
-  SERVICES, type HeroVariantKey,
+  ANSWERS, COVERED, CTA_REASSURANCE, DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS,
+  PROBLEMS, PROOF, type HeroVariantKey,
 } from '@/landing-portugal/content';
 import { BOOKING_ANCHOR, CtaButton } from '@/landing-portugal/CtaButton';
 import { CalEmbed } from '@/landing-portugal/CalEmbed';
@@ -142,30 +142,23 @@ export default function LandingPortugal() {
       </section>
 
       {/* ────────────────────────────────────────────────────────── Problème ──
-          Liste numérotée à filets. Aucun conteneur : le numéro dans la marge
-          fait la structure, la hairline fait la séparation. */}
+          Citations réelles, à filets. Aucun conteneur : la hairline sépare, la
+          typographie hiérarchise. Chaque citation trouve sa réponse dans la
+          section suivante, dans le même ordre. */}
       <section className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
-        <SectionTitle>
-          Ce qui coince, quand on dirige une société portugaise depuis la France
-        </SectionTitle>
-        <ol className="mt-10 border-t">
-          {PROBLEMS.map((p, i) => (
-            <li
-              key={p.title}
-              className="grid gap-x-7 gap-y-2 border-b py-7 sm:grid-cols-[2.5rem_1fr] sm:py-9"
-            >
-              <span className="text-[13px] font-semibold tabular-nums text-primary/35 sm:pt-1.5">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div>
-                <h3 className="text-lg font-semibold tracking-tight sm:text-xl">{p.title}</h3>
-                <p className="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-                  {p.body}
-                </p>
-              </div>
+        <SectionTitle>Ce qu’on entend, à peu près chaque semaine</SectionTitle>
+        <ul className="mt-10 border-t">
+          {PROBLEMS.map((p) => (
+            <li key={p.title} className="border-b py-7 sm:py-8">
+              <p className="max-w-2xl text-lg font-medium leading-snug tracking-tight sm:text-xl">
+                {p.title}
+              </p>
+              <p className="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+                {p.body}
+              </p>
             </li>
           ))}
-        </ol>
+        </ul>
       </section>
 
       {/* ─────────────────────────────────────────────────────── Ce qu'on fait ──
@@ -173,23 +166,26 @@ export default function LandingPortugal() {
           droite. C'est une liste, pas six cartes. */}
       <section className="border-y bg-secondary">
         <div className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
-          <SectionTitle>Ce qu’on prend en charge</SectionTitle>
+          <SectionTitle>Ce que ça change</SectionTitle>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-            Un forfait mensuel, et l’ensemble des obligations comptables et déclaratives de ta
-            société portugaise à l’intérieur.
+            Point par point, dans le même ordre.
           </p>
 
           <dl className="mt-10 border-t border-foreground/10">
-            {SERVICES.map((s) => (
+            {ANSWERS.map((a) => (
               <div
-                key={s.title}
-                className="grid gap-x-8 gap-y-1.5 border-b border-foreground/10 py-6 sm:grid-cols-[13rem_1fr] sm:py-7"
+                key={a.title}
+                className="grid gap-x-8 gap-y-1.5 border-b border-foreground/10 py-6 sm:grid-cols-[15rem_1fr] sm:py-7"
               >
-                <dt className="text-[15px] font-semibold leading-snug">{s.title}</dt>
-                <dd className="text-[15px] leading-relaxed text-muted-foreground">{s.body}</dd>
+                <dt className="text-[15px] font-semibold leading-snug">{a.title}</dt>
+                <dd className="text-[15px] leading-relaxed text-muted-foreground">{a.body}</dd>
               </div>
             ))}
           </dl>
+
+          <p className="mt-7 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
+            {COVERED}
+          </p>
         </div>
       </section>
 
