@@ -35,12 +35,13 @@ export const CAL = {
  * par la section Tarifs et par la FAQ — un seul endroit à modifier.
  */
 export const PRICING = {
-  from: 150,
+  from: 100,
   currency: '€',
   period: '/ mois',
   footnote:
-    'Montant hors IVA. Le forfait exact dépend du volume d’activité de ta société ; ' +
-    'il t’est annoncé dans la proposition, à l’issue de l’appel.',
+    'Montant hors IVA. Le tarif d’entrée correspond aux situations les plus simples, ' +
+    'typiquement un travailleur indépendant. Pour une société, le forfait dépend du volume ' +
+    'd’activité ; il t’est annoncé dans la proposition, à l’issue de l’appel.',
   /** Ce qui est compris dans le forfait, quel qu'il soit. */
   included: [
     'Comptabilité courante et tenue des livres (SNC)',

@@ -2,8 +2,8 @@
 //  Landing DAFTIME PORTUGAL — cible : entrepreneurs français installés au Portugal.
 //
 //  Une seule page, une seule action : réserver 20 minutes.
-//  3 publicités Meta pointent ici ; `?a=1`, `?a=3` et `?a=4` changent UNIQUEMENT
-//  le titre du hero pour que chaque annonce retrouve sa promesse à l'arrivée.
+//  2 publicités Meta pointent ici ; `?a=1` et `?a=3` changent UNIQUEMENT le
+//  titre du hero pour que chaque annonce retrouve sa promesse à l'arrivée.
 //  Toute autre valeur, ou l'absence de paramètre, donne la variante 1.
 //
 //  Toutes les valeurs à renseigner sont dans `src/landing-portugal/config.ts`.
@@ -44,12 +44,12 @@ import {
 import { BOOKING_ANCHOR, CtaButton } from '@/landing-portugal/CtaButton';
 import { CalEmbed } from '@/landing-portugal/CalEmbed';
 
-/** `?a=1|3|4` → variante de hero. Paramètre absent ou invalide → variante 1. */
+/** `?a=1|3` → variante de hero. Paramètre absent ou invalide → variante 1. */
 function useHeroVariant() {
   return useMemo(() => {
     const raw = new URLSearchParams(window.location.search).get('a');
     const n = Number(raw);
-    const key: HeroVariantKey = n === 3 || n === 4 ? n : 1;
+    const key: HeroVariantKey = n === 3 ? n : 1;
     return HERO_VARIANTS[key];
   }, []);
 }

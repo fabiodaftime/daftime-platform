@@ -9,11 +9,15 @@ import { ACCOUNTANT, OFFICES, PARTNER, PRICING } from './config';
 /**
  * Titre du hero selon `?a=` — un angle par publicité Meta.
  *
- * Numérotation volontairement non contiguë : l'angle 2 (échéance facturation
- * électronique 2027) a été abandonné avec sa section. Les trois angles
- * restants gardent leur numéro d'origine plutôt que d'être renumérotés, pour
- * que « pub 3 » reste `?a=3` partout — brief, campagnes Meta et code.
- * `?a=2` retombe sur la variante 1, comme n'importe quelle valeur invalide.
+ * Numérotation volontairement non contiguë. Deux angles ont été abandonnés
+ * avec leur section : le 2 (facturation électronique 2027) et le 4 (fin du
+ * RNH, dont la campagne est arrêtée). Le 3 garde son numéro d'origine plutôt
+ * que d'être renuméroté, pour que « pub 3 » reste `?a=3` partout — brief,
+ * campagnes Meta et code. Toute autre valeur retombe sur la variante 1, donc
+ * une ancienne URL en circulation reste fonctionnelle.
+ *
+ * Le sujet RNH reste traité dans la FAQ : la question est légitime pour
+ * l'audience, c'est seulement l'angle publicitaire qui disparaît.
  */
 export const HERO_VARIANTS = {
   // Pub 1 — comprendre sa compta (valeur par défaut)
@@ -25,11 +29,6 @@ export const HERO_VARIANTS = {
   3: {
     eyebrow: 'Tarifs',
     title: `Ta comptabilité portugaise à partir de ${PRICING.from} ${PRICING.currency} par mois, déclarations annuelles comprises.`,
-  },
-  // Pub 4 — fin du RNH
-  4: {
-    eyebrow: 'Fin du régime RNH',
-    title: 'Ton RNH se termine. Sais-tu ce que tu paieras l’année suivante ?',
   },
 } as const;
 
