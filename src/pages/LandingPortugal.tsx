@@ -46,8 +46,8 @@ import { trackFaqOpen, trackViewContent } from '@/lib/tracking';
 
 import { FLAGS, HOST, LEGAL, LINKS, PRICING } from '@/landing-portugal/config';
 import {
-  ANSWERS, COVERED, CTA_REASSURANCE, DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS,
-  PROBLEMS, PROOF, type HeroVariantKey,
+  ARGUMENTS, COVERED, CTA_REASSURANCE, DUO, FAQ, HERO_REASSURANCE, HERO_SUBTITLE, HERO_VARIANTS,
+  PROOF, type HeroVariantKey,
 } from '@/landing-portugal/content';
 import { BOOKING_ANCHOR, CtaButton } from '@/landing-portugal/CtaButton';
 import { CalEmbed } from '@/landing-portugal/CalEmbed';
@@ -127,8 +127,8 @@ export default function LandingPortugal() {
           Credentials avant tout argumentaire. Rien d'inventé : la cédula est
           vérifiable auprès de l'OCC, le reste décrit le service tel qu'il est. */}
       <section className="bg-primary text-primary-foreground">
-        <div className="mx-auto max-w-5xl px-5 py-8">
-          <ul className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto max-w-5xl px-5 py-7">
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
             {PROOF.map((p) => (
               <li key={p.label}>
                 <p className="text-[13px] font-semibold text-accent">{p.label}</p>
@@ -141,58 +141,35 @@ export default function LandingPortugal() {
         </div>
       </section>
 
-      {/* ────────────────────────────────────────────────────────── Problème ──
-          Citations réelles, à filets. Aucun conteneur : la hairline sépare, la
-          typographie hiérarchise. Chaque citation trouve sa réponse dans la
-          section suivante, dans le même ordre. */}
-      <section className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
-        <SectionTitle>Ce qu’on entend, à peu près chaque semaine</SectionTitle>
-        <ul className="mt-10 border-t">
-          {PROBLEMS.map((p) => (
-            <li key={p.title} className="border-b py-7 sm:py-8">
-              <p className="max-w-2xl text-lg font-medium leading-snug tracking-tight sm:text-xl">
-                {p.title}
+      {/* ────────────────────────────────────── Friction → réponse (fusionné) ──
+          Une seule section : la citation à gauche, la réponse à droite sur
+          desktop, empilées sur mobile. Séparées, ces deux sections pesaient
+          29 % de la hauteur de la page et obligeaient le lecteur à retenir
+          l'ordre pour faire le lien. */}
+      <section className="mx-auto max-w-4xl px-5 py-12 sm:py-20">
+        <SectionTitle>Ce qu’on entend, et ce qu’on en fait</SectionTitle>
+        <ul className="mt-8 border-t sm:mt-10">
+          {ARGUMENTS.map((a) => (
+            <li
+              key={a.quote}
+              className="grid gap-x-10 gap-y-2.5 border-b py-6 sm:grid-cols-2 sm:py-7"
+            >
+              <p className="text-[17px] font-medium leading-snug tracking-tight sm:text-lg">
+                {a.quote}
               </p>
-              <p className="mt-2.5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-                {p.body}
+              <p className="text-[15px] leading-relaxed text-muted-foreground">
+                <span className="font-semibold text-foreground">{a.answer}.</span> {a.detail}
               </p>
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────── Ce qu'on fait ──
-          Liste de définition à deux colonnes : intitulé à gauche, texte à
-          droite. C'est une liste, pas six cartes. */}
-      <section className="border-y bg-secondary">
-        <div className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
-          <SectionTitle>Ce que ça change</SectionTitle>
-          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-            Point par point, dans le même ordre.
-          </p>
-
-          <dl className="mt-10 border-t border-foreground/10">
-            {ANSWERS.map((a) => (
-              <div
-                key={a.title}
-                className="grid gap-x-8 gap-y-1.5 border-b border-foreground/10 py-6 sm:grid-cols-[15rem_1fr] sm:py-7"
-              >
-                <dt className="text-[15px] font-semibold leading-snug">{a.title}</dt>
-                <dd className="text-[15px] leading-relaxed text-muted-foreground">{a.body}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <p className="mt-7 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
-            {COVERED}
-          </p>
-        </div>
+        <p className="mt-6 text-[13px] leading-relaxed text-muted-foreground">{COVERED}</p>
       </section>
 
       {/* ────────────────────────────────────────────────────────────── Équipe ──
           Deux colonnes de texte, pas deux cartes. Le filet jaune sous chaque
           nom remplace le cadre. */}
-      <section className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
+      <section className="mx-auto max-w-4xl px-5 py-12 sm:py-20">
         <SectionTitle>{DUO.title}</SectionTitle>
         <div className="mt-10 grid gap-10 sm:mt-12 sm:grid-cols-2 sm:gap-12">
           {DUO.members.map((m) => (
@@ -209,7 +186,7 @@ export default function LandingPortugal() {
           LE seul objet encadré de la page, et il est en navy : c'est le point
           de bascule, il doit être le seul à arrêter l'œil. */}
       <section className="border-y bg-secondary">
-        <div className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
+        <div className="mx-auto max-w-4xl px-5 py-12 sm:py-20">
           <SectionTitle>Tarifs</SectionTitle>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             Un forfait mensuel, tout compris. Pas de ligne surprise au moment des déclarations
@@ -255,7 +232,7 @@ export default function LandingPortugal() {
           Filets simples, pas huit cartes bordées. L'ouverture est instrumentée
           (Clarity + Meta) comme sur /ecommerce-2 : c'est la FAQ qui concentre
           le temps passé, donc l'information utile. */}
-      <section className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
+      <section className="mx-auto max-w-4xl px-5 py-12 sm:py-20">
         <SectionTitle>Questions fréquentes</SectionTitle>
         <div className="mt-10 border-t">
           {FAQ.map((f) => (
@@ -292,7 +269,7 @@ export default function LandingPortugal() {
 
       {/* ────────────────────────────────────────────────── CTA de fin de page ── */}
       <section className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-4xl flex-col items-start gap-5 px-5 py-16 sm:py-20">
+        <div className="mx-auto flex max-w-4xl flex-col items-start gap-5 px-5 py-12 sm:py-16">
           <ShieldCheck className="h-8 w-8 text-accent" aria-hidden />
           <h2 className="max-w-xl text-[26px] font-semibold leading-[1.15] tracking-tight sm:text-[34px]">
             Vingt minutes pour savoir où tu en es
@@ -309,7 +286,7 @@ export default function LandingPortugal() {
 
       {/* ─────────────────────────────────────────────────────── Réservation ── */}
       <section id={BOOKING_ANCHOR} className="border-b bg-secondary scroll-mt-4">
-        <div className="mx-auto max-w-4xl px-5 py-16 sm:py-20">
+        <div className="mx-auto max-w-4xl px-5 py-12 sm:py-16">
           <SectionTitle>Choisis ton créneau</SectionTitle>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             20 minutes, en visio, en français. Nom et e-mail suffisent.
@@ -332,15 +309,15 @@ export default function LandingPortugal() {
           pb-24 sur mobile : la barre CTA collante ne doit pas masquer les
           mentions légales. */}
       <footer className="bg-primary text-primary-foreground/75">
-        <div className="mx-auto max-w-4xl px-5 py-12 pb-24 sm:pb-12">
-          <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1 text-[13px] leading-relaxed">
+        <div className="mx-auto max-w-4xl px-5 py-10 pb-24 sm:pb-10">
+          <div className="flex flex-col gap-7 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-0.5 text-[13px] leading-relaxed">
               <img
                 src={daftimeLogoWhite}
                 alt="Daftime"
                 width={112}
                 height={28}
-                className="mb-5 h-7 w-auto"
+                className="mb-4 h-7 w-auto"
               />
               <p className="flex items-center gap-1.5 font-semibold text-primary-foreground">
                 <Stamp className="h-3.5 w-3.5 text-accent" aria-hidden />
@@ -358,10 +335,12 @@ export default function LandingPortugal() {
                   {LEGAL.email}
                 </a>
               </p>
-              <p className="pt-2 text-primary-foreground/60">Hébergement : {HOST}</p>
+              <p className="text-[11px] leading-relaxed text-primary-foreground/50">
+                Hébergement : {HOST}
+              </p>
             </div>
 
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 sm:flex-col sm:items-start">
               <Button asChild variant="secondary" className="h-11 touch-manipulation px-5">
                 <a href={LINKS.mainSite} target="_blank" rel="noopener noreferrer">
                   Découvrir Daftime
@@ -379,7 +358,7 @@ export default function LandingPortugal() {
             </div>
           </div>
 
-          <p className="mt-10 border-t border-white/10 pt-6 text-xs leading-relaxed text-primary-foreground/60">
+          <p className="mt-8 border-t border-white/10 pt-5 text-[11px] leading-relaxed text-primary-foreground/50">
             © {new Date().getFullYear()} {LEGAL.name}. Tous droits réservés. Les informations
             fiscales et réglementaires présentées sur cette page sont données à titre indicatif et
             ne constituent pas un conseil personnalisé.

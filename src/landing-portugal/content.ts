@@ -73,96 +73,58 @@ export const CTA_LABEL = 'Réserver 20 minutes';
  */
 export const CTA_REASSURANCE = 'Sans engagement. Tu repars avec une réponse claire, même si tu ne travailles pas avec nous.';
 
-// ──────────────────────────────────────────────────────────────── Problème ──
+// ───────────────────────────────────────────── Friction → réponse (fusionné) ──
 /**
- * Les cinq points de friction réellement entendus au téléphone (source : appels
- * de prospection). Pas des douleurs déduites : des phrases de clients.
+ * Les cinq points de friction réellement entendus au téléphone, chacun suivi
+ * IMMÉDIATEMENT de sa réponse.
  *
- * REGISTRE : première personne, comme sur les LP e-commerce. Le lecteur doit se
- * reconnaître en une seconde, pas lire l'analyse de sa situation.
+ * Ils vivaient dans deux sections séparées : le lecteur lisait cinq plaintes,
+ * puis devait retenir l'ordre pour retrouver cinq réponses un écran plus bas.
+ * 29 % de la hauteur de la page pour un argument qui ne se refermait jamais.
+ * Ici la promesse répond à la douleur sur la même ligne.
  *
- * DÉONTOLOGIE OCC : chaque point décrit le vécu de l'entrepreneur, jamais la
- * performance d'un autre cabinet. « Je n'ai pas de réponse depuis dix jours »
+ * REGISTRE : `quote` à la première personne, comme les PAINS des LP
+ * e-commerce. Le lecteur doit se reconnaître, pas lire l'analyse de son cas.
+ *
+ * DÉONTOLOGIE OCC : chaque citation décrit le vécu de l'entrepreneur, jamais
+ * la performance d'un autre cabinet. « J'attends une réponse depuis dix jours »
  * est recevable ; « les cabinets portugais ne répondent pas » ne le serait pas.
  * Ne jamais généraliser en réécrivant ces lignes.
- *
- * Chaque point a sa réponse dans ANSWERS, dans le même ordre.
  */
-export const PROBLEMS = [
+export const ARGUMENTS = [
   {
-    title: '« J’ai monté ma société vite. Je ne sais pas si c’est la bonne forme. »',
-    body:
-      'Unipessoal, Lda, statut d’indépendant : le choix s’est fait au moment de s’installer, ' +
-      'souvent sans arbitrage. Il conditionne pourtant ce que tu paies chaque année.',
+    quote: '« J’ai monté ma société vite. Je ne sais pas si c’est la bonne forme. »',
+    answer: 'On revoit la structure',
+    detail:
+      'Unipessoal, Lda, indépendant : on compare ce que tu paies aujourd’hui et ce que ça ' +
+      'donnerait autrement. Si le changement ne vaut pas le coup, on te le dit aussi.',
   },
   {
-    title: '« Mon comptable saisit mes factures. Pour le reste, je me débrouille. »',
-    body:
-      'La tenue est faite, les déclarations partent. Mais personne ne te dit comment te ' +
-      'rémunérer, quand un seuil se rapproche, ni ce qu’une décision va coûter.',
+    quote: '« Mon comptable saisit mes factures. Pour le reste, je me débrouille. »',
+    answer: 'Du conseil, pas seulement de la saisie',
+    detail:
+      'Rémunération, arbitrage entre salaire et dividendes, seuils d’IVA : les décisions qui ' +
+      'coûtent se prennent avant la clôture, pas après.',
   },
   {
-    title: '« On ne se comprend pas, alors j’ai arrêté de poser des questions. »',
-    body:
-      'Entre la langue, le vocabulaire comptable portugais et des documents au format SNC, ' +
-      'l’échange s’appauvrit jusqu’à se limiter à l’envoi des pièces.',
+    quote: '« On ne se comprend pas, alors j’ai arrêté de poser des questions. »',
+    answer: 'Tout se passe en français',
+    detail:
+      'Tes documents te sont expliqués, pas seulement transmis. Jamais besoin de déchiffrer un ' +
+      'balancete ni d’écrire en portugais.',
   },
   {
-    title: '« Je ne sais pas exactement ce que je paie, ni pourquoi. »',
-    body:
-      'Des honoraires mensuels d’un côté, des prestations qui s’ajoutent au moment des ' +
-      'déclarations annuelles de l’autre. Le total de l’année ne se lit qu’à la fin.',
+    quote: '« Je ne sais pas exactement ce que je paie, ni pourquoi. »',
+    answer: 'Un forfait annoncé d’avance',
+    detail:
+      'Un montant mensuel qui couvre l’année entière, déclarations annuelles comprises. Rien ne ' +
+      's’ajoute au moment du Modelo 22.',
   },
   {
-    title: '« J’attends une réponse depuis dix jours. »',
-    body:
-      'Une question simple qui traîne, c’est une décision repoussée. Parfois une échéance ' +
-      'qui passe.',
-  },
-] as const;
-
-// ─────────────────────────────────────────────────────────── Ce que ça change ──
-/**
- * Réponses aux cinq points ci-dessus, DANS LE MÊME ORDRE. Si tu modifies un
- * PROBLEMS, modifie l'ANSWERS correspondant : c'est ce parallélisme qui fait
- * l'argumentaire de la page.
- *
- * Orienté conséquence, pas catalogue d'obligations : la liste IVA / IRC / IES
- * ne différencie de rien, tous les cabinets portugais la font. Elle figure déjà
- * dans le bloc tarifaire, et une ligne de rappel suffit ici (COVERED).
- */
-export const ANSWERS = [
-  {
-    title: 'La structure, revue au départ ou corrigée en route',
-    body:
-      'On regarde ce que tu paies aujourd’hui avec ta forme actuelle, et ce que ça donnerait ' +
-      'autrement. Si le changement vaut le coup, on te le dit — et s’il ne le vaut pas, aussi.',
-  },
-  {
-    title: 'Du conseil, pas seulement de la saisie',
-    body:
-      'Rémunération, arbitrage entre salaire et dividendes, seuils d’IVA, investissements : ' +
-      'les décisions qui coûtent ou qui rapportent se prennent avant la clôture, pas après.',
-  },
-  {
-    title: 'Tout se passe en français',
-    body:
-      'Tes documents te sont expliqués, pas seulement transmis. Tu n’as jamais à déchiffrer ' +
-      'un balancete ni à écrire en portugais.',
-  },
-  {
-    title: 'Un forfait, annoncé d’avance',
-    body:
-      'Un montant mensuel qui couvre l’année entière, déclarations annuelles comprises. ' +
-      'Aucune ligne ne s’ajoute au moment du Modelo 22.',
-  },
-  {
-    // ⚠️ ENGAGEMENT PUBLIC — à confirmer avant diffusion, et à tenir. Si le
-    //    délai n'est pas soutenable, ramener la promesse à ce qui l'est.
-    title: 'Une réponse sous 24 heures ouvrées',
-    body:
-      'Une question simple ne doit pas attendre une semaine. Tu écris en français, à une ' +
-      'personne qui connaît ton dossier.',
+    // ⚠️ ENGAGEMENT PUBLIC — à confirmer avant diffusion, et à tenir.
+    quote: '« J’attends une réponse depuis dix jours. »',
+    answer: 'Une réponse sous 24 heures ouvrées',
+    detail: 'En français, par une personne qui connaît déjà ton dossier.',
   },
 ] as const;
 
@@ -185,21 +147,18 @@ export const DUO = {
     {
       label: `${ACCOUNTANT.name} et ${PARTNER.name}`,
       body:
-        `Patrícia est ${ACCOUNTANT.role.toLowerCase()} de Daftime Portugal, ${ACCOUNTANT.title} ` +
-        `inscrite à l’Ordem dos Contabilistas Certificados (${ACCOUNTANT.licence.toLowerCase()}) : ` +
-        'c’est elle qui engage sa responsabilité sur tes comptes et signe tes déclarations. ' +
-        `Fabio est ${PARTNER.role} : c’est lui que tu as au téléphone, il cadre ton besoin, te ` +
-        'dit ce qui est faisable et à quel prix, et reste ton point d’entrée ensuite. Leur équipe ' +
-        `tient ta comptabilité au quotidien depuis nos deux bureaux : ${OFFICES.where}.`,
+        `Patrícia est ${ACCOUNTANT.role.toLowerCase()}, ${ACCOUNTANT.title} : c’est elle qui ` +
+        'engage sa responsabilité sur tes comptes et signe tes déclarations. Fabio est ' +
+        `${PARTNER.role}, c’est lui que tu as au téléphone. Leur équipe tient ta comptabilité ` +
+        `depuis ${OFFICES.where}.`,
     },
     {
       label: 'Le groupe Daftime',
       body:
-        'Derrière les équipes portugaises, le groupe accompagne des dirigeants dont l’activité ne ' +
-        'tient pas dans un seul pays. Français, portugais, anglais : tu poses ta question dans ta ' +
-        'langue. Et parce que nous connaissons le référentiel portugais comme la logique fiscale ' +
-        'française, nous voyons tout de suite quand une décision prise d’un côté a des ' +
-        'conséquences de l’autre.',
+        'Le groupe accompagne des dirigeants dont l’activité ne tient pas dans un seul pays. ' +
+        'Français, portugais, anglais. Et parce que nous connaissons le référentiel portugais ' +
+        'comme la logique fiscale française, nous voyons quand une décision prise d’un côté a ' +
+        'des conséquences de l’autre.',
     },
   ],
 } as const;
