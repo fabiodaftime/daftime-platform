@@ -51,19 +51,13 @@ const FAQ = [
   { q: 'C’est pour moi ?', a: 'Si tu fais au moins 1 000 $/jour de CA et que tu fais de la pub, oui.' },
 ];
 
-// Aperçu du livrable (preuve de valeur). Même shop que la carte "verdict" : on montre le détail derrière le −2 700 €.
-const AUDIT_ROWS = [
-  { l: 'Chiffre d’affaires', v: '136 840 €', head: true },
-  { l: 'Produits & appro', v: '−58 300 €' },
-  { l: 'Pub (Meta + Google)', v: '−41 200 €' },
-  { l: 'Paiement & livraison', v: '−27 900 €' },
-  { l: 'Frais fixes & outils', v: '−12 140 €' },
-];
+// Aperçu du livrable (preuve de valeur). On montre l'ANALYSE d'un expert (verdict + recos chiffrées), pas de la data brute.
 const DOT: Record<string, string> = { red: 'bg-red-500', amber: 'bg-amber-500', emerald: 'bg-emerald-500' };
-const AUDIT_POINTS = [
-  { c: 'red', t: 'Tes pubs Meta te coûtent plus qu’elles ne rapportent depuis 3 semaines. Priorité n°1.' },
-  { c: 'amber', t: 'Ta trésorerie passe sous 5 000 € autour du 18 du mois — à anticiper.' },
-  { c: 'emerald', t: 'Ta gamme lin tient : +8 % de marge. C’est là qu’il faut pousser.' },
+const VERDICT = 'Ton shop perd 2 700 € par mois en scalant. La cause est identifiée — et corrigeable.';
+const AUDIT_ACTIONS = [
+  { c: 'red', t: 'Coupe les 2 campagnes Meta qui plombent ta marge.', g: '≈ +1 800 €/mois récupérés' },
+  { c: 'amber', t: 'Décale ta commande fournisseur après le 25.', g: 'évite le trou de tréso du 18' },
+  { c: 'emerald', t: 'Pousse ta gamme lin, ta plus rentable (+8 % de marge).', g: 'ton meilleur levier de croissance' },
 ];
 
 export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}) {
@@ -174,50 +168,37 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
           <div className="text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">Concret</span>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight">Voilà ce que tu reçois.</h2>
-            <p className="mt-3 text-muted-foreground">Pas un tableau de bord de plus. Un audit clair, lu et expliqué par un expert.</p>
+            <p className="mt-3 text-muted-foreground">Pas un export de data. L’analyse d’un expert&nbsp;: ce qui cloche, et quoi faire — chiffré.</p>
           </div>
 
           <div className="mt-8 rounded-3xl border bg-card shadow-xl overflow-hidden">
-            {/* barre de titre façon rapport */}
-            <div className="flex items-center justify-between gap-3 bg-primary text-primary-foreground px-5 py-3">
-              <div>
-                <div className="text-[11px] uppercase tracking-widest text-primary-foreground/60">Audit financier · exemple</div>
-                <div className="text-sm font-bold">Shop textile · 380 commandes / mois</div>
-              </div>
-              <span className="text-[11px] font-semibold rounded-full bg-white/10 px-2.5 py-1">Juin</span>
+            {/* le verdict — la phrase qu'un expert te dit */}
+            <div className="bg-primary text-primary-foreground px-5 py-5">
+              <div className="text-[11px] uppercase tracking-widest text-primary-foreground/60">Le verdict · exemple</div>
+              <p className="mt-2 text-[17px] font-bold leading-snug">« {VERDICT} »</p>
             </div>
 
-            {/* où part l'argent */}
+            {/* les recommandations chiffrées — la force de proposition */}
             <div className="px-5 py-5">
-              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Où part ton argent</div>
-              <dl className="mt-3 divide-y divide-border">
-                {AUDIT_ROWS.map((r) => (
-                  <div key={r.l} className="flex items-center justify-between py-2.5 text-[15px]">
-                    <dt className={r.head ? 'font-semibold' : 'text-muted-foreground'}>{r.l}</dt>
-                    <dd className="tabular-nums font-semibold">{r.v}</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-red-500/10 px-4 py-3">
-                <span className="font-bold">Ce qu’il te reste</span>
-                <span className="text-xl font-extrabold text-red-600 tabular-nums whitespace-nowrap">−2 700 €</span>
-              </div>
-            </div>
-
-            {/* les 3 points du mois */}
-            <div className="border-t bg-secondary/40 px-5 py-5">
-              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tes 3 points du mois</div>
-              <ul className="mt-3 space-y-3">
-                {AUDIT_POINTS.map((p) => (
-                  <li key={p.t} className="flex gap-3 text-[15px] leading-snug">
-                    <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${DOT[p.c]}`} />
-                    <span>{p.t}</span>
+              <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Ce qu’on te recommande, ce mois-ci</div>
+              <ul className="mt-4 space-y-4">
+                {AUDIT_ACTIONS.map((a) => (
+                  <li key={a.t} className="flex gap-3">
+                    <span className={`mt-2 w-2 h-2 rounded-full shrink-0 ${DOT[a.c]}`} />
+                    <div>
+                      <div className="text-[15px] font-semibold leading-snug">{a.t}</div>
+                      <div className="mt-0.5 text-sm font-bold text-primary">{a.g}</div>
+                    </div>
                   </li>
                 ))}
               </ul>
             </div>
+
+            <div className="border-t bg-secondary/40 px-5 py-3 text-center text-[13px] font-medium text-muted-foreground">
+              Lu et expliqué en visio par un expert e-commerce. Jamais un algo.
+            </div>
           </div>
-          <p className="mt-3 text-center text-xs text-muted-foreground">Exemple anonymisé. Ton audit est personnalisé à partir de tes vrais chiffres.</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">Exemple anonymisé. Ton analyse est faite à partir de tes vrais chiffres.</p>
         </div>
       </section>
 
@@ -273,7 +254,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
       {/* FAQ */}
       <section className="px-5 py-14">
         <div className="max-w-lg mx-auto">
-          <h2 className="text-3xl font-extrabold tracking-tight text-center mb-8">Les questions qu’on te pose tout le temps.</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-center mb-8">Les questions qui reviennent.</h2>
           <div className="space-y-3">
             {FAQ.map((f) => (
               <details key={f.q} onToggle={(e) => { if (e.currentTarget.open) trackFaqOpen(f.q, 'ecommerce2'); }} className="group rounded-2xl border bg-card p-5">
