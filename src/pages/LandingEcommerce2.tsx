@@ -221,6 +221,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
           </div>
           {/* CTA au pic d'intention : juste après la levée d'objections. */}
           <Button onClick={() => openLead('faq')} className="mt-8 w-full h-14 text-lg font-bold">{CTA}</Button>
+          <p className="mt-3 text-center text-sm text-muted-foreground">Gratuit · 20 min · zéro pitch · tu repars avec ton audit.</p>
         </div>
       </section>
 
@@ -251,6 +252,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
       {/* STICKY CTA MOBILE */}
       <div className={`sm:hidden fixed inset-x-0 bottom-0 z-40 p-3 bg-primary/95 backdrop-blur border-t border-white/10 transition-transform duration-300 ${showSticky ? 'translate-y-0' : 'translate-y-full'}`}>
         <Button onClick={() => openLead('sticky')} variant="secondary" className="w-full h-12 text-base font-bold">{CTA}</Button>
+        <p className="text-center text-[11px] text-primary-foreground/70 mt-1.5">Gratuit · 20 min · zéro pitch de vente</p>
       </div>
 
       <BookingModal open={booking} onClose={() => setBooking(false)} advisor={advisor} />
