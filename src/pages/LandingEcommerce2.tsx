@@ -53,11 +53,11 @@ const FAQ = [
 
 // Aperçu du livrable (preuve de valeur). On montre l'ANALYSE d'un expert (verdict + recos chiffrées), pas de la data brute.
 const DOT: Record<string, string> = { red: 'bg-red-500', amber: 'bg-amber-500', emerald: 'bg-emerald-500' };
-const VERDICT = 'Ton shop perd 2 700 € par mois en scalant. La cause est identifiée — et corrigeable.';
+const VERDICT = 'Résultat : −2 700 €/mois. Et ce n’est pas ton CA le problème — chaque vente supplémentaire te coûte plus qu’elle ne te rapporte.';
 const AUDIT_ACTIONS = [
-  { c: 'red', t: 'Coupe les 2 campagnes Meta qui plombent ta marge.', g: '≈ +1 800 €/mois récupérés' },
-  { c: 'amber', t: 'Décale ta commande fournisseur après le 25.', g: 'évite le trou de tréso du 18' },
-  { c: 'emerald', t: 'Pousse ta gamme lin, ta plus rentable (+8 % de marge).', g: 'ton meilleur levier de croissance' },
+  { c: 'red', t: 'Ton point mort pub, c’est un ROAS de 2,4. Deux campagnes Meta tournent à 1,8 depuis 3 semaines : elles achètent du CA à perte.', g: 'Coupe-les, bascule le budget sur ton retargeting (ROAS 4,1) → ≈ +1 800 €/mois' },
+  { c: 'amber', t: 'Ta gamme lin dégage 3× la marge du coton, mais capte à peine 20 % de ton budget pub. Tu pousses tes produits les moins rentables.', g: 'Rééquilibre le mix → +5 pts de marge, à CA constant' },
+  { c: 'emerald', t: 'Tu encaisses à J+3 mais paies tes fournisseurs comptant : chaque grosse commande te met dans le rouge avant de rapporter.', g: 'Négocie 30 j fournisseur → 3 semaines de trésorerie regagnées' },
 ];
 
 export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}) {
@@ -82,7 +82,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 h-14 bg-white/95 backdrop-blur border-b">
+      <header className="h-14 bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 h-full flex items-center justify-between">
           <img src={daftimeLogo} alt="Daftime Advisory" className="h-8 w-auto" />
           <button onClick={() => navigate('/auth')} className="text-[13px] text-muted-foreground/70 hover:text-foreground transition-colors">
@@ -95,7 +95,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
       <section className="bg-primary text-primary-foreground">
         <div className="max-w-lg mx-auto px-5 pt-10 pb-12 flex flex-col items-center text-center min-h-[calc(100dvh-3.5rem)] justify-center">
           <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">Marques e-commerce</span>
-          <h1 className="mt-4 text-[2.5rem] leading-[1.05] font-extrabold tracking-tight">
+          <h1 className="mt-4 text-[2rem] sm:text-[2.5rem] leading-[1.1] font-extrabold tracking-tight">
             Ton shop fait du CA.<br />
             Mais <span className="text-accent">toi</span>, tu gagnes combien&nbsp;?
           </h1>
@@ -186,8 +186,8 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
                   <li key={a.t} className="flex gap-3">
                     <span className={`mt-2 w-2 h-2 rounded-full shrink-0 ${DOT[a.c]}`} />
                     <div>
-                      <div className="text-[15px] font-semibold leading-snug">{a.t}</div>
-                      <div className="mt-0.5 text-sm font-bold text-primary">{a.g}</div>
+                      <div className="text-[15px] font-medium leading-snug">{a.t}</div>
+                      <div className="mt-1 text-sm font-semibold text-primary leading-snug">{a.g}</div>
                     </div>
                   </li>
                 ))}
