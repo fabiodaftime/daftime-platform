@@ -118,8 +118,8 @@ Deno.serve(async (req) => {
     const currency = (client as { currency?: string }).currency ?? "EUR";
     const tpl = getCatalog(at?.config);
 
-    const ctxBlock = { type: "text", text: `CONTEXTE CLIENT:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\nFICHIERS DU MOIS (${docs.length}) :` };
-    const fileBlocks = docs.length ? filesToContentBlocks(docs) : [{ type: "text", text: "(aucun fichier déposé pour ce mois)" }];
+    // Fichiers écartés par les garde-fous mémoire de readClientFiles (trop lourds / budget du lot).
+    const skippedDocs = docs.filter((d) => d.kind === "skipped") as { name: string; reason: string }[];
 
     let dataToSave: unknown;
     let missing: unknown[];
@@ -262,6 +262,8 @@ Deno.serve(async (req) => {
 
       const detected = [...new Set([...keptParsed.map((e) => e.currency), ...llmExtracts.map((e) => (e.currency ?? "").toUpperCase())].filter(Boolean))];
       const flags: unknown[] = [...(data.flags ?? [])];
+      if (skippedDocs.length) flags.push({ id: "_skipped", severity: "warn",
+        label: `Fichiers ignorés (${skippedDocs.length}) — non lus ce mois : ${skippedDocs.map((d) => `${d.name} (${d.reason})`).join(" · ")}. Fournis des exports agrégés plus légers ou standardise en plusieurs fois.` });
       flags.push({ id: "_fx", severity: "info", label: `Devises converties vers ${currency} (taux ${fxSource}).` });
       // Classification des documents par rôle EFFECTIF (auto + override manuel) — pas de devinette.
       const byRole = (role: string) => keptParsed.filter((e) => effRoleOf(e) === role).map((e) => e.parser).join(", ") || "—";
@@ -329,6 +331,8 @@ Deno.serve(async (req) => {
       // GÉNÉRIQUE (activités sans template) : l'IA produit directement la structure.
       const configGuide = at?.config && Object.keys(at.config).length ? JSON.stringify(at.config) : "";
       const guide = [ACTIVITY_GUIDE[activity] ?? "", configGuide].filter(Boolean).join(" ");
+      const ctxBlock = { type: "text", text: `CONTEXTE CLIENT:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\nFICHIERS DU MOIS (${docs.length}) :` };
+      const fileBlocks = docs.length ? filesToContentBlocks(docs) : [{ type: "text", text: "(aucun fichier déposé pour ce mois)" }];
       const content: unknown[] = [ctxBlock, ...fileBlocks, { type: "text", text: "Produis maintenant le JSON standardisé selon les règles." }];
       const res = await callAnthropic({
         model: MODELS.fast,

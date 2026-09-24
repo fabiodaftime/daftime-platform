@@ -18,6 +18,13 @@ const PARSE_CAP = 8_000_000;             // garde-fou mémoire (~8 Mo) — au-de
 const LLM_TEXT_CAP = 40_000;             // caractères max par fichier DANS le payload LLM uniquement
 const PDF_MAX = 15 * 1024 * 1024;        // 15 Mo
 const IMG_MAX = 5 * 1024 * 1024;         // 5 Mo
+// Garde-fous MÉMOIRE (l'edge runtime plafonne à ~256 Mo, tout le contenu est retenu simultanément).
+// Un export texte > 2 Mo est presque toujours un détail ligne-à-ligne dont les TOTAUX existent dans un
+// rapport agrégé/mensuel plus léger : on l'ignore-avec-message plutôt que de faire planter tout le lot.
+const TEXT_MAX = 2 * 1024 * 1024;        // 2 Mo par fichier texte/CSV
+const XLSX_MAX = 2 * 1024 * 1024;        // 2 Mo par Excel (la décompression est très gourmande)
+const TOTAL_BUDGET = 16 * 1024 * 1024;   // budget de contenu RETENU pour l'ensemble du lot
+const mb = (n: number) => (n / 1e6).toFixed(1);
 const IMG_TYPES: Record<string, string> = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif",
 };
@@ -27,6 +34,7 @@ export async function readClientFiles(
   files: Array<{ storage_path?: string | null; original_name?: string | null; id?: string }>,
 ): Promise<FileItem[]> {
   const out: FileItem[] = [];
+  let kept = 0; // octets de contenu déjà RETENU (budget mémoire du lot)
   for (const f of files ?? []) {
     if (!f.storage_path) continue;
     const { data: blob } = await admin.storage.from("client-files").download(f.storage_path);
@@ -34,30 +42,39 @@ export async function readClientFiles(
     const name = String(f.original_name ?? f.id ?? "fichier");
     const lower = name.toLowerCase();
     const ext = lower.slice(lower.lastIndexOf("."));
+    const size = blob.size ?? 0;
+    const overBudget = kept >= TOTAL_BUDGET;
     try {
       if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
+        if (size > XLSX_MAX) { out.push({ kind: "skipped", name, reason: `Excel trop volumineux (${mb(size)} Mo > 2 Mo) — ré-exporte-le en CSV` }); continue; }
+        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
         const buf = new Uint8Array(await blob.arrayBuffer());
         const wb = XLSX.read(buf, { type: "array" });
         const content = wb.SheetNames
           .map((sn) => `# Feuille: ${sn}\n${XLSX.utils.sheet_to_csv(wb.Sheets[sn])}`)
-          .join("\n\n");
-        out.push({ kind: "text", name, content: content.slice(0, PARSE_CAP) });
+          .join("\n\n").slice(0, PARSE_CAP);
+        out.push({ kind: "text", name, content });
+        kept += content.length;
       } else if (/\.(csv|tsv|txt|md|json)$/.test(lower)) {
-        out.push({ kind: "text", name, content: (await blob.text()).slice(0, PARSE_CAP) });
+        if (size > TEXT_MAX) { out.push({ kind: "skipped", name, reason: `fichier trop volumineux (${mb(size)} Mo > 2 Mo) — fournis un export agrégé/mensuel plus léger (les totaux y sont)` }); continue; }
+        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
+        const content = (await blob.text()).slice(0, PARSE_CAP);
+        out.push({ kind: "text", name, content });
+        kept += content.length;
       } else if (lower.endsWith(".pdf")) {
+        if (size > PDF_MAX) { out.push({ kind: "skipped", name, reason: `PDF trop volumineux (${mb(size)} Mo > 15 Mo)` }); continue; }
+        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
         const buf = new Uint8Array(await blob.arrayBuffer());
-        if (buf.byteLength > PDF_MAX) {
-          out.push({ kind: "skipped", name, reason: `PDF trop volumineux (${(buf.byteLength / 1e6).toFixed(1)} Mo > 15 Mo)` });
-        } else {
-          out.push({ kind: "pdf", name, base64: encodeBase64(buf) });
-        }
+        const b64 = encodeBase64(buf);
+        out.push({ kind: "pdf", name, base64: b64 });
+        kept += b64.length;
       } else if (IMG_TYPES[ext]) {
+        if (size > IMG_MAX) { out.push({ kind: "skipped", name, reason: `image trop volumineuse (${mb(size)} Mo > 5 Mo)` }); continue; }
+        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
         const buf = new Uint8Array(await blob.arrayBuffer());
-        if (buf.byteLength > IMG_MAX) {
-          out.push({ kind: "skipped", name, reason: `image trop volumineuse (${(buf.byteLength / 1e6).toFixed(1)} Mo > 5 Mo)` });
-        } else {
-          out.push({ kind: "image", name, base64: encodeBase64(buf), mediaType: IMG_TYPES[ext] });
-        }
+        const b64 = encodeBase64(buf);
+        out.push({ kind: "image", name, base64: b64, mediaType: IMG_TYPES[ext] });
+        kept += b64.length;
       } else {
         out.push({ kind: "skipped", name, reason: "format non pris en charge (PDF, Excel, CSV, image ou texte)" });
       }
