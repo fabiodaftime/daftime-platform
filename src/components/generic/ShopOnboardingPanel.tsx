@@ -33,6 +33,7 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
   const [csv, setCsv] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiErr, setAiErr] = useState<string | null>(null);
+  const [aiMsg, setAiMsg] = useState<string | null>(null);
 
   const setF = <K extends keyof Costs>(k: K, patch: Partial<NonNullable<Costs[K]>>) =>
     setC((prev) => ({ ...prev, [k]: { ...(prev[k] as object ?? {}), ...patch } }));
@@ -71,13 +72,16 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
     r.readAsDataURL(file);
   });
   const runAi = async (payload: Record<string, unknown>) => {
-    setAiLoading(true); setAiErr(null);
+    setAiLoading(true); setAiErr(null); setAiMsg(null);
     try {
       const { data, error } = await supabase.functions.invoke('map-sku-costs', { body: payload });
       if (error) throw error;
       const rows: SkuCost[] = (data?.rows ?? []) as SkuCost[];
-      if (!rows.length) { setAiErr("L'IA n'a trouvé aucun coût exploitable dans cette source."); return; }
+      if (!rows.length) { setAiErr("L'IA n'a trouvé aucun produit exploitable dans cette source."); return; }
       addParsed(rows); setCsv('');
+      setAiMsg(data?.seeded
+        ? `${rows.length} SKU importés (aucun coût dans le fichier — complète les coûts puis Enregistre).`
+        : `${rows.length} lignes importées. Vérifie les coûts puis Enregistre.`);
     } catch (e) {
       setAiErr(e instanceof Error ? e.message : String(e));
     } finally { setAiLoading(false); }
@@ -162,6 +166,7 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
           </div>
           <p className="mt-1.5 text-[11px] text-muted-foreground">L'IA accepte un inventaire dans <b>n'importe quel format</b> (CSV désordonné, capture d'écran, PDF), même sans colonne SKU propre : colle-le ci-dessus ou choisis un fichier, elle repère les coûts et les remappe au schéma.</p>
           {aiErr && <p className="mt-1 text-[11px] text-destructive">{aiErr}</p>}
+          {aiMsg && <p className="mt-1 text-[11px] text-emerald-600">{aiMsg}</p>}
         </div>
       </section>
 
