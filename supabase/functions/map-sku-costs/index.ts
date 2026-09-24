@@ -1,14 +1,45 @@
 // map-sku-costs — importe un inventaire de N'IMPORTE QUEL format (CSV collé, texte,
 // capture d'écran, PDF) et le remappe vers le schéma des coûts de revient SKU attendu
-// par la plateforme (produit + packaging + transport amont + douane → CM1).
-// Staff-only. Sortie structurée garantie par l'outil Anthropic.
+// par la plateforme (produit + packaging + transport amont + douane → CM1). Staff-only.
+//
+// AUTONOME (aucun import ../_shared) pour pouvoir être déployée au copier-coller depuis
+// le dashboard Supabase quand la CLI n'est pas disponible.
 //
 // Body: { text?: string, image_base64?, image_media_type?, pdf_base64? }
 // Réponse: { ok: true, rows: SkuCost[], usage }
 
-import { corsHeaders, json } from "../_shared/cors.ts";
-import { requireStaff } from "../_shared/guard.ts";
-import { callAnthropicTool, MODELS } from "../_shared/anthropic.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+// --- CORS + helper JSON ---
+const corsHeaders = {
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
+};
+const json = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+// --- Garde staff (aligne _shared/guard.ts) ---
+const STAFF_ROLES = ["admin", "manager", "collaborateur", "super_admin"];
+async function requireStaff(req: Request) {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!authHeader) return { ok: false as const, error: "Not authenticated", status: 401 };
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const userSb = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: userData, error } = await userSb.auth.getUser();
+  if (error || !userData?.user) return { ok: false as const, error: "Not authenticated", status: 401 };
+  const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", userData.user.id);
+  const isStaff = (roles ?? []).some((r: { role: string }) => STAFF_ROLES.includes(r.role));
+  if (!isStaff) return { ok: false as const, error: "Staff role required", status: 403 };
+  return { ok: true as const, user: userData.user };
+}
 
 interface SkuCost {
   sku: string;
@@ -17,6 +48,9 @@ interface SkuCost {
   inbound_transport?: number;
   duties?: number;
 }
+
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const MODEL = "claude-sonnet-4-6"; // extraction éco (palier "fast")
 
 const SYSTEM = `Tu es un assistant qui normalise des inventaires e-commerce hétérogènes vers un schéma de coûts de revient unique.
 
@@ -61,7 +95,7 @@ const TOOL = {
     required: ["rows"],
     additionalProperties: false,
   },
-} as const;
+};
 
 const isNum = (v: unknown): v is number => typeof v === "number" && isFinite(v);
 
@@ -70,6 +104,7 @@ Deno.serve(async (req) => {
   try {
     const guard = await requireStaff(req);
     if (!guard.ok) return json({ error: guard.error }, guard.status);
+    if (!ANTHROPIC_API_KEY) return json({ error: "ANTHROPIC_API_KEY manquante" }, 500);
 
     const body = await req.json().catch(() => ({}));
     const { text, image_base64, image_media_type, pdf_base64 } = body ?? {};
@@ -87,13 +122,23 @@ Deno.serve(async (req) => {
       return json({ error: "Fournir 'text', 'image_base64' ou 'pdf_base64'." }, 400);
     }
 
-    const { input, usage } = await callAnthropicTool<{ rows: SkuCost[] }>({
-      model: MODELS.fast,
-      system: SYSTEM,
-      messages: [{ role: "user", content }],
-      tool: TOOL as unknown as { name: string; description: string; input_schema: Record<string, unknown> },
-      max_tokens: 4096,
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 4096,
+        system: SYSTEM,
+        messages: [{ role: "user", content }],
+        tools: [TOOL],
+        tool_choice: { type: "tool", name: TOOL.name },
+      }),
     });
+    const raw = await resp.text();
+    if (!resp.ok) return json({ error: `Anthropic ${resp.status}: ${raw}` }, 502);
+    const data = JSON.parse(raw);
+    const block = (data.content ?? []).find((b: { type: string; name?: string }) => b.type === "tool_use" && b.name === TOOL.name);
+    const input = (block?.input ?? null) as { rows?: SkuCost[] } | null;
 
     // Nettoyage défensif : sku non vide obligatoire, coûts numériques ≥ 0 uniquement.
     const rows: SkuCost[] = (input?.rows ?? [])
@@ -106,7 +151,7 @@ Deno.serve(async (req) => {
         return out;
       });
 
-    return json({ ok: true, rows, usage });
+    return json({ ok: true, rows, usage: data.usage });
   } catch (e) {
     console.error("map-sku-costs:", e);
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
