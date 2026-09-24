@@ -31,6 +31,8 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [csv, setCsv] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiErr, setAiErr] = useState<string | null>(null);
 
   const setF = <K extends keyof Costs>(k: K, patch: Partial<NonNullable<Costs[K]>>) =>
     setC((prev) => ({ ...prev, [k]: { ...(prev[k] as object ?? {}), ...patch } }));
@@ -58,6 +60,36 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
     reader.onload = () => addParsed(parseCsvText(String(reader.result ?? '')));
     reader.readAsText(file);
   };
+
+  // Import IA : envoie un inventaire de n'importe quel format à l'edge function map-sku-costs,
+  // qui repère les coûts et les remappe au schéma (produit/packaging/transport amont/douane).
+  const aiFileRef = useRef<HTMLInputElement>(null);
+  const readBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result ?? '').split(',')[1] ?? '');
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+  const runAi = async (payload: Record<string, unknown>) => {
+    setAiLoading(true); setAiErr(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('map-sku-costs', { body: payload });
+      if (error) throw error;
+      const rows: SkuCost[] = (data?.rows ?? []) as SkuCost[];
+      if (!rows.length) { setAiErr("L'IA n'a trouvé aucun coût exploitable dans cette source."); return; }
+      addParsed(rows); setCsv('');
+    } catch (e) {
+      setAiErr(e instanceof Error ? e.message : String(e));
+    } finally { setAiLoading(false); }
+  };
+  const aiFromFile = async (file: File) => {
+    const isImg = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    if (isImg) runAi({ image_base64: await readBase64(file), image_media_type: file.type || 'image/png' });
+    else if (isPdf) runAi({ pdf_base64: await readBase64(file) });
+    else { const reader = new FileReader(); reader.onload = () => runAi({ text: String(reader.result ?? '') }); reader.readAsText(file); }
+  };
+  const onAiClick = () => { if (csv.trim()) runAi({ text: csv }); else aiFileRef.current?.click(); };
 
   const save = async () => {
     setSaving(true); setErr(null); setSaved(false);
@@ -119,10 +151,17 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
           </S>
           <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) importFile(f); e.target.value = ''; }} />
+          <input ref={aiFileRef} type="file" accept=".csv,.tsv,.txt,text/csv,image/*,application/pdf,.pdf" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) aiFromFile(f); e.target.value = ''; }} />
           <div className="mt-1 flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>Choisir un fichier CSV…</Button>
             <Button variant="outline" size="sm" onClick={importCsv} disabled={!csv.trim()}>Importer le texte collé</Button>
+            <Button variant="outline" size="sm" onClick={onAiClick} disabled={aiLoading}>
+              {aiLoading ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Analyse…</> : <>✨ Importer avec l'IA</>}
+            </Button>
           </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">L'IA accepte un inventaire dans <b>n'importe quel format</b> (CSV désordonné, capture d'écran, PDF), même sans colonne SKU propre : colle-le ci-dessus ou choisis un fichier, elle repère les coûts et les remappe au schéma.</p>
+          {aiErr && <p className="mt-1 text-[11px] text-destructive">{aiErr}</p>}
         </div>
       </section>
 
