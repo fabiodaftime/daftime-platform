@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Loader2, Save, Check } from 'lucide-react';
 
-type SkuCost = { sku: string; product_cost?: number; packaging?: number; inbound_transport?: number; duties?: number };
+type SkuCost = { sku: string; name?: string; product_cost?: number; packaging?: number; inbound_transport?: number; duties?: number };
 type Profile = { model?: string; repeat_model?: string; founder_profile?: string; north_star?: string };
 type Costs = {
   sku_costs?: SkuCost[];
@@ -94,6 +94,15 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
     else { const reader = new FileReader(); reader.onload = () => runAi({ text: String(reader.result ?? '') }); reader.readAsText(file); }
   };
   const onAiClick = () => { if (csv.trim()) runAi({ text: csv }); else aiFileRef.current?.click(); };
+  // Croisement : plusieurs fichiers texte (ex. inventaire + export produits Shopify) joints sur l'EAN/SKU.
+  const xFileRef = useRef<HTMLInputElement>(null);
+  const readText = (file: File) => new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result ?? ''));
+    r.onerror = () => reject(r.error);
+    r.readAsText(file);
+  });
+  const aiFromFiles = async (files: FileList) => { const texts = await Promise.all(Array.from(files).map(readText)); runAi({ texts }); };
 
   const save = async () => {
     setSaving(true); setErr(null); setSaved(false);
@@ -130,10 +139,11 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
         <h3 className="text-sm font-medium mb-1">2 · Coûts de revient par SKU <span className="text-xs text-muted-foreground">— produit + packaging + transport amont + douane → CM1</span></h3>
         <p className="text-xs text-muted-foreground mb-3">« Cost per item » Shopify est presque toujours vide : ces coûts n'existent nulle part ailleurs.</p>
         <div className="space-y-1.5">
-          <div className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_auto] gap-2 text-[11px] text-muted-foreground px-1"><span>SKU / produit</span><span>Produit</span><span>Packaging</span><span>Transport amont</span><span>Douane</span><span></span></div>
+          <div className="grid grid-cols-[1.2fr_1.6fr_1fr_1fr_1fr_1fr_auto] gap-2 text-[11px] text-muted-foreground px-1"><span>SKU / réf.</span><span>Produit</span><span>Coût produit</span><span>Packaging</span><span>Transport amont</span><span>Douane</span><span></span></div>
           {skus.map((r, i) => (
-            <div key={i} className="grid grid-cols-[1.6fr_1fr_1fr_1fr_1fr_auto] gap-2 items-center">
-              <input className={inputCls} value={r.sku} onChange={(e) => setSku(i, { sku: e.target.value })} placeholder="SKU / nom" />
+            <div key={i} className="grid grid-cols-[1.2fr_1.6fr_1fr_1fr_1fr_1fr_auto] gap-2 items-center">
+              <input className={inputCls} value={r.sku} onChange={(e) => setSku(i, { sku: e.target.value })} placeholder="SKU / réf." />
+              <input className={inputCls} value={r.name ?? ''} onChange={(e) => setSku(i, { name: e.target.value })} placeholder="Nom du produit" />
               <input className={inputCls} type="number" value={r.product_cost ?? ''} onChange={(e) => setSku(i, { product_cost: num(e.target.value) })} />
               <input className={inputCls} type="number" value={r.packaging ?? ''} onChange={(e) => setSku(i, { packaging: num(e.target.value) })} />
               <input className={inputCls} type="number" value={r.inbound_transport ?? ''} onChange={(e) => setSku(i, { inbound_transport: num(e.target.value) })} />
@@ -157,14 +167,17 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
             onChange={(e) => { const f = e.target.files?.[0]; if (f) importFile(f); e.target.value = ''; }} />
           <input ref={aiFileRef} type="file" accept=".csv,.tsv,.txt,text/csv,image/*,application/pdf,.pdf" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) aiFromFile(f); e.target.value = ''; }} />
+          <input ref={xFileRef} type="file" accept=".csv,.tsv,.txt,text/csv" multiple className="hidden"
+            onChange={(e) => { const fs = e.target.files; if (fs && fs.length) aiFromFiles(fs); e.target.value = ''; }} />
           <div className="mt-1 flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>Choisir un fichier CSV…</Button>
             <Button variant="outline" size="sm" onClick={importCsv} disabled={!csv.trim()}>Importer le texte collé</Button>
             <Button variant="outline" size="sm" onClick={onAiClick} disabled={aiLoading}>
               {aiLoading ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Analyse…</> : <>✨ Importer avec l'IA</>}
             </Button>
+            <Button variant="outline" size="sm" onClick={() => xFileRef.current?.click()} disabled={aiLoading}>🔗 Croiser plusieurs fichiers</Button>
           </div>
-          <p className="mt-1.5 text-[11px] text-muted-foreground">L'IA accepte un inventaire dans <b>n'importe quel format</b> (CSV désordonné, capture d'écran, PDF), même sans colonne SKU propre : colle-le ci-dessus ou choisis un fichier, elle repère les coûts et les remappe au schéma.</p>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">L'IA accepte un inventaire dans <b>n'importe quel format</b> (CSV désordonné, capture d'écran, PDF), même sans colonne SKU propre : colle-le ci-dessus ou choisis un fichier. <b>Croiser plusieurs fichiers</b> = sélectionne p.ex. ton inventaire + un export produits Shopify, elle les joint sur l'EAN/SKU pour compléter noms et coûts.</p>
           {aiErr && <p className="mt-1 text-[11px] text-destructive">{aiErr}</p>}
           {aiMsg && <p className="mt-1 text-[11px] text-emerald-600">{aiMsg}</p>}
         </div>
