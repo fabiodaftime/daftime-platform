@@ -1,6 +1,6 @@
 // Onboarding shop : paramètres + coûts HORS-EXPORT qui débloquent la cascade CM1→CM2→CM3.
 // Écrit dans clients.shop_profile et clients.cost_params (jsonb).
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Plus, X, Loader2, Save, Check } from 'lucide-react';
@@ -43,13 +43,20 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
     const rows = (productSeed ?? []).filter((s) => s && !existing.has(s.trim().toLowerCase())).map((s) => ({ sku: s }));
     if (rows.length) setC((prev) => ({ ...prev, sku_costs: [...(prev.sku_costs ?? []), ...rows] }));
   };
-  const importCsv = () => {
-    const rows = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => l.split(/[,;\t]/).map((x) => x.trim()));
+  const fileRef = useRef<HTMLInputElement>(null);
+  const parseCsvText = (text: string): SkuCost[] => {
+    const rows = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((l) => l.split(/[,;\t]/).map((x) => x.trim()));
     const start = rows.length && /sku|réf|ref|product/i.test(rows[0][0]) ? 1 : 0; // saute l'en-tête éventuel
-    const parsed: SkuCost[] = rows.slice(start).filter((r) => r[0]).map((r) => ({
+    return rows.slice(start).filter((r) => r[0]).map((r) => ({
       sku: r[0], product_cost: num(r[1] ?? ''), packaging: num(r[2] ?? ''), inbound_transport: num(r[3] ?? ''), duties: num(r[4] ?? ''),
     }));
-    if (parsed.length) { setC((prev) => ({ ...prev, sku_costs: [...(prev.sku_costs ?? []), ...parsed] })); setCsv(''); }
+  };
+  const addParsed = (parsed: SkuCost[]) => { if (parsed.length) setC((prev) => ({ ...prev, sku_costs: [...(prev.sku_costs ?? []), ...parsed] })); };
+  const importCsv = () => { addParsed(parseCsvText(csv)); setCsv(''); };
+  const importFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => addParsed(parseCsvText(String(reader.result ?? '')));
+    reader.readAsText(file);
   };
 
   const save = async () => {
@@ -110,7 +117,12 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
           <S label="Importer un CSV (sku, produit, packaging, transport, douane — une ligne par SKU)">
             <textarea className="w-full text-xs border rounded p-2 bg-background font-mono" rows={3} value={csv} onChange={(e) => setCsv(e.target.value)} placeholder="TSHIRT-BLK-M, 8.50, 0.40, 1.20, 0.30" />
           </S>
-          <Button variant="outline" size="sm" className="mt-1" onClick={importCsv} disabled={!csv.trim()}>Importer</Button>
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,text/csv" className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) importFile(f); e.target.value = ''; }} />
+          <div className="mt-1 flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>Choisir un fichier CSV…</Button>
+            <Button variant="outline" size="sm" onClick={importCsv} disabled={!csv.trim()}>Importer le texte collé</Button>
+          </div>
         </div>
       </section>
 
