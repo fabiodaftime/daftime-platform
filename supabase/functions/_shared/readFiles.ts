@@ -23,7 +23,11 @@ const IMG_MAX = 5 * 1024 * 1024;         // 5 Mo
 // rapport agrégé/mensuel plus léger : on l'ignore-avec-message plutôt que de faire planter tout le lot.
 const TEXT_MAX = 2 * 1024 * 1024;        // 2 Mo par fichier texte/CSV
 const XLSX_MAX = 2 * 1024 * 1024;        // 2 Mo par Excel (la décompression est très gourmande)
-const TOTAL_BUDGET = 16 * 1024 * 1024;   // budget de contenu RETENU pour l'ensemble du lot
+// Le runtime plafonne aussi le TEMPS CPU (~2 s) : parser trop de fichiers dépasse la limite.
+// On borne donc DEUX choses — le contenu retenu ET le NOMBRE de fichiers traités — pour rester
+// sous le budget CPU. Au-delà : ignoré-avec-message (la standardisation mensuelle attend un set filtré).
+const TOTAL_BUDGET = 8 * 1024 * 1024;    // 8 Mo de contenu RETENU pour l'ensemble du lot
+const MAX_FILES = 20;                     // nombre max de fichiers réellement lus/parsés
 const mb = (n: number) => (n / 1e6).toFixed(1);
 const IMG_TYPES: Record<string, string> = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif",
@@ -34,47 +38,57 @@ export async function readClientFiles(
   files: Array<{ storage_path?: string | null; original_name?: string | null; id?: string }>,
 ): Promise<FileItem[]> {
   const out: FileItem[] = [];
-  let kept = 0; // octets de contenu déjà RETENU (budget mémoire du lot)
+  let kept = 0;      // octets de contenu déjà RETENU (budget mémoire du lot)
+  let processed = 0; // nombre de fichiers réellement lus (budget CPU)
   for (const f of files ?? []) {
     if (!f.storage_path) continue;
+    // Plafond de NOMBRE : on n'ouvre même pas les fichiers au-delà (évite temps/CPU inutiles).
+    if (processed >= MAX_FILES) {
+      out.push({ kind: "skipped", name: String(f.original_name ?? f.id ?? "fichier"),
+        reason: `trop de fichiers pour un seul passage (max ${MAX_FILES}) — standardise en plusieurs fois ou envoie un set filtré` });
+      continue;
+    }
     const { data: blob } = await admin.storage.from("client-files").download(f.storage_path);
     if (!blob) continue;
     const name = String(f.original_name ?? f.id ?? "fichier");
     const lower = name.toLowerCase();
     const ext = lower.slice(lower.lastIndexOf("."));
     const size = blob.size ?? 0;
-    const overBudget = kept >= TOTAL_BUDGET;
+    const overCap = kept >= TOTAL_BUDGET || processed >= MAX_FILES;
+    const capReason = processed >= MAX_FILES
+      ? `trop de fichiers pour un seul passage (max ${MAX_FILES}) — standardise en plusieurs fois ou envoie un set filtré`
+      : `budget mémoire/CPU du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois`;
     try {
       if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
         if (size > XLSX_MAX) { out.push({ kind: "skipped", name, reason: `Excel trop volumineux (${mb(size)} Mo > 2 Mo) — ré-exporte-le en CSV` }); continue; }
-        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
+        if (overCap) { out.push({ kind: "skipped", name, reason: capReason }); continue; }
         const buf = new Uint8Array(await blob.arrayBuffer());
         const wb = XLSX.read(buf, { type: "array" });
         const content = wb.SheetNames
           .map((sn) => `# Feuille: ${sn}\n${XLSX.utils.sheet_to_csv(wb.Sheets[sn])}`)
           .join("\n\n").slice(0, PARSE_CAP);
         out.push({ kind: "text", name, content });
-        kept += content.length;
+        kept += content.length; processed++;
       } else if (/\.(csv|tsv|txt|md|json)$/.test(lower)) {
         if (size > TEXT_MAX) { out.push({ kind: "skipped", name, reason: `fichier trop volumineux (${mb(size)} Mo > 2 Mo) — fournis un export agrégé/mensuel plus léger (les totaux y sont)` }); continue; }
-        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
+        if (overCap) { out.push({ kind: "skipped", name, reason: capReason }); continue; }
         const content = (await blob.text()).slice(0, PARSE_CAP);
         out.push({ kind: "text", name, content });
-        kept += content.length;
+        kept += content.length; processed++;
       } else if (lower.endsWith(".pdf")) {
         if (size > PDF_MAX) { out.push({ kind: "skipped", name, reason: `PDF trop volumineux (${mb(size)} Mo > 15 Mo)` }); continue; }
-        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
+        if (overCap) { out.push({ kind: "skipped", name, reason: capReason }); continue; }
         const buf = new Uint8Array(await blob.arrayBuffer());
         const b64 = encodeBase64(buf);
         out.push({ kind: "pdf", name, base64: b64 });
-        kept += b64.length;
+        kept += b64.length; processed++;
       } else if (IMG_TYPES[ext]) {
         if (size > IMG_MAX) { out.push({ kind: "skipped", name, reason: `image trop volumineuse (${mb(size)} Mo > 5 Mo)` }); continue; }
-        if (overBudget) { out.push({ kind: "skipped", name, reason: `budget mémoire du lot atteint (${mb(TOTAL_BUDGET)} Mo) — retire des fichiers ou standardise en plusieurs fois` }); continue; }
+        if (overCap) { out.push({ kind: "skipped", name, reason: capReason }); continue; }
         const buf = new Uint8Array(await blob.arrayBuffer());
         const b64 = encodeBase64(buf);
         out.push({ kind: "image", name, base64: b64, mediaType: IMG_TYPES[ext] });
-        kept += b64.length;
+        kept += b64.length; processed++;
       } else {
         out.push({ kind: "skipped", name, reason: "format non pris en charge (PDF, Excel, CSV, image ou texte)" });
       }
