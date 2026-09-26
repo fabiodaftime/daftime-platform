@@ -135,9 +135,17 @@ export default function AdminClientCockpit() {
     setCurrentContext(data);
   }, [id]);
 
+  // Fichiers dont le contenu n'existe plus dans le stockage (à redéposer) — signalés dans la liste.
+  const [missingContent, setMissingContent] = useState<Set<string>>(new Set());
   const loadFiles = useCallback(async () => {
     const { data } = await supabase.from('files' as any).select('*').eq('client_id', id).eq('period', period).order('created_at');
-    setFiles((data as any[]) ?? []);
+    const rows = (data as any[]) ?? [];
+    setFiles(rows);
+    const { data: objs } = await supabase.storage.from(BUCKET).list(`${id}/${period}`, { limit: 1000 });
+    if (objs) {
+      const present = new Set(objs.map((o) => `${id}/${period}/${o.name}`));
+      setMissingContent(new Set(rows.filter((r) => r.storage_path && !present.has(r.storage_path)).map((r) => r.id)));
+    }
   }, [id, period]);
 
   const loadStandardized = useCallback(async () => {
@@ -223,15 +231,24 @@ export default function AdminClientCockpit() {
       const path = `${id}/${period}/${f.name}`;
       const up = await supabase.storage.from(BUCKET).upload(path, f, { upsert: true, contentType: f.type || undefined });
       if (up.error) throw up.error;
-      await supabase.from('files' as any).insert({
-        client_id: id, period, original_name: f.name, storage_path: path, status: 'uploaded', uploaded_by: user?.id ?? null,
-      });
+      // Même nom = même objet de stockage : on MET À JOUR la ligne existante au lieu d'en créer une 2e
+      // (sinon supprimer l'ancienne effaçait l'objet partagé et laissait la nouvelle sans contenu).
+      const { data: existing } = await supabase.from('files' as any).select('id').eq('client_id', id).eq('storage_path', path);
+      if ((existing as any[])?.length) {
+        await supabase.from('files' as any).update({ original_name: f.name, status: 'uploaded', updated_at: new Date().toISOString() }).eq('client_id', id).eq('storage_path', path);
+      } else {
+        await supabase.from('files' as any).insert({
+          client_id: id, period, original_name: f.name, storage_path: path, status: 'uploaded', uploaded_by: user?.id ?? null,
+        });
+      }
     }
     await loadFiles();
   });
 
   const deleteFile = (f: any) => run('files', async () => {
-    if (f.storage_path) await supabase.storage.from(BUCKET).remove([f.storage_path]);
+    // L'objet n'est effacé que si AUCUNE autre ligne ne le référence (anciens doublons).
+    const { data: others } = await supabase.from('files' as any).select('id').eq('client_id', id).eq('storage_path', f.storage_path ?? '').neq('id', f.id);
+    if (f.storage_path && !((others as any[])?.length)) await supabase.storage.from(BUCKET).remove([f.storage_path]);
     await supabase.from('files' as any).delete().eq('id', f.id);
     await loadFiles();
   });
@@ -630,7 +647,9 @@ export default function AdminClientCockpit() {
           <ul className="mt-1 text-sm divide-y">
             {files.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-2 text-muted-foreground py-1.5">
-                <span className="flex-1 min-w-[160px]">• {f.original_name} <span className="text-xs">({f.status})</span></span>
+                <span className="flex-1 min-w-[160px]">• {f.original_name} <span className="text-xs">({f.status})</span>
+                  {missingContent.has(f.id) && <span className="ml-1.5 text-xs font-medium text-destructive" title="La ligne existe mais le fichier n'est plus dans le stockage : il ne sera pas lu. Redépose-le.">⚠ contenu manquant — redépose-le</span>}
+                </span>
                 <select value={f.doc_role ?? ''} title="Catégorie du document"
                   onChange={(e) => setFileMeta(f, { doc_role: e.target.value || null })}
                   className="text-xs border rounded px-1 py-0.5 bg-background">

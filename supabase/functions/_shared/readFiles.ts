@@ -26,6 +26,9 @@ const IMG_TYPES: Record<string, string> = {
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif",
 };
 const mb = (n: number) => (n / 1e6).toFixed(1);
+// Ligne présente en base mais objet absent du stockage : à redéposer. Jamais mis en cache (le fichier
+// peut réapparaître), et signalé explicitement au lieu d'être ignoré en silence.
+export const MISSING_CONTENT = "contenu introuvable dans le stockage — redépose le fichier";
 
 export type FileRow = { id?: string; storage_path?: string | null; original_name?: string | null; updated_at?: string | null };
 // "prepare" : Excel sans CSV préparé et trop lourd pour l'edge → le navigateur doit le convertir.
@@ -46,7 +49,7 @@ export async function readOneFile(admin: SupabaseClient, f: FileRow, opts: { all
         if (d) { const t0 = performance.now(); const content = (await d.text()).slice(0, PARSE_CAP); return { item: { kind: "text", name, content }, cpuMs: performance.now() - t0 }; }
       }
       const { data: blob } = await bucket.download(f.storage_path);
-      if (!blob) return { item: { kind: "skipped", name, reason: "téléchargement impossible" }, cpuMs: 0 };
+      if (!blob) return { item: { kind: "skipped", name, reason: MISSING_CONTENT }, cpuMs: 0 };
       if ((blob.size ?? 0) > XLSX_EDGE_MAX) return { kind: "prepare", name, reason: `Excel de ${mb(blob.size)} Mo : conversion à faire dans le navigateur` };
       if (!opts.allowEdgeXlsx) return { kind: "defer", name, reason: "conversion Excel au prochain passage" };
       const t0 = performance.now();
@@ -56,7 +59,7 @@ export async function readOneFile(admin: SupabaseClient, f: FileRow, opts: { all
       return { item: { kind: "text", name, content }, cpuMs };
     }
     const { data: blob } = await bucket.download(f.storage_path);
-    if (!blob) return { item: { kind: "skipped", name, reason: "téléchargement impossible" }, cpuMs: 0 };
+    if (!blob) return { item: { kind: "skipped", name, reason: MISSING_CONTENT }, cpuMs: 0 };
     const size = blob.size ?? 0;
     const t0 = performance.now();
     if (/\.(csv|tsv|txt|md|json)$/.test(lower)) {

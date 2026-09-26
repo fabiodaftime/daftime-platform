@@ -15,7 +15,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, callAnthropicTool, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion, poorerStandardized } from "../_shared/versioning.ts";
-import { readClientFiles, readOneFile, filesToContentBlocks, type FileItem } from "../_shared/readFiles.ts";
+import { MISSING_CONTENT, readClientFiles, readOneFile, filesToContentBlocks, type FileItem } from "../_shared/readFiles.ts";
 import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.ts";
 import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
@@ -26,6 +26,8 @@ import { applyCostParams, finalize, mergeParsed, type CostParams } from "../_sha
 const ENGINE_VERSION = "2026-09-26.1";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
+// Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
+const WALL_BUDGET_MS = 45_000;
 
 // Repères métier par type d'activité (chemin générique, activités sans catalogue).
 const ACTIVITY_GUIDE: Record<string, string> = {
@@ -97,6 +99,7 @@ type CacheRow = { file_id: string; fingerprint: string; status: "parsed" | "llm"
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const tStart = Date.now();
   try {
     const guard = await requireStaff(req);
     if (!guard.ok) return json({ error: guard.error }, guard.status);
@@ -120,7 +123,14 @@ Deno.serve(async (req) => {
 
     const { data: filesRaw } = await admin
       .from("files").select("id, original_name, storage_path, updated_at, doc_role, doc_note").eq("client_id", client_id).eq("period", filesPeriod);
-    const files = (filesRaw ?? []) as FileRow[];
+    // Doublons de ligne pour un même objet (anciens ré-uploads du même nom) : une seule lecture,
+    // la plus récente — sinon un relevé bancaire déposé deux fois était compté deux fois.
+    const byPath = new Map<string, FileRow>();
+    for (const f of (filesRaw ?? []) as FileRow[]) {
+      const k = f.storage_path ?? f.id; const cur = byPath.get(k);
+      if (!cur || (f.updated_at ?? "") > (cur.updated_at ?? "")) byPath.set(k, f);
+    }
+    const files = [...byPath.values()];
 
     const at = (client as { activity_types?: { slug?: string; config?: Record<string, unknown> } }).activity_types;
     const activity = at?.slug ?? "inconnu";
@@ -159,12 +169,14 @@ Deno.serve(async (req) => {
       // 2) LOT : lecture + parsing des fichiers pas encore en cache, dans la limite du budget.
       const todo = files.filter((f) => !cache.has(f.id));
       const pending: string[] = [], toPrepare: { id: string; name: string }[] = [];
+      const missingContent = new Set<string>(); // contenu absent du stockage : signalé, JAMAIS mis en cache
       let spent = 0, doneNow = 0;
       for (const f of todo) {
         const name = f.original_name ?? f.id;
-        if (spent >= PARSE_BUDGET_MS && doneNow > 0) { pending.push(name); continue; }
+        if ((spent >= PARSE_BUDGET_MS || Date.now() - tStart > WALL_BUDGET_MS) && doneNow > 0) { pending.push(name); continue; }
         const r = await readOneFile(admin, f, { allowEdgeXlsx: doneNow === 0 });
         if ("kind" in r) { if (r.kind === "prepare") toPrepare.push({ id: f.id, name }); else pending.push(name); continue; }
+        if (r.item.kind === "skipped" && r.item.reason === MISSING_CONTENT) { missingContent.add(f.id); continue; }
         const t0 = performance.now();
         let row: CacheRow;
         if (r.item.kind === "skipped") row = { file_id: f.id, fingerprint: fpOf(f), status: "skipped", extract: null, reason: r.item.reason };
@@ -189,7 +201,8 @@ Deno.serve(async (req) => {
       const llmFiles: FileRow[] = [];
       const skipped: { name: string; reason: string }[] = [];
       for (const f of files) {
-        const c = cache.get(f.id)!; const name = f.original_name ?? f.id;
+        const c = cache.get(f.id); const name = f.original_name ?? f.id;
+        if (!c) { skipped.push({ name, reason: missingContent.has(f.id) ? MISSING_CONTENT : "non lu" }); continue; }
         if (c.status === "parsed" && c.extract) { c.extract.file = name; if (manualByName.get(name)?.role !== "ignore") parsed.push(c.extract); }
         else if (c.status === "llm") { if (manualByName.get(name)?.role !== "ignore") llmFiles.push(f); }
         else skipped.push({ name, reason: c.reason ?? "non lu" });

@@ -27,9 +27,14 @@ Trois types de modifications :
 1) bank_rules — qualification d'une contrepartie bancaire (valable pour tous les mois). « match » = un fragment DISTINCTIF du libellé bancaire tel qu'il apparaît dans la liste (ex. « paypal », « hanayaka », « bp rives de paris », « zaoui »), en minuscules. Catégories :
    ads (publicité), stock (achats de marchandises / fournisseurs de stock / emballages), internal (virement entre ses propres comptes, apport, remboursement d'emprunt, transfert vers une autre société du dirigeant), payroll (salaires, rémunération du dirigeant, freelances récurrents), tools (logiciels/abonnements), logistics (transport, 3PL), tax (impôts), vat (TVA), bankfees (frais bancaires), other (autre charge d'exploitation), ignore (à exclure).
 2) bank_anchors — solde bancaire CONNU d'un compte à une date (le nom du compte tel qu'il apparaît dans les données, date ISO YYYY-MM-DD, solde en devise).
-3) overrides — valeur d'un poste du MOIS donnée EXPLICITEMENT par le conseiller, ou recalculée par toi depuis un fichier fourni si on te le demande (avec la provenance précise). N'invente jamais un chiffre.
+3) overrides — UNIQUEMENT si le conseiller donne un CHIFFRE explicite pour un poste du mois, ou demande explicitement de prendre une autre source/colonne (tu recalcules alors depuis le fichier fourni, provenance précise). JAMAIS :
+   - pour « confirmer » une valeur que le moteur calcule déjà (une valeur figée ne suivrait plus les fichiers) ;
+   - pour une remarque ou une réclamation sans chiffre (« tu as les fichiers qui donnent le CA… » n'est PAS une correction : le moteur relit les fichiers) ;
+   - pour cash_end / cash_start : la trésorerie se reconstitue compte par compte depuis les bank_anchors (un solde de compte n'est pas la trésorerie totale) ;
+   - pour un poste qu'une règle bancaire de ce même patch vient de qualifier.
+   N'invente jamais un chiffre.
 
-Si une réponse est ambiguë, ne crée rien pour elle et explique-le dans « summary ». « summary » = une phrase en français, tutoiement, qui dit ce qui a été compris et appliqué.`;
+Si une réponse est ambiguë, ne crée rien pour elle et explique-le dans « summary ». « summary » = une phrase en français, tutoiement, qui dit ce qui a été compris et appliqué (et, pour une simple remarque, que le moteur relira les fichiers).`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -118,7 +123,12 @@ Deno.serve(async (req) => {
     };
     const rules = (input.bank_rules ?? []).filter((r) => r.match?.trim() && (CATEGORIES as readonly string[]).includes(r.category))
       .map((r) => ({ match: r.match.trim().toLowerCase(), category: r.category, ...(r.label ? { label: r.label } : {}) }));
-    const overrides = (input.overrides ?? []).filter((o) => inputIds.includes(o.id) && typeof o.value === "number" && isFinite(o.value));
+    const anchors = (input.bank_anchors ?? []).filter((a) => a.account?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && isFinite(a.balance));
+    // Garde-fou : la trésorerie ne se fige jamais par une valeur manuelle (elle se reconstitue par compte).
+    const overrides = (input.overrides ?? []).filter((o) => inputIds.includes(o.id) && typeof o.value === "number" && isFinite(o.value)
+      && !["cash_end", "cash_start"].includes(o.id));
+    // Diagnostic : renvoie le patch compris SANS l'enregistrer.
+    if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, overrides, usage });
     if (rules.length || overrides.length) {
       const byMatch = new Map((ctxData.bank_rules ?? []).map((r) => [r.match.toLowerCase(), r]));
       for (const r of rules) byMatch.set(r.match, r);
@@ -131,7 +141,6 @@ Deno.serve(async (req) => {
       await insertVersion(admin, "contexts", { client_id }, { data: ctxData, created_by: user.id });
     }
     // 2) Soldes de référence → onboarding (Paramètres shop), fusionnés par compte + date.
-    const anchors = (input.bank_anchors ?? []).filter((a) => a.account?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && isFinite(a.balance));
     if (anchors.length) {
       const cp = { ...(((client as { cost_params?: Record<string, unknown> }).cost_params) ?? {}) } as { bank_anchors?: { account: string; date: string; balance: number }[] };
       const key = (a: { account: string; date: string }) => `${a.account.trim()}|${a.date}`;

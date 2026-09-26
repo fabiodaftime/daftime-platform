@@ -207,7 +207,11 @@ export function finalize(inp: FinalizeInput): { data: Record<string, unknown>; m
   for (const sec of data.sections) for (const row of sec.rows) { const c = confidence[row.id as string]; if (c) row.confidence = c; }
 
   const flags: Flag[] = [...(data.flags as Flag[] ?? [])];
-  if (inp.skipped.length) flags.push({ id: "_skipped", severity: "warn", label: `Fichiers non lus (${inp.skipped.length}) : ${inp.skipped.map((d) => `${d.name} (${d.reason})`).join(" · ")}.` });
+  if (inp.skipped.length) {
+    const byReason = new Map<string, string[]>();
+    for (const d of inp.skipped) byReason.set(d.reason, [...(byReason.get(d.reason) ?? []), d.name]);
+    flags.push({ id: "_skipped", severity: "warn", label: `Fichiers non lus (${inp.skipped.length}) — ${[...byReason.entries()].map(([r, ns]) => `${r} : ${ns.join(", ")}`).join(" · ")}.` });
+  }
   flags.push({ id: "_fx", severity: "info", label: `Devises converties vers ${currency} (taux ${inp.fxSource}).` });
   const uniq = (xs: string[]) => xs.filter((x, i, a) => a.indexOf(x) === i).join(", ") || "—";
   const byRole = (role: string) => uniq(m.kept.filter((e) => m.effRoleOf(e) === role && role !== "revenue").map((e) => e.parser));
