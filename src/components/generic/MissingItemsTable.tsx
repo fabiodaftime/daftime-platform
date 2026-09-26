@@ -12,17 +12,14 @@ export function MissingItemsTable({
   busy?: boolean;
   onSubmit: (qa: { question: string; answer: string }[]) => void;
 }) {
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  // Réponses indexées par la QUESTION (pas par la position) : quand la liste change après un
+  // nouvel envoi, une réponse ne glisse pas sur une autre ligne et les anciennes ne sont plus comptées.
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   if (!items || items.length === 0) return null;
 
-  const submit = () => {
-    const qa = items
-      .map((q, i) => ({ question: q, answer: (answers[i] ?? '').trim() }))
-      .filter((x) => x.answer);
-    if (qa.length) onSubmit(qa);
-  };
-
-  const answeredCount = Object.values(answers).filter((a) => a.trim()).length;
+  const qa = items.map((q) => ({ question: q, answer: (answers[q] ?? '').trim() })).filter((x) => x.answer);
+  const submit = () => { if (qa.length) onSubmit(qa); };
+  const answeredCount = qa.length;
 
   return (
     <div className="mb-4 border border-amber-300 rounded-md overflow-hidden">
@@ -31,16 +28,16 @@ export function MissingItemsTable({
       </div>
       <table className="w-full text-sm">
         <tbody>
-          {items.map((q, i) => (
-            <tr key={i} className="border-t border-amber-100 align-top">
+          {items.map((q) => (
+            <tr key={q} className="border-t border-amber-100 align-top">
               <td className="px-3 py-2 w-1/2 text-amber-900">{q}</td>
               <td className="px-3 py-2">
                 <textarea
                   className="w-full border rounded p-1.5 text-sm"
                   rows={2}
                   placeholder="Votre réponse…"
-                  value={answers[i] ?? ''}
-                  onChange={(e) => setAnswers({ ...answers, [i]: e.target.value })}
+                  value={answers[q] ?? ''}
+                  onChange={(e) => setAnswers({ ...answers, [q]: e.target.value })}
                 />
               </td>
             </tr>

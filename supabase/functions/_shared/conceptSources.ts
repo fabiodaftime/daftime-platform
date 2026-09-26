@@ -14,7 +14,13 @@ interface ConceptMeta { source: ConceptSource; ask?: string }
 // Classification des concepts e-commerce actuels (extensible / futur `doctrine.config`).
 const MAP: Record<string, ConceptMeta> = {
   // Structurellement hors-export → onboarding
-  cogs: { source: "onboarding", ask: "Coût de revient par SKU (produit + packaging + transport amont + douane) — via l'onboarding : « Cost per item » Shopify est presque toujours vide." },
+  cogs: { source: "onboarding", ask: "export Shopify Analytics « Cost of goods sold by order » (si tes coûts par article sont renseignés dans Shopify), sinon coûts de revient par SKU dans Paramètres shop" },
+  // Trésorerie : un relevé sans colonne de solde (ex. Pennylane) ne suffit pas → solde de référence.
+  cash_end: { source: "client", ask: "un solde bancaire de référence par compte (Paramètres shop → Trésorerie), ou un relevé avec colonne de solde — les mois sont ensuite reconstitués automatiquement" },
+  cash_start: { source: "client" },
+  ads_total: { source: "export", ask: "relevé bancaire du mois (Pennylane…) ou export MENSUEL des plateformes pub (Meta/Google/TikTok/Snap) — une capture d'un cumul multi-mois ne permet pas d'isoler le mois" },
+  ca: { source: "export", ask: "export Shopify Analytics « Total sales over time » (ou « Net sales by order ») couvrant le mois" },
+  orders: { source: "export", ask: "export Shopify Analytics « Total sales over time » couvrant le mois" },
   // Dérivés (calculés par formule) — un manque = conséquence d'un input absent, pas un bug
   marge_brute: { source: "derived" }, taux_marge_brute: { source: "derived" },
   ebitda: { source: "derived" }, marge_ebitda: { source: "derived" },

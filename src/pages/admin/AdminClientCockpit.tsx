@@ -19,6 +19,7 @@ import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { ForcedWidgetsPanel } from '@/components/generic/ForcedWidgetsPanel';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
+import { coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
 
@@ -70,6 +71,7 @@ export default function AdminClientCockpit() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ kind: 'running' | 'success' | 'error'; text: string } | null>(null);
+  const [stdProgress, setStdProgress] = useState<StdProgress | null>(null);
   const [genActive, setGenActive] = useState(false); // génération en cours (tâche de fond) → on bloque un nouveau clic
 
   const [contextText, setContextText] = useState('');
@@ -107,14 +109,15 @@ export default function AdminClientCockpit() {
       setter((prev) => (prev && prev.trim() ? prev + '\n\n' : '') + txt);
     });
 
-  const run = async (key: string, fn: () => Promise<void>) => {
+  // fn peut renvoyer un message de succès (ex. résumé de ce que l'IA a compris et appliqué).
+  const run = async (key: string, fn: () => Promise<void | string>) => {
     const label = OP_LABELS[key] ?? key;
     setBusy(key); setError(null);
     setNotice({ kind: 'running', text: `${label} en cours…` });
     try {
-      await fn();
-      setNotice({ kind: 'success', text: `${label} terminé.` });
-      window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), 4000);
+      const out = await fn();
+      setNotice({ kind: 'success', text: typeof out === 'string' && out ? out : `${label} terminé.` });
+      window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), typeof out === 'string' && out ? 10000 : 4000);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -267,11 +270,41 @@ export default function AdminClientCockpit() {
     }, 4000);
   };
 
+  // Mois où sont déposés les fichiers : ce mois-ci, sinon celui d'origine d'une standardisation
+  // « tous les mois » (les exports janv.→août déposés sur août servent aussi à juillet).
+  const stdFilesPeriod = () => (files.length ? period : ((sd as any)?.data?.meta?.files_period ?? period));
+  const onStdProgress = (prefix: string) => (p: StdProgress) => {
+    setStdProgress(p);
+    setNotice({ kind: 'running', text: `${prefix}${p.step} (${p.done}/${p.total} fichiers)…` });
+  };
   const standardize = () => run('standardize', async () => {
     markBg('standardize');
-    try { await invokeFn('standardize-data', { client_id: id, period }); await loadStandardized(); }
-    finally { clearBg(); }
+    try {
+      const res = await runStandardize(id!, period, { filesPeriod: stdFilesPeriod(), onProgress: onStdProgress('Standardisation — ') });
+      await loadStandardized();
+      if (res?.warning) return res.warning;
+    } finally { clearBg(); setStdProgress(null); }
   });
+  // Tous les mois couverts par les exports déposés (1 import multi-mois → N mois standardisés).
+  const months = coveredMonths(files.map((f: any) => f.original_name));
+  const standardizeAll = () => run('standardize', async () => {
+    const list = months.length ? months : [period];
+    try {
+      for (const [i, m] of list.entries())
+        await runStandardize(id!, m, { filesPeriod: period, onProgress: onStdProgress(`Mois ${i + 1}/${list.length} (${periodLabel(m)}) — `) });
+    } finally { setStdProgress(null); }
+    setAvailablePeriods((prev) => [...new Set([...prev, ...list])].sort((a, b) => (a < b ? 1 : -1)));
+    await loadStandardized();
+    return `${list.length} mois standardisés (${periodLabel(list[0])} → ${periodLabel(list[list.length - 1])}).`;
+  });
+  // Réponses / corrections en langage naturel → règles + corrections mémorisées → re-standardisation.
+  const applyAnswer = async (message: string, history?: any[]) => {
+    const res = await invokeFn<{ summary: string; rerun?: boolean }>('chat-standardize', { client_id: id, period, message, history });
+    if (res?.rerun) await runStandardize(id!, period, { filesPeriod: stdFilesPeriod(), onProgress: onStdProgress('Mise à jour — ') });
+    setStdProgress(null);
+    await loadStandardized();
+    return res?.summary || 'Données mises à jour.';
+  };
 
   const saveStandardized = () => run('save-sd', async () => {
     if (!(editData?.sections?.length)) throw new Error('Aucune donnée à enregistrer.');
@@ -302,9 +335,9 @@ export default function AdminClientCockpit() {
   const correctData = () => run('audit-correct', async () => {
     const message = auditMsg.trim();
     if (!message) return;
-    await invokeFn('chat-standardize', { client_id: id, period, message });
+    const summary = await applyAnswer(message);
     setAuditMsg('');
-    await loadStandardized();
+    return summary;
   });
 
   // Recalcule les dérivés + rejoue les vérifications côté serveur (formules = source unique).
@@ -459,10 +492,12 @@ export default function AdminClientCockpit() {
         </p>
         {notice && (
           <div className={
-            'sticky top-2 z-20 rounded-lg px-4 py-3 text-sm flex items-center gap-2 shadow-sm border ' +
-            (notice.kind === 'running' ? 'bg-primary/10 text-primary border-primary/30'
+            // Collé SOUS le header sticky (h-16 = 4 rem) et sous son z-index ; fonds OPAQUES :
+            // sinon il remonte par-dessus le bandeau marine et devient illisible au scroll.
+            'sticky top-[4.5rem] z-10 rounded-lg px-4 py-3 text-sm flex items-center gap-2 shadow-sm border ' +
+            (notice.kind === 'running' ? 'bg-white text-primary border-primary/30'
               : notice.kind === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : 'bg-destructive/10 text-destructive border-destructive/40')
+              : 'bg-red-50 text-destructive border-destructive/40')
           }>
             {notice.kind === 'running' ? <Loader2 className="w-4 h-4 animate-spin shrink-0" />
               : notice.kind === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -479,7 +514,7 @@ export default function AdminClientCockpit() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
           <aside>
-            <nav className="rounded-xl border bg-card p-2 space-y-1 lg:sticky lg:top-4">
+            <nav className="rounded-xl border bg-card p-2 space-y-1 lg:sticky lg:top-[4.5rem]">
               {TABS.map((t) => (
                 <button key={t.id} onClick={() => setTab(t.id)}
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${tab === t.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}>
@@ -618,6 +653,12 @@ export default function AdminClientCockpit() {
             <Button size="sm" variant="outline" onClick={standardize} disabled={!!busy}>
               {busy === 'standardize' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Lecture…</> : 'Standardiser (IA)'}
             </Button>
+            {months.length > 1 && (
+              <Button size="sm" variant="outline" onClick={standardizeAll} disabled={!!busy}
+                title={`Tes exports couvrent ${months.length} mois (${periodLabel(months[0])} → ${periodLabel(months[months.length - 1])}) : standardise-les tous d'un coup.`}>
+                Tous les mois ({months.length})
+              </Button>
+            )}
             {isTemplate && <Button size="sm" variant="outline" onClick={recompute} disabled={!!busy || !sd}>
               {busy === 'recompute' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Calcul…</> : 'Recalculer'}
             </Button>}
@@ -629,14 +670,22 @@ export default function AdminClientCockpit() {
                   {busy === 'save-sd' ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />…</> : 'Enregistrer'}
                 </Button>}
           </div>}>
-          {busy === 'standardize' && <p className="text-sm text-primary mb-3 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Le moteur lit tes documents et reconstitue les chiffres — compte ~10 à 20 s.</p>}
+          {(busy === 'standardize' || stdProgress) && (
+            <div className="mb-3">
+              <p className="text-sm text-primary flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />
+                {stdProgress ? `${stdProgress.step} — ${stdProgress.done}/${stdProgress.total} fichiers (les fichiers déjà lus sont gardés en mémoire).` : 'Le moteur lit tes documents et reconstitue les chiffres…'}
+              </p>
+              {stdProgress && stdProgress.total > 0 && (
+                <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary transition-all" style={{ width: `${Math.round((stdProgress.done / stdProgress.total) * 100)}%` }} /></div>
+              )}
+            </div>
+          )}
           <MissingItemsTable
             items={missing}
             busy={busy === 'answer-missing'}
             onSubmit={(qa) => run('answer-missing', async () => {
               const msg = 'Réponses aux pièces manquantes :\n' + qa.map((x) => `- ${x.question}\n  → ${x.answer}`).join('\n');
-              await invokeFn('chat-standardize', { client_id: id, period, message: msg });
-              await loadStandardized();
+              return applyAnswer(msg);
             })}
           />
           {isTemplate
@@ -646,11 +695,7 @@ export default function AdminClientCockpit() {
             <div className="text-xs text-muted-foreground mb-1">Affiner avec l'IA</div>
             <AssistantChat
               placeholder="Ex : « le CA de mars ne sera pas dispo », « ajoute une ligne marge brute = 5000 », « regroupe les charges »…"
-              onSend={async (message, history) => {
-                const res = await invokeFn<{ summary: string }>('chat-standardize', { client_id: id, period, message, history });
-                await loadStandardized();
-                return res.summary || 'Données mises à jour.';
-              }}
+              onSend={async (message, history) => applyAnswer(message, history)}
             />
           </div>
         </Section>
@@ -723,6 +768,7 @@ export default function AdminClientCockpit() {
               initialProfile={(client?.shop_profile ?? {}) as never}
               initialCosts={(client?.cost_params ?? {}) as never}
               productSeed={(((dash?.data_json as any)?.breakdowns?.products_catalog?.rows ?? (dash?.data_json as any)?.breakdowns?.top_products?.rows ?? []) as any[]).map((r) => r?.label).filter(Boolean)}
+              bankAccounts={((sd as any)?.data?.meta?.bank_accounts ?? []) as string[]}
               onSaved={(sp, cp) => setClient((c: any) => (c ? { ...c, shop_profile: sp, cost_params: cp } : c))}
             />
           </Section>

@@ -14,6 +14,9 @@ type Costs = {
   supplier_terms?: { dpo_days?: number };
   vat?: { regime?: string; rate?: number };
   inventory?: { source?: string; reorder_lead_days?: number };
+  // Solde CONNU d'un compte à une date : reconstitue la trésorerie de fin de mois de tous les mois
+  // à partir des mouvements d'un relevé sans colonne de solde (ex. export Pennylane).
+  bank_anchors?: { account: string; date: string; balance: number }[];
 };
 
 const num = (v: string): number | undefined => { const n = parseFloat(v.replace(',', '.')); return isFinite(n) ? n : undefined; };
@@ -22,8 +25,8 @@ const S = ({ label, children }: { label: string; children: ReactNode }) => (
 );
 const inputCls = 'h-8 w-full rounded border bg-background px-2 text-sm';
 
-export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, productSeed, onSaved }: {
-  clientId: string; initialProfile: Profile; initialCosts: Costs; productSeed?: string[]; onSaved?: (p: Profile, c: Costs) => void;
+export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, productSeed, bankAccounts, onSaved }: {
+  clientId: string; initialProfile: Profile; initialCosts: Costs; productSeed?: string[]; bankAccounts?: string[]; onSaved?: (p: Profile, c: Costs) => void;
 }) {
   const [p, setP] = useState<Profile>(initialProfile ?? {});
   const [c, setC] = useState<Costs>(initialCosts ?? {});
@@ -106,7 +109,9 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
 
   const save = async () => {
     setSaving(true); setErr(null); setSaved(false);
-    const { error } = await supabase.from('clients' as never).update({ shop_profile: p, cost_params: c } as never).eq('id', clientId);
+    // Soldes de référence incomplets (compte, date ou montant manquant) : jamais enregistrés.
+    const cc: Costs = { ...c, bank_anchors: (c.bank_anchors ?? []).filter((a) => a.account?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && Number.isFinite(a.balance)) };
+    const { error } = await supabase.from('clients' as never).update({ shop_profile: p, cost_params: cc } as never).eq('id', clientId);
     setSaving(false);
     if (error) { setErr(error.message); return; }
     setSaved(true); onSaved?.(p, c); setTimeout(() => setSaved(false), 2500);
@@ -211,6 +216,34 @@ export function ShopOnboardingPanel({ clientId, initialProfile, initialCosts, pr
           <S label="Délai règlement fournisseurs (jours)"><input className={inputCls} type="number" value={c.supplier_terms?.dpo_days ?? ''} onChange={(e) => setF('supplier_terms', { dpo_days: num(e.target.value) })} /></S>
           <S label="Régime TVA"><input className={inputCls} value={c.vat?.regime ?? ''} onChange={(e) => setF('vat', { regime: e.target.value })} placeholder="ex. FR mensuel, UAE 5%" /></S>
           <S label="Taux TVA (%)"><input className={inputCls} type="number" value={c.vat?.rate ?? ''} onChange={(e) => setF('vat', { rate: num(e.target.value) })} /></S>
+        </div>
+        <div className="mt-4">
+          <div className="text-xs font-medium">Soldes bancaires de référence</div>
+          <p className="text-[11px] text-muted-foreground mb-2">Un solde connu par compte, à une date (ex. le solde au 31/08 lu dans ton appli bancaire). Si ton relevé n'a pas de colonne de solde (Pennylane), la trésorerie de fin de mois de <b>tous les mois</b> est reconstituée à partir de ce point et des mouvements. Relance ensuite « Standardiser ».</p>
+          <datalist id="bank-accounts">{(bankAccounts ?? []).map((a) => <option key={a} value={a} />)}</datalist>
+          <div className="space-y-1.5">
+            {(c.bank_anchors ?? []).map((a, i) => (
+              <div key={i} className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 items-center">
+                <input className={inputCls} list="bank-accounts" value={a.account} placeholder="Nom du compte (tel qu'il apparaît dans le relevé)"
+                  onChange={(e) => setC((p) => ({ ...p, bank_anchors: (p.bank_anchors ?? []).map((x, j) => j === i ? { ...x, account: e.target.value } : x) }))} />
+                <input className={inputCls} type="date" value={a.date}
+                  onChange={(e) => setC((p) => ({ ...p, bank_anchors: (p.bank_anchors ?? []).map((x, j) => j === i ? { ...x, date: e.target.value } : x) }))} />
+                <input className={inputCls} type="number" value={Number.isFinite(a.balance) ? a.balance : ''} placeholder="Solde (€)"
+                  onChange={(e) => setC((p) => ({ ...p, bank_anchors: (p.bank_anchors ?? []).map((x, j) => j === i ? { ...x, balance: num(e.target.value) ?? NaN } : x) }))} />
+                <button onClick={() => setC((p) => ({ ...p, bank_anchors: (p.bank_anchors ?? []).filter((_, j) => j !== i) }))} className="text-muted-foreground hover:text-destructive" aria-label="Retirer"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setC((p) => ({ ...p, bank_anchors: [...(p.bank_anchors ?? []), { account: '', date: '', balance: NaN }] }))}>
+              <Plus className="w-3.5 h-3.5 mr-1" /> Ajouter un solde
+            </Button>
+            {(bankAccounts ?? []).filter((a) => !(c.bank_anchors ?? []).some((x) => x.account === a)).length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setC((p) => ({ ...p, bank_anchors: [...(p.bank_anchors ?? []), ...(bankAccounts ?? []).filter((a) => !(p.bank_anchors ?? []).some((x) => x.account === a)).map((a) => ({ account: a, date: '', balance: NaN }))] }))}>
+                Ajouter les comptes détectés ({(bankAccounts ?? []).filter((a) => !(c.bank_anchors ?? []).some((x) => x.account === a)).length})
+              </Button>
+            )}
+          </div>
         </div>
       </section>
 

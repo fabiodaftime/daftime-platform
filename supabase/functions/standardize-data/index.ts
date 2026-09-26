@@ -2,24 +2,32 @@
 // et produit des DONNÉES STANDARDISÉES (source de vérité) pour un client/mois.
 // Signale explicitement les pièces manquantes au lieu d'inventer.
 //
-// Body: { client_id: uuid, period: "YYYY-MM-01" }
+// INCRÉMENTAL : l'edge runtime plafonne le CPU (~2 s) et la mémoire (256 Mo). Les fichiers sont donc
+// lus/parsés PAR LOTS (budget par appel) et chaque extraction est mise en cache (std_file_extracts,
+// par fichier × mois × version). Tant qu'il reste des fichiers, la réponse est { partial: true } et
+// le front relance ; le dernier appel agrège, complète par l'IA et enregistre.
+//
+// Body: { client_id: uuid, period: "YYYY-MM-01", files_period?: "YYYY-MM-01" }
+//   files_period (optionnel) : mois où sont déposés les fichiers, si différent du mois standardisé
+//   (ex. exports janv.→août déposés sur août, standardisation de juillet).
 
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 import { callAnthropic, callAnthropicTool, extractJson, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 import { insertVersion, poorerStandardized } from "../_shared/versioning.ts";
-import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
-import { getCatalog, inputLines, buildStandardized, EXPECTED_BREAKDOWNS, type CatalogLine } from "../_shared/templates.ts";
-import { classifyGap } from "../_shared/conceptSources.ts";
-import { reconcile, type FileExtract } from "../_shared/reconcile.ts";
+import { readClientFiles, readOneFile, filesToContentBlocks, type FileItem } from "../_shared/readFiles.ts";
+import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.ts";
+import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
+import { applyCostParams, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
 
-// Unités NON monétaires (comptes, ratios, durées) : ne pas convertir.
-const NON_MONEY_UNITS = new Set(["%", "x", "u", "nb", "ratio", "pts", "j", "jours", "mois", "q", "score"]);
-const isMonetary = (unit?: string) => !unit || !NON_MONEY_UNITS.has(unit.trim());
+// Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
+const ENGINE_VERSION = "2026-09-26.1";
+// Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
+const PARSE_BUDGET_MS = 800;
 
-// Repères métier par type d'activité (KPIs et charges typiques). Surchargé par activity_types.config si fourni.
+// Repères métier par type d'activité (chemin générique, activités sans catalogue).
 const ACTIVITY_GUIDE: Record<string, string> = {
   ecommerce: "KPIs : chiffre d'affaires, marge brute, coût d'acquisition (CAC/MER/ROAS), panier moyen, taux de marge. Charges typiques : achats/COGS, publicité, frais de plateforme (Shopify/Stripe), logistique.",
   coach: "KPIs : chiffre d'affaires, nombre de clients/sessions, taux de remplissage, panier moyen. Charges typiques : outils, marketing, sous-traitance.",
@@ -45,37 +53,30 @@ ${guide ? `- Spécificités du métier : ${guide}` : ""}
 
 Format attendu (STRICT, structure tabulaire) :
 {
-  "data": {
-    "sections": [
-      { "key": "pnl", "label": "Compte de résultat",
-        "rows": [
-          { "label": "Chiffre d'affaires", "value": 12000, "unit": "EUR" },
-          { "label": "Marge brute", "value": 8000, "unit": "EUR", "type": "total" }
-        ] }
-    ]
-  },
+  "data": { "sections": [ { "key": "pnl", "label": "Compte de résultat", "rows": [ { "label": "Chiffre d'affaires", "value": 12000, "unit": "EUR" } ] } ] },
   "missing_items": [ "ce qu'il faut demander au client" ]
 }`;
 
-// Chemin MULTI-SOURCES : on classe + extrait UN fichier à la fois, puis on réconcilie.
-const PERFILE_SYSTEM = (activity: string, lines: CatalogLine[], ctxText: string) => `Tu analyses UN SEUL fichier d'un client "${activity}". Tu fais partie d'une chaîne qui agrège plusieurs fichiers ensuite : extrais SEULEMENT ce que CE fichier contient, sans déduire le reste.
+// IA de SECOURS : un fichier NON reconnu par les parsers, pour les postes encore manquants.
+// Le MOIS CIBLE est explicite (avant : absent → l'IA mélangeait août et cumul janv.→août).
+const PERFILE_SYSTEM = (activity: string, lines: CatalogLine[], ctxText: string, period: string) => `Tu analyses UN SEUL fichier d'un client "${activity}". Tu fais partie d'une chaîne qui agrège plusieurs fichiers ensuite : extrais SEULEMENT ce que CE fichier contient, sans déduire le reste.
+
+MOIS CIBLE : ${period.slice(0, 7)} (du 1er au dernier jour du mois). N'extrais QUE des montants qui concernent CE mois.
+- Si le document couvre PLUSIEURS mois et que tu ne peux pas isoler ce mois (cumul, capture d'un tableau de bord sur une plage de dates, total annuel…) : n'inclus AUCUNE valeur pour ces postes (value=null, provenance = « cumul multi-mois, mois non isolable »). Ne divise JAMAIS un cumul par le nombre de mois.
+- Vérifie la plage de dates affichée (en-tête, filtre, titre) AVANT d'extraire.
 
 ${ctxText ? `CONTEXTE DU DOSSIER (rôle des sources, montage financier — à respecter) :\n${ctxText}\n` : ""}
-1) IDENTIFIE le type de source (source_type) parmi : "sales_export" (export de ventes Shopify/Stripe/Amazon/Whop), "ads_dashboard" (dashboard publicitaire Meta/Google/TikTok), "bank_statement" (relevé bancaire), "invoice" (facture / export de factures), "payroll" (journal de paie), "pnl" (compte de résultat / bilan / cash flow comptable), "other".
-2) DEVISE : indique "currency" = la devise PRINCIPALE des montants de ce fichier (code ISO : EUR, AED, USD, GBP…). Donne les montants DANS CETTE DEVISE, bruts, SANS conversion (la conversion est faite ensuite par le système). Si le fichier mélange plusieurs devises ligne à ligne, additionne par devise et renvoie la devise dominante dans "currency" (la conversion fine sera gérée en aval — signale-le dans "note").
-3) EXTRAIS uniquement les postes ci-dessous que CE fichier fournit réellement, pour LE MOIS (valeur numérique brute, sans symbole ni séparateur de milliers). N'invente rien ; omets ce qui n'est pas dans ce fichier.
-   - RELEVÉ BANCAIRE : catégorise les transactions et additionne par poste (ventes encaissées, pub, salaires, frais de paiement, abonnements/outils, frais bancaires…). Ignore les frais de change internes "Foreign exchange transaction fee" comme poste de CA. Le solde de fin = dernier "Balance".
-   - EXPORT DE PAIEMENTS (Stripe/Whop) : ne compte QUE les paiements réussis (Paid/Captured=true/succeeded). EXCLUS les "Failed", "open", "pending", "past_due" et les remboursements.
-   - ⚠️ ANTI-DOUBLE-COMPTAGE : n'attribue PAS au CA des montants qui sont de simples mouvements internes (virements entre comptes, "payouts" Stripe vers la banque, règlements d'un processeur qui réapparaissent sur le relevé bancaire). Si tu identifies un tel mouvement, mets-le dans "note" plutôt que dans "values".
-4) Pour chaque valeur, indique brièvement OÙ tu l'as trouvée (page / ligne / feuille) dans "sources".
+1) IDENTIFIE le type de source (source_type) parmi : "sales_export", "ads_dashboard", "bank_statement", "invoice", "payroll", "pnl", "other".
+2) DEVISE : "currency" = devise PRINCIPALE des montants (code ISO). Montants bruts DANS CETTE DEVISE, sans conversion.
+3) EXTRAIS uniquement les postes ci-dessous que CE fichier fournit réellement pour LE MOIS CIBLE (valeur numérique brute). N'invente rien.
+   - RELEVÉ BANCAIRE : catégorise les transactions du mois et additionne par poste. Les encaissements ne sont PAS du CA.
+   - EXPORT DE PAIEMENTS : seulement les paiements réussis ; exclus échecs, en attente, remboursements.
+   - ANTI-DOUBLE-COMPTAGE : les mouvements internes (virements entre comptes, payouts PSP) vont dans "note", pas dans "values".
+4) Pour chaque valeur, indique OÙ tu l'as trouvée (page / ligne / feuille / zone de l'écran) dans "provenance".
 
 POSTES POSSIBLES :
-${lines.map((l) => `- ${l.id} : ${l.label}${l.hint ? ` (${l.hint})` : ""}`).join("\n")}
+${lines.map((l) => `- ${l.id} : ${l.label}${l.hint ? ` (${l.hint})` : ""}`).join("\n")}`;
 
-Réponds UNIQUEMENT en JSON :
-{ "source_type": "sales_export", "currency": "EUR", "values": { "ca": 12000 }, "sources": { "ca": "lignes Paid, colonne Amount" }, "note": "payouts ignorés (mouvement interne)" }`;
-
-// Exécute fn sur le tableau avec un parallélisme borné (évite les limites de débit Anthropic).
 async function mapLimit<T, R>(arr: T[], limit: number, fn: (t: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(arr.length);
   let i = 0;
@@ -85,6 +86,14 @@ async function mapLimit<T, R>(arr: T[], limit: number, fn: (t: T) => Promise<R>)
   await Promise.all(workers);
   return out;
 }
+
+async function sha1(s: string): Promise<string> {
+  const h = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
+  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+}
+
+type FileRow = { id: string; original_name: string | null; storage_path: string | null; updated_at: string | null; doc_role?: string | null; doc_note?: string | null };
+type CacheRow = { file_id: string; fingerprint: string; status: "parsed" | "llm" | "skipped"; extract: ParsedExtract | null; reason: string | null };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -96,11 +105,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const client_id: string | undefined = body.client_id;
     const period: string | undefined = body.period;
+    const filesPeriod: string = body.files_period ?? period;
     if (!client_id || !period) return json({ error: "client_id et period (YYYY-MM-01) requis" }, 400);
 
     const { data: client } = await admin
       .from("clients")
-      .select("id, name, currency, activity_type_id, activity_types:activity_type_id(slug, name, config)")
+      .select("id, name, currency, activity_type_id, cost_params, activity_types:activity_type_id(slug, name, config)")
       .eq("id", client_id)
       .maybeSingle();
     if (!client) return json({ error: "client introuvable" }, 404);
@@ -108,111 +118,115 @@ Deno.serve(async (req) => {
     const { data: ctx } = await admin
       .from("contexts").select("data").eq("client_id", client_id).eq("is_current", true).maybeSingle();
 
-    const { data: files } = await admin
-      .from("files").select("*").eq("client_id", client_id).eq("period", period);
-
-    const docs = await readClientFiles(admin, files ?? []);
+    const { data: filesRaw } = await admin
+      .from("files").select("id, original_name, storage_path, updated_at, doc_role, doc_note").eq("client_id", client_id).eq("period", filesPeriod);
+    const files = (filesRaw ?? []) as FileRow[];
 
     const at = (client as { activity_types?: { slug?: string; config?: Record<string, unknown> } }).activity_types;
     const activity = at?.slug ?? "inconnu";
     const currency = (client as { currency?: string }).currency ?? "EUR";
     const tpl = getCatalog(at?.config);
-
-    // Fichiers écartés par les garde-fous mémoire de readClientFiles (trop lourds / budget du lot).
-    const skippedDocs = docs.filter((d) => d.kind === "skipped") as { name: string; reason: string }[];
+    const manualByName = new Map<string, { role?: string; note?: string }>();
+    for (const f of files) if (f.original_name) manualByName.set(f.original_name, { role: f.doc_role ?? undefined, note: f.doc_note ?? undefined });
 
     let dataToSave: unknown;
     let missing: unknown[];
     let usage: unknown;
 
     if (tpl) {
-      // PIPELINE : 1) parsers DÉTERMINISTES (CSV/exports) → 2) IA seulement sur les PDF/inconnus
-      //            et uniquement pour les postes encore manquants → 3) réconciliation → calcul.
+      const costParams = ((client as { cost_params?: CostParams }).cost_params ?? null) as CostParams | null;
+      const ctxData = (ctx?.data ?? {}) as { fx_rates?: Record<string, number>; bank_rules?: { match: string; category: string }[]; playbook?: { bank_rules?: { match: string; category: string }[] };
+        value_overrides?: Record<string, Record<string, { value: number; source: string }>> };
+      const { factor, source: fxSource } = await ratesToReporting(period, currency, ctxData.fx_rates);
+      const categoryRules = [...(ctxData.playbook?.bank_rules ?? []), ...(ctxData.bank_rules ?? [])];
+      const bankAnchors = costParams?.bank_anchors;
+      const pctx = { reporting: currency, factor, period, activity, categoryRules, bankAnchors };
+      // Empreinte à 2 niveaux : les règles bancaires / soldes de référence n'invalident QUE les relevés
+      // bancaires (une nouvelle règle « paypal → pub » ne relit pas les 34 fichiers).
+      const baseHash = await sha1(JSON.stringify({ ENGINE_VERSION, currency, factor }));
+      const bankHash = await sha1(JSON.stringify({ baseHash, categoryRules, bankAnchors: bankAnchors ?? null }));
+      const fpOf = (f: FileRow, bank = false) => `${f.updated_at ?? ""}|${bank ? bankHash : baseHash}`;
+      const isBank = (e: ParsedExtract | null | undefined) => e?.role === "bank";
+
+      // 1) CACHE : extractions déjà faites pour ce mois avec la même empreinte.
+      const cache = new Map<string, CacheRow>();
+      if (files.length) {
+        const { data: rows } = await admin.from("std_file_extracts")
+          .select("file_id, fingerprint, status, extract, reason").eq("client_id", client_id).eq("period", period).in("file_id", files.map((f) => f.id));
+        for (const r of (rows ?? []) as CacheRow[]) { const f = files.find((x) => x.id === r.file_id); if (f && r.fingerprint === fpOf(f, isBank(r.extract))) cache.set(r.file_id, r); }
+      }
+
+      // 2) LOT : lecture + parsing des fichiers pas encore en cache, dans la limite du budget.
+      const todo = files.filter((f) => !cache.has(f.id));
+      const pending: string[] = [], toPrepare: { id: string; name: string }[] = [];
+      let spent = 0, doneNow = 0;
+      for (const f of todo) {
+        const name = f.original_name ?? f.id;
+        if (spent >= PARSE_BUDGET_MS && doneNow > 0) { pending.push(name); continue; }
+        const r = await readOneFile(admin, f, { allowEdgeXlsx: doneNow === 0 });
+        if ("kind" in r) { if (r.kind === "prepare") toPrepare.push({ id: f.id, name }); else pending.push(name); continue; }
+        const t0 = performance.now();
+        let row: CacheRow;
+        if (r.item.kind === "skipped") row = { file_id: f.id, fingerprint: fpOf(f), status: "skipped", extract: null, reason: r.item.reason };
+        else if (r.item.kind === "text") {
+          const p = parseFile(name, r.item.content, pctx);
+          if (p) { p.file = name; row = { file_id: f.id, fingerprint: fpOf(f, isBank(p)), status: "parsed", extract: p, reason: null }; }
+          else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "format non reconnu → IA" };
+        } else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "PDF/image → IA" };
+        spent += performance.now() - t0 + r.cpuMs; doneNow++;
+        await admin.from("std_file_extracts").delete().eq("file_id", f.id).eq("period", period).neq("fingerprint", row.fingerprint);
+        await admin.from("std_file_extracts").upsert({ client_id, period, ...row }, { onConflict: "file_id,period,fingerprint" });
+        cache.set(f.id, row);
+      }
+      if (pending.length || toPrepare.length) {
+        return json({ ok: true, partial: true, total: files.length, done: cache.size, pending, needs_preparation: toPrepare });
+      }
+
+      // 3) AGRÉGATION déterministe + onboarding.
       const lines = inputLines(tpl);
-      const monetaryIds = new Set(lines.filter((l) => isMonetary(l.unit)).map((l) => l.id));
       const labelOf = (id: string) => tpl.lines.find((l) => l.id === id)?.label ?? id;
-
-      const fxOverrides = (ctx?.data as { fx_rates?: Record<string, number> } | null)?.fx_rates;
-      const { factor, source: fxSource } = await ratesToReporting(period, currency, fxOverrides);
-      // Règles de catégorisation bancaire propres au dossier (ex. "paypal" -> "cogs").
-      const ctxData = (ctx?.data ?? {}) as { bank_rules?: { match: string; category: string }[]; playbook?: { bank_rules?: { match: string; category: string }[] } };
-      const categoryRules = ctxData.bank_rules ?? ctxData.playbook?.bank_rules;
-      const pctx = { reporting: currency, factor, period, activity, categoryRules };
-
-      // Triage manuel : rôle imposé + commentaire par fichier (prime sur la détection auto).
-      const manualByName = new Map<string, { role?: string; note?: string }>();
-      for (const f of (files ?? []) as { original_name?: string; doc_role?: string; doc_note?: string }[])
-        if (f.original_name) manualByName.set(f.original_name, { role: f.doc_role ?? undefined, note: f.doc_note ?? undefined });
-      // Normalise les catégories métier (Shopify, PSP, ads, comptable…) vers un rôle comptable canonique.
-      const CANON: Record<string, string> = {
-        shopify: "revenue", site: "revenue", invoicing: "revenue", quaderno: "revenue", revenue: "revenue",
-        psp: "payment", payment: "payment",
-        bank: "bank", banque: "bank",
-        ads: "ads", publicite: "ads",
-        accounting: "pnl", comptable: "pnl", pnl: "pnl",
-        expense: "expense", internal: "internal", ignore: "ignore",
-      };
-      const effRoleOf = (e: ParsedExtract) => {
-        const raw = (manualByName.get(e.file)?.role || e.role) as string;
-        return CANON[raw] ?? raw;
-      };
-
-      // 1) PARSERS déterministes sur les fichiers texte/CSV reconnus (hors fichiers mis en "ignore").
-      const usable = docs.filter((d) => d.kind !== "skipped" && manualByName.get(d.name)?.role !== "ignore");
       const parsed: ParsedExtract[] = [];
-      const llmDocs: typeof usable = [];
-      for (const doc of usable) {
-        const p = doc.kind === "text" ? parseFile(doc.name, (doc as { content: string }).content, pctx) : null;
-        if (p) { p.file = doc.name; parsed.push(p); } else llmDocs.push(doc);
+      const llmFiles: FileRow[] = [];
+      const skipped: { name: string; reason: string }[] = [];
+      for (const f of files) {
+        const c = cache.get(f.id)!; const name = f.original_name ?? f.id;
+        if (c.status === "parsed" && c.extract) { c.extract.file = name; if (manualByName.get(name)?.role !== "ignore") parsed.push(c.extract); }
+        else if (c.status === "llm") { if (manualByName.get(name)?.role !== "ignore") llmFiles.push(f); }
+        else skipped.push({ name, reason: c.reason ?? "non lu" });
       }
-      // Dédup par groupe (Stripe multi-mois, Ebury -EUR vs all_currencies…) : on garde le plus complet.
-      const best = new Map<string, ParsedExtract>();
-      for (const e of parsed) if (e.dedupGroup) { const c = best.get(e.dedupGroup); if (!c || (e.count ?? 0) > (c.count ?? 0)) best.set(e.dedupGroup, e); }
-      const keptParsed = parsed.filter((e) => !e.dedupGroup || best.get(e.dedupGroup) === e);
-
-      // Somme des contributions parsées (déjà en devise de reporting). On garde le DÉTAIL par document (trace).
-      const parsedValues: Record<string, number> = {};
-      const parsedSources: Record<string, string> = {};
-      const traces: Record<string, { src: string; value: number }[]> = {};
-      const traceSrc = (e: ParsedExtract, k: string) => (e.sources[k] ? `${e.file} — ${e.sources[k]}` : `${e.file} (${e.parser})`);
-      for (const e of keptParsed) for (const [k, val] of Object.entries(e.values)) {
-        parsedValues[k] = Math.round(((parsedValues[k] ?? 0) + val) * 100) / 100;
-        if (!parsedSources[k]) parsedSources[k] = e.sources[k] ?? e.parser;
-        if (!traces[k]) traces[k] = [];
-        traces[k].push({ src: traceSrc(e, k), value: Math.round(val * 100) / 100 });
-      }
-      // CA = somme des revenueCandidate des documents dont le RÔLE EFFECTIF est "revenue" (ex. Quaderno).
-      const revenueDocs = keptParsed.filter((e) => effRoleOf(e) === "revenue" && typeof e.revenueCandidate === "number");
-      if (revenueDocs.length) {
-        parsedValues["ca"] = Math.round(revenueDocs.reduce((s, e) => s + (e.revenueCandidate ?? 0), 0) * 100) / 100;
-        parsedSources["ca"] = revenueDocs.map((e) => e.sources.ca ?? e.parser).join(" + ");
-        traces["ca"] = revenueDocs.map((e) => ({ src: e.sources.ca ? `${e.file} — ${e.sources.ca}` : `${e.file} (${e.parser})`, value: Math.round((e.revenueCandidate ?? 0) * 100) / 100 }));
+      const merged = mergeParsed(parsed, manualByName, labelOf, currency);
+      applyCostParams(merged, costParams, currency);
+      // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
+      for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
+        if (typeof o?.value !== "number" || !isFinite(o.value)) continue;
+        merged.values[id] = o.value; merged.sources[id] = `correction du conseiller : ${o.source}`;
+        merged.traces[id] = [{ src: merged.sources[id], value: o.value }, ...(merged.traces[id] ?? []).map((t) => ({ ...t, src: `${t.src} (remplacé)` }))];
+        merged.confidence[id] = "manual";
       }
 
-      // 2) GAP-FILL IA (contrat STRICT via tool use) : sur les fichiers NON reconnus (PDF/scan/inconnu),
-      //    et SEULEMENT pour les postes encore absents. Chaque champ = valeur+provenance OU null+raison.
-      const missingLines = lines.filter((l) => parsedValues[l.id] == null);
+      // 4) IA DE SECOURS : fichiers non reconnus, postes encore manquants, MOIS CIBLE explicite.
+      const missingLines = lines.filter((l) => merged.values[l.id] == null);
       const missingIds = missingLines.map((l) => l.id);
       const playbookText = ctx?.data ? JSON.stringify((ctx.data as { playbook?: unknown }).playbook ?? ctx.data).slice(0, 4000) : "";
       const fileNotes = [...manualByName.entries()].filter(([, m]) => m.note).map(([n, m]) => `${n} : ${m.note}`).join(" | ");
       const ctxText = [playbookText, fileNotes ? `NOTES PAR FICHIER (contexte imposé) : ${fileNotes}` : ""].filter(Boolean).join("\n");
       const EXTRACT_TOOL = {
         name: "emit_extraction",
-        description: "Renvoie les postes que CE fichier permet de renseigner. N'invente jamais : si un poste est introuvable, ne l'inclus pas (ou value=null avec la raison).",
+        description: "Renvoie les postes que CE fichier permet de renseigner POUR LE MOIS CIBLE. N'invente jamais : si un poste est introuvable ou seulement disponible en cumul multi-mois, value=null avec la raison.",
         input_schema: {
           type: "object",
           properties: {
             source_type: { type: "string", enum: ["sales_export", "ads_dashboard", "bank_statement", "invoice", "payroll", "pnl", "other"] },
             currency: { type: "string", description: "Code ISO de la devise principale des montants (EUR, AED, USD, GBP…)" },
+            period_covered: { type: "string", description: "Plage de dates couverte par le document, telle qu'affichée (ex. 2026-01-01 → 2026-08-31)" },
             fields: {
               type: "array",
-              description: "Un élément par poste réellement présent dans ce fichier.",
               items: {
                 type: "object",
                 properties: {
-                  id: { type: "string", enum: missingIds },
-                  value: { type: ["number", "null"], description: "Montant brut DANS la devise du fichier (sans conversion), ou null si absent." },
-                  provenance: { type: "string", description: "Où trouvé (page/ligne/feuille) si value≠null ; sinon raison de l'absence." },
+                  id: { type: "string", enum: missingIds.length ? missingIds : ["_none"] },
+                  value: { type: ["number", "null"], description: "Montant brut DANS la devise du fichier, pour le MOIS CIBLE uniquement, ou null." },
+                  provenance: { type: "string", description: "Où trouvé si value≠null ; sinon raison de l'absence." },
                 },
                 required: ["id", "value", "provenance"],
                 additionalProperties: false,
@@ -223,136 +237,59 @@ Deno.serve(async (req) => {
           additionalProperties: false,
         },
       };
-      type ToolOut = { source_type?: string; currency?: string; fields?: { id: string; value: number | null; provenance: string }[] };
-      const llmExtracts = (llmDocs.length && missingIds.length)
-        ? (await mapLimit(llmDocs, 3, async (doc) => {
-            const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: "Classe ce fichier et renseigne UNIQUEMENT les postes présents, via l'outil." }];
+      type ToolOut = { source_type?: string; currency?: string; period_covered?: string; fields?: { id: string; value: number | null; provenance: string }[] };
+      const llmExtracts: FileExtract[] = (llmFiles.length && missingIds.length)
+        ? (await mapLimit(llmFiles, 3, async (f) => {
+            const r = await readOneFile(admin, f, { allowEdgeXlsx: false });
+            if ("kind" in r || r.item.kind === "skipped") return null;
+            const doc: FileItem = r.item;
+            const content: unknown[] = [...filesToContentBlocks([doc]), { type: "text", text: `Classe ce fichier et renseigne UNIQUEMENT les postes présents pour ${period.slice(0, 7)}, via l'outil.` }];
             try {
-              const { input } = await callAnthropicTool<ToolOut>({ model: MODELS.fast, system: PERFILE_SYSTEM(activity, missingLines, ctxText),
+              const { input } = await callAnthropicTool<ToolOut>({ model: MODELS.fast, system: PERFILE_SYSTEM(activity, missingLines, ctxText, period),
                 messages: [{ role: "user", content } as AnthropicMessage], tool: EXTRACT_TOOL, max_tokens: 1500 });
               if (!input) return null;
               const values: Record<string, number> = {}; const sources: Record<string, string> = {};
-              for (const f of input.fields ?? []) {
-                // Contrat : valeur retenue seulement si numérique ET provenance fournie.
-                if (typeof f.value === "number" && isFinite(f.value) && f.provenance && f.provenance.trim()) {
-                  values[f.id] = f.value; sources[f.id] = `${doc.name} — ${f.provenance}`;
-                }
+              for (const x of input.fields ?? []) {
+                if (typeof x.value === "number" && isFinite(x.value) && x.provenance && x.provenance.trim())
+                  { values[x.id] = x.value; sources[x.id] = `${doc.name} — ${x.provenance}`; }
               }
               return { file: doc.name, type: (input.source_type ?? "other") as FileExtract["type"], currency: input.currency, values, sources } as FileExtract;
             } catch { return null; }
           })).filter((x): x is FileExtract => !!x)
         : [];
-      // Trace des contributions IA (pour les postes non couverts par un parser, qui prime).
-      for (const ex of llmExtracts) for (const [k, val] of Object.entries(ex.values)) {
-        if (parsedValues[k] != null) continue;
-        if (!traces[k]) traces[k] = [];
-        traces[k].push({ src: ex.sources[k] ?? `${ex.file} (IA)`, value: val });
-      }
-      const recLLM = reconcile(llmExtracts, labelOf, { factor, monetaryIds, reporting: currency });
 
-      // 3) FUSION : les parsers (exacts) priment ; l'IA complète les trous.
-      const values = { ...recLLM.values, ...parsedValues };
-      const sources = { ...recLLM.sources, ...parsedSources };
-      const confidence: Record<string, string> = { ...recLLM.confidence };
-      for (const k of Object.keys(parsedValues)) confidence[k] = "parsed";
-
-      const built = buildStandardized(tpl, values, sources, currency, traces);
-      const data = built.data as { sections: { rows: Record<string, unknown>[] }[]; flags: unknown[]; meta?: Record<string, unknown> };
-      for (const sec of data.sections) for (const row of sec.rows) { const c = confidence[row.id as string]; if (c) row.confidence = c; }
-
-      const detected = [...new Set([...keptParsed.map((e) => e.currency), ...llmExtracts.map((e) => (e.currency ?? "").toUpperCase())].filter(Boolean))];
-      const flags: unknown[] = [...(data.flags ?? [])];
-      if (skippedDocs.length) flags.push({ id: "_skipped", severity: "warn",
-        label: `Fichiers ignorés (${skippedDocs.length}) — non lus ce mois : ${skippedDocs.map((d) => `${d.name} (${d.reason})`).join(" · ")}. Fournis des exports agrégés plus légers ou standardise en plusieurs fois.` });
-      flags.push({ id: "_fx", severity: "info", label: `Devises converties vers ${currency} (taux ${fxSource}).` });
-      // Classification des documents par rôle EFFECTIF (auto + override manuel) — pas de devinette.
-      const byRole = (role: string) => keptParsed.filter((e) => effRoleOf(e) === role).map((e) => e.parser).join(", ") || "—";
-      flags.push({ id: "_classif", severity: "info", label: `Documents classés — CA (facturé) : ${byRole("revenue")} · Réception : ${byRole("payment")} · Banque : ${byRole("bank")}.` });
-      if (!revenueDocs.length)
-        flags.push({ id: "_no_revenue", severity: "warn", label: "Aucune source de CA (rôle « revenue », ex. Quaderno) — CA potentiellement incomplet. Classe un document en « CA » si besoin." });
-      if (revenueDocs.length > 1)
-        flags.push({ id: "_multi_revenue", severity: "warn", label: `${revenueDocs.length} sources de CA cumulées (${revenueDocs.map((e) => e.parser).join(", ")}) — risque de double comptage. Mets en « réception » celles qui ne sont pas le CA facturé.` });
-      // Remonte les notes des parsers (CA par méthode, montants de réception Stripe/Whop…).
-      for (const e of keptParsed) if (e.note) flags.push({ id: `_note_${e.parser}`, severity: "info", label: e.note });
-      flags.push(...recLLM.conflicts);
-      data.flags = flags;
-
-      // VALIDATION + TRI DES ABSENCES (doctrine H7) : chaque champ core manquant est CLASSÉ.
-      // On ne BLOQUE que sur les vrais bugs (donnée censée être dans un export, introuvable) ;
-      // paramétrage / donnée-client / historique / dérivé → dashboard PARTIEL + trou explicite.
-      const gaps = lines.filter((l) => l.core && values[l.id] == null).map((l) => {
-        const g = classifyGap(l.id);
-        return { concept: l.id, label: l.label, statut: g.statut, ask: g.ask ?? null };
-      });
-      const errorIssues = (flags as { severity?: string; label?: string }[]).filter((f) => f.severity === "error").map((f) => f.label ?? "");
-      const bugGaps = gaps.filter((g) => g.statut === "missing_bug");
-      const blocking = [...bugGaps.map((g) => `Champ clé introuvable : ${g.label}`), ...errorIssues];
-      if (blocking.length) flags.push({ id: "_invalid", severity: "error", label: `Bloquant (à corriger) : ${blocking.join(" · ")}.` });
-      const paramGaps = gaps.filter((g) => g.statut === "missing_param");
-      if (paramGaps.length) flags.push({ id: "_param_needed", severity: "warn", label: `À paramétrer (onboarding) : ${paramGaps.map((g) => g.label).join(", ")}. Le dashboard s'affiche en partiel en attendant.` });
-      const askGaps = gaps.filter((g) => g.statut === "missing_obtainable");
-      if (askGaps.length) flags.push({ id: "_ask_client", severity: "warn", label: `À demander au client : ${askGaps.map((g) => g.label).join(", ")}.` });
-
-      data.meta = { ...(data.meta ?? {}), fx: { reporting: currency, source: fxSource, detected, factor },
-        classification: keptParsed.map((e) => ({ parser: e.parser, file: e.file, role: e.role, effRole: effRoleOf(e), manual: !!manualByName.get(e.file)?.role, revenueCandidate: e.revenueCandidate ?? null, note: e.note })),
-        sources_count: keptParsed.length + llmExtracts.length,
-        period, currency, entity: (client as { name?: string }).name ?? null,
-        gaps,
-        validation: { ok: blocking.length === 0, blocking } };
-
-      // Breakdowns dimensionnels (ventes par pays, top produits…) collectés depuis les parsers.
-      const breakdowns: Record<string, unknown> = {};
-      for (const e of keptParsed) if (e.breakdowns) for (const [k, v] of Object.entries(e.breakdowns)) if (!breakdowns[k]) breakdowns[k] = v;
-      if (Object.keys(breakdowns).length) (data as { breakdowns?: unknown }).breakdowns = breakdowns;
-
-      // « Magazine de data » sectoriel : ce que ce secteur DOIT produire vs ce qui est présent ce mois.
-      const cfgExpected = (at?.config as { expected_breakdowns?: { key: string; label: string }[] })?.expected_breakdowns;
-      const expected = Array.isArray(cfgExpected) ? cfgExpected : (EXPECTED_BREAKDOWNS[activity] ?? []);
-      if (expected.length) {
-        const missing = expected.filter((e) => !breakdowns[e.key]);
-        (data.meta as Record<string, unknown>).completeness = {
-          expected: expected.map((e) => e.key),
-          present: expected.filter((e) => breakdowns[e.key]).map((e) => e.key),
-          missing: missing.map((e) => e.key),
-        };
-        if (missing.length) flags.push({ id: "_completeness", severity: "info",
-          label: `Vues sectorielles manquantes ce mois : ${missing.map((e) => e.label).join(", ")} — vérifie les exports correspondants.` });
-      }
-
-      dataToSave = data;
-      missing = gaps.map((g) =>
-        g.statut === "missing_param" ? `${g.label} — à paramétrer${g.ask ? ` : ${g.ask}` : ""}`
-        : g.statut === "missing_obtainable" ? `${g.label} — à demander au client`
-        : g.statut === "needs_history" ? `${g.label} — nécessite de l'historique`
-        : g.statut === "derived" ? `${g.label} — non calculé (dépend d'un input manquant)`
-        : `${g.label} — introuvable dans les fichiers (à vérifier)`);
-      usage = { parsers: keptParsed.length, llm: llmExtracts.length };
+      // 5) FINALISATION (calcul, contrôles, tri des absences).
+      const out = finalize({ tpl, activity, currency, period, entity: (client as { name?: string }).name ?? null,
+        merged, llmExtracts, factor, fxSource, skipped,
+        expectedBreakdowns: (at?.config as { expected_breakdowns?: { key: string; label: string }[] })?.expected_breakdowns });
+      const bankAccounts = [...new Set(merged.kept.flatMap((e) => (e.aux?.bankAccounts as string[] | undefined) ?? []))];
+      dataToSave = { ...out.data, meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod,
+        ...(bankAccounts.length ? { bank_accounts: bankAccounts } : {}) } };
+      missing = out.missing;
+      usage = { parsers: merged.kept.length, llm: llmExtracts.length, files: files.length };
     } else {
-      // GÉNÉRIQUE (activités sans template) : l'IA produit directement la structure.
+      // GÉNÉRIQUE (activités sans catalogue) : l'IA produit directement la structure.
+      const docs = await readClientFiles(admin, files);
       const configGuide = at?.config && Object.keys(at.config).length ? JSON.stringify(at.config) : "";
       const guide = [ACTIVITY_GUIDE[activity] ?? "", configGuide].filter(Boolean).join(" ");
       const ctxBlock = { type: "text", text: `CONTEXTE CLIENT:\n${JSON.stringify(ctx?.data ?? {}, null, 2)}\n\nFICHIERS DU MOIS (${docs.length}) :` };
       const fileBlocks = docs.length ? filesToContentBlocks(docs) : [{ type: "text", text: "(aucun fichier déposé pour ce mois)" }];
       const content: unknown[] = [ctxBlock, ...fileBlocks, { type: "text", text: "Produis maintenant le JSON standardisé selon les règles." }];
-      const res = await callAnthropic({
-        model: MODELS.fast,
-        system: SYSTEM(activity, guide),
-        messages: [{ role: "user", content } as AnthropicMessage],
-        max_tokens: 8000,
-      });
+      const res = await callAnthropic({ model: MODELS.fast, system: SYSTEM(activity, guide), messages: [{ role: "user", content } as AnthropicMessage], max_tokens: 8000 });
       usage = res.usage;
       const parsed = extractJson<{ data?: unknown; missing_items?: unknown[] }>(res.text);
       dataToSave = parsed.data ?? {};
       missing = parsed.missing_items ?? [];
-      // Alerte : chemin DÉGRADÉ (aucun catalogue) alors que l'activité est connue → extraction appauvrie
-      // (ni parsers, ni breakdowns, ni cascade). Rend le problème visible au lieu de le masquer.
       if (activity && activity !== "inconnu") {
         console.warn(`standardize-data: chemin générique pour activité « ${activity} » (pas de catalogue)`);
         const d = dataToSave as { flags?: unknown[] };
         d.flags = [...(Array.isArray(d.flags) ? d.flags : []),
-          { id: "_degraded", severity: "warn", label: `Extraction en mode générique (pas de catalogue pour l'activité « ${activity} ») — données appauvries (pas de breakdowns, pas de cascade). Vérifie la configuration de l'activité.` }];
+          { id: "_degraded", severity: "warn", label: `Extraction en mode générique (pas de catalogue pour l'activité « ${activity} ») — données appauvries. Vérifie la configuration de l'activité.` }];
       }
     }
+
+    // Diagnostic : calcule tout SANS enregistrer de version (le cache d'extraction, lui, est alimenté).
+    if (body.dry_run) return json({ ok: true, partial: false, dry_run: true, data: dataToSave, missing_items: missing, usage });
 
     const saved = await insertVersion(admin, "standardized_data", { client_id, period }, {
       activity_type_id: client.activity_type_id,
@@ -360,11 +297,14 @@ Deno.serve(async (req) => {
       missing_items: missing ?? [],
       source: "ai",
       created_by: user.id,
-    }, { demoteIfPoorer: poorerStandardized });
+    }, {
+      // Garde-fou anti-régression seulement À MOTEUR ÉGAL : une version d'un moteur plus récent n'est pas
+      // une régression (répartitions erronées supprimées, nouvelles sources) → toujours appliquée.
+      demoteIfPoorer: (cand, cur) => ((cur.data as { meta?: { engine?: string } })?.meta?.engine === ENGINE_VERSION) && poorerStandardized(cand, cur),
+    });
 
-    // Si la nouvelle version est PLUS PAUVRE que la courante, elle est enregistrée mais non appliquée.
     const demoted = (saved as { _demoted?: boolean })._demoted === true;
-    return json({ ok: true, standardized_data: saved, usage, demoted,
+    return json({ ok: true, partial: false, standardized_data: saved, usage, demoted,
       ...(demoted ? { warning: "Version enregistrée mais NON appliquée : elle est plus pauvre (moins de breakdowns) que la version courante. L'ancienne, plus riche, est conservée." } : {}) });
   } catch (e) {
     console.error("standardize-data:", e);
