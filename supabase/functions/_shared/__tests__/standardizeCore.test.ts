@@ -65,6 +65,10 @@ describe("onboarding branché", () => {
     applyCostParams(m, { sku_costs: [{ sku: "X", name: "body  b", product_cost: 7 }] }, "EUR");
     expect(m.values.cogs).toBe(29.5); // 22,5 + 7
     expect(m.confidence.cogs).toBe("estimated");
+    expect(m.cogsMissingProducts).toEqual([]);
+    const none = mergeParsed(allExtracts(), new Map(), labelOf, "EUR");
+    applyCostParams(none, null, "EUR");
+    expect(none.cogsMissingProducts).toEqual([{ title: "BODY B", lines: 1 }]);
   });
   it("sans facture logistique : pick & pack × commandes, signalé comme hypothèse", () => {
     const ex = allExtracts().filter((e) => e.parser !== "bigblue_invoice");

@@ -20,6 +20,7 @@ import { ForcedWidgetsPanel } from '@/components/generic/ForcedWidgetsPanel';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
 import { CounterpartiesPanel, type CpOp } from '@/components/generic/CounterpartiesPanel';
+import { StructuredAnswers, type CostParamsLite } from '@/components/generic/StructuredAnswers';
 import { analyzeFile, analyzeStoredFiles, coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
 import { SourceCoverage } from '@/components/generic/SourceCoverage';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
@@ -104,7 +105,7 @@ export default function AdminClientCockpit() {
   const OP_LABELS: Record<string, string> = {
     standardize: 'Standardisation des données', generate: 'Génération du dashboard', validate: 'Validation',
     'save-sd': 'Enregistrement', recompute: 'Recalcul', status: 'Changement de statut',
-    files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données', counterparties: 'Qualification des contreparties',
+    files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données', counterparties: 'Qualification des contreparties', structured: 'Enregistrement des réponses',
     guidance: 'Enregistrement des consignes', ingest: 'Analyse de la transcription',
     'extract-file': 'Extraction du fichier',
   };
@@ -348,6 +349,17 @@ export default function AdminClientCockpit() {
     await loadStandardized();
     return res?.summary || 'Données mises à jour.';
   };
+
+  // Réponses structurées (soldes par compte, coûts produit) → onboarding → re-standardisation du mois.
+  const saveStructured = (next: CostParamsLite, summary: string) => run('structured', async () => {
+    const { error } = await supabase.from('clients' as any).update({ cost_params: next } as any).eq('id', id);
+    if (error) throw error;
+    setClient((c: any) => (c ? { ...c, cost_params: next } : c));
+    try { await runStandardize(id!, period, { filesPeriod: stdFilesPeriod(), onProgress: onStdProgress('Mise à jour — ') }); }
+    finally { setStdProgress(null); }
+    await loadStandardized();
+    return `${summary} Ce mois est recalculé ; « Tous les mois » applique aussi aux autres mois.`;
+  });
 
   // Revue des contreparties bancaires : décision → règle du dossier → re-standardisation du mois.
   const applyCpOps = (ops: CpOp[]) => run('counterparties', async () => {
@@ -762,6 +774,19 @@ export default function AdminClientCockpit() {
                 <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary transition-all" style={{ width: `${Math.round((stdProgress.done / stdProgress.total) * 100)}%` }} /></div>
               )}
             </div>
+          )}
+          {sd && (
+            <StructuredAnswers
+              key={`${period}-${(sd as any)?.id ?? ''}`}
+              period={period}
+              accounts={((sd as any)?.data?.meta?.bank_accounts ?? []) as string[]}
+              costParams={(client?.cost_params ?? null) as CostParamsLite | null}
+              missingProducts={((sd as any)?.data?.meta?.cogs_missing_products ?? []) as { title: string; lines: number }[]}
+              askCash={!((sd as any)?.data?.sections ?? []).some((s: any) => (s.rows ?? []).some((r: any) => r.id === 'cash_end' && typeof r.value === 'number'))
+                || ((sd as any)?.data?.controls ?? []).some((c: any) => c.id === 'cash' && c.status === 'ecart')}
+              busy={busy === 'structured'}
+              onSave={saveStructured}
+            />
           )}
           <MissingItemsTable
             items={missing}

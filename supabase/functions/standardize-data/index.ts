@@ -420,6 +420,7 @@ Deno.serve(async (req) => {
         } catch (e) { console.warn("trésorerie 13 semaines :", e instanceof Error ? e.message : String(e)); }
       }
       dataToSave = { ...out.data, controls, reliability, ...(cashForecast ? { cash_forecast: cashForecast } : {}), meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,
+        ...(merged.cogsMissingProducts?.length ? { cogs_missing_products: merged.cogsMissingProducts.slice(0, 60) } : {}),
         ...(bankAccounts.length ? { bank_accounts: bankAccounts } : {}) } };
       missing = out.missing;
       usage = { parsers: merged.kept.length, llm: llmExtracts.length, files: files.length };

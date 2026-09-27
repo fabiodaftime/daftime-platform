@@ -40,6 +40,7 @@ export interface Merged {
   effRoleOf: (e: ParsedExtract) => string;
   questions: string[]; // questions ciblées ajoutées aux « pièces manquantes » (réponses → règles)
   cogsMissing?: number; // lignes vendues toujours sans coût après complément SKU (contrôle de couverture)
+  cogsMissingProducts?: { title: string; lines: number }[]; // produits concernés (saisie structurée)
 }
 
 // 1) FUSION des extractions déterministes.
@@ -157,16 +158,21 @@ export function applyCostParams(m: Merged, cp: CostParams | null | undefined, re
   // COGS : lignes de vente sans coût Shopify → complétées par le coût de revient SKU (1 unité / ligne).
   const cogsEx = m.kept.find((e) => e.aux?.cogsZeroLines);
   const zero = (cogsEx?.aux?.cogsZeroLines ?? {}) as Record<string, number>;
-  if (cogsEx) m.cogsMissing = Object.values(zero).reduce((s, x) => s + x, 0);
+  if (cogsEx) {
+    m.cogsMissing = Object.values(zero).reduce((s, x) => s + x, 0);
+    m.cogsMissingProducts = Object.entries(zero).map(([title, lines]) => ({ title, lines })).sort((a, b) => b.lines - a.lines);
+  }
   if (!cp) return;
   if (cogsEx && m.values.cogs != null && Object.keys(zero).length && cp.sku_costs?.length) {
     const costByName = new Map<string, number>();
     for (const s of cp.sku_costs) { const n = norm(s.name ?? s.sku ?? ""); if (n && typeof s.product_cost === "number" && s.product_cost > 0 && !costByName.has(n)) costByName.set(n, s.product_cost); }
-    let add = 0, lines = 0, miss = 0;
+    let add = 0, lines = 0, miss = 0; const still: { title: string; lines: number }[] = [];
     for (const [title, count] of Object.entries(zero)) {
       const c = costByName.get(norm(title));
-      if (c != null) { add += c * count; lines += count; } else miss += count;
+      if (c != null) { add += c * count; lines += count; } else { miss += count; still.push({ title, lines: count }); }
     }
+    // Réponse structurée (A2) : produits vendus encore sans coût → saisie directe dans le cockpit.
+    m.cogsMissingProducts = still.sort((a, b) => b.lines - a.lines);
     if (add > 0) {
       m.values.cogs = r2(m.values.cogs + add);
       (m.traces.cogs ??= []).push({ src: `complément coûts SKU (onboarding) : ${lines} ligne(s) sans coût Shopify × coût de revient, 1 unité par ligne (estimation)`, value: r2(add) });
