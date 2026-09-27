@@ -104,12 +104,14 @@ type FileRow = { id: string; original_name: string | null; storage_path: string 
 // ── REGISTRE (chantier B, étape 1 : double écriture) ───────────────────────────────────────────
 // Jamais bloquant : une erreur d'écriture du registre est journalisée, la standardisation continue.
 type Admin = Parameters<typeof insertVersion>[0];
-async function registerBankFile(admin: Admin, client_id: string, f: FileRow, text: string): Promise<void> {
+async function registerBankFile(admin: Admin, client_id: string, f: FileRow, text: string | (() => Promise<string | null>)): Promise<void> {
   try {
     // Déjà enregistré pour CETTE version du fichier (re-standardisation d'un autre mois) → rien à faire.
     const { data: done } = await admin.from("src_bank_transactions").select("id").eq("file_id", f.id).gte("synced_at", f.updated_at ?? "1970-01-01").limit(1);
     if (done?.length) return;
-    const txs = pennylaneTransactions(text);
+    const content = typeof text === "string" ? text : await text();
+    if (!content) return;
+    const txs = pennylaneTransactions(content);
     if (!txs?.length) return;
     const rows = bankRows(txs, { client_id, source: "pennylane_file", file_id: f.id });
     for (let i = 0; i < rows.length; i += 500) {
@@ -257,6 +259,14 @@ Deno.serve(async (req) => {
       let merged = mergeParsed(parsed, manualByName, labelOf, currency, proposals);
       // REGISTRE (double écriture) : faits du mois + contrôle « lecture du registre = fusion » au centime.
       const registryCheck = await registerFacts(admin, client_id, period, parsed, files, merged.values);
+      // Rattrapage : relevé déjà en cache (lu avant le registre) → ses transactions sont enregistrées une fois.
+      for (const f of files) {
+        if (cache.get(f.id)?.extract?.parser !== "pennylane_bank") continue;
+        await registerBankFile(admin, client_id, f, async () => {
+          const r = await readOneFile(admin, f, { allowEdgeXlsx: false });
+          return "kind" in r || r.item.kind !== "text" ? null : r.item.content;
+        });
+      }
 
       // 3b) QUALIFICATION IA des débits bancaires encore inconnus (contrepartie + montant seulement).
       //  ≥ 90 % → règle du dossier « IA » (appliquée, révocable) puis re-lecture du relevé ; sinon proposition.
