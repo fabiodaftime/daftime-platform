@@ -23,6 +23,7 @@ import { CounterpartiesPanel, type CpOp } from '@/components/generic/Counterpart
 import { StructuredAnswers, type CostParamsLite } from '@/components/generic/StructuredAnswers';
 import { analyzeFile, analyzeStoredFiles, coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
 import { SourceCoverage } from '@/components/generic/SourceCoverage';
+import { ConnectorsPanel } from '@/components/generic/ConnectorsPanel';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
 
@@ -697,6 +698,7 @@ export default function AdminClientCockpit() {
           <summary className="cursor-pointer text-sm font-medium">📋 Documents à demander (aide-mémoire closer)</summary>
           <div className="mt-3"><DocChecklistPanel activitySlug={(client as any)?.activity_types?.slug} /></div>
         </details>
+        <ConnectorsPanel clientId={id!} />
         <Section icon={<FileUp className="w-4 h-4" />} title={`Fichiers du mois (${files.length})`}>
           <label className="inline-block">
             <input type="file" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) uploadFiles(e.target.files); e.currentTarget.value = ''; }} />
