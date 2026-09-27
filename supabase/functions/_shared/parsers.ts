@@ -576,11 +576,12 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
 function bigblueInvoice(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract {
   const h = rows[0];
   const iD = idx(h, "Date"), iP = idx(h, "Price"), iS = idx(h, "Service"), iCur = idx(h, "Currency");
-  let tot = 0, used = 0, undated = 0, undatedAmt = 0; const bySvc: Record<string, number> = {};
+  let tot = 0, used = 0, undated = 0, undatedAmt = 0, lastDate = ""; const bySvc: Record<string, number> = {};
   for (const r of rows.slice(1)) {
     const p = toNum(r[iP]); if (p == null) continue;
     if (!isoOf(r[iD])) { undated++; undatedAmt += p; continue; }
     if (!inMonth(r[iD], ctx.period)) continue;
+    const d = isoOf(r[iD])!; if (d > lastDate) lastDate = d;
     const c = convert(p, (iCur >= 0 ? r[iCur] : "") || ctx.reporting, ctx.factor);
     tot += c; used++; const svc = (r[iS] ?? "").trim() || "Autre"; bySvc[svc] = (bySvc[svc] ?? 0) + c;
   }
@@ -591,7 +592,8 @@ function bigblueInvoice(name: string, rows: string[][], ctx: ParseCtx): ParsedEx
     breakdowns: used ? { logistics_by_service: { label: "Logistique par prestation (Bigblue)", rows: topN(bySvc, 12) } } : undefined,
     // Plusieurs exports de la MÊME facture (re-téléchargement) → on n'en garde qu'un.
     dedupGroup: inv ? `bigblue_${inv}` : undefined, count: rows.length,
-    aux: undated ? { undatedCredits: { n: undated, amount: r2(undatedAmt) } } : undefined };
+    // coveredTo : dernier jour facturé du mois → un mois facturé à moitié n'est pas sous-compté en silence.
+    aux: (undated || lastDate) ? { ...(undated ? { undatedCredits: { n: undated, amount: r2(undatedAmt) } } : {}), ...(lastDate ? { coveredTo: lastDate } : {}) } : undefined };
 }
 
 // Export commandes Bigblue : articles expédiés et ventes par pays (TTC). Le CA reste celui de Shopify.

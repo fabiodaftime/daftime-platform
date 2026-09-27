@@ -20,7 +20,7 @@ import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.t
 import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
-import { applyCostParams, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
+import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
 import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeClassified, splitByConfidence, toClassify,
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
@@ -257,6 +257,7 @@ Deno.serve(async (req) => {
       if (iaRules.length) merged.flags.push({ id: "_ia_rules", severity: "info",
         label: `Débits qualifiés automatiquement par l'IA (hypothèse, à vérifier dans « Contreparties ») : ${iaRules.slice(0, 8).map((r) => `${r.label ?? r.match} → ${CP_CATEGORY_LABELS[r.category as CpCategory] ?? r.category}${r.confidence ? ` (${Math.round(r.confidence * 100)} %)` : ""}`).join(" · ")}${iaRules.length > 8 ? ` · +${iaRules.length - 8}` : ""}.` });
       applyCostParams(merged, costParams, currency);
+      completeLogistics(merged, period, currency);
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
         if (typeof o?.value !== "number" || !isFinite(o.value)) continue;

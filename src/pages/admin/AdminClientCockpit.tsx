@@ -692,7 +692,7 @@ export default function AdminClientCockpit() {
               {busy === 'files' ? 'Envoi…' : 'Déposer des fichiers'}
             </span>
           </label>
-          <p className="mt-3 text-xs text-muted-foreground">Laisse « Auto » si la détection est bonne ; impose un rôle ou ajoute un commentaire si besoin.</p>
+          <p className="mt-3 text-xs text-muted-foreground">Chaque fichier est reconnu au dépôt. Un commentaire suffit pour préciser le contexte ; le rôle ne se choisit que pour un format non reconnu.</p>
           <ul className="mt-1 text-sm divide-y">
             {files.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-2 text-muted-foreground py-1.5">
@@ -705,11 +705,14 @@ export default function AdminClientCockpit() {
                   )}
                   {missingContent.has(f.id) && <span className="ml-1.5 text-xs font-medium text-destructive" title="La ligne existe mais le fichier n'est plus dans le stockage : il ne sera pas lu. Redépose-le.">⚠ contenu manquant — redépose-le</span>}
                 </span>
-                <select value={f.doc_role ?? ''} title="Catégorie du document"
-                  onChange={(e) => setFileMeta(f, { doc_role: e.target.value || null })}
-                  className="text-xs border rounded px-1 py-0.5 bg-background">
-                  {docCats.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                {/* Rôle imposé : seulement si la reconnaissance échoue (ou s'il a déjà été forcé). */}
+                {(!f.detected?.recognized || f.doc_role) && (
+                  <select value={f.doc_role ?? ''} title="Catégorie du document (format non reconnu)"
+                    onChange={(e) => setFileMeta(f, { doc_role: e.target.value || null })}
+                    className="text-xs border rounded px-1 py-0.5 bg-background">
+                    {docCats.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                )}
                 <input defaultValue={f.doc_note ?? ''} placeholder="commentaire…"
                   onBlur={(e) => { const v = e.target.value || null; if (v !== (f.doc_note ?? null)) setFileMeta(f, { doc_note: v }); }}
                   className="text-xs border rounded px-1.5 py-0.5 bg-background w-40" />

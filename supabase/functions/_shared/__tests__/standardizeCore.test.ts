@@ -2,7 +2,7 @@
 // Non-régression du cœur de standardisation : fusion sans double comptage, onboarding, tri des absences.
 import { describe, expect, it } from "vitest";
 import { parseFile, type ParsedExtract } from "../parsers.ts";
-import { applyCostParams, finalize, mergeParsed } from "../standardizeCore.ts";
+import { applyCostParams, completeLogistics, finalize, mergeParsed } from "../standardizeCore.ts";
 import type { Catalog } from "../templates.ts";
 import * as F from "./fixtures.ts";
 
@@ -72,6 +72,22 @@ describe("onboarding branché", () => {
     applyCostParams(m, { fulfillment: { pick_pack_per_order: 2 } }, "EUR");
     expect(m.values.shipping_cost).toBe(240);
     expect(m.confidence.shipping_cost).toBe("estimated");
+  });
+});
+
+describe("mois incomplet côté logistique", () => {
+  it("factures jusqu'au 20/08 : reste du mois estimé au rythme observé, signalé", () => {
+    const m = mergeParsed(allExtracts(), new Map(), labelOf, "EUR");
+    completeLogistics(m, AUG, "EUR");
+    expect(m.values.shipping_cost).toBeCloseTo(17.82, 2); // 11,5 réels + 11,5/20 × 11 jours
+    expect(m.confidence.shipping_cost).toBe("estimated");
+    expect(m.flags.find((f) => f.id === "_logistics_partial")?.label).toMatch(/s'arrêtent au 20\/08/);
+  });
+  it("mois couvert jusqu'à la fin : aucune estimation", () => {
+    const full = parse("FA-TEST0003-details-x.csv", F.BIGBLUE_INVOICE_2.replace("20/08/2026", "30/08/2026"));
+    const m = mergeParsed([full], new Map(), labelOf, "EUR");
+    completeLogistics(m, AUG, "EUR");
+    expect(m.values.shipping_cost).toBe(3);
   });
 });
 

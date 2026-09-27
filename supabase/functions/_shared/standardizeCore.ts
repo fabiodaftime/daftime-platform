@@ -190,6 +190,25 @@ export function applyCostParams(m: Merged, cp: CostParams | null | undefined, re
   }
 }
 
+// 2b) MOIS INCOMPLET côté logistique : les factures 3PL arrivent par quinzaine ; si la dernière facture
+// fournie s'arrête avant la fin du mois, le reste est ESTIMÉ au rythme observé (hypothèse signalée),
+// au lieu d'un sous-comptage silencieux. La facture suivante remplace l'estimation.
+export function completeLogistics(m: Merged, period: string, reporting: string): void {
+  const inv = m.kept.filter((e) => e.parser === "bigblue_invoice" && typeof e.aux?.coveredTo === "string");
+  if (!inv.length || m.values.shipping_cost == null || m.confidence.shipping_cost === "estimated" || m.confidence.shipping_cost === "manual") return;
+  const to = inv.map((e) => e.aux!.coveredTo as string).sort().pop()!;
+  if (to.slice(0, 7) !== period.slice(0, 7)) return;
+  const [y, mo] = period.slice(0, 7).split("-").map(Number);
+  const days = new Date(Date.UTC(y, mo, 0)).getUTCDate(), covered = Number(to.slice(8, 10));
+  if (covered >= days - 3 || covered < 5) return;
+  const real = m.values.shipping_cost, add = r2(real / covered * (days - covered));
+  m.values.shipping_cost = r2(real + add);
+  (m.traces.shipping_cost ??= []).push({ src: `estimation du ${covered + 1} au ${days} : rythme des factures reçues (${fmt(real / covered)} ${reporting}/jour) — pas encore de facture`, value: add });
+  m.sources.shipping_cost = `${m.sources.shipping_cost ?? ""} + estimation fin de mois`;
+  m.confidence.shipping_cost = "estimated";
+  m.flags.push({ id: "_logistics_partial", severity: "warn", label: `Logistique : les factures reçues s'arrêtent au ${to.slice(8, 10)}/${to.slice(5, 7)} — le reste du mois est estimé (+${fmt(add)} ${reporting}, au rythme observé). Ajoute la facture suivante du 3PL pour le montant réel.` });
+}
+
 // 3) FINALISATION : fusion IA (ne comble que les trous), calcul, flags, tri des absences.
 export interface FinalizeInput {
   tpl: Catalog; activity: string; currency: string; period: string; entity: string | null;
