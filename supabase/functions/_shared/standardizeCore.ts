@@ -22,6 +22,8 @@ const CANON: Record<string, string> = {
   psp: "payment", payment: "payment", bank: "bank", banque: "bank", ads: "ads", publicite: "ads",
   accounting: "pnl", comptable: "pnl", pnl: "pnl", expense: "expense", internal: "internal", ignore: "ignore",
 };
+const CAT_FR: Record<string, string> = { ads: "pub", stock: "stock", internal: "virement interne", loan: "emprunt", payroll: "rémunération",
+  tools: "logiciel", logistics: "logistique", tax: "impôt", vat: "TVA", bankfees: "frais bancaires", other: "autre charge", ignore: "à exclure" };
 const r2 = (x: number) => Math.round(x * 100) / 100;
 const fmt = (x: number) => Math.round(x).toLocaleString("fr-FR");
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -44,7 +46,8 @@ export interface Merged {
 //  - EXCLUSIVES (rapports d'analytics qui décrivent le même fait) : la plus prioritaire fait foi,
 //    les autres servent de contrôle croisé (jamais additionnées → plus de double comptage) ;
 //  - CA : uniquement depuis les documents au rôle « revenue ».
-export function mergeParsed(parsed: ParsedExtract[], manualByName: Map<string, { role?: string; note?: string }>, labelOf: (id: string) => string, reporting: string): Merged {
+export function mergeParsed(parsed: ParsedExtract[], manualByName: Map<string, { role?: string; note?: string }>, labelOf: (id: string) => string, reporting: string,
+  proposals: { match: string; category: string; confidence: number }[] = []): Merged {
   const effRoleOf = (e: ParsedExtract) => { const raw = (manualByName.get(e.file ?? "")?.role || e.role) as string; return CANON[raw] ?? raw; };
   // Doublons connus (même facture ré-exportée, Stripe multi-mois…) : on garde le plus complet.
   const best = new Map<string, ParsedExtract>();
@@ -135,7 +138,14 @@ export function mergeParsed(parsed: ParsedExtract[], manualByName: Map<string, {
       const pp = u.find((x) => /paypal/i.test(x.label));
       flags.push({ id: `_unqualified_${e.parser}`, severity: "warn",
         label: `Débits bancaires à qualifier : ${fmt(tot)} ${reporting} non classés — hors charges tant qu'ils ne sont pas qualifiés, donc le résultat peut être SURESTIMÉ. Principaux : ${u.slice(0, 6).map((x) => `${x.label} ${fmt(x.value)}`).join(" · ")}.${pp ? " Les prélèvements PayPal servent souvent à payer Meta/TikTok Ads." : ""}` });
-      questions.push(`Débits bancaires à qualifier (${fmt(tot)} ${reporting}) : ${u.slice(0, 8).map((x) => `${x.label} ${fmt(x.value)}`).join(", ")}. Dis ce que c'est, en une phrase (ex. « PayPal = pub Meta, Hanayaka = achats de stock, BP Rives de Paris = emprunt, Zaoui = rémunération dirigeant ») — ce sera mémorisé comme règle pour tous les mois.`);
+      // Proposition IA (< 90 %, non appliquée) affichée à côté : le conseiller confirme d'un mot.
+      const sugg = (label: string) => {
+        const l = label.toLowerCase().replace(/\s+/g, " ");
+        const p = proposals.find((x) => x.match && x.confidence >= 0.3 && l.includes(x.match));
+        return p ? ` (IA : ${CAT_FR[p.category] ?? p.category} ? ${Math.round(p.confidence * 100)} %)` : "";
+      };
+      const hasSugg = u.slice(0, 8).some((x) => sugg(x.label));
+      questions.push(`Débits bancaires à qualifier (${fmt(tot)} ${reporting}) : ${u.slice(0, 8).map((x) => `${x.label} ${fmt(x.value)}${sugg(x.label)}`).join(", ")}. ${hasSugg ? "Valide ou corrige les propositions dans « Contreparties », ou d" : "D"}is ce que c'est, en une phrase (ex. « PayPal = pub Meta, Hanayaka = achats de stock, BP Rives de Paris = emprunt, Zaoui = rémunération dirigeant ») — ce sera mémorisé comme règle pour tous les mois.`);
     }
   }
   return { values, sources, traces, confidence, flags, breakdowns, kept, revenueDocs, effRoleOf, questions };

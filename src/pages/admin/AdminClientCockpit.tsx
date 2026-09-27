@@ -19,6 +19,7 @@ import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { ForcedWidgetsPanel } from '@/components/generic/ForcedWidgetsPanel';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
+import { CounterpartiesPanel, type CpOp } from '@/components/generic/CounterpartiesPanel';
 import { coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
@@ -95,7 +96,7 @@ export default function AdminClientCockpit() {
   const OP_LABELS: Record<string, string> = {
     standardize: 'Standardisation des données', generate: 'Génération du dashboard', validate: 'Validation',
     'save-sd': 'Enregistrement', recompute: 'Recalcul', status: 'Changement de statut',
-    files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données',
+    files: 'Mise à jour des fichiers', 'answer-missing': 'Mise à jour des données', counterparties: 'Qualification des contreparties',
     guidance: 'Enregistrement des consignes', ingest: 'Analyse de la transcription',
     'extract-file': 'Extraction du fichier',
   };
@@ -330,6 +331,18 @@ export default function AdminClientCockpit() {
     await loadStandardized();
     return res?.summary || 'Données mises à jour.';
   };
+
+  // Revue des contreparties bancaires : décision → règle du dossier → re-standardisation du mois.
+  const applyCpOps = (ops: CpOp[]) => run('counterparties', async () => {
+    const res = await invokeFn<{ rerun?: boolean }>('bank-rules', { client_id: id, ops });
+    await loadContext();
+    if (res?.rerun && sd) {
+      try { await runStandardize(id!, period, { filesPeriod: stdFilesPeriod(), onProgress: onStdProgress('Mise à jour — ') }); }
+      finally { setStdProgress(null); }
+      await loadStandardized();
+    }
+    return ops.length > 1 ? `${ops.length} contreparties qualifiées.` : 'Contrepartie mise à jour.';
+  });
 
   const saveStandardized = () => run('save-sd', async () => {
     if (!(editData?.sections?.length)) throw new Error('Aucune donnée à enregistrer.');
@@ -726,6 +739,7 @@ export default function AdminClientCockpit() {
               return applyAnswer(msg);
             })}
           />
+          <CounterpartiesPanel context={(currentContext as any)?.data} busy={busy === 'counterparties'} onApply={applyCpOps} />
           {isTemplate
             ? <StandardizedReview data={editData} onInputChange={setInputValue} />
             : <StandardizedTableEditor value={editData} onChange={setEditData} />}

@@ -659,8 +659,8 @@ const counterparty = (w: string): string => {
   return (m ? m[1] : s.slice(0, 32)).trim().replace(/\s{2,}/g, " ");
 };
 function classifyDebit(w: string, rules?: { match: string; category: string }[]): { cat: DebitCat; platform?: string } {
-  const d = w.toLowerCase();
-  for (const r of rules ?? []) if (r.match && d.includes(r.match.toLowerCase())) {
+  const d = w.toLowerCase().replace(/\s+/g, " ");
+  for (const r of rules ?? []) if (r.match && d.includes(r.match.toLowerCase().replace(/\s+/g, " ").trim())) {
     const c = r.category.toLowerCase();
     const map: Record<string, DebitCat> = { ads: "ads", pub: "ads", publicite: "ads", tools: "tools", outils: "tools", payroll: "payroll", salaires: "payroll",
       cogs: "stock", stock: "stock", achats: "stock", internal: "internal", interne: "internal", ignore: "ignore", fin: "fx", other: "other", autre: "other",
@@ -761,7 +761,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
     breakdowns: Object.keys(byPlat).length ? { ads_by_platform: { label: "Dépense pub par plateforme (banque)", rows: topN(byPlat, 8) } } : undefined,
     aux: { bankAccounts: accounts,
       netFlow: r2(accounts.reduce((s, acc) => s + flowsByAcc[acc].filter((f) => f.d.slice(0, 7) === ym).reduce((a, f) => a + f.a, 0), 0)),
-      ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 12).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
+      ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 40).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
     note: notes.join(" ") };
 }
 

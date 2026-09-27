@@ -45,7 +45,7 @@ export async function runStandardize(
   for (let i = 0; i < 60; i++) {
     const res = await invokeFn<any>('standardize-data', { client_id: clientId, period, files_period: filesPeriod });
     if (!res?.partial) return res ?? {};
-    opts.onProgress?.({ done: res.done ?? 0, total: res.total ?? files.length, step: 'Lecture des fichiers' });
+    opts.onProgress?.({ done: res.done ?? 0, total: res.total ?? files.length, step: res.step ?? 'Lecture des fichiers' });
     const need = ((res.needs_preparation ?? []) as { id: string; name: string }[]).filter((x) => !prepared.has(x.id));
     if (need.length) {
       await prepareExcelFiles(files.filter((f) => need.some((x) => x.id === f.id)));

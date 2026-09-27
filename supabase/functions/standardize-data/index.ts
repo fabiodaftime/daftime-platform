@@ -21,9 +21,11 @@ import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
 import { applyCostParams, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
+import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeClassified, splitByConfidence, toClassify,
+  CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-27.1";
+const ENGINE_VERSION = "2026-09-28.1";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -142,13 +144,18 @@ Deno.serve(async (req) => {
     let dataToSave: unknown;
     let missing: unknown[];
     let usage: unknown;
+    let qualification: { auto: BankRule[]; proposals: Proposal[] } | null = null;
 
     if (tpl) {
       const costParams = ((client as { cost_params?: CostParams }).cost_params ?? null) as CostParams | null;
-      const ctxData = (ctx?.data ?? {}) as { fx_rates?: Record<string, number>; bank_rules?: { match: string; category: string }[]; playbook?: { bank_rules?: { match: string; category: string }[] };
-        value_overrides?: Record<string, Record<string, { value: number; source: string }>> };
+      const ctxData = (ctx?.data ?? {}) as { fx_rates?: Record<string, number>; bank_rules?: BankRule[]; playbook?: { bank_rules?: { match: string; category: string }[] };
+        value_overrides?: Record<string, Record<string, { value: number; source: string }>>;
+        bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[] };
       const { factor, source: fxSource } = await ratesToReporting(period, currency, ctxData.fx_rates);
-      const categoryRules = [...(ctxData.playbook?.bank_rules ?? []), ...(ctxData.bank_rules ?? [])];
+      // Priorité : règles du dossier > playbook > dictionnaire global des contreparties (> classement intégré).
+      const { data: globalCp } = await admin.from("std_counterparties").select("match, category").order("match");
+      const categoryRules = [...(ctxData.bank_rules ?? []).map((r) => ({ match: r.match, category: r.category })),
+        ...(ctxData.playbook?.bank_rules ?? []), ...((globalCp ?? []) as { match: string; category: string }[])];
       const bankAnchors = costParams?.bank_anchors;
       const pctx = { reporting: currency, factor, period, activity, categoryRules, bankAnchors };
       // Empreinte à 2 niveaux : les règles bancaires / soldes de référence n'invalident QUE les relevés
@@ -207,7 +214,48 @@ Deno.serve(async (req) => {
         else if (c.status === "llm") { if (manualByName.get(name)?.role !== "ignore") llmFiles.push(f); }
         else skipped.push({ name, reason: c.reason ?? "non lu" });
       }
-      const merged = mergeParsed(parsed, manualByName, labelOf, currency);
+      let proposals = ctxData.bank_rule_proposals ?? [];
+      let merged = mergeParsed(parsed, manualByName, labelOf, currency, proposals);
+
+      // 3b) QUALIFICATION IA des débits bancaires encore inconnus (contrepartie + montant seulement).
+      //  ≥ 90 % → règle du dossier « IA » (appliquée, révocable) puis re-lecture du relevé ; sinon proposition.
+      const unq = merged.kept.flatMap((e) => (e.aux?.unqualifiedDebits as { label: string; value: number }[] | undefined) ?? []);
+      const asked = toClassify(unq, [...categoryRules.map((r) => r.match), ...proposals.map((p) => p.match), ...(ctxData.bank_rules_rejected ?? [])]).slice(0, 40);
+      if (asked.length && body.no_ai_rules !== true) {
+        try {
+          const { input } = await callAnthropicTool({ model: MODELS.fast, system: CLASSIFY_SYSTEM(activity),
+            messages: [{ role: "user", content: classifyUserText(asked, currency) }], tool: CLASSIFY_TOOL, max_tokens: 4000, signal: AbortSignal.timeout(60_000) });
+          const cls = sanitizeClassified(input, asked);
+          const split = splitByConfidence(cls, new Map(asked.map((a) => [a.label, a.value])), period);
+          // Contreparties que l'IA n'a pas su qualifier : mémorisées (confiance 0) pour ne pas être redemandées.
+          const got = new Set(cls.map((c) => c.counterparty));
+          const unknown: Proposal[] = asked.filter((a) => !got.has(a.label)).map((a) => ({ match: a.label.toLowerCase().replace(/\s+/g, " ").trim(),
+            category: "other" as CpCategory, label: a.label, confidence: 0, amount: a.value, period, reason: "non qualifiable automatiquement" }));
+          qualification = { auto: split.auto, proposals: [...split.proposals, ...unknown] };
+          if (!body.dry_run) {
+            const nextCtx = { ...((ctx?.data as Record<string, unknown>) ?? {}),
+              bank_rules: mergeRules(ctxData.bank_rules ?? [], split.auto), bank_rule_proposals: [...proposals, ...qualification.proposals] };
+            await insertVersion(admin, "contexts", { client_id }, { data: nextCtx, created_by: user.id });
+            for (const u of split.universal) {
+              const { data: cur } = await admin.from("std_counterparties").select("id, hits").eq("match", u.match).maybeSingle();
+              if (cur) await admin.from("std_counterparties").update({ hits: ((cur as { hits: number }).hits ?? 0) + 1, updated_at: new Date().toISOString() }).eq("id", (cur as { id: string }).id);
+              else await admin.from("std_counterparties").insert({ match: u.match, category: u.category, label: u.label, source: "ai", confidence: u.confidence });
+            }
+            // Nouvelles règles → le relevé doit être relu (empreinte bancaire changée) : on rend la main au front.
+            if (split.auto.length) {
+              const bankNames = files.filter((f) => isBank(cache.get(f.id)?.extract)).map((f) => f.original_name ?? f.id);
+              return json({ ok: true, partial: true, total: files.length, done: files.length - bankNames.length, pending: bankNames,
+                step: `Débits qualifiés par l'IA : ${split.auto.length}`, auto_rules: split.auto.length });
+            }
+          }
+          proposals = [...proposals, ...qualification.proposals];
+          merged = mergeParsed(parsed, manualByName, labelOf, currency, proposals);
+        } catch (e) { console.warn("standardize-data: qualification IA ignorée", e); }
+      }
+      // Traçabilité fait / hypothèse : les règles posées par l'IA restent visibles tant qu'un humain ne les a pas validées.
+      const iaRules = (ctxData.bank_rules ?? []).filter((r) => r.source === "ia");
+      if (iaRules.length) merged.flags.push({ id: "_ia_rules", severity: "info",
+        label: `Débits qualifiés automatiquement par l'IA (hypothèse, à vérifier dans « Contreparties ») : ${iaRules.slice(0, 8).map((r) => `${r.label ?? r.match} → ${CP_CATEGORY_LABELS[r.category as CpCategory] ?? r.category}${r.confidence ? ` (${Math.round(r.confidence * 100)} %)` : ""}`).join(" · ")}${iaRules.length > 8 ? ` · +${iaRules.length - 8}` : ""}.` });
       applyCostParams(merged, costParams, currency);
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
@@ -321,7 +369,7 @@ Deno.serve(async (req) => {
     }
 
     // Diagnostic : calcule tout SANS enregistrer de version (le cache d'extraction, lui, est alimenté).
-    if (body.dry_run) return json({ ok: true, partial: false, dry_run: true, data: dataToSave, missing_items: missing, usage });
+    if (body.dry_run) return json({ ok: true, partial: false, dry_run: true, data: dataToSave, missing_items: missing, usage, qualification });
 
     const saved = await insertVersion(admin, "standardized_data", { client_id, period }, {
       activity_type_id: client.activity_type_id,
