@@ -3,6 +3,7 @@
 // analysés ; alertes ; breakdowns ; et le JSON brut. Filtrable + export CSV. L'édition reste dans « Données ».
 import { useMemo, useState } from 'react';
 import { FileText, ShieldCheck, Info, CircleHelp, GitMerge, FunctionSquare, Copy, Check, AlertTriangle } from 'lucide-react';
+import { ControlsPanel } from './ControlsPanel';
 
 interface Trace { src: string; value: number }
 interface Row {
@@ -85,6 +86,7 @@ export function DataAudit({ data }: { data: any }) {
 
   return (
     <div className="space-y-4 text-sm">
+      <ControlsPanel controls={data?.controls} reliability={data?.reliability} />
       {/* Résumé */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         {meta.entity && <span><b>{meta.entity}</b></span>}

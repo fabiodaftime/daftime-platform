@@ -21,11 +21,13 @@ import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
 import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
+import { reliabilityIndex, runControls } from "../_shared/controls.ts";
+import { flatValues } from "../_shared/marginBridge.ts";
 import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeClassified, splitByConfidence, toClassify,
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-28.2";
+const ENGINE_VERSION = "2026-09-28.3";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -344,7 +346,12 @@ Deno.serve(async (req) => {
         merged, llmExtracts, factor, fxSource, skipped,
         expectedBreakdowns: (at?.config as { expected_breakdowns?: { key: string; label: string }[] })?.expected_breakdowns });
       const bankAccounts = [...new Set(merged.kept.flatMap((e) => (e.aux?.bankAccounts as string[] | undefined) ?? []))];
-      dataToSave = { ...out.data, meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod,
+      // 6) CONTRÔLES CROISÉS + INDICE DE FIABILITÉ (onglet Audit, accueil) — comparés au mois précédent standardisé.
+      const { data: prevSd } = await admin.from("standardized_data").select("data").eq("client_id", client_id).eq("period", prevP).eq("is_current", true).maybeSingle();
+      const cur = flatValues(out.data);
+      const controls = runControls(cur, prevSd ? flatValues(prevSd.data) : null, merged.kept, currency, { cogsMissing: merged.cogsMissing });
+      const reliability = reliabilityIndex(cur, controls, merged.kept);
+      dataToSave = { ...out.data, controls, reliability, meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod,
         ...(bankAccounts.length ? { bank_accounts: bankAccounts } : {}) } };
       missing = out.missing;
       usage = { parsers: merged.kept.length, llm: llmExtracts.length, files: files.length };

@@ -403,8 +403,11 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     if (tax != null) extras.push(`taxes ${fmtE(tax)}`);
     if (vis != null) extras.push(`${fmtE(vis)} visiteurs`);
     const isRevenue = v.ca != null;
+    const totalTTC = pick("Total sales");
     return mk(isRevenue ? "revenue" : "analytics", v, s, {
       exclusive: true, priority, ...(isRevenue ? { revenueCandidate: v.ca } : {}),
+      // Contrôles croisés (encaissements, TVA) : ventes TTC encaissables et taxes collectées du mois.
+      ...(priority >= 100 && (totalTTC != null || tax != null) ? { aux: { ...(totalTTC != null ? { salesTTC: totalTTC } : {}), ...(tax != null ? { taxesCollected: tax } : {}) } } : {}),
       // Note uniquement sur le rapport de référence (évite les doublons « remises » d'un rapport secondaire).
       note: extras.length && priority >= 100 ? `Shopify ${ym} (« ${short} ») : ${extras.join(" · ")} ${ctx.reporting}.` : undefined,
     });
@@ -693,7 +696,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   const ym = ctx.period.slice(0, 7);
   const v: Record<string, number> = {};
   const byPlat: Record<string, number> = {}; const excl: Record<string, number> = {}; const unk: Record<string, number> = {};
-  let inflow = 0, used = 0;
+  let inflow = 0, used = 0, debits = 0, vatPaid = 0;
   const flowsByAcc: Record<string, { d: string; a: number }[]> = {};
   for (const r of rows.slice(1)) {
     const d = isoOf(r[iD]); const amt = toNum(r[iA]); if (!d || amt == null) continue;
@@ -705,7 +708,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
     if (a >= 0) { inflow += a; continue; } // encaissements (Shopify, Klarna, Scalapay, PayPal…) = RÉCEPTION, jamais du CA
     const w = [r[iW], iT >= 0 ? r[iT] : "", iCm >= 0 ? r[iCm] : ""].filter(Boolean).join(" ");
     const { cat, platform } = classifyDebit(w, ctx.categoryRules);
-    const x = -a;
+    const x = -a; debits += x; if (cat === "vat") vatPaid += x;
     switch (cat) {
       case "ads": add(v, "ads_total", x); if (platform === "Meta") add(v, "ads_meta", x); if (platform === "Google") add(v, "ads_google", x); byPlat[platform ?? "Autre"] = (byPlat[platform ?? "Autre"] ?? 0) + x; break;
       case "tools": add(v, "platform_fees", x); break;
@@ -761,7 +764,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   ].filter(Boolean);
   return { parser: "pennylane_bank", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, sources, count: used,
     breakdowns: Object.keys(byPlat).length ? { ads_by_platform: { label: "Dépense pub par plateforme (banque)", rows: topN(byPlat, 8) } } : undefined,
-    aux: { bankAccounts: accounts,
+    aux: { bankAccounts: accounts, inflow: r2(inflow), totalDebits: r2(debits), vatPaid: r2(vatPaid),
       netFlow: r2(accounts.reduce((s, acc) => s + flowsByAcc[acc].filter((f) => f.d.slice(0, 7) === ym).reduce((a, f) => a + f.a, 0), 0)),
       ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 40).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
     note: notes.join(" ") };

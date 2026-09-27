@@ -12,6 +12,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
 import { currentPeriod, periodLabel, STATUS_LABELS } from '@/lib/genericApi';
 import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
+import { reliabilityTone } from '@/components/generic/ControlsPanel';
 import { DOC_CHECKLIST } from '@/lib/docChecklist';
 
 interface Client {
@@ -57,6 +58,8 @@ export default function AdminHome() {
   const [statusByClient, setStatusByClient] = useState<Record<string, string>>({});
   const [prodStatusByClient, setProdStatusByClient] = useState<Record<string, string>>({});
   const [missingByClient, setMissingByClient] = useState<Record<string, number>>({});
+  // Indice de fiabilité du mois (/100, moteur) : repère les dossiers à risque avant l'envoi.
+  const [reliabilityByClient, setReliabilityByClient] = useState<Record<string, number>>({});
   const [advisorById, setAdvisorById] = useState<Record<string, string>>({});
   const [activity, setActivity] = useState<any[]>([]);
   // Onglet actif (view) + filtre (loc) stockés dans l'URL : le bouton « retour » du navigateur
@@ -82,7 +85,7 @@ export default function AdminHome() {
         supabase.from('companies').select('id, layout_type'),
         supabase.from('dashboards' as any).select('client_id, status').eq('is_current', true).eq('period', period),
         supabase.from('production_status' as any).select('client_id, status').eq('period', period),
-        supabase.from('standardized_data' as any).select('client_id, missing_items').eq('is_current', true).eq('period', period),
+        supabase.from('standardized_data' as any).select('client_id, missing_items, reliability:data->reliability').eq('is_current', true).eq('period', period),
         supabase.from('advisors' as any).select('id, name'),
         supabase.from('activity_log' as any).select('id, action, created_at, metadata, client_id, clients:client_id(name)').order('created_at', { ascending: false }).limit(8),
       ]);
@@ -91,6 +94,7 @@ export default function AdminHome() {
       const smap: Record<string, string> = {}; for (const d of ((dash as any[]) ?? [])) smap[d.client_id] = d.status; setStatusByClient(smap);
       const psmap: Record<string, string> = {}; for (const p of ((ps as any[]) ?? [])) psmap[p.client_id] = p.status; setProdStatusByClient(psmap);
       const mmap: Record<string, number> = {}; for (const s of ((sd as any[]) ?? [])) mmap[s.client_id] = Array.isArray(s.missing_items) ? s.missing_items.length : 0; setMissingByClient(mmap);
+      const rmap: Record<string, number> = {}; for (const s of ((sd as any[]) ?? [])) if (typeof s.reliability?.score === 'number') rmap[s.client_id] = s.reliability.score; setReliabilityByClient(rmap);
       const amap: Record<string, string> = {}; for (const a of ((ad as any[]) ?? [])) amap[a.id] = a.name; setAdvisorById(amap);
       setActivity((act as any[]) ?? []);
       setLoading(false);
@@ -346,7 +350,11 @@ export default function AdminHome() {
                                 </select>
                               : <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{statusLabel(status)}</span>}
                           </td>
-                          <td className="px-4 py-2.5 text-center">{missing > 0 ? <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{missing}</span> : <span className="text-muted-foreground">—</span>}</td>
+                          <td className="px-4 py-2.5 text-center whitespace-nowrap">{missing > 0 ? <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{missing}</span> : <span className="text-muted-foreground">—</span>}
+                            {reliabilityByClient[c.id] != null && (
+                              <span className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded border tabular-nums ${reliabilityTone(reliabilityByClient[c.id])}`} title="Indice de fiabilité du mois (cible ≥ 90 avant envoi)">{reliabilityByClient[c.id]}/100</span>
+                            )}
+                          </td>
                           <td className="px-4 py-2.5 text-right"><button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button></td>
                         </tr>
                       ))}

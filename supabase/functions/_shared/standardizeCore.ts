@@ -39,6 +39,7 @@ export interface Merged {
   revenueDocs: ParsedExtract[];
   effRoleOf: (e: ParsedExtract) => string;
   questions: string[]; // questions ciblées ajoutées aux « pièces manquantes » (réponses → règles)
+  cogsMissing?: number; // lignes vendues toujours sans coût après complément SKU (contrôle de couverture)
 }
 
 // 1) FUSION des extractions déterministes.
@@ -153,10 +154,11 @@ export function mergeParsed(parsed: ParsedExtract[], manualByName: Map<string, {
 
 // 2) BRANCHEMENT de l'onboarding (Paramètres shop) — ce que les exports ne contiennent pas.
 export function applyCostParams(m: Merged, cp: CostParams | null | undefined, reporting: string): void {
-  if (!cp) return;
   // COGS : lignes de vente sans coût Shopify → complétées par le coût de revient SKU (1 unité / ligne).
   const cogsEx = m.kept.find((e) => e.aux?.cogsZeroLines);
   const zero = (cogsEx?.aux?.cogsZeroLines ?? {}) as Record<string, number>;
+  if (cogsEx) m.cogsMissing = Object.values(zero).reduce((s, x) => s + x, 0);
+  if (!cp) return;
   if (cogsEx && m.values.cogs != null && Object.keys(zero).length && cp.sku_costs?.length) {
     const costByName = new Map<string, number>();
     for (const s of cp.sku_costs) { const n = norm(s.name ?? s.sku ?? ""); if (n && typeof s.product_cost === "number" && s.product_cost > 0 && !costByName.has(n)) costByName.set(n, s.product_cost); }
@@ -171,6 +173,7 @@ export function applyCostParams(m: Merged, cp: CostParams | null | undefined, re
       m.sources.cogs = `${m.sources.cogs ?? ""} + complément coûts SKU onboarding (${lines} ligne(s))`;
       m.confidence.cogs = "estimated";
     }
+    m.cogsMissing = miss;
     if (miss) m.flags.push({ id: "_cogs_gap", severity: "warn", label: `COGS : ${miss} ligne(s) de vente sans coût ni dans Shopify ni dans tes coûts SKU — COGS encore sous-estimé. Complète « Coûts de revient par SKU » (Paramètres shop).` });
   }
   // Logistique : facture 3PL = fait ; sinon paramètre pick & pack × commandes = hypothèse.
