@@ -43,6 +43,9 @@ export function ForcedWidgetsPanel({ clientId, dataJson, initial, onChange }: {
     [dataJson],
   );
   const needs = TYPES.find((x) => x.type === type)?.needs ?? 'breakdown';
+  // Une carte n'a de sens que sur une répartition GÉOGRAPHIQUE.
+  const isGeo = (b: { key: string; label: string }) => /countr|pays|region|région|géo|geo/i.test(`${b.key} ${b.label}`);
+  const bkOptions = type === 'map' ? breakdowns.filter(isGeo) : breakdowns;
 
   const persist = async (next: ForcedWidget[]) => {
     setList(next); onChange?.(next); setSaving(true); setErr(null);
@@ -96,8 +99,8 @@ export function ForcedWidgetsPanel({ clientId, dataJson, initial, onChange }: {
         {needs === 'breakdown' ? (
           <select value={breakdown} onChange={(e) => setBreakdown(e.target.value)}
             className="h-8 rounded border bg-background px-2 text-sm min-w-[160px]">
-            <option value="">— donnée —</option>
-            {breakdowns.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+            <option value="">{bkOptions.length ? '— donnée —' : '— aucune donnée compatible —'}</option>
+            {bkOptions.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
           </select>
         ) : (
           <select multiple value={metrics}
@@ -116,7 +119,10 @@ export function ForcedWidgetsPanel({ clientId, dataJson, initial, onChange }: {
       </div>
 
       {breakdowns.length === 0 && metricOpts.length === 0 && (
-        <p className="text-xs text-muted-foreground mt-2">Génère d'abord un dashboard pour voir les données disponibles de ce client.</p>
+        <p className="text-xs text-muted-foreground mt-2">Standardise d'abord les données du mois (onglet « Données ») pour voir ce qui est disponible.</p>
+      )}
+      {type === 'map' && breakdowns.length > 0 && bkOptions.length === 0 && (
+        <p className="text-xs text-muted-foreground mt-2">Aucune répartition par pays ce mois-ci (ex. export Shopify des ventes par pays, ou commandes Bigblue).</p>
       )}
       {err && <p className="text-xs text-destructive mt-2">Erreur d'enregistrement : {err}</p>}
       <p className="text-xs text-muted-foreground mt-2">💡 Un graphique n'apparaît que si sa donnée existe pour le mois. <b>Régénère</b> le dashboard pour l'appliquer.</p>

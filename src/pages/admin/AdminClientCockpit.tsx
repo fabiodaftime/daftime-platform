@@ -476,6 +476,17 @@ export default function AdminClientCockpit() {
 
   if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
+  // Données disponibles pour les graphiques obligatoires : celles du mois STANDARDISÉ (dispo avant toute
+  // génération), complétées par celles du dashboard (répartitions dérivées à la génération).
+  const forcedData = (() => {
+    const labels: Record<string, string> = {};
+    for (const s of (sd as any)?.data?.sections ?? []) for (const r of s.rows ?? []) if (typeof r.value === 'number') labels[r.id] = r.label;
+    return {
+      breakdowns: { ...((sd as any)?.data?.breakdowns ?? {}), ...((dash?.data_json as any)?.breakdowns ?? {}) },
+      history: { labels: { ...labels, ...((dash?.data_json as any)?.history?.labels ?? {}) } },
+    };
+  })();
+
   return (
     <AppShell
       title={client.name}
@@ -813,7 +824,7 @@ export default function AdminClientCockpit() {
             <div className="mt-2">
               <ForcedWidgetsPanel
                 clientId={id!}
-                dataJson={dash?.data_json}
+                dataJson={forcedData}
                 initial={(client?.forced_widgets ?? []) as never}
                 onChange={(fw) => setClient((c: any) => (c ? { ...c, forced_widgets: fw } : c))}
               />
