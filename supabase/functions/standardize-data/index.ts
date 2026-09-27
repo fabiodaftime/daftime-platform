@@ -21,6 +21,7 @@ import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
 import { bankRows, extractToFacts, readFacts } from "../_shared/registry.ts";
+import { forecastCash } from "../_shared/cashForecast.ts";
 import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls } from "../_shared/controls.ts";
 import { flatValues } from "../_shared/marginBridge.ts";
@@ -400,7 +401,25 @@ Deno.serve(async (req) => {
       const cur = flatValues(out.data);
       const controls = runControls(cur, prevSd ? flatValues(prevSd.data) : null, merged.kept, currency, { cogsMissing: merged.cogsMissing });
       const reliability = reliabilityIndex(cur, controls, merged.kept);
-      dataToSave = { ...out.data, controls, reliability, meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,
+      // 7) TRÉSORERIE À 13 SEMAINES (registre : flux au jour) — seulement si la trésorerie de fin de mois est connue.
+      let cashForecast: unknown = null;
+      if (typeof cur.cash_end === "number") {
+        try {
+          const [y, mo] = period.slice(0, 7).split("-").map(Number);
+          const asOf = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
+          const since = new Date(Date.UTC(y, mo, 0) - 90 * 86400000).toISOString().slice(0, 10);
+          const txs: { tx_date: string; amount: number; counterparty: string | null; label: string | null; currency?: string | null }[] = [];
+          for (let off = 0; off < 20000; off += 1000) {
+            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, currency")
+              .eq("client_id", client_id).gte("tx_date", since).lte("tx_date", asOf).order("tx_date").range(off, off + 999);
+            // Devise d'origine conservée dans le registre : on ne projette que les flux dans la devise du client.
+            txs.push(...((page ?? []) as typeof txs).filter((t) => !t.currency || t.currency === currency).map((t) => ({ ...t, amount: Number(t.amount) })));
+            if (!page || page.length < 1000) break;
+          }
+          cashForecast = forecastCash(txs, asOf, cur.cash_end);
+        } catch (e) { console.warn("trésorerie 13 semaines :", e instanceof Error ? e.message : String(e)); }
+      }
+      dataToSave = { ...out.data, controls, reliability, ...(cashForecast ? { cash_forecast: cashForecast } : {}), meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,
         ...(bankAccounts.length ? { bank_accounts: bankAccounts } : {}) } };
       missing = out.missing;
       usage = { parsers: merged.kept.length, llm: llmExtracts.length, files: files.length };

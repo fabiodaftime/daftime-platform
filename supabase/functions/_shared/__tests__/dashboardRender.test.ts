@@ -27,6 +27,14 @@ describe("rendu doctrinal", () => {
     expect(html).toContain("Publicité");       // libellé de la cascade CM2 → CM3
     expect(html).toContain("CM3 juillet");      // barre de départ du pont
   });
+  it("trésorerie à 13 semaines : point bas et passage sous zéro", () => {
+    const h = renderDashboard({ client: "T", period: "2026-08-01", currency: "EUR", metrics: {}, history: { months: [], series: {}, labels: {} },
+      cashForecast: { start: { date: "2026-08-31", balance: 20_000 }, weeks: [{ week_start: "2026-09-01", inflow: 7_000, outflow: 17_000, balance: 10_000 }],
+        low: { date: "2026-11-05", balance: -3_143 }, below_zero: "2026-11-05", run_rate: { inflow_week: 7_000, outflow_week: 5_000 }, scheduled: [], hypotheses: ["Encaissements au rythme…"] } },
+      { pages: [{ title: "Trésorerie", widgets: [{ type: "cash_forecast" }] }] });
+    expect(h).toMatch(/Trésorerie à 13 semaines/);
+    expect(h).toMatch(/Passage sous zéro le 05\/11/);
+  });
   it("repère CM3 de la doctrine (sain 15-30 %)", () => {
     expect(html).toMatch(/sain 15-30 %/);
   });

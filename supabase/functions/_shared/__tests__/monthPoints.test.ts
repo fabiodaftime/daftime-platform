@@ -32,6 +32,12 @@ describe("3 points du mois", () => {
     expect(pts[2]).toMatchObject({ key: "tresorerie", tone: "warn" });
     expect(pts[2].text).toMatch(/1 mois devant toi/);
   });
+  it("point bas à 13 semaines sous zéro : prime sur la variation du mois", () => {
+    const pts = selectMonthPoints({ ...derived(aug), cash_start: 80_000, cash_end: 50_000 }, b, "EUR", undefined,
+      { start: { balance: 50_000 }, low: { date: "2026-11-05", balance: -3_143 }, below_zero: "2026-11-05" });
+    expect(pts[2]).toMatchObject({ key: "tresorerie", tone: "warn" });
+    expect(pts[2].text).toMatch(/passe sous zéro le 05\/11/);
+  });
   it("logistique inconnue : le point le dit, pas de fausse certitude", () => {
     const pts = selectMonthPoints({ ca: 100_000, cogs: 40_000, cm1: 60_000, cm1_rate: 60 }, null, "EUR");
     expect(pts[0].text).toMatch(/Logistique inconnue/);

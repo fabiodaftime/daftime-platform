@@ -14,6 +14,7 @@ import { assess } from "../_shared/benchmarks.ts";
 import { averageBase, flatValues, marginBridge, type Bridge } from "../_shared/marginBridge.ts";
 import { buildStandardized, getCatalog } from "../_shared/templates.ts";
 import { numbersPreserved, selectMonthPoints, type MonthPoint } from "../_shared/monthPoints.ts";
+import type { CashForecast } from "../_shared/cashForecast.ts";
 
 // DOCTRINE (docs/Doctrine_Pilotage_Econamy_Daftime.md) — fait autorité sur toute convention générale.
 const DOCTRINE = `DOCTRINE DAFTIME (prime sur tes habitudes d'analyste) :
@@ -204,7 +205,7 @@ function renders(w: Widget, a: Avail): boolean {
     case "matrix_table": case "scatter":
       return !!w.breakdown && a.brk.has(w.breakdown);
     case "callout": return !!(w.text && w.text.trim());
-    case "points": case "bridge": return true; // insérés par le code seulement s'ils existent (vide sinon)
+    case "points": case "bridge": case "cash_forecast": return true; // insérés par le code seulement s'ils existent (vide sinon)
     case "scorecard": return true; // s'auto-valide au rendu (vide si < 3 verdicts)
     default: return false;
   }
@@ -417,7 +418,8 @@ Deno.serve(async (req) => {
     const bridgeAvg: Bridge | null = avg3 ? marginBridge(curMap, avg3, "moyenne des 3 mois précédents") : null;
     const mainBridge = bridgePrev ?? bridgeAvg;
     // LES 3 POINTS DU MOIS : faits sélectionnés par règles (ordre doctrinal) ; l'IA ne fera que les reformuler.
-    const pointFacts: MonthPoint[] = selectMonthPoints(curMap, mainBridge, (client as { currency?: string } | null)?.currency ?? "EUR");
+    const cashForecast = ((sd.data as { cash_forecast?: CashForecast }).cash_forecast) ?? null;
+    const pointFacts: MonthPoint[] = selectMonthPoints(curMap, mainBridge, (client as { currency?: string } | null)?.currency ?? "EUR", undefined, cashForecast);
     const fmtE = (x: number) => Math.round(x).toLocaleString("fr-FR");
     const bridgeText = (b: Bridge | null) => b ? `${b.level.toUpperCase()} ${fmtE(b.from)} (${b.base}) → ${fmtE(b.to)} ce mois (${b.delta >= 0 ? "+" : ""}${fmtE(b.delta)}) : ${b.effects.map((e) => `${e.label} ${e.value >= 0 ? "+" : ""}${fmtE(e.value)}`).join(" ; ")}${b.missing ? ` [${b.missing}]` : ""}` : "";
 
@@ -658,18 +660,20 @@ Deno.serve(async (req) => {
         p.widgets = p.widgets.map((w) => ({ ...w, ...(w.title ? { title: dejargon(w.title) } : {}), ...(w.text ? { text: dejargon(w.text) } : {}) }));
       }
       if (plan.pages[0]) {
-        for (const p of plan.pages) p.widgets = p.widgets.filter((w) => w.type !== "points" && w.type !== "bridge");
+        for (const p of plan.pages) p.widgets = p.widgets.filter((w) => w.type !== "points" && w.type !== "bridge" && w.type !== "cash_forecast");
         const w0 = plan.pages[0].widgets;
         if (mainBridge) { const at = w0.findIndex((x) => x.type === "kpi_row"); w0.splice(at >= 0 ? at + 1 : 0, 0, { type: "bridge" } as Widget); }
         if (points.length) w0.unshift({ type: "points", title: "Les 3 points du mois" } as Widget);
+        // Double lecture : la trésorerie à 13 semaines va sur la page trésorerie si elle existe, sinon en 1re page.
+        if (cashForecast) { const tp = plan.pages.find((p) => /tr[ée]so|cash/i.test(p.title)) ?? plan.pages[0]; const at = tp.widgets.findIndex((x) => x.type === "kpi_row"); tp.widgets.splice(at >= 0 ? at + 1 : 0, 0, { type: "cash_forecast" } as Widget); }
       }
 
       const html = await renderDashboardWithFx(
-        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets, bridge: mainBridge, points },
+        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets, bridge: mainBridge, points, cashForecast },
         plan,
       );
       const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, sections, history, plan, theme, breakdowns, targets,
-        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg } };
+        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg }, cash_forecast: cashForecast };
       const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });

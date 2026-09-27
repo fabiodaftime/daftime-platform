@@ -7,6 +7,7 @@ import { assess, type BenchOverride } from "./benchmarks.ts";
 import { ratesToReporting } from "./fx.ts";
 import type { Bridge } from "./marginBridge.ts";
 import type { MonthPoint } from "./monthPoints.ts";
+import type { CashForecast } from "./cashForecast.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
 // Colonne d'un breakdown MULTI-COLONNES (ex. perf par canal : CA, commission, marge…).
@@ -26,6 +27,7 @@ export interface RenderCtx {
   targets?: Record<string, number>;
   fxRate?: number; // taux AED pour 1 EUR (bascule devise) — injecté par renderDashboardWithFx ; repli constant sinon
   bridge?: Bridge | null;      // pont d'écarts de marge (déterministe) — widget "bridge"
+  cashForecast?: CashForecast | null; // trésorerie à 13 semaines — widget "cash_forecast"
   points?: MonthPoint[] | null; // les 3 points du mois — widget "points"
 }
 export interface Widget {
@@ -38,7 +40,8 @@ export interface Widget {
     | "matrix_table" // tableau multi-colonnes trié (perf par canal/produit) — lit un breakdown à colonnes
     | "scatter" // nuage de points volume (CA) vs marge % — lit un breakdown à colonnes
     | "points"  // les 3 points du mois (doctrine) — lit ctx.points
-    | "bridge"; // pont d'écarts de marge vs M-1 — lit ctx.bridge
+    | "bridge" // pont d'écarts de marge vs M-1 — lit ctx.bridge
+    | "cash_forecast"; // trésorerie à 13 semaines (point bas) — lit ctx.cashForecast
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   line?: string; // widget "combo" : id de la métrique tracée en courbe (2e axe)
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
@@ -106,7 +109,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
   // callout = bandeau d'analyse → TOUJOURS pleine largeur (bande fine sur toute la largeur, jamais un bloc 1/3 épais).
   const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table", "callout", "points"]);
-  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter", "bridge"]);
+  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter", "bridge", "cash_forecast"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
   const chCard = (id: string, title: string, cls = "echart") => `<div class="card chartcard"><div class="card-t">${esc(title)}</div><div class="${cls}" id="${id}"></div></div>`;
@@ -560,6 +563,20 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const id = `ch${cid++}`;
         charts.push({ id, kind: "waterfall", labels, base, delta, colors, real });
         return chCard(id, w.title ?? `Pourquoi la marge a bougé (${lv}, vs ${b.base})`);
+      }
+      case "cash_forecast": {
+        // TRÉSORERIE À 13 SEMAINES : solde projeté fin de semaine (rythme constant) + point bas daté.
+        const f = ctx.cashForecast;
+        if (!f || !f.weeks?.length) return "";
+        const d = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+        const id = `ch${cid++}`;
+        charts.push({ id, kind: "line", labels: [d(f.start.date), ...f.weeks.map((x) => d(x.week_start))],
+          series: [{ name: "Trésorerie projetée", data: [f.start.balance, ...f.weeks.map((x) => x.balance)], color: f.below_zero ? "#e24b4a" : primary }] });
+        const lowTxt = f.below_zero ? `Passage sous zéro le ${d(f.below_zero)} · point bas ${fmt(f.low.balance, ctx.currency, ctx.currency)} le ${d(f.low.date)}`
+          : `Point bas ${fmt(f.low.balance, ctx.currency, ctx.currency)} le ${d(f.low.date)}`;
+        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Trésorerie à 13 semaines")}</div>` +
+          `<div class="co-t" style="margin:2px 0 6px;color:${f.below_zero ? "#dc2626" : "inherit"}">${esc(lowTxt)}</div><div class="echart" id="${id}"></div>` +
+          `<div style="font-size:11.5px;opacity:.7;margin-top:6px">Projection à rythme constant (hypothèse) : ${esc(f.hypotheses?.[0] ?? "")}</div></div>`;
       }
       case "callout": {
         if (!w.text) return "";
