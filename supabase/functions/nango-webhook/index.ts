@@ -46,7 +46,9 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   const raw = await req.text();
-  const sigHeader = req.headers.get("X-Nango-Signature") ?? req.headers.get("X-Nango-Hmac-Sha256");
+  // Nango envoie DEUX en-têtes : X-Nango-Hmac-Sha256 (HMAC-SHA256 du corps brut avec la signing key —
+  // celui qu'on vérifie) et X-Nango-Signature (ancien format, simple SHA-256 : ne correspond jamais à un HMAC).
+  const sigHeader = req.headers.get("X-Nango-Hmac-Sha256") ?? req.headers.get("X-Nango-Signature");
   const ok = await verifySignature(raw, sigHeader);
   if (!ok) return json({ error: "Signature invalide" }, 401);
 
