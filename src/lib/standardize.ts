@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeFn } from '@/lib/genericApi';
 import { derivedCsvPath, isExcelName, workbookToText } from '../../supabase/functions/_shared/xlsxText';
+import { detectSource, type DetectedSource } from '../../supabase/functions/_shared/detectSource';
 
 const BUCKET = 'client-files';
 type FileRow = { id: string; original_name: string | null; storage_path: string | null; updated_at: string | null };
@@ -24,6 +25,37 @@ export async function prepareExcelFiles(files: FileRow[]): Promise<number> {
     const up = await supabase.storage.from(BUCKET).upload(dp, new Blob([text], { type: 'text/csv' }), { upsert: true, contentType: 'text/csv' });
     if (up.error) throw up.error;
     n++;
+  }
+  return n;
+}
+
+// Reconnaissance au DÉPÔT (navigateur) : source, famille, période couverte → files.detected.
+// Un Excel est converti au passage (CSV préparé) : la standardisation n'aura plus à le faire.
+// Ordre imposé : écrire `detected` AVANT de lire updated_at (le trigger le modifie) puis déposer le CSV.
+const TEXTUAL = /\.(csv|tsv|txt|json)$/i;
+export async function analyzeFile(blob: Blob, row: { id: string; original_name: string | null; storage_path: string | null }): Promise<DetectedSource> {
+  const name = row.original_name ?? '';
+  let text = '';
+  if (isExcelName(name)) text = workbookToText(XLSX, new Uint8Array(await blob.arrayBuffer()));
+  else if (TEXTUAL.test(name) && blob.size < 30_000_000) text = await blob.text();
+  const det = detectSource(name, text);
+  if (!text) det.label = /\.pdf$/i.test(name) ? 'PDF → lu par l\'IA' : /\.(png|jpe?g|webp|gif)$/i.test(name) ? 'Image → lue par l\'IA' : det.label;
+  await supabase.from('files' as any).update({ detected: det } as any).eq('id', row.id);
+  if (isExcelName(name) && text) {
+    const { data: fresh } = await supabase.from('files' as any).select('id, storage_path, updated_at').eq('id', row.id).maybeSingle();
+    const dp = fresh ? derivedCsvPath(fresh as any) : null;
+    if (dp) await supabase.storage.from(BUCKET).upload(dp, new Blob([text], { type: 'text/csv' }), { upsert: true, contentType: 'text/csv' });
+  }
+  return det;
+}
+
+// Rattrapage : fichiers déjà déposés sans reconnaissance (téléchargés puis analysés).
+export async function analyzeStoredFiles(rows: FileRow[], onProgress?: (done: number, total: number) => void): Promise<number> {
+  let n = 0;
+  for (const r of rows.filter((x) => x.storage_path)) {
+    const { data: blob } = await supabase.storage.from(BUCKET).download(r.storage_path!);
+    if (blob) { await analyzeFile(blob, r); n++; }
+    onProgress?.(n, rows.length);
   }
   return n;
 }

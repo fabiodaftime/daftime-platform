@@ -20,11 +20,19 @@ import { ForcedWidgetsPanel } from '@/components/generic/ForcedWidgetsPanel';
 import { AssistantChat } from '@/components/generic/AssistantChat';
 import { MissingItemsTable } from '@/components/generic/MissingItemsTable';
 import { CounterpartiesPanel, type CpOp } from '@/components/generic/CounterpartiesPanel';
-import { coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
+import { analyzeFile, analyzeStoredFiles, coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
+import { SourceCoverage } from '@/components/generic/SourceCoverage';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
 
 const BUCKET = 'client-files';
+// Période couverte par un fichier : « 31/07 → 20/08/26 » ou « janv. → août 2026 » pour les exports mensuels.
+const fmtRange = (from: string, to?: string) => {
+  const d = (s: string) => `${s.slice(8, 10)}/${s.slice(5, 7)}`;
+  if (!to || to === from) return `${d(from)}/${from.slice(2, 4)}`;
+  if (from.slice(8, 10) === '01' && to.slice(0, 7) !== from.slice(0, 7)) return `${periodLabel(`${from.slice(0, 7)}-01`)} → ${periodLabel(`${to.slice(0, 7)}-01`)}`;
+  return `${d(from)} → ${d(to)}/${to.slice(2, 4)}`;
+};
 
 // Catégories de documents par activité (le moteur les mappe vers le bon traitement comptable).
 const DOC_CATEGORIES: Record<string, { value: string; label: string }[]> = {
@@ -242,8 +250,17 @@ export default function AdminClientCockpit() {
           client_id: id, period, original_name: f.name, storage_path: path, status: 'uploaded', uploaded_by: user?.id ?? null,
         });
       }
+      // Reconnaissance immédiate (source, période couverte) — un échec n'empêche jamais le dépôt.
+      const { data: row } = await supabase.from('files' as any).select('id, original_name, storage_path').eq('client_id', id).eq('storage_path', path).order('updated_at', { ascending: false }).limit(1).maybeSingle();
+      if (row) { try { await analyzeFile(f, row as any); } catch (e) { console.warn('reconnaissance', f.name, e); } }
     }
     await loadFiles();
+  });
+  const analyzeMissing = () => run('files', async () => {
+    const todo = files.filter((f: any) => !f.detected && !missingContent.has(f.id));
+    const n = await analyzeStoredFiles(todo, (d, t) => setNotice({ kind: 'running', text: `Reconnaissance des fichiers (${d}/${t})…` }));
+    await loadFiles();
+    return `${n} fichier(s) reconnu(s).`;
   });
 
   const deleteFile = (f: any) => run('files', async () => {
@@ -679,7 +696,13 @@ export default function AdminClientCockpit() {
           <ul className="mt-1 text-sm divide-y">
             {files.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-2 text-muted-foreground py-1.5">
-                <span className="flex-1 min-w-[160px]">• {f.original_name} <span className="text-xs">({f.status})</span>
+                <span className="flex-1 min-w-[160px]">• {f.original_name}
+                  {f.detected && (
+                    <span className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded whitespace-nowrap ${f.detected.recognized ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}
+                      title={f.detected.recognized ? 'Lu par un lecteur dédié (chiffres exacts)' : 'Format non reconnu : lu par l\'IA de secours (à vérifier)'}>
+                      {f.detected.label}{f.detected.from ? ` · ${fmtRange(f.detected.from, f.detected.to)}` : ''}
+                    </span>
+                  )}
                   {missingContent.has(f.id) && <span className="ml-1.5 text-xs font-medium text-destructive" title="La ligne existe mais le fichier n'est plus dans le stockage : il ne sera pas lu. Redépose-le.">⚠ contenu manquant — redépose-le</span>}
                 </span>
                 <select value={f.doc_role ?? ''} title="Catégorie du document"
@@ -696,6 +719,12 @@ export default function AdminClientCockpit() {
               </li>
             ))}
           </ul>
+          {files.some((f: any) => !f.detected && !missingContent.has(f.id)) && (
+            <button className="mt-2 text-xs underline text-muted-foreground hover:text-foreground" onClick={analyzeMissing} disabled={!!busy}>
+              Reconnaître les fichiers déjà déposés ({files.filter((f: any) => !f.detected && !missingContent.has(f.id)).length})
+            </button>
+          )}
+          <SourceCoverage clientId={id!} period={period} activity={(client as any)?.activity_types?.slug} refreshKey={files} />
         </Section>
 
         <Section icon={<Wand2 className="w-4 h-4" />} title="Données standardisées"
