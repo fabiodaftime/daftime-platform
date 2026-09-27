@@ -24,7 +24,7 @@ const PLATFORM = {
   "generate-dashboard": true, "standardize-data": true, "chat-standardize": true, "chat-iterate": true,
   "extract-context": true, "extract-brand": true, "client-chat": true, "template-recompute": true,
   "distill-feedback": true, "restyle-dashboard": true, "dashboard-chat": true, "map-sku-costs": true, "bank-rules": true, "shopify-sync": true,
-  "pennylane-sync": true, "shopify-install": false, "shopify-compliance": false, // appels Shopify / marchand sans compte Daftime : signature Shopify vérifiée dans le code
+  "pennylane-sync": true, "client-access": true, "shopify-install": false, "shopify-compliance": false, // appels Shopify / marchand sans compte Daftime : signature Shopify vérifiée dans le code
   "nango-connect-session": true, "nango-webhook": false, "ingest-records": false,
 };
 const FORBIDDEN = new Set(["sync-gsheet-to-inputs"]);

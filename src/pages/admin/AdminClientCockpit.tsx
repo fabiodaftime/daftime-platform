@@ -24,6 +24,7 @@ import { StructuredAnswers, type CostParamsLite } from '@/components/generic/Str
 import { analyzeFile, analyzeStoredFiles, coveredMonths, runStandardize, type StdProgress } from '@/lib/standardize';
 import { SourceCoverage } from '@/components/generic/SourceCoverage';
 import { ConnectorsPanel } from '@/components/generic/ConnectorsPanel';
+import { ClientAccessPanel } from '@/components/generic/ClientAccessPanel';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
 
@@ -930,6 +931,7 @@ export default function AdminClientCockpit() {
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />
           </Section>
         )}
+        <ClientAccessPanel clientId={id!} published={dash?.status === 'publie'} />
         </>)}
         </div>
         </div>
