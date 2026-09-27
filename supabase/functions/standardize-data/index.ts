@@ -19,7 +19,8 @@ import { MISSING_CONTENT, readClientFiles, readOneFile, filesToContentBlocks, ty
 import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.ts";
 import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
-import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
+import { parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
+import { bankRows, extractToFacts, readFacts } from "../_shared/registry.ts";
 import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls } from "../_shared/controls.ts";
 import { flatValues } from "../_shared/marginBridge.ts";
@@ -99,6 +100,40 @@ async function sha1(s: string): Promise<string> {
 }
 
 type FileRow = { id: string; original_name: string | null; storage_path: string | null; updated_at: string | null; doc_role?: string | null; doc_note?: string | null };
+
+// ── REGISTRE (chantier B, étape 1 : double écriture) ───────────────────────────────────────────
+// Jamais bloquant : une erreur d'écriture du registre est journalisée, la standardisation continue.
+type Admin = Parameters<typeof insertVersion>[0];
+async function registerBankFile(admin: Admin, client_id: string, f: FileRow, text: string): Promise<void> {
+  try {
+    // Déjà enregistré pour CETTE version du fichier (re-standardisation d'un autre mois) → rien à faire.
+    const { data: done } = await admin.from("src_bank_transactions").select("id").eq("file_id", f.id).gte("synced_at", f.updated_at ?? "1970-01-01").limit(1);
+    if (done?.length) return;
+    const txs = pennylaneTransactions(text);
+    if (!txs?.length) return;
+    const rows = bankRows(txs, { client_id, source: "pennylane_file", file_id: f.id });
+    for (let i = 0; i < rows.length; i += 500) {
+      const { error } = await admin.from("src_bank_transactions").upsert(rows.slice(i, i + 500), { onConflict: "dedup_key" });
+      if (error) throw error;
+    }
+  } catch (e) { console.warn("registre (transactions) :", e instanceof Error ? e.message : String(e)); }
+}
+async function registerFacts(admin: Admin, client_id: string, period: string, parsed: ParsedExtract[], files: FileRow[], mergedValues: Record<string, number>) {
+  try {
+    const idOf = new Map(files.map((f) => [f.original_name ?? f.id, f.id]));
+    const facts = parsed.flatMap((e) => extractToFacts(e, { client_id, period, file_id: idOf.get(e.file ?? "") ?? null, file_name: e.file ?? "" }))
+      .map((x) => ({ ...x, engine: ENGINE_VERSION }));
+    // Les faits « fichiers » du mois sont entièrement dérivés des fichiers présents : on les remplace
+    // (un fichier supprimé ne laisse pas de fait orphelin). Les faits des connecteurs (file_id nul) restent.
+    await admin.from("std_facts").delete().eq("client_id", client_id).eq("period", period).not("file_id", "is", null);
+    const uniq = [...new Map(facts.map((x) => [x.dedup_key, x])).values()];
+    if (uniq.length) { const { error } = await admin.from("std_facts").upsert(uniq, { onConflict: "dedup_key" }); if (error) throw error; }
+    const read = readFacts(facts);
+    const diffs = Object.keys({ ...read, ...mergedValues }).filter((k) => Math.abs((read[k] ?? NaN) - (mergedValues[k] ?? NaN)) > 0.005 || (read[k] == null) !== (mergedValues[k] == null))
+      .map((k) => ({ id: k, registre: read[k] ?? null, fusion: mergedValues[k] ?? null }));
+    return { facts: uniq.length, equal: diffs.length === 0, diffs: diffs.slice(0, 20) };
+  } catch (e) { console.warn("registre (faits) :", e instanceof Error ? e.message : String(e)); return { error: e instanceof Error ? e.message : String(e) }; }
+}
 type CacheRow = { file_id: string; fingerprint: string; status: "parsed" | "llm" | "skipped"; extract: ParsedExtract | null; reason: string | null };
 
 Deno.serve(async (req) => {
@@ -192,6 +227,8 @@ Deno.serve(async (req) => {
         else if (r.item.kind === "text") {
           const p = parseFile(name, r.item.content, pctx);
           if (p) { p.file = name; row = { file_id: f.id, fingerprint: fpOf(f, isBank(p)), status: "parsed", extract: p, reason: null }; }
+          // REGISTRE (double écriture) : transactions bancaires BRUTES, une seule fois par version du fichier.
+          if (p?.parser === "pennylane_bank") await registerBankFile(admin, client_id, f, r.item.content);
           else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "format non reconnu → IA" };
         } else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "PDF/image → IA" };
         spent += performance.now() - t0 + r.cpuMs; doneNow++;
@@ -218,6 +255,8 @@ Deno.serve(async (req) => {
       }
       let proposals = ctxData.bank_rule_proposals ?? [];
       let merged = mergeParsed(parsed, manualByName, labelOf, currency, proposals);
+      // REGISTRE (double écriture) : faits du mois + contrôle « lecture du registre = fusion » au centime.
+      const registryCheck = await registerFacts(admin, client_id, period, parsed, files, merged.values);
 
       // 3b) QUALIFICATION IA des débits bancaires encore inconnus (contrepartie + montant seulement).
       //  ≥ 90 % → règle du dossier « IA » (appliquée, révocable) puis re-lecture du relevé ; sinon proposition.
@@ -351,7 +390,7 @@ Deno.serve(async (req) => {
       const cur = flatValues(out.data);
       const controls = runControls(cur, prevSd ? flatValues(prevSd.data) : null, merged.kept, currency, { cogsMissing: merged.cogsMissing });
       const reliability = reliabilityIndex(cur, controls, merged.kept);
-      dataToSave = { ...out.data, controls, reliability, meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod,
+      dataToSave = { ...out.data, controls, reliability, meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,
         ...(bankAccounts.length ? { bank_accounts: bankAccounts } : {}) } };
       missing = out.missing;
       usage = { parsers: merged.kept.length, llm: llmExtracts.length, files: files.length };

@@ -689,6 +689,34 @@ function classifyDebit(w: string, rules?: { match: string; category: string }[])
   if (SAAS.test(w) || /shopify international|klaviyo|gorgias|zapier|triple ?whale|judge\.me|recharge|loox|yotpo/i.test(w)) return { cat: "tools" };
   return { cat: "unknown" };
 }
+// REGISTRE : transactions BRUTES d'un relevé Pennylane, sans catégorie figée ni conversion. Le classement
+// se fait à la LECTURE (règles du moment) → une nouvelle règle reclasse tout l'historique sans relire le fichier.
+// Clé de dédoublonnage stable d'un export à l'autre (compte, date, montant, libellé, rang des doublons du jour).
+export type { DebitCat };
+export { classifyDebit, counterparty };
+export interface BankTx { account: string; date: string; amount: number; currency: string | null; label: string; counterparty: string; dedup: string }
+export function pennylaneTransactions(text: string): BankTx[] | null {
+  if (/^# Feuille: /m.test(text.slice(0, 300))) {
+    for (const block of text.split(/^# Feuille: .*$/m)) { const t = pennylaneTransactions(block.trim()); if (t) return t; }
+    return null;
+  }
+  const rows = parseCsv(text); const h = rows[0] ?? [];
+  if (!(has(h, "Wording") && has(h, "Amount") && (has(h, "Bank account") || has(h, "Suivi de trésorerie") || has(h, "Justified")))) return null;
+  const iD = idx(h, "Date"), iA = idx(h, "Amount"), iW = idx(h, "Wording", "Label", "Libellé"), iB = idx(h, "Bank account", "Account"),
+        iT = idx(h, "Third"), iCm = idx(h, "Comments"), iCur = idx(h, "Currency");
+  const seen = new Map<string, number>(); const out: BankTx[] = [];
+  for (const r of rows.slice(1)) {
+    const date = isoOf(r[iD]); const amount = toNum(r[iA]); if (!date || amount == null) continue;
+    const account = ((iB >= 0 ? r[iB] : "") || "compte").trim();
+    const wording = String(r[iW] ?? "").replace(/\s+/g, " ").trim();
+    const label = [wording, iT >= 0 ? r[iT] : "", iCm >= 0 ? r[iCm] : ""].filter((x) => x && String(x).trim()).join(" ").replace(/\s+/g, " ").trim();
+    const base = `${account}|${date}|${amount}|${wording.toLowerCase()}`;
+    const n = (seen.get(base) ?? 0) + 1; seen.set(base, n);
+    out.push({ account, date, amount, currency: iCur >= 0 && r[iCur] ? String(r[iCur]).trim().toUpperCase() : null, label, counterparty: counterparty(wording), dedup: `${base}#${n}` });
+  }
+  return out;
+}
+
 function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedExtract {
   const h = rows[0];
   const iD = idx(h, "Date"), iA = idx(h, "Amount"), iW = idx(h, "Wording", "Label", "Libellé"), iB = idx(h, "Bank account", "Account"),
