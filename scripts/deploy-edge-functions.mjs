@@ -23,7 +23,7 @@ const FN_DIR = path.join(ROOT, "supabase", "functions");
 const PLATFORM = {
   "generate-dashboard": true, "standardize-data": true, "chat-standardize": true, "chat-iterate": true,
   "extract-context": true, "extract-brand": true, "client-chat": true, "template-recompute": true,
-  "distill-feedback": true, "restyle-dashboard": true, "dashboard-chat": true, "map-sku-costs": true, "bank-rules": true,
+  "distill-feedback": true, "restyle-dashboard": true, "dashboard-chat": true, "map-sku-costs": true, "bank-rules": true, "shopify-sync": true,
   "nango-connect-session": true, "nango-webhook": false, "ingest-records": false,
 };
 const FORBIDDEN = new Set(["sync-gsheet-to-inputs"]);

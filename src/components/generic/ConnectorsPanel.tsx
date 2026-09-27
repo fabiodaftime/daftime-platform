@@ -52,6 +52,19 @@ export function ConnectorsPanel({ clientId }: { clientId: string }) {
     }
   };
 
+  // Synchronisation (Shopify : ventes mensuelles ShopifyQL → registre, 13 derniers mois).
+  const sync = async (provider: string) => {
+    setBusy(`sync:${provider}`); setMsg(null);
+    try {
+      const r = await invokeFn<{ ok?: boolean; months?: string[]; facts?: number; error?: string; hint?: string }>(`${provider}-sync`, { client_id: clientId });
+      if (r?.ok === false || r?.error) throw new Error(`${r.error}${r.hint ? ` — ${r.hint}` : ''}`);
+      const ms = r?.months ?? [];
+      setMsg({ kind: 'ok', text: ms.length ? `${ms.length} mois synchronisés (${ms[0].slice(0, 7)} → ${ms[ms.length - 1].slice(0, 7)}). Relance la standardisation d'un mois pour l'utiliser.` : 'Synchronisé : aucune vente sur la période.' });
+      await load();
+    } catch (e) { setMsg({ kind: 'err', text: e instanceof Error ? e.message : String(e) }); }
+    finally { setBusy(null); }
+  };
+
   return (
     <div className="mb-4 border rounded-lg bg-background p-3">
       <div className="text-sm font-medium flex items-center gap-1.5 mb-2"><PlugZap className="w-4 h-4" />Sources connectées</div>
@@ -65,7 +78,12 @@ export function ConnectorsPanel({ clientId }: { clientId: string }) {
               {c && <span className={`text-[11px] px-1.5 py-0.5 rounded ${(STATUS[c.status] ?? STATUS.pending).cls}`}>{(STATUS[c.status] ?? STATUS.pending).label}</span>}
               {c && <span className="text-xs text-muted-foreground">depuis le {when(c.created_at)} · dernière synchro {when(c.last_synced_at)}</span>}
               {c?.last_error && <span className="text-xs text-destructive">{c.last_error}</span>}
-              <Button size="sm" variant="outline" className="ml-auto h-7" disabled={!!busy} onClick={() => connect(p.key)}>
+              {c?.status === 'active' && (
+                <Button size="sm" className="ml-auto h-7" disabled={!!busy} onClick={() => sync(p.key)}>
+                  {busy === `sync:${p.key}` ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Synchro…</> : 'Synchroniser'}
+                </Button>
+              )}
+              <Button size="sm" variant="outline" className={`${c?.status === 'active' ? '' : 'ml-auto '}h-7`} disabled={!!busy} onClick={() => connect(p.key)}>
                 {busy === p.key ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />Connexion…</> : c ? 'Reconnecter' : 'Connecter'}
               </Button>
             </li>

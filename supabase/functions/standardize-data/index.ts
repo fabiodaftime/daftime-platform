@@ -20,7 +20,8 @@ import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.t
 import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
-import { bankRows, extractToFacts, readFacts } from "../_shared/registry.ts";
+import { bankRows, extractToFacts, readFacts, type Fact } from "../_shared/registry.ts";
+import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash } from "../_shared/cashForecast.ts";
 import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls } from "../_shared/controls.ts";
@@ -121,7 +122,7 @@ async function registerBankFile(admin: Admin, client_id: string, f: FileRow, tex
     }
   } catch (e) { console.warn("registre (transactions) :", e instanceof Error ? e.message : String(e)); }
 }
-async function registerFacts(admin: Admin, client_id: string, period: string, parsed: ParsedExtract[], files: FileRow[], mergedValues: Record<string, number>) {
+async function registerFacts(admin: Admin, client_id: string, period: string, parsed: ParsedExtract[], files: FileRow[], mergedValues: Record<string, number>, connectorFacts: Fact[] = []) {
   try {
     const idOf = new Map(files.map((f) => [f.original_name ?? f.id, f.id]));
     const facts = parsed.flatMap((e) => extractToFacts(e, { client_id, period, file_id: idOf.get(e.file ?? "") ?? null, file_name: e.file ?? "" }))
@@ -131,10 +132,16 @@ async function registerFacts(admin: Admin, client_id: string, period: string, pa
     await admin.from("std_facts").delete().eq("client_id", client_id).eq("period", period).not("file_id", "is", null);
     const uniq = [...new Map(facts.map((x) => [x.dedup_key, x])).values()];
     if (uniq.length) { const { error } = await admin.from("std_facts").upsert(uniq, { onConflict: "dedup_key" }); if (error) throw error; }
-    const read = readFacts(facts);
+    const read = readFacts([...facts, ...connectorFacts.filter((f) => !f.concept.startsWith("_"))]);
+    // Validation d'un connecteur : même poste vu par l'API et par un export → écart mesuré.
+    const fileRead = readFacts(facts);
+    const connRead = readFacts(connectorFacts.filter((f) => !f.concept.startsWith("_")));
+    const connector_vs_files = Object.keys(connRead).filter((k) => fileRead[k] != null)
+      .map((k) => ({ id: k, api: connRead[k], fichiers: fileRead[k], ecart: Math.round((connRead[k] - fileRead[k]) * 100) / 100 }));
     const diffs = Object.keys({ ...read, ...mergedValues }).filter((k) => Math.abs((read[k] ?? NaN) - (mergedValues[k] ?? NaN)) > 0.005 || (read[k] == null) !== (mergedValues[k] == null))
       .map((k) => ({ id: k, registre: read[k] ?? null, fusion: mergedValues[k] ?? null }));
-    return { facts: uniq.length, equal: diffs.length === 0, diffs: diffs.slice(0, 20) };
+    return { facts: uniq.length, connector_facts: connectorFacts.length, equal: diffs.length === 0, diffs: diffs.slice(0, 20),
+      ...(connector_vs_files.length ? { connector_vs_files } : {}) };
   } catch (e) { console.warn("registre (faits) :", e instanceof Error ? e.message : String(e)); return { error: e instanceof Error ? e.message : String(e) }; }
 }
 type CacheRow = { file_id: string; fingerprint: string; status: "parsed" | "llm" | "skipped"; extract: ParsedExtract | null; reason: string | null };
@@ -256,10 +263,17 @@ Deno.serve(async (req) => {
         else if (c.status === "llm") { if (manualByName.get(name)?.role !== "ignore") llmFiles.push(f); }
         else skipped.push({ name, reason: c.reason ?? "non lu" });
       }
+      // CONNECTEURS : faits du mois déposés par les connecteurs (API Shopify…) → une source de plus pour la
+      // fusion, prioritaire sur l'export équivalent. L'écart API vs export est mesuré (validation au centime).
+      const { data: connRaw } = await admin.from("std_facts").select("*").eq("client_id", client_id).eq("period", period).is("file_id", null);
+      const connFacts = ((connRaw ?? []) as Fact[]).map((f) => ({ ...f, amount: Number(f.amount), priority: Number(f.priority) })); // numeric → nombre
+      const connectorExtracts = connectorFactsToExtract((connFacts ?? []) as Fact[]) as unknown as ParsedExtract[];
+      const fileParsed = [...parsed];
+      parsed.push(...connectorExtracts);
       let proposals = ctxData.bank_rule_proposals ?? [];
       let merged = mergeParsed(parsed, manualByName, labelOf, currency, proposals);
       // REGISTRE (double écriture) : faits du mois + contrôle « lecture du registre = fusion » au centime.
-      const registryCheck = await registerFacts(admin, client_id, period, parsed, files, merged.values);
+      const registryCheck = await registerFacts(admin, client_id, period, fileParsed, files, merged.values, (connFacts ?? []) as Fact[]);
       // Rattrapage : relevé déjà en cache (lu avant le registre) → ses transactions sont enregistrées une fois.
       for (const f of files) {
         if (cache.get(f.id)?.extract?.parser !== "pennylane_bank") continue;
