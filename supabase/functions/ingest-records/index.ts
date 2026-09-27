@@ -52,11 +52,28 @@ const shopifyOrders: Mapper = (records, ctx) => {
       financial_status: o.financial_status ?? null,
       customer_type: ordersCount && ordersCount > 1 ? "returning" : "new",
       country: (ship?.country_code ?? bill?.country_code ?? null) as string | null,
-      raw: o,
+      raw: stripOrderPII(o),
     };
   });
   return { table: "src_orders", conflict: "client_id,source,external_id", rows };
 };
+
+// MINIMISATION (RGPD + exigence Shopify « données client protégées ») : on ne conserve de la commande que
+// des champs SANS donnée personnelle — jamais client, e-mail, téléphone, adresses, notes, IP, navigateur.
+const ORDER_KEEP = ["id", "name", "created_at", "processed_at", "cancelled_at", "currency", "presentment_currency", "financial_status",
+  "fulfillment_status", "total_line_items_price", "total_discounts", "total_tax", "total_price", "subtotal_price", "total_shipping_price_set",
+  "taxes_included", "test", "source_name", "discount_codes", "refunds", "line_items"];
+const LINE_KEEP = ["id", "product_id", "variant_id", "sku", "title", "variant_title", "quantity", "price", "total_discount", "fulfillment_status"];
+function stripOrderPII(o: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of ORDER_KEEP) if (o[k] !== undefined) out[k] = o[k];
+  if (Array.isArray(o.line_items)) out.line_items = (o.line_items as Record<string, unknown>[]).map((l) => Object.fromEntries(LINE_KEEP.filter((k) => l[k] !== undefined).map((k) => [k, l[k]])));
+  if (Array.isArray(o.refunds)) out.refunds = (o.refunds as Record<string, unknown>[]).map((r) => ({ id: r.id, created_at: r.created_at,
+    transactions: ((r.transactions as Record<string, unknown>[] | undefined) ?? []).map((t) => ({ amount: t.amount, kind: t.kind, status: t.status })) }));
+  const ship = o.shipping_address as Record<string, unknown> | undefined;
+  if (ship?.country_code) out.shipping_country = ship.country_code; // pays seul (ventes par pays)
+  return out;
+}
 
 const MAPPERS: Record<string, Mapper> = {
   "shopify:orders": shopifyOrders,

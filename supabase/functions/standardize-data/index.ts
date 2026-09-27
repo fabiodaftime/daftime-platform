@@ -20,7 +20,7 @@ import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.t
 import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
 import { parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
-import { bankRows, extractToFacts, readFacts, type Fact } from "../_shared/registry.ts";
+import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact } from "../_shared/registry.ts";
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash } from "../_shared/cashForecast.ts";
 import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
@@ -268,6 +268,27 @@ Deno.serve(async (req) => {
       const { data: connRaw } = await admin.from("std_facts").select("*").eq("client_id", client_id).eq("period", period).is("file_id", null);
       const connFacts = ((connRaw ?? []) as Fact[]).map((f) => ({ ...f, amount: Number(f.amount), priority: Number(f.priority) })); // numeric → nombre
       const connectorExtracts = connectorFactsToExtract((connFacts ?? []) as Fact[]) as unknown as ParsedExtract[];
+      // BANQUE via l'API Pennylane (préférée au relevé déposé, jamais les deux) : transactions du registre
+      // depuis le mois précédent (soldes de début) jusqu'à la dernière connue (soldes de référence).
+      try {
+        const [y0, m0] = period.slice(0, 7).split("-").map(Number);
+        const since = new Date(Date.UTC(y0, m0 - 2, 1)).toISOString().slice(0, 10);
+        const apiTx: { tx_date: string; amount: number; label: string | null; account: string; currency: string | null }[] = [];
+        for (let off = 0; off < 60000; off += 1000) {
+          const { data: pg } = await admin.from("src_bank_transactions").select("tx_date, amount, label, account, currency")
+            .eq("client_id", client_id).eq("source", "pennylane_api").gte("tx_date", since).order("tx_date").range(off, off + 999);
+          apiTx.push(...((pg ?? []) as typeof apiTx).map((t) => ({ ...t, amount: Number(t.amount) })));
+          if (!pg || pg.length < 1000) break;
+        }
+        if (apiTx.length) {
+          const p = parseFile("API Pennylane.csv", bankTxsToPennylaneCsv(apiTx), pctx);
+          if (p) {
+            p.file = "API Pennylane (connecteur)"; p.aux = { ...(p.aux ?? {}), connector: true };
+            for (let i = parsed.length - 1; i >= 0; i--) if (parsed[i].parser === "pennylane_bank") parsed.splice(i, 1);
+            connectorExtracts.push(p);
+          }
+        }
+      } catch (e) { console.warn("banque via API Pennylane ignorée :", e instanceof Error ? e.message : String(e)); }
       const fileParsed = [...parsed];
       parsed.push(...connectorExtracts);
       let proposals = ctxData.bank_rule_proposals ?? [];
@@ -422,15 +443,17 @@ Deno.serve(async (req) => {
           const [y, mo] = period.slice(0, 7).split("-").map(Number);
           const asOf = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
           const since = new Date(Date.UTC(y, mo, 0) - 90 * 86400000).toISOString().slice(0, 10);
-          const txs: { tx_date: string; amount: number; counterparty: string | null; label: string | null; currency?: string | null }[] = [];
+          const txs: { tx_date: string; amount: number; counterparty: string | null; label: string | null; currency?: string | null; source?: string }[] = [];
           for (let off = 0; off < 20000; off += 1000) {
-            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, currency")
+            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, currency, source")
               .eq("client_id", client_id).gte("tx_date", since).lte("tx_date", asOf).order("tx_date").range(off, off + 999);
             // Devise d'origine conservée dans le registre : on ne projette que les flux dans la devise du client.
             txs.push(...((page ?? []) as typeof txs).filter((t) => !t.currency || t.currency === currency).map((t) => ({ ...t, amount: Number(t.amount) })));
             if (!page || page.length < 1000) break;
           }
-          cashForecast = forecastCash(txs, asOf, cur.cash_end);
+          // API Pennylane préférée au relevé déposé (jamais les deux : pas de double comptage).
+          const useApi = txs.some((t) => t.source === "pennylane_api");
+          cashForecast = forecastCash(useApi ? txs.filter((t) => t.source !== "pennylane_file") : txs, asOf, cur.cash_end);
         } catch (e) { console.warn("trésorerie 13 semaines :", e instanceof Error ? e.message : String(e)); }
       }
       dataToSave = { ...out.data, controls, reliability, ...(cashForecast ? { cash_forecast: cashForecast } : {}), meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,

@@ -61,3 +61,15 @@ describe("transactions bancaires brutes", () => {
 
 // Garde le type importé utilisé (vérification de compilation).
 export type _E = ParsedExtract;
+
+describe("banque via API → même lecteur que les fichiers", () => {
+  it("transactions du registre → format export Pennylane → mêmes chiffres que le fichier", async () => {
+    const { bankTxsToPennylaneCsv } = await import("../registry.ts");
+    const txs = pennylaneTransactions(F.PENNYLANE)!.map((t) => ({ tx_date: t.date, amount: t.amount, label: t.label, account: t.account, currency: t.currency }));
+    const viaApi = parseFile("API Pennylane.csv", bankTxsToPennylaneCsv(txs), F.ctx(AUG))!;
+    const viaFile = parseFile("PENNYLANE_transaction_banking.xlsx", F.PENNYLANE, F.ctx(AUG))!;
+    expect(viaApi.parser).toBe("pennylane_bank");
+    expect(viaApi.values).toEqual(viaFile.values);
+    expect(viaApi.aux?.netFlow).toBe(viaFile.aux?.netFlow);
+  });
+});

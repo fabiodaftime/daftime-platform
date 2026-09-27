@@ -22,6 +22,7 @@ const NANGO_INTEGRATION: Record<string, string> = {
   meta: "meta",
   google_ads: "google_ads",
   tiktok: "tiktok",
+  pennylane: "pennylane", // Pennylane (Company API) — jeton par société saisi dans Nango Connect
 };
 
 Deno.serve(async (req) => {

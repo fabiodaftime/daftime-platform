@@ -11,7 +11,9 @@ import { Loader2, PlugZap } from 'lucide-react';
 type Conn = { provider: string; status: string; last_synced_at: string | null; created_at: string; last_error: string | null };
 const PROVIDERS: { key: string; label: string; hint: string }[] = [
   { key: 'shopify', label: 'Shopify', hint: 'ventes, produits, stock, versements Shopify Payments' },
+  { key: 'pennylane', label: 'Pennylane', hint: 'transactions et soldes bancaires (le client colle un jeton API en lecture)' },
 ];
+type Pending = { id: string; provider: string; shop: string | null; nango_connection_id: string; created_at: string };
 const STATUS: Record<string, { label: string; cls: string }> = {
   active: { label: 'connectée', cls: 'bg-emerald-100 text-emerald-800' },
   pending: { label: 'en attente', cls: 'bg-amber-100 text-amber-800' },
@@ -25,10 +27,32 @@ export function ConnectorsPanel({ clientId }: { clientId: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
+  const [pending, setPending] = useState<Pending[]>([]);
   const load = useCallback(async () => {
-    const { data } = await supabase.from('src_connections' as never).select('provider, status, last_synced_at, created_at, last_error').eq('client_id', clientId);
+    const [{ data }, { data: pend }] = await Promise.all([
+      supabase.from('src_connections' as never).select('provider, status, last_synced_at, created_at, last_error').eq('client_id', clientId),
+      supabase.from('src_pending_connections' as never).select('id, provider, shop, nango_connection_id, created_at').order('created_at', { ascending: false }),
+    ]);
     setConns((data ?? []) as Conn[]);
+    setPending((pend ?? []) as Pending[]);
   }, [clientId]);
+
+  // Boutique installée DEPUIS Shopify (sans dossier) → rattachée à ce dossier.
+  const attach = async (p: Pending) => {
+    setBusy(`attach:${p.id}`); setMsg(null);
+    try {
+      const { data: ex } = await supabase.from('src_connections' as never).select('id').eq('client_id', clientId).eq('provider', p.provider).maybeSingle();
+      const row = { client_id: clientId, provider: p.provider, nango_connection_id: p.nango_connection_id, external_account_id: p.shop, status: 'active', last_error: null };
+      const { error } = ex
+        ? await supabase.from('src_connections' as never).update(row as never).eq('id', (ex as { id: string }).id)
+        : await supabase.from('src_connections' as never).insert(row as never);
+      if (error) throw error;
+      await supabase.from('src_pending_connections' as never).delete().eq('id', p.id);
+      setMsg({ kind: 'ok', text: `${p.shop ?? 'Boutique'} rattachée à ce dossier. Tu peux synchroniser.` });
+      await load();
+    } catch (e) { setMsg({ kind: 'err', text: e instanceof Error ? e.message : String(e) }); }
+    finally { setBusy(null); }
+  };
   useEffect(() => { load(); }, [load]);
 
   const connect = async (provider: string) => {
@@ -90,6 +114,22 @@ export function ConnectorsPanel({ clientId }: { clientId: string }) {
           );
         })}
       </ul>
+      {pending.length > 0 && (
+        <div className="mt-2 border-t pt-2">
+          <div className="text-xs font-medium mb-1">Installées depuis Shopify, à rattacher à un dossier</div>
+          <ul className="space-y-1">
+            {pending.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-2 text-sm">
+                <span>{p.shop ?? p.provider}</span>
+                <span className="text-xs text-muted-foreground">installée le {when(p.created_at)}</span>
+                <Button size="sm" variant="outline" className="ml-auto h-7" disabled={!!busy} onClick={() => attach(p)}>
+                  {busy === `attach:${p.id}` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Rattacher à ce dossier'}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {msg && <p className={`text-xs mt-2 ${msg.kind === 'err' ? 'text-destructive' : 'text-emerald-700'}`}>{msg.text}</p>}
       <p className="text-xs text-muted-foreground mt-2">Le client (ou toi avec ses accès) autorise l'accès en lecture dans la fenêtre Nango. Aucun mot de passe ni jeton ne transite par Daftime.</p>
     </div>

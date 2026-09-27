@@ -77,6 +77,14 @@ export function bankRows(txs: BankTx[], ctx: { client_id: string; source: string
     label: t.label, counterparty: t.counterparty, file_id: ctx.file_id, dedup_key: `${ctx.client_id}|${t.dedup}` }));
 }
 
+// Transactions du registre → texte au FORMAT DE L'EXPORT PENNYLANE : relues par le même parser que les
+// fichiers (mêmes règles de classement, mêmes soldes de référence) — une source API n'a pas de logique à part.
+export function bankTxsToPennylaneCsv(txs: { tx_date: string; amount: number; label: string | null; account: string; currency?: string | null }[]): string {
+  const q = (s: unknown) => { const v = String(s ?? ""); return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; };
+  return ["Date,Bank account,Wording,Amount,Currency,Justified",
+    ...txs.map((t) => [t.tx_date, q(t.account), q(t.label ?? ""), String(t.amount), t.currency ?? "", "No"].join(","))].join("\n");
+}
+
 // Lecture bancaire d'un mois avec les RÈGLES DU MOMENT (catégories calculées, jamais stockées).
 export function readBankMonth(txs: { tx_date: string; amount: number; label: string; account: string }[], period: string,
   rules: { match: string; category: string }[] = []): { inflow: number; debitsByCat: Record<string, number>; netFlow: number; accounts: string[] } {

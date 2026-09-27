@@ -26,6 +26,7 @@ const PROVIDER_FROM_INTEGRATION: Record<string, string> = {
   meta: "meta",
   google_ads: "google_ads",
   tiktok: "tiktok",
+  pennylane: "pennylane", // Pennylane (Company API) — jeton par société saisi dans Nango Connect
 };
 
 async function verifySignature(raw: string, header: string | null): Promise<boolean> {
@@ -71,6 +72,15 @@ Deno.serve(async (req) => {
   }
 
   const admin = serviceClient();
+
+  // Installation lancée DEPUIS SHOPIFY (shopify-install) : pas encore de dossier → connexion en attente,
+  // rattachée par le staff depuis le cockpit.
+  if (clientId.startsWith("shop:")) {
+    const { error } = await admin.from("src_pending_connections").upsert(
+      { provider, shop: clientId.slice(5), nango_connection_id: nangoConnectionId }, { onConflict: "nango_connection_id" });
+    if (error) return json({ error: error.message }, 500);
+    return json({ received: true, pending: true, shop: clientId.slice(5) });
+  }
 
   // Upsert manuel par (client_id, provider) : robuste malgre external_account_id nul a ce stade.
   // (Multi-comptes d'un meme provider = raffinement ulterieur.)
