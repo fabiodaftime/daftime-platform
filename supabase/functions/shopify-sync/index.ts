@@ -1,7 +1,7 @@
 // ⑧ shopify-sync — synchronise les chiffres de vente mensuels d'une boutique connectée (Nango) vers le
 // registre de faits. Staff uniquement. ShopifyQL via le proxy Nango : aucun jeton Shopify chez nous.
 //
-// Body: { client_id, from?: "YYYY-MM-01", to?: "YYYY-MM-01" }  (défaut : 13 derniers mois)
+// Body: { client_id, from?: "YYYY-MM-01", to?: "YYYY-MM-01" }  (défaut : mois en cours + 13 mois d'historique)
 // Scopes requis sur l'app Shopify : read_reports (+ accès « données client protégées » niveau 2 déclaré).
 
 import { corsHeaders, json } from "../_shared/cors.ts";
@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
     const client_id: string | undefined = body.client_id;
     if (!client_id) return json({ error: "client_id requis" }, 400);
     const now = new Date();
-    const to: string = body.to ?? monthStart(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)));
+    // Mois en cours inclus (le mois qui se construit sert aussi, ex. vue quotidienne) ; 13 mois d'historique.
+    const to: string = body.to ?? monthStart(now);
     const from: string = body.from ?? monthStart(new Date(Date.UTC(Number(to.slice(0, 4)), Number(to.slice(5, 7)) - 13, 1)));
 
     const { data: conn } = await admin.from("src_connections").select("id, nango_connection_id, external_account_id")
