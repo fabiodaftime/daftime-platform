@@ -5,6 +5,8 @@
 import { type Theme, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
 import { assess, type BenchOverride } from "./benchmarks.ts";
 import { ratesToReporting } from "./fx.ts";
+import type { Bridge } from "./marginBridge.ts";
+import type { MonthPoint } from "./monthPoints.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
 // Colonne d'un breakdown MULTI-COLONNES (ex. perf par canal : CA, commission, marge…).
@@ -23,6 +25,8 @@ export interface RenderCtx {
   breakdowns?: Record<string, Breakdown>;
   targets?: Record<string, number>;
   fxRate?: number; // taux AED pour 1 EUR (bascule devise) — injecté par renderDashboardWithFx ; repli constant sinon
+  bridge?: Bridge | null;      // pont d'écarts de marge (déterministe) — widget "bridge"
+  points?: MonthPoint[] | null; // les 3 points du mois — widget "points"
 }
 export interface Widget {
   type:
@@ -32,7 +36,9 @@ export interface Widget {
     | "rose" | "polar" | "sunburst" | "pictorial" | "lollipop" | "share" | "histogram"
     | "bullet" | "rings" | "gauge_grid" | "diverging" | "comparison" | "trend_grid" | "scorecard"
     | "matrix_table" // tableau multi-colonnes trié (perf par canal/produit) — lit un breakdown à colonnes
-    | "scatter"; // nuage de points volume (CA) vs marge % — lit un breakdown à colonnes
+    | "scatter" // nuage de points volume (CA) vs marge % — lit un breakdown à colonnes
+    | "points"  // les 3 points du mois (doctrine) — lit ctx.points
+    | "bridge"; // pont d'écarts de marge vs M-1 — lit ctx.bridge
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   line?: string; // widget "combo" : id de la métrique tracée en courbe (2e axe)
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
@@ -99,8 +105,8 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const has = (id: string) => M[id] && M[id].value != null;
   // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
   // callout = bandeau d'analyse → TOUJOURS pleine largeur (bande fine sur toute la largeur, jamais un bloc 1/3 épais).
-  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table", "callout"]);
-  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter"]);
+  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table", "callout", "points"]);
+  const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter", "bridge"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
   const chCard = (id: string, title: string, cls = "echart") => `<div class="card chartcard"><div class="card-t">${esc(title)}</div><div class="${cls}" id="${id}"></div></div>`;
@@ -182,8 +188,11 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         if (ids.length < 2) return "";
         const labels: string[] = []; const base: number[] = []; const delta: number[] = []; const colors: string[] = []; const real: number[] = [];
         const push = (l: string, b: number, d: number, c: string, r: number) => { labels.push(l); base.push(b); delta.push(d); colors.push(c); real.push(r); };
-        const chain = ["ca", "marge_brute", "ebitda", "resultat_net"].filter(has);
-        const dl: Record<string, string> = { "ca>marge_brute": M["cogs"]?.label ?? "Coût des ventes", "marge_brute>ebitda": M["total_opex"]?.label ?? "Charges", "ebitda>resultat_net": "Impôts & autres" };
+        // Doctrine : cascade CA → CM1 → CM2 → CM3 quand elle existe ; sinon l'ancienne chaîne P&L.
+        const cmChain = ["ca", "cm1", "cm2", "cm3"].filter(has);
+        const chain = cmChain.length >= 3 ? cmChain : ["ca", "marge_brute", "ebitda", "resultat_net"].filter(has);
+        const dl: Record<string, string> = { "ca>marge_brute": M["cogs"]?.label ?? "Coût des ventes", "marge_brute>ebitda": M["total_opex"]?.label ?? "Charges", "ebitda>resultat_net": "Impôts & autres",
+          "ca>cm1": "Coût des marchandises", "cm1>cm2": "Logistique & paiement", "cm2>cm3": "Publicité", "cm1>cm3": "Opérations & pub" };
         if (chain.length >= 2 && chain[0] === "ca") {
           for (let i = 0; i < chain.length; i++) {
             const v = M[chain[i]].value as number;
@@ -525,6 +534,33 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
           `<div class="sc-cols"><div><div class="sc-h">Points forts</div>${strengths.length ? strengths.map(chip).join("") : '<div class="sc-empty">—</div>'}</div>` +
           `<div><div class="sc-h">Points de vigilance</div>${alerts.length ? alerts.map(chip).join("") : '<div class="sc-empty">—</div>'}</div></div></div>`;
       }
+      case "points": {
+        // LES 3 POINTS DU MOIS : une ligne chacun (filtre > exhaustivité), dans l'ordre doctrinal.
+        const pts = (ctx.points ?? []).slice(0, 3);
+        if (!pts.length) return "";
+        return `<div class="card pts"><div class="card-t">${esc(w.title ?? "Les 3 points du mois")}</div><ol class="pts-l">${pts.map((p) =>
+          `<li class="pt ${p.tone}"><span class="pt-d"></span><span>${esc(p.text)}</span></li>`).join("")}</ol></div>`;
+      }
+      case "bridge": {
+        // PONT D'ÉCARTS : marge de la base → effets (volume, panier, retours, marge produit, logistique,
+        // paiement, pub) → marge du mois. Calcul déterministe (marginBridge) ; somme des effets = variation.
+        const b = ctx.bridge;
+        if (!b || !b.effects.length) return "";
+        const lv = b.level.toUpperCase();
+        const labels: string[] = []; const base: number[] = []; const delta: number[] = []; const colors: string[] = []; const real: number[] = [];
+        const push = (l: string, bs: number, d: number, c: string, r: number) => { labels.push(l); base.push(bs); delta.push(d); colors.push(c); real.push(r); };
+        push(`${lv} ${b.base}`, Math.min(0, b.from), Math.abs(b.from), primary, b.from);
+        let run = b.from;
+        for (const e of [...b.effects].sort((x, y) => y.value - x.value)) {
+          const next = run + e.value;
+          push(e.label.replace(/ \(.*\)$/, ""), Math.min(run, next), Math.abs(e.value), e.value >= 0 ? "#16a34a" : "#e24b4a", e.value);
+          run = next;
+        }
+        push(`${lv} ce mois`, Math.min(0, b.to), Math.abs(b.to), primary, b.to);
+        const id = `ch${cid++}`;
+        charts.push({ id, kind: "waterfall", labels, base, delta, colors, real });
+        return chCard(id, w.title ?? `Pourquoi la marge a bougé (${lv}, vs ${b.base})`);
+      }
       case "callout": {
         if (!w.text) return "";
         const tone = w.tone ?? "info";
@@ -691,7 +727,7 @@ function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLin
  if(d.kind==='rings')return{tooltip:{show:false},series:d.rings.map(function(r,i){var rad=92-i*15;return{type:'gauge',startAngle:90,endAngle:-270,min:0,max:100,radius:rad+'%',center:['50%','50%'],pointer:{show:false},progress:{show:true,roundCap:true,width:9,itemStyle:{color:r.color}},axisLine:{lineStyle:{width:9,color:[[1,GRID]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},anchor:{show:false},title:{show:false},detail:i===0?{offsetCenter:[0,0],fontSize:17,fontWeight:'bold',color:INK,formatter:function(){return d.center;}}:{show:false},data:[{value:r.pct}]};})};
  if(d.kind==='diverging')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+': <b>'+(p.value>=0?'+':'')+p.value+'%</b>';}},grid:{left:10,right:26,top:8,bottom:8,containLabel:true},xAxis:{type:'value',...ax,axisLabel:{color:MUT,formatter:'{value}%'}},yAxis:{type:'category',data:d.labels,inverse:true,axisLine:{show:false},axisTick:{show:false},axisLabel:{color:MUT,fontSize:12}},series:[{type:'bar',data:d.data.map(function(v){return{value:v,itemStyle:{color:v>=0?'#16a34a':'#e24b4a',borderRadius:v>=0?[0,5,5,0]:[5,0,0,5]}};}),barMaxWidth:18,label:{show:true,color:MUT,fontSize:11,position:'right',formatter:function(p){return(p.value>=0?'+':'')+p.value+'%';}}}]};
  if(d.kind==='group')return{...BASE,animationDuration:800,tooltip:STIP,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'bar',data:s.data,emphasis:{focus:'series'},itemStyle:{color:s.color,borderRadius:[CS.barRadius,CS.barRadius,0,0]},barMaxWidth:24,barGap:'18%'};})};
- if(d.kind==='waterfall')return{...BASE,animationDuration:800,tooltip:{...TIP,trigger:'axis',formatter:function(p){var x=p[p.length-1];var r=d.real[x.dataIndex];return x.name+' : <b>'+(r<0?'-':'')+nf(Math.abs(r))+'</b>';}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true,fontSize:11}},yAxis:{type:'value',...ax},series:[{type:'bar',stack:'w',data:d.base,itemStyle:{color:'transparent'},emphasis:{itemStyle:{color:'transparent'}},silent:true},{type:'bar',stack:'w',data:d.delta.map(function(v,i){return{value:v,itemStyle:{color:d.colors[i],borderRadius:3}};}),emphasis:{itemStyle:{shadowBlur:12,shadowColor:'rgba(0,0,0,.2)'}},barMaxWidth:46}]};
+ if(d.kind==='waterfall')return{...BASE,animationDuration:800,tooltip:{...TIP,trigger:'axis',formatter:function(p){var x=p[p.length-1];var r=d.real[x.dataIndex];return x.name+' : <b>'+(r<0?'-':'')+nf(Math.abs(r))+'</b>';}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true,fontSize:11}},yAxis:{type:'value',...ax},series:[{type:'bar',stack:'w',stackStrategy:'all',data:d.base,itemStyle:{color:'transparent'},emphasis:{itemStyle:{color:'transparent'}},silent:true},{type:'bar',stack:'w',stackStrategy:'all',data:d.delta.map(function(v,i){return{value:v,itemStyle:{color:d.colors[i],borderRadius:3}};}),emphasis:{itemStyle:{shadowBlur:12,shadowColor:'rgba(0,0,0,.2)'}},barMaxWidth:46}]};
  return{};}
 function gbar(e,c){return new e.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c},{offset:1,color:c+'c2'}]);}
 function build(i){if(!window.echarts)return;document.querySelectorAll('.page[data-i="'+i+'"] .echart').forEach(function(el){if(made[el.id])return;var d=CHARTS.find(function(x){return x.id===el.id;});if(!d)return;if(d.kind==='map'&&!(echarts.getMap&&echarts.getMap('world')))return;try{var c=echarts.init(el,null,{renderer:'canvas'});c.setOption(opt(echarts,d));made[el.id]=c;if(window.ResizeObserver){new ResizeObserver(function(){try{c.resize();}catch(e){}}).observe(el);}}catch(e){}});}
@@ -818,6 +854,10 @@ header.hero h1{margin:0;font-size:clamp(21px,1.5vw+1rem,28px);font-weight:700;le
 .callout.warn{border-left-color:#d97706}.callout.good{border-left-color:#16a34a}
 .co-ic{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
 .callout.warn .co-ic{background:#d97706}.callout.good .co-ic{background:#16a34a}.co-t{font-weight:700;margin-bottom:3px}
+.pts-l{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:9px;counter-reset:pt}
+.pt{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.45;counter-increment:pt}
+.pt::before{content:counter(pt);flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.pt.warn::before{background:#d97706}.pt.good::before{background:#16a34a}.pt-d{display:none}
 @media(max-width:760px){.grid{grid-template-columns:1fr}.echart-map{height:300px}}
 .kpi-drill{cursor:pointer}.kpi-drill:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(20,26,60,.14)}
 .kpi-drill::after{content:'›';position:absolute;top:6px;right:11px;font-size:17px;line-height:1;color:var(--mut);opacity:.45}

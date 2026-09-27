@@ -10,7 +10,12 @@ type B = { dir: "high" | "low"; good: number; warn: number; ref: string };
 const ECOM: Record<string, B> = {
   conversion_rate:    { dir: "high", good: 2.5, warn: 1.5, ref: "repère 2-3 %" },
   add_to_cart_rate:   { dir: "high", good: 10,  warn: 6,   ref: "repère ~10 %" },
-  roas:               { dir: "high", good: 3,   warn: 2,   ref: "rentable > 3-4" },
+  // Doctrine : la pub se juge contre le POINT MORT DU SHOP (1 / CM2), jamais contre une norme externe.
+  // → pas de repère fixe sur le ROAS ; le verdict porte sur la marge de sécurité vs ce point mort.
+  ads_headroom:       { dir: "high", good: 30,  warn: 0,   ref: "viser nettement au-dessus du point mort (1/CM2)" },
+  cm1_rate:           { dir: "high", good: 50,  warn: 40,  ref: "marque DTC 50-70 %" },
+  cm2_rate:           { dir: "high", good: 35,  warn: 25,  ref: "marque avec stock/3PL 35-55 %" },
+  cm3_rate:           { dir: "high", good: 15,  warn: 10,  ref: "sain 15-30 %, < 10 % = acquisition non rentable" },
   refund_rate:        { dir: "low",  good: 3,   warn: 6,   ref: "sain < 3 %" },
   repeat_rate:        { dir: "high", good: 25,  warn: 12,  ref: "fidélisation > 25 %" },
   new_customer_share: { dir: "low",  good: 65,  warn: 85,  ref: "trop de nouveaux = pas de réachat" },
@@ -32,7 +37,7 @@ const DEFAULT: Record<string, B> = {
   tresorerie_nette: { dir: "high", good: 0,  warn: 0,  ref: "viser > 0" },
 };
 
-const TABLES: Record<string, Record<string, B>> = { ecommerce: ECOM, default: DEFAULT };
+const TABLES: Record<string, Record<string, B>> = { ecommerce: ECOM, ecommerce_marketplace: ECOM, default: DEFAULT };
 
 const VERB: Record<"high" | "low", Record<Verdict["level"], string>> = {
   high: { good: "sain", warn: "à surveiller", bad: "sous le seuil" },

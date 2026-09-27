@@ -11,6 +11,26 @@ import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { renderDashboardWithFx, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
 import { assess } from "../_shared/benchmarks.ts";
+import { averageBase, flatValues, marginBridge, type Bridge } from "../_shared/marginBridge.ts";
+import { buildStandardized, getCatalog } from "../_shared/templates.ts";
+import { numbersPreserved, selectMonthPoints, type MonthPoint } from "../_shared/monthPoints.ts";
+
+// DOCTRINE (docs/Doctrine_Pilotage_Econamy_Daftime.md) — fait autorité sur toute convention générale.
+const DOCTRINE = `DOCTRINE DAFTIME (prime sur tes habitudes d'analyste) :
+- Cascade CM1 → CM2 → CM3 au cœur (CM1 = CA − marchandises ; CM2 = CM1 − logistique − frais de paiement ; CM3 = CM2 − pub). Ne raisonne pas en « marge brute / EBITDA » quand la cascade est fournie.
+- Marge d'abord : le CA n'est jamais l'axe de jugement ; toute conclusion part de la marge réelle.
+- La pub se juge contre le POINT MORT DU SHOP (breakeven_roas = 1 / CM2, fourni), jamais contre une norme externe (« ROAS de 3 », « conversion de 2 % »…).
+- Ordre de raisonnement : (1) le shop gagne-t-il et où ? (2) l'acquisition est-elle rentable ? (3) vitesse de croissance ? (4) quoi regarder ce mois-ci ? — jamais la croissance avant (1) et (2).
+- Double lecture : engagement (« je gagne de l'argent ? ») ET trésorerie (« je tiens ? »).
+- Ton : tutoiement, langage e-commerce ; jargon comptable proscrit (pas de BFR, DSO, DIO, DPO, CCC) ; distingue fait / hypothèse / recommandation.`;
+// Jargon proscrit côté client : ces indicateurs ne sont jamais affichés dans le livrable.
+const CLIENT_HIDDEN = new Set(["bfr", "bfr_days"]);
+// Filet anti-jargon sur tout texte du livrable (titres de pages/graphes, callouts, points) — l'IA l'oublie parfois.
+const JARGON: [RegExp, string][] = [
+  [/\bBFR\b/g, "argent immobilisé"], [/\bDSO\b/g, "délai d'encaissement"], [/\bDPO\b/g, "délai de paiement fournisseurs"],
+  [/\bDIO\b/g, "jours de stock"], [/\bCCC\b/g, "cycle de cash"],
+];
+const dejargon = (s?: string) => (s ? JARGON.reduce((t, [re, rep]) => t.replace(re, rep), s) : s);
 
 const PLAN_SYSTEM = (activity: string) => `Tu es un ANALYSTE FINANCIER SENIOR et le CONSEILLER de ce client "${activity}". Tu ne « poses pas des graphes » : tu produis un RAPPORT MENSUEL qui RACONTE UNE HISTOIRE — où en est l'entreprise ce mois-ci, ce qui va, ce qui ne va pas, et quoi faire. Le dashboard est livré à un dirigeant qui paie pour du CONSEIL, pas pour une galerie de graphiques.
 
@@ -20,7 +40,10 @@ POSTURE & EXIGENCE D'ANALYSE :
   · La page « Vue d'ensemble » s'ouvre par un callout de SYNTHÈSE (3-5 phrases) : la lecture du mois en langage dirigeant.
   · CHAQUE page contient au moins 1 callout d'analyse : constat chiffré → interprétation → reco ou point de vigilance (tone good/warn/info).
   · Les callouts citent des chiffres RÉELS (fournis) mais tu PEUX et DOIS interpréter et conseiller. Tu n'inventes jamais un chiffre ; tu as le droit de raisonner dessus.
-- Mobilise ta connaissance du SECTEUR "${activity}" : KPIs qui comptent vraiment, ordres de grandeur sains, pièges classiques. Pour de l'E-COMMERCE p.ex. : taux de conversion (sessions→commandes), panier moyen, coût d'acquisition vs panier, taux de retour, poids de la pub dans le CA, marge après COGS+logistique+PSP, saisonnalité.
+- Mobilise ta connaissance du SECTEUR "${activity}" : KPIs qui comptent vraiment, pièges classiques. Pour de l'E-COMMERCE : cascade CM1 → CM2 → CM3, MER face au point mort pub (1/CM2), CM2 par commande, panier moyen, taux de retour, saisonnalité.
+
+${DOCTRINE}
+- Les « 3 points du mois » et le « pont d'écarts » sont insérés automatiquement en tête de la 1re page : ne les recopie pas, appuie tes callouts dessus.
 
 ANTI-RÉPÉTITION (problème n°1 à éviter) :
 - INTERDIT d'avoir deux pages qui se ressemblent. Chaque page a un ANGLE UNIQUE et un titre qui le dit. NE crée PAS une page par poste comptable (pas de « page CA » + « page Charges » + « page Marge » qui réaffichent les mêmes bar/donut/table). Ces postes se LISENT ENSEMBLE.
@@ -116,7 +139,8 @@ Conserve le THÈME tel quel (ne touche pas aux couleurs/police). Renvoie le PLAN
 const NARRATIVE_SYSTEM = (activity: string) => `Tu es un ANALYSTE FINANCIER SENIOR / conseiller pour ce client "${activity}". On te donne les CHIFFRES du mois et la liste des PAGES d'un rapport déjà construit. Ta mission : écrire l'ANALYSE qui donne de la valeur, et choisir l'ambiance visuelle.
 - N'invente AUCUN chiffre : tu peux calculer des ratios/écarts simples à partir des valeurs fournies et les interpréter.
 - SYNTHÈSE (3-5 phrases) : la lecture du mois pour un dirigeant — performance, ce qui va / ne va pas, et l'enjeu principal. Concrète, chiffrée, sans jargon.
-- INSIGHTS : pour CHAQUE page (par index), 1 analyse = constat chiffré → interprétation/cause plausible → recommandation ou point de vigilance. Mobilise les standards du secteur "${activity}" (ex. e-commerce : conversion saine ~2-3 %, ROAS, poids de la pub dans le CA, taux de retour, part de nouveaux clients vs fidélisation, marge après COGS/pub/PSP).
+- INSIGHTS : pour CHAQUE page (par index), 1 analyse = constat chiffré → interprétation/cause plausible → recommandation ou point de vigilance.
+${DOCTRINE}
 - TONE : good (point fort), warn (dérive/risque), info (lecture neutre).
 - THÈME : choisis un "mood" adapté à l'univers ${activity} (ne définis PAS de couleurs/police, elles viennent de la marque) et des icônes par KPI si utile.
 Réponds UNIQUEMENT en JSON : {"theme":{"mood":"...","icons":{}},"synthese":"...","insights":[{"page":0,"title":"...","text":"...","tone":"good|warn|info"}, ...]}`;
@@ -180,6 +204,7 @@ function renders(w: Widget, a: Avail): boolean {
     case "matrix_table": case "scatter":
       return !!w.breakdown && a.brk.has(w.breakdown);
     case "callout": return !!(w.text && w.text.trim());
+    case "points": case "bridge": return true; // insérés par le code seulement s'ils existent (vide sinon)
     case "scorecard": return true; // s'auto-valide au rendu (vide si < 3 verdicts)
     default: return false;
   }
@@ -195,11 +220,13 @@ function buildPlan(sections: Sec[], a: Avail): DashPlan {
 
   // 1) VUE D'ENSEMBLE — la photo du mois : KPIs clés + P&L (sankey/cascade) + soldes.
   const ov: Widget[] = [];
-  const kpisOv = pick("ca", "resultat_net", "ebitda", "marge_brute", "cash_end", "orders", "aov", "roas").slice(0, 6);
+  // Doctrine : la marge (CM3 / CM2) et la pub face à son point mort d'abord ; le CA n'est qu'un repère.
+  const kpisOv = pick("cm3", "cm3_rate", "cm2_rate", "mer", "breakeven_roas", "cash_end", "ca", "resultat_net", "ebitda", "marge_brute").slice(0, 6);
   if (kpisOv.length) ov.push(W({ type: "kpi_row", items: kpisOv.map((m) => ({ metric: m })) }));
   if (id("ca") && id("marge_brute") && id("ebitda")) ov.push(W({ type: "flow", title: "Du chiffre d'affaires au résultat" }));
-  const chain = pick("ca", "marge_brute", "ebitda", "resultat_net");
-  if (chain.length >= 2) ov.push(W({ type: "waterfall", title: "Cascade du résultat", metrics: chain }));
+  const cmChain = pick("ca", "cm1", "cm2", "cm3");
+  const chain = cmChain.length >= 3 ? cmChain : pick("ca", "marge_brute", "ebitda", "resultat_net");
+  if (chain.length >= 2) ov.push(W({ type: "waterfall", title: cmChain.length >= 3 ? "Cascade de marges (CM1 → CM3)" : "Cascade du résultat", metrics: chain }));
   const soldes = pick("ca", "marge_brute", "total_opex", "ebitda", "resultat_net");
   if (soldes.length >= 2) ov.push(W({ type: "bar", title: "Principaux soldes", metrics: soldes }));
   if (ov.length >= 2) pages.push({ title: "Vue d'ensemble", widgets: ov });
@@ -240,9 +267,9 @@ function buildPlan(sections: Sec[], a: Avail): DashPlan {
   if (opsTable.length) ops.push(W({ type: "table", title: "Commandes & clients", metrics: opsTable }));
   if (ops.length >= 3) pages.push({ title: "Commandes & clients", widgets: ops });
 
-  // 5) TRÉSORERIE, PSP & BFR.
+  // 5) TRÉSORERIE & ENCAISSEMENTS (jargon BFR proscrit côté client).
   const fin: Widget[] = [];
-  const kFin = pick("cash_end", "tresorerie_nette", "bfr", "bfr_days", "psp_balance", "psp_fee_rate", "psp_payout").slice(0, 6);
+  const kFin = pick("cash_end", "cash_variation", "tresorerie_nette", "psp_balance", "psp_fee_rate", "psp_payout").slice(0, 6);
   if (kFin.length) fin.push(W({ type: "kpi_row", items: kFin.map((m) => ({ metric: m })) }));
   const fees = pick("payment_fees", "platform_fees").filter((x) => a.pos.has(x));
   if (fees.length >= 2) fin.push(W({ type: "treemap", title: "Frais (PSP & plateforme)", metrics: fees }));
@@ -250,11 +277,11 @@ function buildPlan(sections: Sec[], a: Avail): DashPlan {
   if (tre.length >= 2) fin.push(W({ type: "bar", title: "Trésorerie", metrics: tre }));
   const pspBar = pick("psp_payout", "psp_balance", "payment_fees");
   if (pspBar.length >= 2) fin.push(W({ type: "bar", title: "Encaissements PSP", metrics: pspBar }));
-  const bfrComp = pick("inventory_value", "receivables", "payables", "bfr");
-  if (bfrComp.length >= 2) fin.push(W({ type: "bar", title: "Composantes du BFR", metrics: bfrComp }));
+  const bfrComp = pick("inventory_value", "receivables", "payables");
+  if (bfrComp.length >= 2) fin.push(W({ type: "bar", title: "Argent immobilisé (stock, à encaisser, à payer)", metrics: bfrComp }));
   const finTable = [...secIds(/tr[eé]sor|cash/i), ...secIds(/psp|encaiss/i)];
-  if (finTable.length) fin.push(W({ type: "table", title: "Trésorerie, PSP & BFR", metrics: finTable }));
-  if (fin.length >= 2) pages.push({ title: "Trésorerie, PSP & BFR", widgets: fin });
+  if (finTable.length) fin.push(W({ type: "table", title: "Trésorerie & encaissements", metrics: finTable }));
+  if (fin.length >= 2) pages.push({ title: "Trésorerie & encaissements", widgets: fin });
 
   // FILET : si peu de pages e-commerce (autre métier), garantir une structure générique riche.
   if (pages.length < 2) {
@@ -375,6 +402,25 @@ Deno.serve(async (req) => {
     monthsRaw.push({ period: period!, map: idVal(sd.data as any) });
     const prevMap = monthsRaw.length >= 2 ? monthsRaw[monthsRaw.length - 2].map : {};
 
+    // PONT D'ÉCARTS (déterministe) : vs M-1 si le mois précédent existe, et vs moyenne des 3 mois précédents.
+    const shiftP = (p: string, k: number) => { const d = new Date(Date.UTC(Number(p.slice(0, 4)), Number(p.slice(5, 7)) - 1 + k, 1)); return d.toISOString().slice(0, 10); };
+    const monthName = (p: string) => { try { return new Date(p).toLocaleDateString("fr-FR", { month: "long", timeZone: "UTC" }); } catch { return p.slice(0, 7); } };
+    // Dérivés du catalogue COURANT (cascade CM, point mort…) recalculés sur chaque mois : un mois standardisé
+    // avant l'ajout d'une formule en profite aussi (les valeurs stockées priment).
+    const cat = getCatalog((client as { activity_types?: { config?: unknown } } | null)?.activity_types?.config);
+    if (cat) for (const m of monthsRaw) m.map = { ...flatValues(buildStandardized(cat, m.map, {}, "EUR").data), ...m.map };
+    const curMap = monthsRaw[monthsRaw.length - 1].map;
+    const prevEntry = monthsRaw.find((m) => m.period.slice(0, 7) === shiftP(period!, -1).slice(0, 7));
+    const bridgePrev: Bridge | null = prevEntry ? marginBridge(curMap, prevEntry.map, monthName(prevEntry.period)) : null;
+    const prior3 = monthsRaw.filter((m) => m.period < period! && m.period >= shiftP(period!, -3));
+    const avg3 = averageBase(prior3.map((m) => m.map));
+    const bridgeAvg: Bridge | null = avg3 ? marginBridge(curMap, avg3, "moyenne des 3 mois précédents") : null;
+    const mainBridge = bridgePrev ?? bridgeAvg;
+    // LES 3 POINTS DU MOIS : faits sélectionnés par règles (ordre doctrinal) ; l'IA ne fera que les reformuler.
+    const pointFacts: MonthPoint[] = selectMonthPoints(curMap, mainBridge, (client as { currency?: string } | null)?.currency ?? "EUR");
+    const fmtE = (x: number) => Math.round(x).toLocaleString("fr-FR");
+    const bridgeText = (b: Bridge | null) => b ? `${b.level.toUpperCase()} ${fmtE(b.from)} (${b.base}) → ${fmtE(b.to)} ce mois (${b.delta >= 0 ? "+" : ""}${fmtE(b.delta)}) : ${b.effects.map((e) => `${e.label} ${e.value >= 0 ? "+" : ""}${fmtE(e.value)}`).join(" ; ")}${b.missing ? ` [${b.missing}]` : ""}` : "";
+
     // CONTINUITÉ : plan du mois précédent (forme à conserver) + consignes durables (retours de call).
     const { data: prevDash } = await admin.from("dashboards").select("period, data_json")
       .eq("client_id", client_id).eq("is_current", true).lt("period", period).order("period", { ascending: false }).limit(1).maybeSingle();
@@ -448,13 +494,26 @@ Deno.serve(async (req) => {
     }
     const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
       label: s.label,
-      rows: (s.rows ?? []).map((r) => {
+      rows: (s.rows ?? []).filter((r) => !CLIENT_HIDDEN.has(r.id ?? "")).map((r) => {
         const row: Row = { id: r.id, label: r.label, value: r.value, unit: r.unit, ...(r.type === "total" ? { type: "total" } : {}) };
         const pv = r.id ? prevMap[r.id] : undefined;
         if (typeof r.value === "number" && typeof pv === "number" && pv !== 0) row.change_pct = Math.round(((r.value - pv) / Math.abs(pv)) * 1000) / 10;
         return row;
       }),
     }));
+
+    // Cascade de marges absente de la donnée stockée (mois standardisé avant la cascade) → ajoutée depuis le
+    // recalcul du catalogue, pour que le livrable soit en CM1/CM2/CM3 sans attendre une re-standardisation.
+    if (cat) {
+      const have = new Set(sections.flatMap((s) => s.rows.map((r) => r.id)));
+      const pm = prevEntry?.map ?? {};
+      const add: Row[] = cat.lines.filter((l) => l.section === "cascade" && !have.has(l.id) && typeof curMap[l.id] === "number").map((l) => {
+        const v = curMap[l.id], pv = pm[l.id];
+        return { id: l.id, label: l.label, value: v, unit: l.unit === "CUR" ? ((client as { currency?: string } | null)?.currency ?? "EUR") : (l.unit ?? ""),
+          ...(l.total ? { type: "total" } : {}), ...(typeof pv === "number" && pv !== 0 ? { change_pct: Math.round(((v - pv) / Math.abs(pv)) * 1000) / 10 } : {}) };
+      });
+      if (add.length) sections.unshift({ label: "Cascade de marges", rows: add });
+    }
 
     // Tendances : totaux + CA/MRR.
     const trend: { id: string; label: string }[] = [];
@@ -546,6 +605,8 @@ Deno.serve(async (req) => {
         `⛔ TYPES DE GRAPHES AUTORISÉS CE MOIS (les seuls qui afficheront des données — N'EN UTILISE AUCUN AUTRE) :\n${avTypes}\n` +
         `Les répartitions (treemap, rose, polar, pictorial, lollipop, share, ranking) acceptent une LISTE DE MÉTRIQUES (champ "metrics"), pas seulement un breakdown : sers-t'en pour faire parler les ratios (AOV, ROAS, CAC, CPA, taux…) et les postes (charges, canaux).\n\n` +
         (diag ? `\n📊 DIAGNOSTIC SECTORIEL (repères marché — APPUIE-TOI DESSUS dans les callouts, cite le repère et dis si c'est bon ou problématique) :\n${diag}\n` : "") +
+        (mainBridge ? `\n🔎 PONT D'ÉCARTS (calcul exact — explique POURQUOI la marge a bougé, cite ces effets) :\n${bridgeText(bridgePrev)}${bridgeAvg ? `\nvs moyenne 3 mois : ${bridgeText(bridgeAvg)}` : ""}\n` : "") +
+        (pointFacts.length ? `\n📌 LES 3 POINTS DU MOIS (déjà affichés en tête — tes callouts doivent les étayer, pas les contredire) :\n${pointFacts.map((p, i) => `${i + 1}. ${p.text}`).join("\n")}\n` : "") +
         `\nEXIGENCES : 3 à 4 pages à ANGLES DISTINCTS ; CHAQUE page = un kpi_row + AU MOINS 6 graphes qui afficheront vraiment des données + 1 callout d'analyse. EXPLOITE toute la richesse (unit economics, acquisition, conversion, LTV/fidélisation, rentabilité, trésorerie) — pas seulement CA/marge. Varie les types.\n` +
         (guidance ? `\nCONSIGNES CLIENT (prioritaires) :\n${guidance}\n` : "") +
         (forcedWidgets.length ? `\nGRAPHIQUES OBLIGATOIRES (à INCLURE impérativement, bien intégrés dans les pages) :\n${forcedWidgets.map((w) => `- ${w.type}${w.breakdown ? ` (breakdown: ${w.breakdown})` : w.metrics?.length ? ` (metrics: ${w.metrics.join(", ")})` : ""}${w.title ? ` — « ${w.title} »` : ""}`).join("\n")}\n` : "") +
@@ -575,11 +636,40 @@ Deno.serve(async (req) => {
       plan = ensureForced(plan, forcedWidgets, a);
       if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
 
+      // LIVRABLE CENTRAL : les 3 points du mois en tête de la 1re page, puis le pont d'écarts.
+      // Reformulation IA (ton de la doctrine) sous garde-fou : un point dont un chiffre change garde le fait brut.
+      let points = pointFacts;
+      if (pointFacts.length) {
+        try {
+          const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 25_000);
+          let raw: string;
+          try {
+            raw = (await callAnthropic({ model: MODELS.fast, max_tokens: 800, signal: ctrl.signal,
+              system: `${DOCTRINE}\nTu reformules les « 3 points du mois » d'un conseiller e-commerce : UNE ligne chacun (30 mots max), tutoiement, direct, concret. Tu ne changes, n'ajoutes ni n'arrondis AUCUN chiffre (recopie-les à l'identique) et tu gardes l'ordre. Tu gardes le vocabulaire (MER reste MER, jamais « ROAS » ; CM1/CM2/CM3 restent tels quels). Tu n'ajoutes AUCUNE recommandation ni conclusion absente du fait : c'est un constat, le conseiller recommandera. Réponds UNIQUEMENT en JSON : {"points":["…","…","…"]}`,
+              messages: [{ role: "user", content: pointFacts.map((p, i) => `${i + 1}. ${p.text}`).join("\n") }] })).text;
+          } finally { clearTimeout(timer); }
+          const out = extractJson<{ points?: string[] }>(raw).points ?? [];
+          points = pointFacts.map((p, i) => (typeof out[i] === "string" && out[i].trim() && numbersPreserved(p.text, out[i]) ? { ...p, text: out[i].trim() } : p));
+        } catch (e) { console.warn("3 points : reformulation IA ignorée", e instanceof Error ? e.message : String(e)); }
+      }
+      points = points.map((p) => ({ ...p, text: dejargon(p.text)! }));
+      for (const p of plan.pages) {
+        p.title = dejargon(p.title) ?? p.title;
+        p.widgets = p.widgets.map((w) => ({ ...w, ...(w.title ? { title: dejargon(w.title) } : {}), ...(w.text ? { text: dejargon(w.text) } : {}) }));
+      }
+      if (plan.pages[0]) {
+        for (const p of plan.pages) p.widgets = p.widgets.filter((w) => w.type !== "points" && w.type !== "bridge");
+        const w0 = plan.pages[0].widgets;
+        if (mainBridge) { const at = w0.findIndex((x) => x.type === "kpi_row"); w0.splice(at >= 0 ? at + 1 : 0, 0, { type: "bridge" } as Widget); }
+        if (points.length) w0.unshift({ type: "points", title: "Les 3 points du mois" } as Widget);
+      }
+
       const html = await renderDashboardWithFx(
-        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets },
+        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets, bridge: mainBridge, points },
         plan,
       );
-      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, sections, history, plan, theme, breakdowns, targets };
+      const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, sections, history, plan, theme, breakdowns, targets,
+        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg } };
       const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });

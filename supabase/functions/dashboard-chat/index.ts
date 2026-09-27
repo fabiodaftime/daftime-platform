@@ -115,7 +115,8 @@ Deno.serve(async (req) => {
     const theme: Theme = { ...(dj.theme ?? {}), ...(parsed.theme ?? {}), icons: { ...((dj.theme ?? {}).icons ?? {}), ...((parsed.theme ?? {}).icons ?? {}) } };
     const html = await renderDashboardWithFx(
       { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity, benchmarks,
-        brand: client?.brand as any, theme, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets },
+        brand: client?.brand as any, theme, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets,
+        points: (dj as any).points ?? null, bridge: (dj as any).bridge?.vs_prev ?? (dj as any).bridge?.vs_avg3 ?? null },
       { pages: plan.pages as any, theme },
     );
 
