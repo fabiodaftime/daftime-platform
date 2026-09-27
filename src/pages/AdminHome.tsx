@@ -387,8 +387,9 @@ export default function AdminHome() {
                           </div>
                           <div className="text-xs text-muted-foreground mt-1 truncate">{c.activity_types?.name ?? (legacy ? 'Dashboard sur-mesure' : 'Activité non définie')} · {c.currency}{c.cadence === 'quarterly' ? ' · Trimestriel' : ''}</div>
                         </button>
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
+                        {/* flex-wrap : sur une carte étroite, « Classer… » + « Ouvrir » passent à la ligne au lieu de déborder */}
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                             <select value={c.location ?? 'dubai'} onChange={(e) => changeLocation(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
                               {LOCATIONS.map((l) => <option key={l.key} value={l.key}>{l.flag} {l.label}</option>)}
                             </select>
@@ -402,7 +403,7 @@ export default function AdminHome() {
                               </select>
                             )}
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0 ml-auto">
                             <button onClick={() => navigate(`/admin/clients/${c.id}/settings`)} title="Réglages" className="p-1 text-muted-foreground hover:text-foreground"><Settings className="w-3.5 h-3.5" /></button>
                             <button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button>
                           </div>

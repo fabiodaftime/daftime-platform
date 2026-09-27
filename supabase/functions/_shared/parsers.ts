@@ -645,7 +645,7 @@ function bigblueInbound(_name: string, rows: string[][], ctx: ParseCtx): ParsedE
 // Pas de colonne de solde, plusieurs comptes, catégories Pennylane PEU FIABLES (encaissements Shopify
 // classés « Logiciels », virements fournisseur en « Frais bancaires ») → classement par CONTREPARTIE.
 // Base DÉCAISSEMENTS : sert aux charges hors-exports (pub, outils, frais) et à la trésorerie.
-type DebitCat = "refund" | "ads" | "logistics" | "tools" | "bankfees" | "fx" | "vat" | "social" | "tax" | "payroll" | "stock" | "internal" | "ignore" | "other" | "unknown";
+type DebitCat = "refund" | "ads" | "logistics" | "tools" | "bankfees" | "fx" | "vat" | "social" | "tax" | "payroll" | "stock" | "internal" | "loan" | "ignore" | "other" | "unknown";
 const AD_PLATFORMS: [RegExp, string][] = [
   [/snap group|snapchat/i, "Snapchat"], [/google ireland|adwords|google\s*ads/i, "Google"],
   [/facebk|facebook|meta platforms/i, "Meta"], [/tiktok|bytedance/i, "TikTok"],
@@ -664,12 +664,15 @@ function classifyDebit(w: string, rules?: { match: string; category: string }[])
     const c = r.category.toLowerCase();
     const map: Record<string, DebitCat> = { ads: "ads", pub: "ads", publicite: "ads", tools: "tools", outils: "tools", payroll: "payroll", salaires: "payroll",
       cogs: "stock", stock: "stock", achats: "stock", internal: "internal", interne: "internal", ignore: "ignore", fin: "fx", other: "other", autre: "other",
+      loan: "loan", emprunt: "loan", pret: "loan",
       logistics: "logistics", logistique: "logistics", tax: "tax", impots: "tax", vat: "vat", tva: "vat", bankfees: "bankfees", frais: "bankfees" };
     return { cat: map[c] ?? "other", platform: map[c] === "ads" ? r.match : undefined };
   }
   if (/^refund:|remboursement client/i.test(w)) return { cat: "refund" };
   for (const [re, p] of AD_PLATFORMS) if (re.test(w)) return { cat: "ads", platform: p };
   if (/bigblue|cubyn|sendcloud|boxtal|colissimo|chronopost|mondial relay|dhl|ups\b|gls\b/i.test(w)) return { cat: "logistics" };
+  // Remboursement d'emprunt : le CAPITAL n'est pas une charge (financement) — hors résultat.
+  if (/ech[eé]ance (de )?pr[eê]t|pr[eê]t n°|remboursement (d'|de |du )?(pr[eê]t|emprunt)/i.test(w)) return { cat: "loan" };
   // Frais bancaires AVANT la TVA : « cotisation mensuelle … TVA à 20 % » est un frais, pas un reversement.
   // (« débit mensuel carte » = total des achats carte du mois → à qualifier, ce n'est PAS un frais.)
   if (/tenue de compte|\bcions?\b|commission|frais bancaires|agios|cotisation mensuelle/i.test(w)) return { cat: "bankfees" };
@@ -709,7 +712,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
       case "fx": add(v, "financial_result", -x); break;
       case "tax": add(v, "taxes", x); break;
       case "unknown": { const cp = counterparty(String(r[iW] ?? "")); unk[cp] = (unk[cp] ?? 0) + x; break; }
-      default: { const lab = { refund: "remboursements clients (déjà dans les retours Shopify)", logistics: "logistique réglée (comptée via les factures du 3PL)", vat: "TVA reversée", stock: "achats de stock", internal: "virements internes", ignore: "ignorés (règle)" }[cat as string] ?? cat; excl[lab] = (excl[lab] ?? 0) + x; }
+      default: { const lab = { refund: "remboursements clients (déjà dans les retours Shopify)", logistics: "logistique réglée (comptée via les factures du 3PL)", vat: "TVA reversée", stock: "achats de stock", internal: "virements internes", loan: "remboursements d'emprunt (capital, hors résultat)", ignore: "ignorés (règle)" }[cat as string] ?? cat; excl[lab] = (excl[lab] ?? 0) + x; }
     }
   }
   for (const k of Object.keys(v)) v[k] = r2(v[k]);
@@ -756,7 +759,9 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   ].filter(Boolean);
   return { parser: "pennylane_bank", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, sources, count: used,
     breakdowns: Object.keys(byPlat).length ? { ads_by_platform: { label: "Dépense pub par plateforme (banque)", rows: topN(byPlat, 8) } } : undefined,
-    aux: { bankAccounts: accounts, ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 12).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
+    aux: { bankAccounts: accounts,
+      netFlow: r2(accounts.reduce((s, acc) => s + flowsByAcc[acc].filter((f) => f.d.slice(0, 7) === ym).reduce((a, f) => a + f.a, 0), 0)),
+      ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 12).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
     note: notes.join(" ") };
 }
 

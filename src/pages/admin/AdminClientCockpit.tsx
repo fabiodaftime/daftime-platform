@@ -316,9 +316,17 @@ export default function AdminClientCockpit() {
   });
   // Réponses / corrections en langage naturel → règles + corrections mémorisées → re-standardisation.
   const applyAnswer = async (message: string, history?: any[]) => {
-    const res = await invokeFn<{ summary: string; rerun?: boolean }>('chat-standardize', { client_id: id, period, message, history });
-    if (res?.rerun) await runStandardize(id!, period, { filesPeriod: stdFilesPeriod(), onProgress: onStdProgress('Mise à jour — ') });
-    setStdProgress(null);
+    const res = await invokeFn<{ summary: string; rerun?: boolean; rerun_periods?: string[] }>('chat-standardize', { client_id: id, period, message, history });
+    if (res?.rerun) {
+      // Mois touchés par la réponse (ex. trésorerie de juillet donnée depuis août → juillet ET août),
+      // limités aux mois déjà travaillés : on ne crée jamais un mois « fantôme ».
+      const known = new Set([...availablePeriods, period]);
+      const list = (res.rerun_periods?.length ? res.rerun_periods : [period]).filter((p) => known.has(p));
+      try {
+        for (const [i, p] of list.entries())
+          await runStandardize(id!, p, { filesPeriod: stdFilesPeriod(), onProgress: onStdProgress(list.length > 1 ? `Mise à jour ${i + 1}/${list.length} (${periodLabel(p)}) — ` : 'Mise à jour — ') });
+      } finally { setStdProgress(null); }
+    }
     await loadStandardized();
     return res?.summary || 'Données mises à jour.';
   };

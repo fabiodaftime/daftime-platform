@@ -19,18 +19,19 @@ import { insertVersion } from "../_shared/versioning.ts";
 import { readClientFiles, filesToContentBlocks } from "../_shared/readFiles.ts";
 import { getCatalog, inputLines } from "../_shared/templates.ts";
 
-const CATEGORIES = ["ads", "stock", "internal", "payroll", "tools", "logistics", "tax", "vat", "bankfees", "other", "ignore"] as const;
+const CATEGORIES = ["ads", "stock", "internal", "loan", "payroll", "tools", "logistics", "tax", "vat", "bankfees", "other", "ignore"] as const;
 
 const SYSTEM = `Tu traduis les réponses / corrections d'un conseiller financier en MODIFICATIONS STRUCTURÉES des données d'un client e-commerce, via l'outil. Tu ne réécris jamais les données toi-même : le moteur recalcule tout.
 
 Trois types de modifications :
 1) bank_rules — qualification d'une contrepartie bancaire (valable pour tous les mois). « match » = un fragment DISTINCTIF du libellé bancaire tel qu'il apparaît dans la liste (ex. « paypal », « hanayaka », « bp rives de paris », « zaoui »), en minuscules. Catégories :
-   ads (publicité), stock (achats de marchandises / fournisseurs de stock / emballages), internal (virement entre ses propres comptes, apport, remboursement d'emprunt, transfert vers une autre société du dirigeant), payroll (salaires, rémunération du dirigeant, freelances récurrents), tools (logiciels/abonnements), logistics (transport, 3PL), tax (impôts), vat (TVA), bankfees (frais bancaires), other (autre charge d'exploitation), ignore (à exclure).
-2) bank_anchors — solde bancaire CONNU d'un compte à une date (le nom du compte tel qu'il apparaît dans les données, date ISO YYYY-MM-DD, solde en devise).
-3) overrides — UNIQUEMENT si le conseiller donne un CHIFFRE explicite pour un poste du mois, ou demande explicitement de prendre une autre source/colonne (tu recalcules alors depuis le fichier fourni, provenance précise). JAMAIS :
+   ads (publicité), stock (achats de marchandises / fournisseurs de stock / emballages), internal (virement entre ses propres comptes, apport, transfert vers une autre société du dirigeant), loan (remboursement d'emprunt — capital), payroll (salaires, rémunération du dirigeant, freelances récurrents), tools (logiciels/abonnements), logistics (transport, 3PL), tax (impôts), vat (TVA), bankfees (frais bancaires), other (autre charge d'exploitation), ignore (à exclure).
+2) bank_anchors — solde CONNU d'UN compte NOMMÉ à une date (nom du compte tel qu'il apparaît dans les données, date ISO YYYY-MM-DD, solde en devise).
+3) overrides — UNIQUEMENT si le conseiller donne un CHIFFRE explicite pour un poste, ou demande explicitement de prendre une autre source/colonne (tu recalcules alors depuis le fichier fourni, provenance précise). Chaque override porte le mois concerné dans « period » (YYYY-MM-01) : « juillet = 139 675 » → period du mois de juillet de l'année en cours ; sans mois précisé → le MOIS de la conversation.
+   - TRÉSORERIE : une trésorerie TOTALE de fin de mois donnée par le conseiller (« trésorerie de juillet = … », ou un chiffre par mois en réponse à la question sur la trésorerie) → override cash_end de CE mois. En revanche le solde d'UN compte nommé → bank_anchors (ce n'est pas la trésorerie totale).
+   JAMAIS d'override :
    - pour « confirmer » une valeur que le moteur calcule déjà (une valeur figée ne suivrait plus les fichiers) ;
    - pour une remarque ou une réclamation sans chiffre (« tu as les fichiers qui donnent le CA… » n'est PAS une correction : le moteur relit les fichiers) ;
-   - pour cash_end / cash_start : la trésorerie se reconstitue compte par compte depuis les bank_anchors (un solde de compte n'est pas la trésorerie totale) ;
    - pour un poste qu'une règle bancaire de ce même patch vient de qualifier.
    N'invente jamais un chiffre.
 
@@ -91,6 +92,7 @@ Deno.serve(async (req) => {
           }, required: ["account", "date", "balance"], additionalProperties: false } },
           overrides: { type: "array", items: { type: "object", properties: {
             id: { type: "string", enum: inputIds.length ? inputIds : ["_none"] }, value: { type: "number" },
+            period: { type: "string", description: "mois concerné, YYYY-MM-01 (défaut : le mois de la conversation)" },
             source: { type: "string", description: "d'où vient la valeur (réponse du conseiller, fichier + colonne…)" },
           }, required: ["id", "value", "source"], additionalProperties: false } },
           summary: { type: "string" },
@@ -101,7 +103,7 @@ Deno.serve(async (req) => {
     };
     const content: unknown[] = [
       { type: "text", text:
-        `MOIS : ${period.slice(0, 7)}\n\nDONNÉES ACTUELLES (id | libellé | valeur | provenance) :\n${rows.join("\n") || "(aucune)"}\n\n` +
+        `MOIS DE LA CONVERSATION : ${period.slice(0, 7)} (année par défaut pour « juillet », « août »… : ${period.slice(0, 4)})\n\nDONNÉES ACTUELLES (id | libellé | valeur | provenance) :\n${rows.join("\n") || "(aucune)"}\n\n` +
         `COMPTES BANCAIRES DÉTECTÉS : ${(meta?.bank_accounts ?? []).join(" ; ") || "(inconnus)"}\n\n` +
         `ALERTES / QUESTIONS EN COURS :\n${[...flags, ...((sd?.missing_items as string[] | null) ?? []).map((m) => `- ${m}`)].join("\n") || "(aucune)"}\n\n` +
         `RÈGLES BANCAIRES DÉJÀ CONNUES : ${JSON.stringify((ctx?.data as { bank_rules?: unknown })?.bank_rules ?? [])}` },
@@ -111,7 +113,7 @@ Deno.serve(async (req) => {
     const { input, usage } = await callAnthropicTool<{
       bank_rules?: { match: string; category: string; label?: string }[];
       bank_anchors?: { account: string; date: string; balance: number }[];
-      overrides?: { id: string; value: number; source: string }[];
+      overrides?: { id: string; value: number; source: string; period?: string }[];
       summary?: string;
     }>({ model: MODELS.quality, system: SYSTEM, messages: [...history, { role: "user", content } as AnthropicMessage], tool: TOOL, max_tokens: 2000, signal: AbortSignal.timeout(120_000) });
     if (!input) return json({ error: "Réponse du modèle inexploitable — reformule ta réponse." }, 502);
@@ -124,9 +126,14 @@ Deno.serve(async (req) => {
     const rules = (input.bank_rules ?? []).filter((r) => r.match?.trim() && (CATEGORIES as readonly string[]).includes(r.category))
       .map((r) => ({ match: r.match.trim().toLowerCase(), category: r.category, ...(r.label ? { label: r.label } : {}) }));
     const anchors = (input.bank_anchors ?? []).filter((a) => a.account?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(a.date) && isFinite(a.balance));
-    // Garde-fou : la trésorerie ne se fige jamais par une valeur manuelle (elle se reconstitue par compte).
-    const overrides = (input.overrides ?? []).filter((o) => inputIds.includes(o.id) && typeof o.value === "number" && isFinite(o.value)
-      && !["cash_end", "cash_start"].includes(o.id));
+    // Chaque correction vise un mois (défaut : celui de la conversation). Garde-fou ciblé : une
+    // « trésorerie » égale au solde d'un compte posé dans ce même patch est un solde de COMPTE recopié,
+    // pas la trésorerie totale → ignorée (le solde de référence suffit).
+    const anchorBalances = new Set(anchors.map((a) => Math.round(a.balance * 100)));
+    const overrides = (input.overrides ?? [])
+      .map((o) => ({ ...o, period: /^\d{4}-\d{2}-01$/.test(o.period ?? "") ? o.period! : period }))
+      .filter((o) => inputIds.includes(o.id) && typeof o.value === "number" && isFinite(o.value)
+        && !(["cash_end", "cash_start"].includes(o.id) && anchorBalances.has(Math.round(o.value * 100))));
     // Diagnostic : renvoie le patch compris SANS l'enregistrer.
     if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, overrides, usage });
     if (rules.length || overrides.length) {
@@ -135,7 +142,7 @@ Deno.serve(async (req) => {
       ctxData.bank_rules = [...byMatch.values()];
       if (overrides.length) {
         const vo = { ...(ctxData.value_overrides ?? {}) };
-        vo[period] = { ...(vo[period] ?? {}), ...Object.fromEntries(overrides.map((o) => [o.id, { value: o.value, source: o.source }])) };
+        for (const o of overrides) vo[o.period] = { ...(vo[o.period] ?? {}), [o.id]: { value: o.value, source: o.source } };
         ctxData.value_overrides = vo;
       }
       await insertVersion(admin, "contexts", { client_id }, { data: ctxData, created_by: user.id });
@@ -150,7 +157,14 @@ Deno.serve(async (req) => {
       await admin.from("clients").update({ cost_params: cp }).eq("id", client_id);
     }
 
-    return json({ ok: true, rerun: !!(rules.length || overrides.length || anchors.length), summary: input.summary ?? "",
+    // Mois à re-standardiser : celui de la conversation (règles / soldes valent pour tous les mois, dont
+    // celui-ci) + chaque mois visé par une correction (ex. trésorerie de juillet donnée depuis août ;
+    // le mois suivant aussi, sa trésorerie de début en dépend).
+    const next = (p: string) => { const [y, m] = p.slice(0, 7).split("-").map(Number); const d = new Date(Date.UTC(y, m, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`; };
+    const touched = new Set<string>();
+    if (rules.length || anchors.length) touched.add(period);
+    for (const o of overrides) { touched.add(o.period); if (o.id === "cash_end") touched.add(next(o.period)); }
+    return json({ ok: true, rerun: touched.size > 0, rerun_periods: [...touched].sort(), summary: input.summary ?? "",
       applied: { rules: rules.length, anchors: anchors.length, overrides: overrides.length }, usage });
   } catch (e) {
     console.error("chat-standardize:", e);

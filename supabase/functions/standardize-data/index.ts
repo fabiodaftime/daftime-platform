@@ -23,7 +23,7 @@ import { parseFile, type ParsedExtract } from "../_shared/parsers.ts";
 import { applyCostParams, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-26.1";
+const ENGINE_VERSION = "2026-09-27.1";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -215,6 +215,25 @@ Deno.serve(async (req) => {
         merged.values[id] = o.value; merged.sources[id] = `correction du conseiller : ${o.source}`;
         merged.traces[id] = [{ src: merged.sources[id], value: o.value }, ...(merged.traces[id] ?? []).map((t) => ({ ...t, src: `${t.src} (remplacé)` }))];
         merged.confidence[id] = "manual";
+      }
+      // Trésorerie de DÉBUT = trésorerie de fin du mois précédent, si le conseiller l'a déclarée.
+      const prevP = (() => { const [y, m] = period.slice(0, 7).split("-").map(Number); const d = new Date(Date.UTC(y, m - 2, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`; })();
+      const prevEnd = ctxData.value_overrides?.[prevP]?.cash_end;
+      if (!ctxData.value_overrides?.[period]?.cash_start && typeof prevEnd?.value === "number" && isFinite(prevEnd.value)) {
+        merged.values.cash_start = prevEnd.value;
+        merged.sources.cash_start = `trésorerie de fin ${prevP.slice(0, 7)} déclarée par le conseiller`;
+        merged.traces.cash_start = [{ src: merged.sources.cash_start, value: prevEnd.value }];
+        merged.confidence.cash_start = "manual";
+      }
+      // Contrôle : une trésorerie DÉCLARÉE doit être cohérente avec le flux net du relevé bancaire du mois.
+      const netFlow = merged.kept.map((e) => e.aux?.netFlow as number | undefined).find((x) => typeof x === "number");
+      const declared = merged.confidence.cash_end === "manual" || merged.confidence.cash_start === "manual";
+      if (declared && netFlow != null && merged.values.cash_end != null && merged.values.cash_start != null) {
+        const fe = (x: number) => Math.round(x).toLocaleString("fr-FR");
+        const variation = merged.values.cash_end - merged.values.cash_start, gap = variation - netFlow;
+        merged.flags.push(Math.abs(gap) > Math.max(500, Math.abs(merged.values.cash_start) * 0.01)
+          ? { id: "_cash_recon", severity: "warn" as const, label: `Contrôle trésorerie : variation du mois ${fe(variation)} ${currency} (fin − début déclarées) vs flux net du relevé bancaire ${fe(netFlow)} ${currency} — écart ${fe(gap)} ${currency}. Un compte manque au relevé, ou un compte du relevé n'est pas dans ta trésorerie déclarée (ex. solde Shopify Payments, carte).` }
+          : { id: "_cash_recon", severity: "info" as const, label: `Contrôle trésorerie OK : la variation déclarée correspond au flux net du relevé (${fe(netFlow)} ${currency}).` });
       }
 
       // 4) IA DE SECOURS : fichiers non reconnus, postes encore manquants, MOIS CIBLE explicite.
