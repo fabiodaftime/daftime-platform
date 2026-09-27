@@ -11,7 +11,8 @@ if (typeof window !== "undefined") {
   (window as any).ResizeObserver = ResizeObserverMock;
 }
 
-Object.defineProperty(window, "matchMedia", {
+// Tests du moteur (environnement node) : pas de window.
+if (typeof window !== "undefined") Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
     matches: false,
