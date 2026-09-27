@@ -11,9 +11,10 @@ import { callAnthropic, extractJson, MODELS } from "../_shared/anthropic.ts";
 import { insertVersion } from "../_shared/versioning.ts";
 import { renderDashboardWithFx, type DashPlan, type Metric, type Widget } from "../_shared/dashboardRender.ts";
 import { assess } from "../_shared/benchmarks.ts";
-import { averageBase, flatValues, marginBridge, type Bridge } from "../_shared/marginBridge.ts";
-import { buildStandardized, getCatalog } from "../_shared/templates.ts";
-import { numbersPreserved, selectMonthPoints, type MonthPoint } from "../_shared/monthPoints.ts";
+import type { Bridge } from "../_shared/marginBridge.ts";
+import { prepareReport } from "../_shared/reportData.ts";
+import { buildReportPlan, hasCascade } from "../_shared/reportPlan.ts";
+import { numbersPreserved } from "../_shared/monthPoints.ts";
 import type { CashForecast } from "../_shared/cashForecast.ts";
 
 // DOCTRINE (docs/Doctrine_Pilotage_Econamy_Daftime.md) — fait autorité sur toute convention générale.
@@ -24,8 +25,6 @@ const DOCTRINE = `DOCTRINE DAFTIME (prime sur tes habitudes d'analyste) :
 - Ordre de raisonnement : (1) le shop gagne-t-il et où ? (2) l'acquisition est-elle rentable ? (3) vitesse de croissance ? (4) quoi regarder ce mois-ci ? — jamais la croissance avant (1) et (2).
 - Double lecture : engagement (« je gagne de l'argent ? ») ET trésorerie (« je tiens ? »).
 - Ton : tutoiement, langage e-commerce ; jargon comptable proscrit (pas de BFR, DSO, DIO, DPO, CCC) ; distingue fait / hypothèse / recommandation.`;
-// Jargon proscrit côté client : ces indicateurs ne sont jamais affichés dans le livrable.
-const CLIENT_HIDDEN = new Set(["bfr", "bfr_days"]);
 // Filet anti-jargon sur tout texte du livrable (titres de pages/graphes, callouts, points) — l'IA l'oublie parfois.
 const JARGON: [RegExp, string][] = [
   [/\bBFR\b/g, "argent immobilisé"], [/\bDSO\b/g, "délai d'encaissement"], [/\bDPO\b/g, "délai de paiement fournisseurs"],
@@ -147,12 +146,6 @@ ${DOCTRINE}
 Réponds UNIQUEMENT en JSON : {"theme":{"mood":"...","icons":{}},"synthese":"...","insights":[{"page":0,"title":"...","text":"...","tone":"good|warn|info"}, ...]}`;
 
 type Row = { id?: string; label?: string; value?: unknown; unit?: string; type?: string; change_pct?: number };
-const idVal = (d: { sections?: { rows?: Row[] }[] } | null | undefined): Record<string, number> => {
-  const m: Record<string, number> = {};
-  for (const sec of (d?.sections ?? [])) for (const r of (sec.rows ?? [])) if (typeof r.value === "number" && r.id) m[r.id] = r.value;
-  return m;
-};
-const shortMonth = (p: string) => { try { return new Date(p).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" }); } catch { return p.slice(0, 7); } };
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -395,31 +388,15 @@ Deno.serve(async (req) => {
       return json({ error: `Données incomplètes/incohérentes — dashboard bloqué : ${(meta.validation.blocking ?? []).join(" · ")}` }, 409);
     }
 
-    // Historique (variations + tendances).
+    // DONNÉES DU LIVRABLE (module partagé _shared/reportData.ts, identique au banc de rendu local).
     const { data: hist } = await admin.from("standardized_data").select("period, data")
       .eq("client_id", client_id).eq("is_current", true).lt("period", period).order("period", { ascending: false }).limit(5);
-    const monthsRaw = [...((hist as { period: string; data: unknown }[]) ?? [])].reverse()
-      .map((h) => ({ period: h.period, map: idVal(h.data as any) }));
-    monthsRaw.push({ period: period!, map: idVal(sd.data as any) });
-    const prevMap = monthsRaw.length >= 2 ? monthsRaw[monthsRaw.length - 2].map : {};
-
-    // PONT D'ÉCARTS (déterministe) : vs M-1 si le mois précédent existe, et vs moyenne des 3 mois précédents.
-    const shiftP = (p: string, k: number) => { const d = new Date(Date.UTC(Number(p.slice(0, 4)), Number(p.slice(5, 7)) - 1 + k, 1)); return d.toISOString().slice(0, 10); };
-    const monthName = (p: string) => { try { return new Date(p).toLocaleDateString("fr-FR", { month: "long", timeZone: "UTC" }); } catch { return p.slice(0, 7); } };
-    // Dérivés du catalogue COURANT (cascade CM, point mort…) recalculés sur chaque mois : un mois standardisé
-    // avant l'ajout d'une formule en profite aussi (les valeurs stockées priment).
-    const cat = getCatalog((client as { activity_types?: { config?: unknown } } | null)?.activity_types?.config);
-    if (cat) for (const m of monthsRaw) m.map = { ...flatValues(buildStandardized(cat, m.map, {}, "EUR").data), ...m.map };
-    const curMap = monthsRaw[monthsRaw.length - 1].map;
-    const prevEntry = monthsRaw.find((m) => m.period.slice(0, 7) === shiftP(period!, -1).slice(0, 7));
-    const bridgePrev: Bridge | null = prevEntry ? marginBridge(curMap, prevEntry.map, monthName(prevEntry.period)) : null;
-    const prior3 = monthsRaw.filter((m) => m.period < period! && m.period >= shiftP(period!, -3));
-    const avg3 = averageBase(prior3.map((m) => m.map));
-    const bridgeAvg: Bridge | null = avg3 ? marginBridge(curMap, avg3, "moyenne des 3 mois précédents") : null;
-    const mainBridge = bridgePrev ?? bridgeAvg;
-    // LES 3 POINTS DU MOIS : faits sélectionnés par règles (ordre doctrinal) ; l'IA ne fera que les reformuler.
-    const cashForecast = ((sd.data as { cash_forecast?: CashForecast }).cash_forecast) ?? null;
-    const pointFacts: MonthPoint[] = selectMonthPoints(curMap, mainBridge, (client as { currency?: string } | null)?.currency ?? "EUR", undefined, cashForecast);
+    const { data: ctxRow } = await admin.from("contexts").select("data").eq("client_id", client_id).eq("is_current", true).maybeSingle();
+    const objectives = ((ctxRow?.data as { objectives?: Record<string, number> } | null)?.objectives) ?? {};
+    const rep = prepareReport({ period: period!, currency: (client as { currency?: string } | null)?.currency ?? "EUR",
+      activityConfig: (client as { activity_types?: { config?: unknown } } | null)?.activity_types?.config, sdData: sd.data, history: (hist ?? []) as { period: string; data: unknown }[], objectives });
+    const { sections, metrics, history, breakdowns, targets, bridgePrev, bridgeAvg, mainBridge, pointFacts, cashForecast } = rep;
+    const series = history.series;
     const fmtE = (x: number) => Math.round(x).toLocaleString("fr-FR");
     const bridgeText = (b: Bridge | null) => b ? `${b.level.toUpperCase()} ${fmtE(b.from)} (${b.base}) → ${fmtE(b.to)} ce mois (${b.delta >= 0 ? "+" : ""}${fmtE(b.delta)}) : ${b.effects.map((e) => `${e.label} ${e.value >= 0 ? "+" : ""}${fmtE(e.value)}`).join(" ; ")}${b.missing ? ` [${b.missing}]` : ""}` : "";
 
@@ -442,108 +419,7 @@ Deno.serve(async (req) => {
         }))
       : [];
 
-    const breakdowns = (sd.data as { breakdowns?: Record<string, { label: string; rows: { label: string; value: number; unit?: string }[] }> })?.breakdowns;
-    // Breakdown composite MULTI-COLONNES « performance par canal » — dérivé des breakdowns de canaux
-    // présents (sales/commissions/margin/orders by channel), sans exiger les 4. Calculé au rendu pour
-    // être dispo quelle que soit l'origine (fichiers, connecteurs, démo). Tri par marge contributive.
-    if (breakdowns && breakdowns["sales_by_channel"] && !breakdowns["channel_performance"]) {
-      const src = breakdowns as Record<string, { rows?: { label: string; value: number }[] }>;
-      const mp = (k: string): Record<string, number> => { const o: Record<string, number> = {}; for (const r of src[k]?.rows ?? []) o[r.label] = r.value; return o; };
-      const ca = mp("sales_by_channel"); const labels = Object.keys(ca);
-      if (labels.length) {
-        const commission = mp("commissions_by_channel"), margin = mp("margin_by_channel"), orders = mp("orders_by_channel");
-        const hasCom = Object.keys(commission).length > 0, hasMar = Object.keys(margin).length > 0, hasOrd = Object.keys(orders).length > 0;
-        const totalCA = labels.reduce((s, l) => s + (ca[l] || 0), 0) || 1;
-        const r1 = (n: number) => Math.round(n * 10) / 10, r2 = (n: number) => Math.round(n * 100) / 100;
-        const rows = labels.map((l) => {
-          const values: Record<string, number> = { ca: ca[l], share_ca: r1((ca[l] / totalCA) * 100) };
-          if (hasOrd) { values.orders = orders[l]; if (orders[l]) values.aov = r2(ca[l] / orders[l]); }
-          if (hasCom) { values.commission = commission[l]; if (ca[l]) values.commission_rate = r1((commission[l] / ca[l]) * 100); }
-          if (hasMar) { values.marge_contributive = margin[l]; if (ca[l]) values.taux_marge_contributive = r1((margin[l] / ca[l]) * 100); }
-          return { label: l, value: hasMar ? margin[l] : ca[l], values };
-        });
-        const columns: { key: string; label: string; unit: "CUR" | "%" | ""; emphasis?: boolean; sort?: boolean }[] = [
-          { key: "ca", label: "CA", unit: "CUR", emphasis: true }, { key: "share_ca", label: "% CA", unit: "%" },
-        ];
-        if (hasOrd) columns.push({ key: "orders", label: "Cmd", unit: "" }, { key: "aov", label: "Panier", unit: "CUR" });
-        if (hasCom) columns.push({ key: "commission", label: "Commission", unit: "CUR" }, { key: "commission_rate", label: "Taux comm.", unit: "%" });
-        if (hasMar) columns.push({ key: "marge_contributive", label: "Marge contrib.", unit: "CUR", sort: true }, { key: "taux_marge_contributive", label: "Taux MC", unit: "%" });
-        else columns[0].sort = true;
-        (breakdowns as Record<string, unknown>)["channel_performance"] = { label: "Performance par canal", rows, columns, total_row: true };
-      }
-    }
-    // Breakdown composite « performance par catégorie » (marge par catégorie multi-colonnes) — Lot 4.
-    if (breakdowns && breakdowns["sales_by_category"] && !breakdowns["category_performance"]) {
-      const src = breakdowns as Record<string, { rows?: { label: string; value: number }[] }>;
-      const mp = (k: string): Record<string, number> => { const o: Record<string, number> = {}; for (const r of src[k]?.rows ?? []) o[r.label] = r.value; return o; };
-      const ca = mp("sales_by_category"); const labels = Object.keys(ca);
-      if (labels.length) {
-        const marge = mp("margin_by_category"); const hasMar = Object.keys(marge).length > 0;
-        const totalCA = labels.reduce((s, l) => s + (ca[l] || 0), 0) || 1;
-        const r1 = (n: number) => Math.round(n * 10) / 10;
-        const rows = labels.map((l) => {
-          const values: Record<string, number> = { ca: ca[l], share_ca: r1((ca[l] / totalCA) * 100) };
-          if (hasMar) { values.marge = marge[l]; if (ca[l]) values.taux_marge = r1((marge[l] / ca[l]) * 100); }
-          return { label: l, value: hasMar ? marge[l] : ca[l], values };
-        });
-        const columns: { key: string; label: string; unit: "CUR" | "%" | ""; emphasis?: boolean; sort?: boolean }[] = [
-          { key: "ca", label: "CA", unit: "CUR", emphasis: true }, { key: "share_ca", label: "% CA", unit: "%" },
-        ];
-        if (hasMar) columns.push({ key: "marge", label: "Marge", unit: "CUR", sort: true }, { key: "taux_marge", label: "Taux marge", unit: "%" });
-        else columns[0].sort = true;
-        (breakdowns as Record<string, unknown>)["category_performance"] = { label: "Performance par catégorie", rows, columns, total_row: true };
-      }
-    }
-    const sections = (((sd.data as { sections?: unknown[] })?.sections ?? []) as { label?: string; rows?: Row[] }[]).map((s) => ({
-      label: s.label,
-      rows: (s.rows ?? []).filter((r) => !CLIENT_HIDDEN.has(r.id ?? "")).map((r) => {
-        const row: Row = { id: r.id, label: r.label, value: r.value, unit: r.unit, ...(r.type === "total" ? { type: "total" } : {}) };
-        const pv = r.id ? prevMap[r.id] : undefined;
-        if (typeof r.value === "number" && typeof pv === "number" && pv !== 0) row.change_pct = Math.round(((r.value - pv) / Math.abs(pv)) * 1000) / 10;
-        return row;
-      }),
-    }));
-
-    // Cascade de marges absente de la donnée stockée (mois standardisé avant la cascade) → ajoutée depuis le
-    // recalcul du catalogue, pour que le livrable soit en CM1/CM2/CM3 sans attendre une re-standardisation.
-    if (cat) {
-      const have = new Set(sections.flatMap((s) => s.rows.map((r) => r.id)));
-      const pm = prevEntry?.map ?? {};
-      const add: Row[] = cat.lines.filter((l) => l.section === "cascade" && !have.has(l.id) && typeof curMap[l.id] === "number").map((l) => {
-        const v = curMap[l.id], pv = pm[l.id];
-        return { id: l.id, label: l.label, value: v, unit: l.unit === "CUR" ? ((client as { currency?: string } | null)?.currency ?? "EUR") : (l.unit ?? ""),
-          ...(l.total ? { type: "total" } : {}), ...(typeof pv === "number" && pv !== 0 ? { change_pct: Math.round(((v - pv) / Math.abs(pv)) * 1000) / 10 } : {}) };
-      });
-      if (add.length) sections.unshift({ label: "Cascade de marges", rows: add });
-    }
-
-    // Tendances : totaux + CA/MRR.
-    const trend: { id: string; label: string }[] = [];
-    const seen = new Set<string>();
-    for (const s of sections) for (const r of s.rows) {
-      if (r.id && !seen.has(r.id) && (r.type === "total" || r.id === "ca" || r.id === "mrr")) { seen.add(r.id); trend.push({ id: r.id, label: r.label ?? r.id }); }
-    }
-    // Séries pour TOUS les indicateurs présents (permet courbes ET barres empilées sur n'importe quel poste).
-    const labelOf: Record<string, string> = {};
-    for (const s of sections) for (const r of s.rows) if (r.id) labelOf[r.id] = r.label ?? r.id;
-    const series: Record<string, (number | null)[]> = {};
-    for (const id of Object.keys(labelOf)) {
-      const arr = monthsRaw.map((m) => (typeof m.map[id] === "number" ? m.map[id] : null));
-      if (arr.some((x) => x != null)) series[id] = arr;
-    }
-    const history = { months: monthsRaw.map((m) => shortMonth(m.period)), series, labels: labelOf };
-
-    // Objectifs (contexte) → cibles des jauges ; à défaut, le mois précédent sert de référence.
-    const { data: ctxRow } = await admin.from("contexts").select("data").eq("client_id", client_id).eq("is_current", true).maybeSingle();
-    const objectives = ((ctxRow?.data as { objectives?: Record<string, number> } | null)?.objectives) ?? {};
-    const targets: Record<string, number> = {};
-    for (const id of Object.keys(labelOf)) { const t = objectives[id] ?? (typeof prevMap[id] === "number" ? prevMap[id] : undefined); if (typeof t === "number" && isFinite(t) && t > 0) targets[id] = t; }
-
-    // Carte des indicateurs (pour le rendu).
-    const metrics: Record<string, Metric> = {};
-    for (const s of sections) for (const r of s.rows) {
-      if (typeof r.value === "number" && r.id) metrics[r.id] = { value: r.value, label: r.label ?? r.id, unit: r.unit ?? "", change_pct: r.change_pct ?? null };
-    }
+    const labelOf = history.labels;
 
     const activity = (client as { activity_types?: { slug?: string } })?.activity_types?.slug ?? "inconnu";
     const brief = (client as { activity_types?: { config?: { dashboard?: unknown } } })?.activity_types?.config?.dashboard;
@@ -583,6 +459,7 @@ Deno.serve(async (req) => {
     // dépasser le délai de la passerelle. La fonction répond tout de suite ; le cockpit recharge
     // dès que la nouvelle version apparaît en base.
     const produce = async () => {
+      const doctrinal = hasCascade(rep);
       const a = availability(sections, history.months.length, Object.keys(breakdowns ?? {}), Object.keys(targets ?? {}));
       // Diagnostic sectoriel (repères) → on l'injecte pour que l'analyse IA soit FONDÉE, pas vague.
       const diagLines = Object.keys(metrics).map((id) => {
@@ -597,8 +474,9 @@ Deno.serve(async (req) => {
 
       // 1) COMPOSITION (IA) : l'IA conçoit la structure ET l'analyse, MAIS uniquement avec les types
       //    DISPONIBLES (calculés depuis la donnée) → plus de graphe vide. Riche : ≥6 graphes/page.
-      let plan: DashPlan | null = null;
-      let theme: Record<string, unknown> = (prevTheme as Record<string, unknown>) ?? {};
+      let plan: DashPlan | null = doctrinal ? buildReportPlan(rep, forcedWidgets) : null;
+      // Thème : le système « rapport » (clair, marque) s'applique à tous ; seules les icônes viennent de l'IA.
+      let theme: Record<string, unknown> = {};
       const composeMsg = [{ role: "user" as const, content:
         `Activité : ${activity}. Client : ${client?.name ?? ""}. Mois : ${period} (devise ${client?.currency ?? "EUR"}).\n\n` +
         `DONNÉES DISPONIBLES (par section — id, libellé, valeur, variation) :\n${metricsText}\n\n` +
@@ -614,7 +492,7 @@ Deno.serve(async (req) => {
         (forcedWidgets.length ? `\nGRAPHIQUES OBLIGATOIRES (à INCLURE impérativement, bien intégrés dans les pages) :\n${forcedWidgets.map((w) => `- ${w.type}${w.breakdown ? ` (breakdown: ${w.breakdown})` : w.metrics?.length ? ` (metrics: ${w.metrics.join(", ")})` : ""}${w.title ? ` — « ${w.title} »` : ""}`).join("\n")}\n` : "") +
         (prevTheme ? `\nTHÈME À CONSERVER : ${JSON.stringify(prevTheme)}\n` : "") +
         `\nMARQUE : ${(client as { brand?: unknown })?.brand ? JSON.stringify((client as { brand?: unknown }).brand) : "non fournie"}` }];
-      try {
+      if (!doctrinal) try {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 80_000);
         let raw: string;
@@ -622,11 +500,12 @@ Deno.serve(async (req) => {
         finally { clearTimeout(timer); }
         const parsed = extractJson<DashPlan>(raw);
         if (parsed && Array.isArray(parsed.pages) && parsed.pages.length) plan = parsed;
-        if (parsed?.theme && Object.keys(parsed.theme).length) theme = { ...theme, ...parsed.theme, icons: { ...(theme.icons as object ?? {}), ...((parsed.theme as { icons?: object }).icons ?? {}) } };
+        if ((parsed?.theme as { icons?: object } | undefined)?.icons) theme = { icons: (parsed!.theme as { icons?: object }).icons };
       } catch (e) { console.warn("compose IA KO → structure déterministe:", e instanceof Error ? e.message : String(e)); }
       if (!plan) plan = buildPlan(sections, a);
 
-      // 2) FILETS : on supprime les widgets vides puis on garantit la densité (≥5 graphes/page) via le pool déterministe.
+      // 2) FILETS (composition libre uniquement) : widgets vides supprimés, densité garantie.
+      if (!doctrinal) {
       plan = validatePlan(plan, a, sections);
       plan = ensureDensity(plan, a, sections, 3);
       // Diagnostic du mois : on le place en tête de la 1re page (après le kpi_row) s'il n'y est pas déjà.
@@ -636,7 +515,7 @@ Deno.serve(async (req) => {
       }
       // Widgets OBLIGATOIRES du client — garantis en dernier (après validate/densité/scorecard).
       plan = ensureForced(plan, forcedWidgets, a);
-      if (!theme || !Object.keys(theme).length) theme = { mood: "vivid" };
+      }
 
       // LIVRABLE CENTRAL : les 3 points du mois en tête de la 1re page, puis le pont d'écarts.
       // Reformulation IA (ton de la doctrine) sous garde-fou : un point dont un chiffre change garde le fait brut.
@@ -655,11 +534,28 @@ Deno.serve(async (req) => {
         } catch (e) { console.warn("3 points : reformulation IA ignorée", e instanceof Error ? e.message : String(e)); }
       }
       points = points.map((p) => ({ ...p, text: dejargon(p.text)! }));
+      if (doctrinal) {
+        const readable = plan.pages.map((pg, i) => ({ i, title: pg.title })).filter((x) => x.title !== "Les chiffres");
+        try {
+          const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 60_000);
+          let raw: string;
+          try {
+            raw = (await callAnthropic({ model: MODELS.quality, max_tokens: 1500, signal: ctrl.signal,
+              system: `${DOCTRINE}\nTu écris la LECTURE de chaque page d'un rapport mensuel e-commerce (le rapport, ses graphes et « les 3 points du mois » existent déjà). Pour chaque page : 2 à 3 phrases, tutoiement, concret — le constat chiffré le plus important de la page, sa cause probable, et quoi regarder. N'invente AUCUN chiffre (uniquement ceux fournis), ne répète pas les 3 points mot pour mot. Réponds UNIQUEMENT en JSON : {"insights":[{"page":0,"text":"…","tone":"good|warn|info"}]}`,
+              messages: [{ role: "user", content: `Client : ${client?.name ?? ""} — ${period}\nPAGES : ${readable.map((x) => `${x.i}. ${x.title}`).join(" · ")}\n\nCHIFFRES :\n${metricsText}\n\nPONT D'ÉCARTS : ${bridgeText(mainBridge) || "—"}\nLES 3 POINTS : ${points.map((x) => x.text).join(" | ")}${cashForecast ? `\nTRÉSORERIE 13 SEMAINES : point bas ${fmtE(cashForecast.low.balance)} le ${cashForecast.low.date}${cashForecast.below_zero ? ` (sous zéro le ${cashForecast.below_zero})` : ""}` : ""}${guidance ? `\n\nCONSIGNES DU CONSEILLER :\n${guidance.slice(0, 1500)}` : ""}` }] })).text;
+          } finally { clearTimeout(timer); }
+          const ins = extractJson<{ insights?: { page: number; text: string; tone?: string }[] }>(raw).insights ?? [];
+          for (const x of ins) {
+            const pg = plan.pages[x.page]; if (!pg || !x.text?.trim() || pg.title === "Les chiffres") continue;
+            pg.widgets.push({ type: "callout", title: "Lecture", text: dejargon(x.text.trim())!, tone: (["good", "warn", "info"].includes(String(x.tone)) ? x.tone : "info") as Widget["tone"] });
+          }
+        } catch (e) { console.warn("lectures IA ignorées", e instanceof Error ? e.message : String(e)); }
+      }
       for (const p of plan.pages) {
         p.title = dejargon(p.title) ?? p.title;
         p.widgets = p.widgets.map((w) => ({ ...w, ...(w.title ? { title: dejargon(w.title) } : {}), ...(w.text ? { text: dejargon(w.text) } : {}) }));
       }
-      if (plan.pages[0]) {
+      if (plan.pages[0] && !doctrinal) {
         for (const p of plan.pages) p.widgets = p.widgets.filter((w) => w.type !== "points" && w.type !== "bridge" && w.type !== "cash_forecast");
         const w0 = plan.pages[0].widgets;
         if (mainBridge) { const at = w0.findIndex((x) => x.type === "kpi_row"); w0.splice(at >= 0 ? at + 1 : 0, 0, { type: "bridge" } as Widget); }
@@ -678,7 +574,7 @@ Deno.serve(async (req) => {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });
       await admin.from("dashboard_status_history").insert({
-        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: "Généré (composition IA + filets anti-vide/densité)",
+        dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: doctrinal ? "Généré (rapport doctrinal, textes IA)" : "Généré (composition IA + filets anti-vide/densité)",
       });
       return saved;
     };

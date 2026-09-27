@@ -12,10 +12,10 @@ const ECOM: Record<string, B> = {
   add_to_cart_rate:   { dir: "high", good: 10,  warn: 6,   ref: "repère ~10 %" },
   // Doctrine : la pub se juge contre le POINT MORT DU SHOP (1 / CM2), jamais contre une norme externe.
   // → pas de repère fixe sur le ROAS ; le verdict porte sur la marge de sécurité vs ce point mort.
-  ads_headroom:       { dir: "high", good: 30,  warn: 0,   ref: "viser nettement au-dessus du point mort (1/CM2)" },
-  cm1_rate:           { dir: "high", good: 50,  warn: 40,  ref: "marque DTC 50-70 %" },
-  cm2_rate:           { dir: "high", good: 35,  warn: 25,  ref: "marque avec stock/3PL 35-55 %" },
-  cm3_rate:           { dir: "high", good: 15,  warn: 10,  ref: "sain 15-30 %, < 10 % = acquisition non rentable" },
+  ads_headroom:       { dir: "high", good: 30,  warn: 0,   ref: "vs point mort 1/CM2" },
+  cm1_rate:           { dir: "high", good: 50,  warn: 40,  ref: "repère DTC 50-70 %" },
+  cm2_rate:           { dir: "high", good: 35,  warn: 25,  ref: "repère 3PL 35-55 %" },
+  cm3_rate:           { dir: "high", good: 15,  warn: 10,  ref: "repère 15-30 %" },
   refund_rate:        { dir: "low",  good: 3,   warn: 6,   ref: "sain < 3 %" },
   repeat_rate:        { dir: "high", good: 25,  warn: 12,  ref: "fidélisation > 25 %" },
   new_customer_share: { dir: "low",  good: 65,  warn: 85,  ref: "trop de nouveaux = pas de réachat" },

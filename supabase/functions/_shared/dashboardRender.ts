@@ -2,7 +2,7 @@
 // Graphes premium via ECharts ; carte choroplèthe pour les breakdowns par pays.
 // Les chiffres viennent de la data (zéro hallucination).
 
-import { type Theme, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
+import { type Theme, contrast, resolveTheme, iconFor, iconSvg } from "./dashboardTheme.ts";
 import { assess, type BenchOverride } from "./benchmarks.ts";
 import { ratesToReporting } from "./fx.ts";
 import type { Bridge } from "./marginBridge.ts";
@@ -83,8 +83,13 @@ function fmt(value: number | null | undefined, unit = "", currency = "EUR"): str
 }
 // Montant en texte BRUT (jeton retiré) — pour les attributs HTML et libellés où on ne peut pas injecter de <span>.
 const fmtPlain = (value: number | null | undefined, unit = "", currency = "EUR"): string => detokMoney(fmt(value, unit, currency));
-const changeHtml = (pct?: number | null) =>
-  pct == null ? "" : `<span class="chg ${pct >= 0 ? "up" : "down"}">${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}%</span>`;
+// Indicateurs où MOINS = MIEUX (coûts, retours, point mort…) : une hausse s'affiche en rouge.
+export const LOWER_IS_BETTER = /^(refunds|refund_rate|ads_total|ads_meta|ads_google|cogs|shipping_cost|payment_fees|platform_fees|marketplace_fees|payroll|other_opex|total_opex|cac|cpa_order|cpc|cpm|breakeven_roas|stock_days|bfr|bfr_days|payback_cac|commission_rate_global|marketplace_fee_rate|psp_fee_rate)$/;
+const changeHtml = (pct?: number | null, id?: string) => {
+  if (pct == null) return "";
+  const good = id && LOWER_IS_BETTER.test(id) ? pct <= 0 : pct >= 0;
+  return `<span class="chg ${good ? "up" : "down"}">${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toLocaleString("fr-FR", { maximumFractionDigits: 1 })}%</span>`;
+};
 
 // noms FR → EN pour matcher la carte mondiale ECharts (noms anglais).
 const COUNTRY_EN: Record<string, string> = {
@@ -96,12 +101,26 @@ const COUNTRY_EN: Record<string, string> = {
 };
 const toEN = (n: string) => COUNTRY_EN[n.trim().toLowerCase()] ?? n.trim();
 
+// FEUILLE DE STYLE « RAPPORT » (défaut) : éditoriale, claire, filets fins, chiffres dans la police des titres.
+// Appliquée APRÈS l'ancienne feuille (elle prime) ; tout passe par les tokens du thème → réutilisable pour
+// chaque client (la marque change polices, encre et accent, jamais la lisibilité).
+function reportCss(th: ReturnType<typeof resolveTheme>, headFont: string): string {
+  const A = safeColor(th.accent, "#C2410C"), AI = safeColor(th.accentInk, "#9A3412");
+  const G = safeColor(th.good, "#1E7B4F"), W = safeColor(th.warn, "#B7791F"), B = safeColor(th.bad, "#B42318");
+  return "\nbody.report{background:var(--bg);font-size:15px}\n.report .dash{max-width:1240px}\n.rhead{background:var(--card);margin:0 calc(-1*clamp(16px,4vw,30px)) 0;padding:clamp(18px,3vw,26px) clamp(16px,4vw,30px) 16px;border-bottom:1px solid var(--ink)}\n.rhead-row{display:flex;align-items:center;gap:18px;max-width:1240px;margin:0 auto}\n.rhead-logo{height:42px;max-width:150px;object-fit:contain;border-radius:3px}\n.rhead-id{flex:1;min-width:0}\n.report .eyebrow{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);opacity:1;margin-bottom:4px;font-weight:600}\n.rhead h1{margin:0;font-family:HEADFONT;font-weight:400;font-size:clamp(30px,3.2vw,46px);line-height:.95;letter-spacing:.02em;text-transform:uppercase}\n.rhead-right{text-align:right;flex:0 0 auto}\n.rhead-period{font-family:HEADFONT;font-size:clamp(18px,1.6vw,24px);letter-spacing:.05em;text-transform:uppercase;line-height:1}\n.report .cur-switch{background:var(--bg);border:1px solid var(--bd);margin-top:8px}\n.report .cur-switch button{color:var(--mut);opacity:1}\n.report .cur-switch button.on{background:var(--ink);color:#fff}\n.report .tabs{gap:0;flex-wrap:nowrap;overflow-x:auto;border-bottom:1px solid var(--bd);margin:0 0 26px;scrollbar-width:none}\n.report .tab{border:0;border-radius:0;background:transparent;padding:15px 16px 12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap;font-weight:600}\n.report .tab:hover{color:var(--ink);border-color:transparent;border-bottom-color:var(--bd)}\n.report .tab.on{background:transparent;color:var(--ink);border-bottom-color:ACCENT;box-shadow:none}\n.report .page-h{border-bottom:0;margin:0 0 16px;padding:0}\n.report .page-h h2{font-family:HEADFONT;font-weight:400;font-size:clamp(26px,2.4vw,34px);letter-spacing:.03em;text-transform:uppercase;line-height:1}\n.report .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}\n.report .cell.full{grid-column:1/-1}.report .cell.wide,.report .cell.half{grid-column:span 6}\n@media(max-width:900px){.report .cell.wide,.report .cell.half{grid-column:1/-1}}\n.report .card{border-radius:var(--r);box-shadow:none;border:1px solid var(--bd);padding:18px 20px 14px}\n.report .card-t{font-size:11.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--mut);font-weight:600;margin-bottom:12px}\n.report .echart{height:clamp(230px,24vw,270px)}\n.report .kpis{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:0;border:1px solid var(--bd);border-radius:var(--r);background:var(--card);overflow:hidden}\n.rkpi{padding:16px 18px 8px;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);margin:0 -1px -1px 0;display:flex;flex-direction:column;min-height:138px;position:relative;min-width:0}\n.rkpi-l{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);font-weight:600;line-height:1.35;min-height:28px}\n.rkpi-v{font-family:HEADFONT;font-size:clamp(28px,2.3vw,38px);line-height:1;letter-spacing:.01em;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n.rkpi-f{display:flex;align-items:center;gap:6px;margin-top:8px}\n.rkpi-vs{font-size:11px;color:var(--mut)}\n.rkpi-b{font-size:11px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}\n.report .rkpi .rk-spark{height:26px;width:100%;margin-top:auto}\n.report .kpi-drill:hover{transform:none;background:var(--bg);box-shadow:none}\n.report .kpi-drill::after{top:12px;right:12px}\n.report .chg{border-radius:3px;font-size:11px;padding:1px 6px}\n.report .chg.up{color:GOODC;background:#1E7B4F14}.report .chg.down{color:BADC;background:#B4231812}\n.report .b-good{color:GOODC}.report .b-warn{color:WARNC}.report .b-bad{color:BADC}\n.report .pts{border:1px solid var(--bd);border-left:3px solid ACCENT;background:var(--card);padding:18px 22px 16px}\n.report .pts .card-t{color:var(--ink)}\n.report .pts-l{gap:11px}\n.report .pt{font-size:16px;line-height:1.45}\n.report .pt::before{background:var(--ink);border-radius:2px;width:24px;height:24px;font-family:HEADFONT;font-weight:400;font-size:16px}\n.report .pt.warn::before{background:WARNC}.report .pt.good::before{background:GOODC}\n.report .callout{border:1px solid var(--bd);border-left:3px solid var(--ink);border-radius:var(--r);font-size:14.5px;line-height:1.55;padding:14px 18px}\n.report .callout.warn{border-left-color:WARNC}.report .callout.good{border-left-color:GOODC}\n.report .co-ic{display:none}\n.report .co-t{font-size:11.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--mut);font-weight:600;margin-bottom:5px}\n.report .tbl{font-size:14px}.report .tbl th{letter-spacing:.1em}\n.report .tbl tr.tot td{border-top:1px solid var(--ink)}\n.report .rk-track{height:6px;border-radius:0}.report .rk-bar{border-radius:0}\n.report .foot{letter-spacing:.16em}\n.report a{color:ACCENTINK}\n@media(max-width:640px){.rhead-row{flex-wrap:wrap}.rhead-right{text-align:left}.report .page-h h2{font-size:24px}}\n"
+    .replace(/HEADFONT/g, headFont).replace(/ACCENTINK/g, AI).replace(/ACCENT/g, A)
+    .replace(/GOODC/g, G).replace(/WARNC/g, W).replace(/BADC/g, B);
+}
+
 export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const th = resolveTheme(ctx.brand, ctx.theme ?? plan.theme ?? {});
   const primary = safeColor(th.primary, "#4f46e5");
   const accent = safeColor(th.accent, "#ec4899");
   const palette = (Array.isArray(th.palette) && th.palette.length ? th.palette : FALLBACK_PAL).map((c, i) => safeColor(c, FALLBACK_PAL[i % FALLBACK_PAL.length]));
   const font = safeFontFamily(th.font);
+  const headFont = safeFontFamily(th.headingFont);
+  const GOOD = safeColor(th.good, "#16a34a"), BAD = safeColor(th.bad, "#e24b4a");
+  const SUBTOT = th.report ? `${th.ink}8C` : accent; // sous-totaux d'une cascade : encre adoucie
   const charts: any[] = [];
   let cid = 0;
   const M = ctx.metrics;
@@ -112,6 +131,8 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter", "bridge", "cash_forecast"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
+  // Couleur qui se DISTINGUE d'une autre (ex. courbe sur des barres) : accent si assez contrasté, sinon palette.
+  const distinctFrom = (c: string) => contrast(accent, c) >= 2 ? accent : (palette.find((x) => contrast(x, c) >= 2) ?? "#C2410C");
   const chCard = (id: string, title: string, cls = "echart") => `<div class="card chartcard"><div class="card-t">${esc(title)}</div><div class="${cls}" id="${id}"></div></div>`;
   const hist = (id: string) => ctx.history.series[id]; // série temporelle d'une métrique (ou undefined)
   const lab = (id: string) => ctx.history.labels[id] ?? M[id]?.label ?? id;
@@ -146,14 +167,36 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
     return bkAll.slice().sort((a, b) => score(b) - score(a));
   };
 
+  // Tuile « rapport » : hauteur fixe, grand chiffre (police des titres), variation + verdict sur une ligne,
+  // mini-courbe fine en pied (couleur d'encre, pas d'aplat) — lisible d'un coup d'œil, identique partout.
+  const reportTile = (id: string): string => {
+    const m = M[id];
+    const dCls = drillKeys(id).length ? " kpi-drill" : "";
+    const dAttr = dCls ? ` data-drill="${esc(id)}" role="button" tabindex="0"` : "";
+    let spHtml = "";
+    if (ctx.history.series[id] && ctx.history.months.length > 2) { const spId = `ch${cid++}`; charts.push({ id: spId, kind: "spark", color: th.ink, data: ctx.history.series[id] }); spHtml = `<div class="rk-spark echart" id="${spId}"></div>`; }
+    let vb = assess(id, m.value, ctx.activity, ctx.benchmarks);
+    if (id === "mer" && has("breakeven_roas")) {
+      const head = M.ads_headroom?.value, v = head != null ? assess("ads_headroom", head, ctx.activity, ctx.benchmarks) : null;
+      vb = { level: v?.level ?? "warn", note: `point mort ${fmtPlain(M.breakeven_roas.value, "x")}${head != null ? ` · sécurité ${head >= 0 ? "+" : ""}${Math.round(head)} %` : ""}` };
+    }
+    if (id === "cash_end" && ctx.cashForecast?.low) {
+      const f = ctx.cashForecast, d = f.low.date;
+      vb = { level: f.below_zero ? "bad" : f.low.balance < f.start.balance * 0.5 ? "warn" : "good", note: `point bas ${fmtPlain(f.low.balance, ctx.currency, ctx.currency)} le ${d.slice(8, 10)}/${d.slice(5, 7)}` };
+    }
+    return `<div class="rkpi${dCls}"${dAttr}><div class="rkpi-l">${esc(m.label)}</div><div class="rkpi-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div>` +
+      `<div class="rkpi-f">${changeHtml(m.change_pct, id) || '<span class="chg flat">—</span>'}<span class="rkpi-vs">vs M-1</span></div>` +
+      (vb ? `<div class="rkpi-b b-${vb.level}" title="${esc(vb.note)}">${esc(vb.note)}</div>` : "") + spHtml + `</div>`;
+  };
   const kpiTile = (id: string, i: number): string => {
+    if (th.report) return reportTile(id);
     const m = M[id]; const c = col(i);
     const dCls = drillKeys(id).length ? " kpi-drill" : "";                 // KPI cliquable si un détail existe
     const dAttr = dCls ? ` data-drill="${esc(id)}" role="button" tabindex="0"` : "";
     const sp = ctx.history.series[id] && ctx.history.months.length > 1;
     let spHtml = "";
     if (sp) { const spId = `ch${cid++}`; charts.push({ id: spId, kind: "spark", color: c, data: ctx.history.series[id] }); spHtml = `<div class="spark echart" id="${spId}"></div>`; }
-    const foot = `<div class="kpi-foot">${changeHtml(m.change_pct) || '<span class="chg flat">—</span>'}${spHtml}</div>`;
+    const foot = `<div class="kpi-foot">${changeHtml(m.change_pct, id) || '<span class="chg flat">—</span>'}${spHtml}</div>`;
     const vb = assess(id, m.value, ctx.activity, ctx.benchmarks); // verdict (repères secteur + surcharges client)
     const benchHtml = vb ? `<div class="kpi-bench b-${vb.level}">${esc(vb.note)}</div>` : "";
     const main = `<div class="kpi-main"><div class="kpi-l">${esc(m.label)}</div><div class="kpi-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div>${foot}${benchHtml}</div>`;
@@ -175,7 +218,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         if (!ids.length || ctx.history.months.length < 2) return "";
         const id = `ch${cid++}`;
         charts.push({ id, kind: "line", labels: ctx.history.months, series: ids.map((mid, i) => ({ name: ctx.history.labels[mid] ?? M[mid]?.label ?? mid, data: ctx.history.series[mid], color: col(i) })) });
-        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Tendance")}</div><div class="echart" id="${id}"></div></div>`;
+        return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? `${ids.map(lab).join(" · ")} — évolution`)}</div><div class="echart" id="${id}"></div></div>`;
       }
       case "bar": {
         const ids = (w.metrics ?? []).filter((id) => has(id));
@@ -202,10 +245,11 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
             if (i > 0) {
               const prevV = M[chain[i - 1]].value as number; const change = v - prevV;
               const label = dl[`${chain[i - 1]}>${chain[i]}`] ?? "Variation";
-              if (change >= 0) push(label, prevV, change, "#16a34a", change);
-              else push(label, v, -change, "#e24b4a", change);
+              if (change >= 0) push(label, prevV, change, GOOD, change);
+              else push(label, v, -change, BAD, change);
             }
-            push(M[chain[i]].label, 0, v, i === 0 || i === chain.length - 1 ? primary : accent, v);
+            const SHORT: Record<string, string> = { ca: "CA net", cm1: "CM1", cm2: "CM2", cm3: "CM3", marge_brute: "Marge brute", ebitda: "EBITDA", resultat_net: "Résultat net" };
+            push(th.report ? (SHORT[chain[i]] ?? M[chain[i]].label) : M[chain[i]].label, 0, v, i === 0 || i === chain.length - 1 ? primary : SUBTOT, v);
           }
         } else {
           let prev = 0;
@@ -244,7 +288,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return `<div class="card"><div class="card-t">${esc(repLabel(w, "Classement"))}</div><div class="rank">${rows.map((r, i) => {
           const pct = Math.max(4, Math.round((Math.abs(r.value) / max) * 100));
           const share = Math.round((r.value / total) * 1000) / 10;
-          return `<div class="rk-row"><div class="rk-l" title="${esc(r.label)}">${esc(r.label)}</div><div class="rk-track"><div class="rk-bar" style="width:${pct}%;background:${col(i)}"></div></div><div class="rk-v">${esc(fmt(r.value, r.unit ?? "", ctx.currency))} <span class="rk-s">${share}%</span></div></div>`;
+          return `<div class="rk-row"><div class="rk-l" title="${esc(r.label)}">${esc(r.label)}</div><div class="rk-track"><div class="rk-bar" style="width:${pct}%;background:${th.report ? (i === 0 ? th.ink : `${th.ink}99`) : col(i)}"></div></div><div class="rk-v">${esc(fmt(r.value, r.unit ?? "", ctx.currency))} <span class="rk-s">${share}%</span></div></div>`;
         }).join("")}</div></div>`;
       }
       case "table": {
@@ -271,7 +315,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
           const m = M[id]; const val = m.value ?? 0;
           const prev = i > 0 ? (M[ids[i - 1]].value ?? 0) : 0;
           const conv = i > 0 && prev > 0 ? Math.round((val / prev) * 1000) / 10 : null;
-          return { name: m.label, value: val, color: col(i), real: fmt(val, m.unit, ctx.currency), pct: Math.round((val / top) * 1000) / 10, conv };
+          return { name: m.label, value: val, color: th.report ? [th.ink, `${th.ink}B3`, `${th.ink}66`, `${th.ink}40`][i] ?? `${th.ink}33` : col(i), real: fmt(val, m.unit, ctx.currency), pct: Math.round((val / top) * 1000) / 10, conv };
         });
         const id = `ch${cid++}`;
         charts.push({ id, kind: "funnel", items });
@@ -380,7 +424,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const lineId = w.line && hist(w.line) ? w.line : null;
         if (!barIds.length || !lineId || ctx.history.months.length < 2) return "";
         const id = `ch${cid++}`;
-        charts.push({ id, kind: "combo", labels: ctx.history.months, bars: barIds.slice(0, 3).map((mid, i) => ({ name: lab(mid), data: hist(mid), color: col(i) })), line: { name: lab(lineId), data: hist(lineId), color: accent }, lineUnit: M[lineId]?.unit ?? "" });
+        charts.push({ id, kind: "combo", labels: ctx.history.months, bars: barIds.slice(0, 3).map((mid, i) => ({ name: lab(mid), data: hist(mid), color: col(i) })), line: { name: lab(lineId), data: hist(lineId), color: distinctFrom(col(0)) }, lineUnit: M[lineId]?.unit ?? "" });
         return chCard(id, w.title ?? "Évolution combinée");
       }
       case "slope": {
@@ -515,7 +559,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         return `<div class="card"><div class="card-t">${esc(w.title ?? "Tendances clés")}</div><div class="tg">${ids.map((id, i) => {
           const m = M[id]; const c = col(i); const spId = `ch${cid++}`;
           charts.push({ id: spId, kind: "spark", color: c, data: hist(id) });
-          return `<div class="tg-c"><div class="tg-l">${esc(m.label)}</div><div class="tg-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div><div class="tg-f">${changeHtml(m.change_pct) || '<span class="chg flat">—</span>'}</div><div class="tg-s echart" id="${spId}"></div></div>`;
+          return `<div class="tg-c"><div class="tg-l">${esc(m.label)}</div><div class="tg-v">${esc(fmt(m.value, m.unit, ctx.currency))}</div><div class="tg-f">${changeHtml(m.change_pct, id) || '<span class="chg flat">—</span>'}</div><div class="tg-s echart" id="${spId}"></div></div>`;
         }).join("")}</div></div>`;
       }
       case "scorecard": {
@@ -556,7 +600,8 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         let run = b.from;
         for (const e of [...b.effects].sort((x, y) => y.value - x.value)) {
           const next = run + e.value;
-          push(e.label.replace(/ \(.*\)$/, ""), Math.min(run, next), Math.abs(e.value), e.value >= 0 ? "#16a34a" : "#e24b4a", e.value);
+          const SH: Record<string, string> = { volume: "Volume", panier: "Panier", retours: "Retours", marge_produit: "Marge produit", logistique: "Logistique", paiement: "Paiement", pub: "Pub" };
+          push(th.report ? (SH[e.key] ?? e.label) : e.label.replace(/ \(.*\)$/, ""), Math.min(run, next), Math.abs(e.value), e.value >= 0 ? GOOD : BAD, e.value);
           run = next;
         }
         push(`${lv} ce mois`, Math.min(0, b.to), Math.abs(b.to), primary, b.to);
@@ -677,7 +722,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const nav = rendered.map((p, i) => `<button class="tab ${i === 0 ? "on" : ""}" data-i="${i}">${esc(p.title)}</button>`).join("");
   const main = rendered.map((p, i) =>
     `<section class="page ${i === 0 ? "on" : ""}" data-i="${i}"><div class="page-h"><h2>${esc(p.title)}</h2><span class="page-meta">${esc(periodLabel(ctx.period))}</span></div><div class="grid">${p.cells}</div></section>`).join("");
-  const ACT: Record<string, string> = { ecommerce: "E-commerce", immobilier: "Immobilier", coaching: "Coaching", formation: "Formation", saas: "SaaS", hotellerie: "Hôtellerie", restauration: "Restauration" };
+  const ACT: Record<string, string> = { ecommerce: "E-commerce", ecommerce_marketplace: "E-commerce multicanal", immobilier: "Immobilier", coaching: "Coaching", formation: "Formation", saas: "SaaS", hotellerie: "Hôtellerie", restauration: "Restauration" };
   const eyebrow = ACT[ctx.activity ?? ""] ?? "Rapport financier";
   // Bascule devise (indicatif) : proposée uniquement pour EUR/AED ; sinon on garde l'affichage simple.
   const altCur = ctx.currency === "EUR" ? "AED" : ctx.currency === "AED" ? "EUR" : null;
@@ -703,12 +748,17 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const glass = th.background === "glass" || th.kpi === "glass";
   const logo = (ctx.brand as { logo?: string; logo_url?: string } | null)?.logo ?? (ctx.brand as { logo_url?: string } | null)?.logo_url;
   const safeFont = (th.googleFont ?? "").replace(/[^a-zA-Z0-9 ]/g, "").trim().slice(0, 40); // anti-injection dans l'URL
-  const fontLink = safeFont ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${safeFont.replace(/ /g, "+")}:wght@400;500;600;700&display=swap">` : "";
+  const fams = (th.googleFonts?.length ? th.googleFonts : safeFont ? [safeFont] : []).map((f) => f.replace(/[^a-zA-Z0-9 ]/g, "").trim()).filter(Boolean).slice(0, 3);
+  const famQ = fams.map((f) => `family=${f.replace(/ /g, "+")}${f === "Inter" ? ":wght@400;500;600;700" : ""}`).join("&");
+  const fontLinkReport = famQ ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?${famQ}&display=swap">` : "";
+  const fontLinkLegacy = safeFont ? `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${safeFont.replace(/ /g, "+")}:wght@400;500;600;700&display=swap">` : "";
+  const fontLink = th.report ? fontLinkReport : fontLinkLegacy;
 
   const drillMap: Record<string, string[]> = {};
   for (const id of Object.keys(M)) { const dk = drillKeys(id); if (dk.length) drillMap[id] = dk; }
-  const chartsJs = `const CHARTS=${JSON.stringify(charts)};const PALETTE=${JSON.stringify(palette)};const PRIMARY=${JSON.stringify(primary)};const INK='${th.ink}',MUT='${th.muted}',GRID='${th.grid}',SURF='${th.surface}',DARK=${th.dark};const CS=${JSON.stringify(th.chart)};const FONT=${JSON.stringify(font)};const TIPBG=DARK?'#0b0e1a':'#171a2b';const made={};
+  const chartsJs = `const REPORT=${th.report};const CHARTS=${JSON.stringify(charts)};const PALETTE=${JSON.stringify(palette)};const PRIMARY=${JSON.stringify(primary)};const INK='${th.ink}',MUT='${th.muted}',GRID='${th.grid}',SURF='${th.surface}',DARK=${th.dark};const CS=${JSON.stringify(th.chart)};const FONT=${JSON.stringify(font)};const TIPBG=DARK?'#0b0e1a':'#171a2b';const made={};
 function nf(v){return (v==null||isNaN(v))?'–':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:0});}
+function nk(v){if(v==null||isNaN(v))return '–';if(Math.round(Math.abs(v))===0)return '0';var a=Math.abs(v),s=a>=1e6?(a/1e6).toLocaleString('fr-FR',{maximumFractionDigits:1})+' M':a>=1e4?Math.round(a/1e3).toLocaleString('fr-FR')+' k':Math.round(a).toLocaleString('fr-FR');return (v<0?'−':'')+s;}
 function sval(p){var v=p.value;return (v&&v.length!==undefined)?v[v.length-1]:v;}
 function axisTip(ps){if(!ps||!ps.length)return '';var s='<b>'+(ps[0].axisValueLabel||ps[0].name||'')+'</b>';for(var i=0;i<ps.length;i++){if(ps[i].seriesName&&ps[i].seriesName.indexOf('series')===0&&ps.length===1){s+='<br/>'+ps[i].marker+' <b>'+nf(sval(ps[i]))+'</b>';}else{s+='<br/>'+ps[i].marker+' '+ps[i].seriesName+' : <b>'+nf(sval(ps[i]))+'</b>';}}return s;}
 const TIP={backgroundColor:TIPBG,borderWidth:0,textStyle:{color:'#fff',fontSize:12},padding:[9,12],extraCssText:'border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.24)'};
@@ -716,24 +766,24 @@ const BASE={textStyle:{fontFamily:FONT,color:MUT},tooltip:{...TIP,trigger:'item'
 const LTIP={...TIP,trigger:'axis',formatter:axisTip,axisPointer:{type:'line',lineStyle:{color:MUT,width:1,type:'dashed',opacity:.5}}};
 const STIP={...TIP,trigger:'axis',formatter:axisTip,axisPointer:{type:'shadow',shadowStyle:{color:INK+'0d'}}};
 const EMPH={emphasis:{focus:'series'}};
-function gr(e,c){return new e.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c+'59'},{offset:1,color:c+'05'}]);}
-function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLine:{show:CS.grid,lineStyle:{color:GRID,type:'dashed'}},axisLabel:{color:MUT}};
+function gr(e,c){if(REPORT)return c+'12';return new e.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c+'59'},{offset:1,color:c+'05'}]);}
+function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLine:{show:CS.grid,lineStyle:{color:GRID,type:REPORT?'solid':'dashed'}},axisLabel:{color:MUT,formatter:REPORT?function(v){return typeof v==='number'?nk(v):v;}:undefined}};
  if(d.kind==='spark')return{animationDuration:700,grid:{left:0,right:0,top:2,bottom:2},xAxis:{type:'category',show:false,data:d.data.map((_,i)=>i)},yAxis:{type:'value',show:true,scale:true,axisLabel:{show:false},splitLine:{show:false}},series:[{type:'line',data:d.data,smooth:true,symbol:'none',lineStyle:{width:2,color:d.color},areaStyle:{color:gr(e,d.color)}}]};
- if(d.kind==='line')return{...BASE,animationDuration:850,tooltip:LTIP,legend:{show:d.series.length>1,bottom:0,icon:'circle',itemWidth:8,textStyle:{color:MUT}},xAxis:{type:'category',boundaryGap:false,data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(s=>({name:s.name,type:'line',data:s.data,smooth:CS.smooth,symbol:'circle',symbolSize:7,showSymbol:false,emphasis:{focus:'series'},lineStyle:{width:CS.lineWidth,color:s.color,shadowBlur:CS.glow?14:6,shadowColor:s.color+'66',shadowOffsetY:3},itemStyle:{color:s.color,borderColor:'#fff',borderWidth:2},areaStyle:(CS.area&&d.series.length===1)?{color:gr(e,s.color)}:undefined}))};
- if(d.kind==='bar')return{...BASE,animationDuration:800,tooltip:STIP,xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true}},yAxis:{type:'value',...ax},series:[{type:'bar',data:d.data.map((v,i)=>({value:v,itemStyle:{color:gbar(e,d.colors[i]),borderRadius:[CS.barRadius,CS.barRadius,0,0],shadowBlur:CS.glow?10:0,shadowColor:d.colors[i]+'66'}})),emphasis:{itemStyle:{shadowBlur:14,shadowColor:'rgba(0,0,0,.22)'}},barMaxWidth:52}]};
+ if(d.kind==='line')return{...BASE,animationDuration:850,tooltip:LTIP,legend:REPORT?{show:d.series.length>1,top:0,right:0,icon:'roundRect',itemWidth:12,itemHeight:4,textStyle:{color:MUT,fontSize:11}}:{show:d.series.length>1,bottom:0,icon:'circle',itemWidth:8,textStyle:{color:MUT}},xAxis:{type:'category',boundaryGap:false,data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(s=>({name:s.name,type:'line',data:s.data,smooth:CS.smooth,symbol:'circle',symbolSize:7,showSymbol:false,emphasis:{focus:'series'},lineStyle:{width:CS.lineWidth,color:s.color,shadowBlur:CS.glow?14:6,shadowColor:s.color+'66',shadowOffsetY:3},itemStyle:{color:s.color,borderColor:'#fff',borderWidth:2},areaStyle:(CS.area&&d.series.length===1)?{color:gr(e,s.color)}:undefined}))};
+ if(d.kind==='bar')return{...BASE,animationDuration:800,tooltip:STIP,xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true}},yAxis:{type:'value',...ax},series:[{type:'bar',label:{show:REPORT,position:'top',color:INK,fontSize:11,formatter:function(p){return nk(p.value);}},data:d.data.map((v,i)=>({value:v,itemStyle:{color:gbar(e,d.colors[i]),borderRadius:[CS.barRadius,CS.barRadius,0,0],shadowBlur:CS.glow?10:0,shadowColor:d.colors[i]+'66'}})),emphasis:{itemStyle:{shadowBlur:14,shadowColor:'rgba(0,0,0,.22)'}},barMaxWidth:52}]};
  if(d.kind==='pie')return{...BASE,animationDuration:800,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+' : <b>'+nf(p.value)+'</b> ('+p.percent+'%)';}},legend:{type:'scroll',bottom:0,left:'center',icon:'circle',itemWidth:9,itemHeight:9,textStyle:{color:MUT,fontSize:11},pageIconColor:MUT,pageTextStyle:{color:MUT}},series:[{type:'pie',radius:['50%','72%'],center:['50%','44%'],avoidLabelOverlap:true,itemStyle:{borderColor:SURF,borderWidth:2,borderRadius:5},label:{show:false},emphasis:{scale:true,scaleSize:8,itemStyle:{shadowBlur:18,shadowColor:'rgba(0,0,0,.22)'},label:{show:true,fontSize:14,fontWeight:'bold',color:INK,formatter:function(p){return p.name+'\\n'+p.percent+'%';}}},data:d.items.map(it=>({name:it.name,value:it.value,itemStyle:{color:it.color}}))}]};
- if(d.kind==='map')return{tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+(p.value?(': <b>'+nf(p.value)+'</b>'):'');}},visualMap:{min:0,max:d.max,left:8,bottom:8,calculable:true,inRange:{color:[PRIMARY+'18',PRIMARY+'66',PRIMARY]},textStyle:{color:MUT}},series:[{type:'map',map:'world',roam:false,emphasis:{label:{show:false},itemStyle:{areaColor:${JSON.stringify(accent)}}},itemStyle:{borderColor:GRID,areaColor:DARK?'#1d2236':'#eef0f6'},data:d.items}]};
+ if(d.kind==='map')return{tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+(p.value?(': <b>'+nf(p.value)+'</b>'):'');}},visualMap:{show:!REPORT,min:0,max:d.max,left:8,bottom:8,calculable:true,inRange:{color:REPORT?['#E9E6E0',PRIMARY+'99',PRIMARY]:[PRIMARY+'18',PRIMARY+'66',PRIMARY]},textStyle:{color:MUT}},series:[{type:'map',map:'world',roam:false,emphasis:{label:{show:false},itemStyle:{areaColor:${JSON.stringify(accent)}}},itemStyle:{borderColor:GRID,areaColor:DARK?'#1d2236':'#eef0f6'},data:d.items}]};
  if(d.kind==='gauge')return{series:[{type:'gauge',startAngle:215,endAngle:-35,min:0,max:Math.max(d.target,d.value)||1,progress:{show:true,width:13,roundCap:true,itemStyle:{color:d.color}},axisLine:{lineStyle:{width:13,color:[[1,GRID]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},title:{offsetCenter:[0,'32%'],color:MUT,fontSize:12},detail:{offsetCenter:[0,'-6%'],fontSize:22,fontWeight:'bold',color:INK,formatter:function(){return d.fmt;}},data:[{value:d.value,name:'objectif '+d.targetFmt+(d.target?(' · '+Math.round(d.value/d.target*100)+'%'):'')}]}]};
  if(d.kind==='stackbar')return{...BASE,animationDuration:800,tooltip:STIP,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'bar',stack:'t',data:s.data,emphasis:{focus:'series'},itemStyle:{color:s.color},barMaxWidth:48};})};
  if(d.kind==='sankey')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.data&&p.data.source?(p.data.source+' → '+p.data.target+' : <b>'+nf(p.value)+'</b>'):(p.name+' : <b>'+nf(p.value)+'</b>');}},series:[{type:'sankey',data:d.nodes,links:d.links,emphasis:{focus:'adjacency',lineStyle:{opacity:.72}},nodeGap:18,nodeWidth:16,label:{color:INK,fontSize:12,fontWeight:600},itemStyle:{borderWidth:0,borderRadius:3},lineStyle:{color:'source',opacity:.48,curveness:.55}}]};
  if(d.kind==='radar')return{...BASE,tooltip:{...TIP,trigger:'item'},legend:{show:d.series.length>1,bottom:0,icon:'circle',textStyle:{color:MUT}},radar:{indicator:d.indicators,splitNumber:4,center:['50%','52%'],radius:'64%',axisName:{color:MUT,fontSize:11},splitLine:{lineStyle:{color:GRID}},splitArea:{show:true,areaStyle:{color:[DARK?'#161a30':'#fbfbfe',SURF]}},axisLine:{lineStyle:{color:GRID}}},series:[{type:'radar',data:d.series.map(function(s){return{value:s.value,name:s.name,symbol:s.dash?'none':'circle',symbolSize:5,lineStyle:{width:s.dash?1.5:2.5,color:s.color,type:s.dash?'dashed':'solid'},itemStyle:{color:s.color},areaStyle:s.dash?undefined:{color:s.color,opacity:.16}};})}]};
- if(d.kind==='funnel')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){var it=d.items[p.dataIndex];return it.name+' : <b>'+it.real+'</b><br/>'+it.pct+'% du sommet'+(it.conv!=null?'<br/>conversion : '+it.conv+'%':'');}},legend:{type:'scroll',bottom:0,icon:'circle',textStyle:{color:MUT}},series:[{type:'funnel',left:'6%',right:'6%',top:12,bottom:36,minSize:'16%',maxSize:'100%',sort:'descending',gap:3,funnelAlign:'center',label:{show:true,position:'inside',color:'#fff',fontSize:12,fontWeight:600,formatter:function(p){return p.name+'  '+d.items[p.dataIndex].pct+'%';}},labelLine:{show:false},itemStyle:{borderColor:SURF,borderWidth:1,borderRadius:4},emphasis:{label:{fontSize:13}},data:d.items.map(function(it){return{name:it.name,value:it.value,itemStyle:{color:it.color}};})}]};
+ if(d.kind==='funnel')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){var it=d.items[p.dataIndex];return it.name+' : <b>'+it.real+'</b><br/>'+it.pct+'% du sommet'+(it.conv!=null?'<br/>conversion : '+it.conv+'%':'');}},legend:{show:!REPORT,type:'scroll',bottom:0,icon:'circle',textStyle:{color:MUT}},series:[{type:'funnel',left:'6%',right:REPORT?'34%':'6%',top:12,bottom:REPORT?12:36,minSize:'16%',maxSize:'100%',sort:'descending',gap:3,funnelAlign:'center',label:{show:true,position:REPORT?'right':'inside',color:REPORT?INK:'#fff',fontSize:12,fontWeight:600,formatter:function(p){var it=d.items[p.dataIndex];return REPORT?(p.name+' · '+it.real+(it.conv!=null?' ('+it.conv+' %)':'')):(p.name+'  '+it.pct+'%');}},labelLine:{show:REPORT,lineStyle:{color:GRID}},itemStyle:{borderColor:SURF,borderWidth:1,borderRadius:4},emphasis:{label:{fontSize:13}},data:d.items.map(function(it){return{name:it.name,value:it.value,itemStyle:{color:it.color}};})}]};
  if(d.kind==='treemap')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+': <b>'+nf(p.value)+'</b>';}},series:[{type:'treemap',roam:false,nodeClick:false,breadcrumb:{show:false},width:'100%',height:'100%',label:{color:'#fff',fontSize:12,overflow:'truncate'},itemStyle:{borderColor:SURF,borderWidth:2,gapWidth:2},data:d.items.map(function(it){return{name:it.name,value:it.value,itemStyle:{color:it.color}};})}]};
  if(d.kind==='calendar')return{tooltip:{...TIP,formatter:function(p){return p.value[0]+': <b>'+nf(p.value[1])+'</b>';}},visualMap:{min:0,max:d.max,show:false,inRange:{color:[PRIMARY+'14',PRIMARY+'66',PRIMARY]}},calendar:{range:d.range,cellSize:['auto',16],left:22,right:16,top:24,bottom:8,itemStyle:{color:SURF,borderColor:DARK?'#0f1221':'#fff',borderWidth:3,borderRadius:3},splitLine:{show:false},dayLabel:{color:MUT,firstDay:1},monthLabel:{show:false},yearLabel:{show:false}},series:[{type:'heatmap',coordinateSystem:'calendar',data:d.data}]};
  if(d.kind==='area')return{...BASE,animationDuration:850,tooltip:LTIP,legend:{show:d.series.length>1,bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',boundaryGap:false,data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'line',data:s.data,smooth:CS.smooth,symbol:'none',emphasis:{focus:'series'},lineStyle:{width:CS.lineWidth,color:s.color,shadowBlur:CS.glow?14:6,shadowColor:s.color+'66',shadowOffsetY:3},areaStyle:{color:gr(e,s.color),opacity:d.series.length>1?.55:.95}};})};
  if(d.kind==='stackarea')return{...BASE,tooltip:LTIP,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',boundaryGap:false,data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'line',stack:'t',data:s.data,smooth:CS.smooth,symbol:'none',emphasis:{focus:'series'},lineStyle:{width:1,color:s.color},areaStyle:{color:s.color,opacity:.72}};})};
  if(d.kind==='river')return{...BASE,tooltip:{...TIP,trigger:'axis',axisPointer:{type:'line',lineStyle:{color:GRID}}},legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},singleAxis:{type:'category',data:d.labels,top:12,bottom:42,axisLine:{lineStyle:{color:GRID}},axisTick:{show:false},axisLabel:{color:MUT}},series:[{type:'themeRiver',data:d.data,color:d.colors,emphasis:{itemStyle:{shadowBlur:12,shadowColor:'rgba(0,0,0,.25)'}},label:{show:false}}]};
- if(d.kind==='combo')return{...BASE,animationDuration:800,tooltip:LTIP,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false}},yAxis:[{type:'value',...ax},{type:'value',...ax,splitLine:{show:false},axisLabel:{color:MUT,formatter:function(v){return v+(d.lineUnit==='%'?'%':'');}}}],series:d.bars.map(function(s){return{name:s.name,type:'bar',data:s.data,emphasis:{focus:'series'},itemStyle:{color:gbar(e,s.color),borderRadius:[CS.barRadius,CS.barRadius,0,0]},barMaxWidth:38};}).concat([{name:d.line.name,type:'line',yAxisIndex:1,data:d.line.data,smooth:CS.smooth,symbol:'circle',symbolSize:7,z:5,lineStyle:{width:CS.lineWidth+.5,color:d.line.color},itemStyle:{color:d.line.color,borderColor:'#fff',borderWidth:2}}])};
+ if(d.kind==='combo')return{...BASE,grid:{left:10,right:18,top:REPORT?34:20,bottom:8,containLabel:true},animationDuration:800,tooltip:LTIP,legend:REPORT?{top:0,right:0,icon:'roundRect',itemWidth:12,itemHeight:4,textStyle:{color:MUT,fontSize:11}}:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false}},yAxis:[{type:'value',...ax},{type:'value',...ax,splitLine:{show:false},axisLabel:{color:MUT,formatter:function(v){return v+(d.lineUnit==='%'?'%':'');}}}],series:d.bars.map(function(s){return{name:s.name,type:'bar',data:s.data,emphasis:{focus:'series'},itemStyle:{color:gbar(e,s.color),borderRadius:[CS.barRadius,CS.barRadius,0,0]},barMaxWidth:38};}).concat([{name:d.line.name,type:'line',yAxisIndex:1,data:d.line.data,smooth:CS.smooth,symbol:'circle',symbolSize:7,z:5,lineStyle:{width:CS.lineWidth+.5,color:d.line.color},itemStyle:{color:d.line.color,borderColor:'#fff',borderWidth:2}}])};
  if(d.kind==='slope')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.seriesName+' : <b>'+p.value+'</b>'+(p.dataIndex===1?' (base 100)':'');}},legend:{type:'scroll',bottom:0,icon:'circle',textStyle:{color:MUT}},grid:{left:10,right:66,top:16,bottom:34,containLabel:true},xAxis:{type:'category',data:d.labels,boundaryGap:false,axisLine:{lineStyle:{color:GRID}},axisTick:{show:false},axisLabel:{color:MUT}},yAxis:{type:'value',show:false,scale:true},series:d.series.map(function(s){return{name:s.name,type:'line',data:s.data,symbol:'circle',symbolSize:8,lineStyle:{width:2.4,color:s.color},itemStyle:{color:s.color},endLabel:{show:true,color:s.color,fontSize:11,formatter:function(p){return s.name;}}};})};
  if(d.kind==='matrix')return{...BASE,tooltip:{...TIP,position:'top',formatter:function(p){return d.rowlabels[p.value[1]]+' · '+d.collabels[p.value[0]]+': <b>'+nf(p.value[3])+'</b>';}},grid:{left:10,right:16,top:10,bottom:26,containLabel:true},xAxis:{type:'category',data:d.collabels,splitArea:{show:false},axisLine:{show:false},axisTick:{show:false},axisLabel:{color:MUT}},yAxis:{type:'category',data:d.rowlabels,splitArea:{show:false},axisLine:{show:false},axisTick:{show:false},axisLabel:{color:MUT}},visualMap:{min:0,max:100,show:false,inRange:{color:[PRIMARY+'12',PRIMARY+'70',PRIMARY]}},series:[{type:'heatmap',data:d.data,label:{show:false},itemStyle:{borderColor:SURF,borderWidth:3,borderRadius:5},emphasis:{itemStyle:{shadowBlur:8,shadowColor:'rgba(0,0,0,.2)'}}}]};
  if(d.kind==='rose')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+' : <b>'+nf(p.value)+'</b> ('+p.percent+'%)';}},legend:{type:'scroll',bottom:0,left:'center',icon:'circle',itemWidth:9,itemHeight:9,textStyle:{color:MUT,fontSize:11},pageIconColor:MUT,pageTextStyle:{color:MUT}},series:[{type:'pie',radius:['18%','74%'],center:['50%','44%'],roseType:'radius',itemStyle:{borderColor:SURF,borderWidth:2,borderRadius:5},label:{show:false},emphasis:{scale:true,scaleSize:6,itemStyle:{shadowBlur:16,shadowColor:'rgba(0,0,0,.2)'}},data:d.items.map(function(it){return{name:it.name,value:it.value,itemStyle:{color:it.color}};})}]};
@@ -744,9 +794,9 @@ function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLin
  if(d.kind==='rings')return{tooltip:{show:false},series:d.rings.map(function(r,i){var rad=92-i*15;return{type:'gauge',startAngle:90,endAngle:-270,min:0,max:100,radius:rad+'%',center:['50%','50%'],pointer:{show:false},progress:{show:true,roundCap:true,width:9,itemStyle:{color:r.color}},axisLine:{lineStyle:{width:9,color:[[1,GRID]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},anchor:{show:false},title:{show:false},detail:i===0?{offsetCenter:[0,0],fontSize:17,fontWeight:'bold',color:INK,formatter:function(){return d.center;}}:{show:false},data:[{value:r.pct}]};})};
  if(d.kind==='diverging')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+': <b>'+(p.value>=0?'+':'')+p.value+'%</b>';}},grid:{left:10,right:26,top:8,bottom:8,containLabel:true},xAxis:{type:'value',...ax,axisLabel:{color:MUT,formatter:'{value}%'}},yAxis:{type:'category',data:d.labels,inverse:true,axisLine:{show:false},axisTick:{show:false},axisLabel:{color:MUT,fontSize:12}},series:[{type:'bar',data:d.data.map(function(v){return{value:v,itemStyle:{color:v>=0?'#16a34a':'#e24b4a',borderRadius:v>=0?[0,5,5,0]:[5,0,0,5]}};}),barMaxWidth:18,label:{show:true,color:MUT,fontSize:11,position:'right',formatter:function(p){return(p.value>=0?'+':'')+p.value+'%';}}}]};
  if(d.kind==='group')return{...BASE,animationDuration:800,tooltip:STIP,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'bar',data:s.data,emphasis:{focus:'series'},itemStyle:{color:s.color,borderRadius:[CS.barRadius,CS.barRadius,0,0]},barMaxWidth:24,barGap:'18%'};})};
- if(d.kind==='waterfall')return{...BASE,animationDuration:800,tooltip:{...TIP,trigger:'axis',formatter:function(p){var x=p[p.length-1];var r=d.real[x.dataIndex];return x.name+' : <b>'+(r<0?'-':'')+nf(Math.abs(r))+'</b>';}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true,fontSize:11}},yAxis:{type:'value',...ax},series:[{type:'bar',stack:'w',stackStrategy:'all',data:d.base,itemStyle:{color:'transparent'},emphasis:{itemStyle:{color:'transparent'}},silent:true},{type:'bar',stack:'w',stackStrategy:'all',data:d.delta.map(function(v,i){return{value:v,itemStyle:{color:d.colors[i],borderRadius:3}};}),emphasis:{itemStyle:{shadowBlur:12,shadowColor:'rgba(0,0,0,.2)'}},barMaxWidth:46}]};
+ if(d.kind==='waterfall')return{...BASE,animationDuration:800,tooltip:{...TIP,trigger:'axis',formatter:function(p){var x=p[p.length-1];var r=d.real[x.dataIndex];return x.name+' : <b>'+(r<0?'-':'')+nf(Math.abs(r))+'</b>';}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true,fontSize:11}},yAxis:{type:'value',...ax},series:[{type:'bar',stack:'w',stackStrategy:'all',data:d.base,itemStyle:{color:'transparent'},emphasis:{itemStyle:{color:'transparent'}},silent:true},{type:'bar',stack:'w',stackStrategy:'all',data:d.delta.map(function(v,i){return{value:v,itemStyle:{color:d.colors[i],borderRadius:REPORT?1:3}};}),label:{show:REPORT,position:'top',color:INK,fontSize:11,fontFamily:FONT,formatter:function(p){return nk(d.real[p.dataIndex]);}},emphasis:{itemStyle:{shadowBlur:12,shadowColor:'rgba(0,0,0,.2)'}},barMaxWidth:46}]};
  return{};}
-function gbar(e,c){return new e.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c},{offset:1,color:c+'c2'}]);}
+function gbar(e,c){if(REPORT)return c;return new e.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c},{offset:1,color:c+'c2'}]);}
 function build(i){if(!window.echarts)return;document.querySelectorAll('.page[data-i="'+i+'"] .echart').forEach(function(el){if(made[el.id])return;var d=CHARTS.find(function(x){return x.id===el.id;});if(!d)return;if(d.kind==='map'&&!(echarts.getMap&&echarts.getMap('world')))return;try{var c=echarts.init(el,null,{renderer:'canvas'});c.setOption(opt(echarts,d));made[el.id]=c;if(window.ResizeObserver){new ResizeObserver(function(){try{c.resize();}catch(e){}}).observe(el);}}catch(e){}});}
 window.addEventListener('resize',function(){for(var k in made){try{made[k].resize();}catch(e){}}});
 document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){var i=t.dataset.i;document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x===t);});document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.dataset.i===i);});build(i);});});
@@ -887,9 +937,9 @@ header.hero h1{margin:0;font-size:clamp(21px,1.5vw+1rem,28px);font-weight:700;le
 .drawer-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
 .drawer-h h3{margin:4px 0 18px;font-size:19px;font-weight:700;letter-spacing:-.01em}
 .drawer-sec{margin-bottom:20px}.drawer-st{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:10px}
-</style></head><body class="${glass ? "glassbg" : ""}">
+${th.report ? reportCss(th, headFont) : ""}</style></head><body class="${glass ? "glassbg" : ""}${th.report ? " report" : ""}">
 <div class="dash">
-  <header class="hero"><div class="hero-row">${logo ? `<img src="${esc(logo)}" alt="" style="height:44px;max-width:150px;object-fit:contain;background:#fff;border-radius:10px;padding:5px 9px">` : ""}<div class="hero-id"><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(ctx.client)}</h1></div><div class="hero-right"><div class="hero-period">${esc(periodLabel(ctx.period))}</div>${curToggle}</div></div></header>
+  ${th.report ? `<header class="rhead"><div class="rhead-row">${logo ? `<img class="rhead-logo" src="${esc(logo)}" alt="">` : ""}<div class="rhead-id"><div class="eyebrow">${esc(eyebrow === "Rapport financier" ? "Rapport financier mensuel" : `${eyebrow} · rapport mensuel`)}</div><h1>${esc(ctx.client)}</h1></div><div class="rhead-right"><div class="rhead-period">${esc(periodLabel(ctx.period))}</div>${curToggle}</div></div></header>` : `<header class="hero"><div class="hero-row">${logo ? `<img src="${esc(logo)}" alt="" style="height:44px;max-width:150px;object-fit:contain;background:#fff;border-radius:10px;padding:5px 9px">` : ""}<div class="hero-id"><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(ctx.client)}</h1></div><div class="hero-right"><div class="hero-period">${esc(periodLabel(ctx.period))}</div>${curToggle}</div></div></header>`}
   <nav class="tabs">${nav}</nav>
   <main>${spanifyMoney(main)}</main>
   <footer class="foot">${esc(ctx.client)} · ${esc(periodLabel(ctx.period))} · ${esc(ctx.currency)} — Document confidentiel</footer>

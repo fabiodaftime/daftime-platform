@@ -35,7 +35,7 @@ describe("rendu doctrinal", () => {
     expect(h).toMatch(/Trésorerie à 13 semaines/);
     expect(h).toMatch(/Passage sous zéro le 05\/11/);
   });
-  it("repère CM3 de la doctrine (sain 15-30 %)", () => {
-    expect(html).toMatch(/sain 15-30 %/);
+  it("repère CM3 de la doctrine (15-30 %)", () => {
+    expect(html).toMatch(/repère 15-30 %/);
   });
 });

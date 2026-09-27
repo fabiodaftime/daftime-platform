@@ -16,6 +16,7 @@ export interface Theme {
   googleFont?: string;                // nom Google Fonts (chargé en <link>)
   bgColor?: string;                   // fond personnalisé (sinon défaut clair/sombre)
   icons?: Record<string, string>;
+  legacy?: boolean;                   // true = ancienne ambiance imposée par le conseiller (sinon : rapport clair)
 }
 
 export interface ChartStyle { area: boolean; smooth: boolean; grid: boolean; barRadius: number; glow: boolean; lineWidth: number }
@@ -25,6 +26,47 @@ export interface ResolvedTheme {
   font: string; googleFont?: string; icons: Record<string, string>;
   bg: string; surface: string; ink: string; muted: string; border: string; grid: string; dark: boolean;
   chart: ChartStyle;
+  // Système « rapport » (défaut) : rendu éditorial clair dérivé de la marque, contrastes garantis.
+  report: boolean;
+  headingFont: string;        // police des titres et des grands chiffres (marque : titres du site)
+  googleFonts: string[];      // familles Google Fonts à charger (titres + texte)
+  accentInk: string;          // accent assombri si besoin pour servir de texte (contraste ≥ 4,5)
+  good: string; warn: string; bad: string; // sémantique, indépendante de l'accent
+}
+
+// ---- contraste (WCAG 2.x) ----------------------------------------------------------
+function lum(hex: string): number {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim()); if (!m) return 0;
+  const n = parseInt(m[1], 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+}
+export function contrast(a: string, b: string): number { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+const isHex = (s: unknown): s is string => typeof s === "string" && /^#[0-9a-f]{6}$/i.test(s.trim());
+// Assombrit (en luminosité HSL) jusqu'à atteindre le contraste voulu sur le fond.
+function darkenTo(hex: string, bg: string, target: number): string {
+  let [h, s, l] = hexToHsl(hex); let out = hex;
+  for (let i = 0; i < 40 && contrast(out, bg) < target; i++) { l = Math.max(0, l - 0.025); out = hslToHex(h, s, l); }
+  return out;
+}
+// Deux couleurs trop proches pour être distinguées dans un graphe (écart de luminance ET de teinte faibles).
+function tooClose(a: string, b: string): boolean {
+  const [ha, sa, la] = hexToHsl(a), [hb, sb, lb] = hexToHsl(b);
+  const dh = Math.min(Math.abs(ha - hb), 360 - Math.abs(ha - hb)) * Math.min(sa, sb);
+  return Math.abs(la - lb) < (Math.max(la, lb) < 0.25 ? 0.2 : 0.12) && dh < 25;
+}
+// Palette de graphes du rapport : couleurs de la MARQUE lisibles sur fond clair (contraste ≥ 1,8 pour une
+// surface pleine), dédoublonnées, complétées par une palette neutre testée. La 1re série = l'encre de marque.
+const REPORT_FALLBACK = ["#1F2937", "#C2410C", "#0F766E", "#7C3AED", "#2563EB", "#65A30D", "#BE185D"];
+export function reportPalette(candidates: string[], bg: string): string[] {
+  const out: string[] = [];
+  for (const c of [...candidates, ...REPORT_FALLBACK]) {
+    if (!isHex(c) || contrast(c, bg) < 1.8) continue;
+    if (out.some((x) => tooClose(x, c))) continue;
+    out.push(c.toUpperCase());
+    if (out.length >= 7) break;
+  }
+  return out;
 }
 
 const VIVID = ["#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ef4444", "#14b8a6"];
@@ -89,9 +131,42 @@ const CHART_STYLES: Record<string, Partial<ChartStyle>> = {
   glass:     { area: true, smooth: true, glow: true, barRadius: 10 },
 };
 
+// SYSTÈME « RAPPORT » (défaut de TOUS les dashboards) : clair, éditorial, identité de la marque sans ses pièges.
+//  - fond clair toujours ; encre = texte de marque si assez foncé (contraste ≥ 9), sinon quasi-noir ;
+//  - accent = accent de marque ; version « texte » assombrie automatiquement si trop pâle ;
+//  - graphes = couleurs de marque lisibles + palette testée ; sémantique vert/ambre/rouge séparée ;
+//  - polices = celles du site (titres / texte), chargées depuis Google Fonts.
+function resolveReport(b: Record<string, any>, t: Theme): ResolvedTheme {
+  const bg = "#FAFAF8", surface = "#FFFFFF";
+  const c = (b.colors ?? {}) as Record<string, string>;
+  const inkCand = [c.text, c.primary, c.secondary, "#171717"].find((x) => isHex(x) && contrast(x, surface) >= 9) ?? "#171717";
+  const accent = [t.accent, c.accent, b.accent, "#C2410C"].find((x) => isHex(x) && contrast(x as string, surface) >= 1.6) as string;
+  const accentInk = contrast(accent, surface) >= 4.5 ? accent : darkenTo(accent, surface, 4.5);
+  const brandColors = [inkCand, ...(Array.isArray(b.palette) ? b.palette : []), c.primary, c.accent, c.secondary].filter(isHex) as string[];
+  const palette = (t.palette && t.palette.length) ? t.palette : reportPalette(brandColors, surface);
+  const safeFam = (s: unknown) => String(s ?? "").replace(/['"]/g, "").split(",")[0].replace(/[^a-zA-Z0-9 ]/g, "").trim().slice(0, 40);
+  const body = safeFam(b.fonts?.body ?? b.googleFont ?? b.typography?.googleFont) || "Inter";
+  const heading = safeFam(b.fonts?.heading ?? b.typography?.heading) || body;
+  const minimal = Array.isArray(b.style) && b.style.some((s: string) => /minimal|luxe|fashion|mode/i.test(s));
+  return {
+    mood: "report", primary: inkCand, accent, palette, background: "plain", header: "report", kpi: "report",
+    radius: t.radius ?? (minimal ? 4 : 8), density: "comfortable",
+    font: `'${body}', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,
+    googleFont: body, googleFonts: [...new Set([heading, body])],
+    headingFont: `'${heading}', '${body}', 'Inter', system-ui, sans-serif`,
+    icons: t.icons ?? {},
+    bg, surface, ink: inkCand, muted: "#6B6B6B", border: "#E7E5E0", grid: "#EFEDE8", dark: false,
+    chart: { area: false, smooth: true, grid: true, barRadius: 2, glow: false, lineWidth: 2, ...(t.chart ?? {}) },
+    report: true, accentInk, good: "#1E7B4F", warn: "#B7791F", bad: "#B42318",
+  };
+}
+
 export function resolveTheme(brand: Record<string, any> | null | undefined, t: Theme = {}): ResolvedTheme {
   const b = brand ?? {};
-  const mood = t.mood && PRESETS[t.mood] ? t.mood : "vivid";
+  // Le rapport clair est la règle pour TOUS les dossiers. Une ancienne ambiance (mood choisi par l'IA dans les
+  // dashboards existants) ne s'applique que si le conseiller l'impose explicitement (theme.legacy = true).
+  if (!(t as { legacy?: boolean }).legacy || !t.mood || !PRESETS[t.mood]) return resolveReport(b, t);
+  const mood = t.mood;
   const p = PRESETS[mood];
   // la marque prime pour les couleurs identitaires ; sinon on prend celles du preset.
   const primary = t.primary ?? b.colors?.primary ?? b.primary ?? p.primary ?? "#1A1D56";
@@ -122,6 +197,8 @@ export function resolveTheme(brand: Record<string, any> | null | undefined, t: T
     grid: dark ? "#262b40" : "#eef0f6",
     dark,
     chart: { ...CHART_DEFAULT, ...(CHART_STYLES[mood] ?? {}), ...(t.chart ?? {}) },
+    report: false, headingFont: stack, googleFonts: googleFont ? [googleFont] : [],
+    accentInk: accent, good: "#16a34a", warn: "#d97706", bad: "#e24b4a",
   };
 }
 
