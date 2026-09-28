@@ -66,3 +66,19 @@ describe("trésorerie : neutralisations, sorties ponctuelles, scénario plan", (
     expect(f.below_zero).toBe("2026-11-05");
   });
 });
+
+describe("échéance fixe d'un shop qui grandit", () => {
+  it("replanifiée au dernier mois quand il dépasse la médiane (prudence)", () => {
+    const grow: Tx[] = [...txs,
+      { tx_date: "2026-06-06", amount: -20_000, counterparty: "3PL" }, { tx_date: "2026-07-06", amount: -30_000, counterparty: "3PL" },
+      { tx_date: "2026-08-06", amount: -45_000, counterparty: "3PL" }];
+    const g = forecastCash(grow, "2026-08-31", 200_000)!;
+    expect(g.scheduled.find((s) => s.counterparty === "3PL")!.amount).toBe(45_000);
+  });
+  it("mois atypiquement bas : la médiane reste la référence", () => {
+    const dip: Tx[] = [...txs,
+      { tx_date: "2026-06-06", amount: -30_000, counterparty: "3PL" }, { tx_date: "2026-07-06", amount: -32_000, counterparty: "3PL" },
+      { tx_date: "2026-08-06", amount: -10_000, counterparty: "3PL" }];
+    expect(forecastCash(dip, "2026-08-31", 200_000)!.scheduled.find((s) => s.counterparty === "3PL")!.amount).toBe(30_000);
+  });
+});

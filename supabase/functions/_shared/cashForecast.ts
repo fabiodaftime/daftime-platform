@@ -84,7 +84,10 @@ export function forecastCash(txsAll: Tx[], asOf: string, startBalance: number, o
     if (present.length < 2 || present.some((x) => x.length > 3)) continue;
     const last = perMonth.find((x) => x.length) ?? [];
     const days = [...new Set(last.map((t) => Number(t.tx_date.slice(8, 10))))].sort((a, b) => a - b);
-    const amount = median(present.map((x) => -x.reduce((s, t) => s + t.amount, 0))) / Math.max(1, days.length);
+    // Montant : le plus élevé entre la médiane des 3 mois et le dernier mois (prudence : un shop qui grandit paie
+    // plus au 3PL, à la TVA… que sa médiane — la projection doit répondre « je tiens ? »).
+    const monthly = present.map((x) => -x.reduce((s, t) => s + t.amount, 0));
+    const amount = Math.max(median(monthly), -last.reduce((s, t) => s + t.amount, 0)) / Math.max(1, days.length);
     scheduled.push({ counterparty: ts[0].counterparty || k, days, amount: r0(amount) }); schedKeys.add(k);
   }
 

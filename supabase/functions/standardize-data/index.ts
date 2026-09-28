@@ -492,24 +492,33 @@ Deno.serve(async (req) => {
       if (typeof cur.cash_end === "number") {
         try {
           // Neutralisés : débits qualifiés « interne » par les règles du dossier (virements entre comptes, interco).
+          // Un virement « interne » vers un compte HORS trésorerie (carte des flux) sort bien de la trésorerie suivie.
           const exclude = (t: { amount: number; label?: string | null; counterparty?: string | null }) =>
-            t.amount < 0 && classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount).cat === "internal";
+            t.amount < 0 && classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount).cat === "internal"
+            && !isOutOfTreasury(`${t.label ?? ""} ${t.counterparty ?? ""}`, perimeter);
           // Scénario PLAN : objectif de CA annuel (même base que le CA du dashboard) → CA mensuel nécessaire
           // d'ici décembre, rapporté au rythme des 2 derniers mois → facteur appliqué aux flux variables.
+          // L'objectif peut être donné tel que le client le dit : ca_annual = CA net (base du dashboard) ;
+          // ca_annual_gross = CA HT AVANT retours et remises → converti en net au ratio net / brut de l'année.
           let plan: { label: string; factor: (ym: string) => number } | undefined;
-          const caAnnual = Number(ctxData.objectives?.ca_annual);
-          if (caAnnual > 0 && typeof cur.ca === "number" && cur.ca > 0) {
+          const caNetObj = Number(ctxData.objectives?.ca_annual), caGrossObj = Number(ctxData.objectives?.ca_annual_gross);
+          if ((caNetObj > 0 || caGrossObj > 0) && typeof cur.ca === "number" && cur.ca > 0) {
             const { data: ytd } = await admin.from("standardized_data").select("period, data").eq("client_id", client_id).eq("is_current", true)
               .gte("period", `${y}-01-01`).lt("period", period);
-            const caOf = (d: unknown) => { const v = flatValues(d as never).ca; return typeof v === "number" ? v : 0; };
-            const done = (ytd ?? []).reduce((s, r) => s + caOf(r.data), 0) + cur.ca;
-            const prevCa = prevSd ? caOf(prevSd.data) : 0;
+            const valOf = (d: unknown, k: string) => { const v = flatValues(d as never)[k]; return typeof v === "number" ? v : 0; };
+            const done = (ytd ?? []).reduce((s, r) => s + valOf(r.data, "ca"), 0) + cur.ca;
+            const doneGross = (ytd ?? []).reduce((s, r) => s + valOf(r.data, "gross_sales"), 0) + (typeof cur.gross_sales === "number" ? cur.gross_sales : 0);
+            const netRatio = doneGross > 0 ? done / doneGross : null;
+            const caAnnual = caNetObj > 0 ? caNetObj : netRatio ? caGrossObj * netRatio : 0;
+            const M = (x: number) => `${(Math.round(x / 1e4) / 100).toLocaleString("fr-FR")} M`;
+            const prevCa = prevSd ? valOf(prevSd.data, "ca") : 0;
             const recentMonthly = prevCa > 0 ? (cur.ca + prevCa) / 2 : cur.ca;
             const left = 12 - mo;
-            if (left > 0) {
+            if (left > 0 && caAnnual > 0) {
               const need = Math.max(0, caAnnual - done) / left;
               const k = Math.min(3, Math.max(0.3, need / recentMonthly));
-              plan = { label: `plan ${Math.round(caAnnual / 1e5) / 10} M`, factor: (ym) => (ym.startsWith(String(y)) ? k : 1) };
+              plan = { label: caNetObj > 0 ? `plan ${M(caAnnual)}` : `plan ${M(caGrossObj)} HT avant retours (≈ ${M(caAnnual)} net)`,
+                factor: (ym) => (ym.startsWith(String(y)) ? k : 1) };
             }
           }
           // Périmètre (carte des flux) : un compte hors trésorerie ne pèse ni sur la projection ni sur les leviers.
