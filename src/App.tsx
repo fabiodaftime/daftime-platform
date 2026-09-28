@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect } from "react";
 // Landing pub en EAGER (dans le bundle principal) : pas d'aller-retour réseau supplémentaire au
-// chargement de /ecommerce → meilleur FCP/LCP sur la page qui reçoit le trafic pub.
-import LandingEcommerce from "./pages/LandingEcommerce";
-const LandingEcommerce2 = lazy(() => import("./pages/LandingEcommerce2"));
+// chargement de la page qui reçoit le trafic pub → meilleur FCP/LCP. Depuis le 28/09/2026 c'est /ecommerce-2
+// (seule LP en diffusion) ; /ecommerce passe en chargement à la demande.
+import LandingEcommerce2 from "./pages/LandingEcommerce2";
+const LandingEcommerce = lazy(() => import("./pages/LandingEcommerce"));
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
