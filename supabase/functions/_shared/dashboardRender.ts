@@ -98,8 +98,21 @@ const COUNTRY_EN: Record<string, string> = {
   "italie": "Italy", "italy": "Italy", "royaume-uni": "United Kingdom", "united kingdom": "United Kingdom",
   "états-unis": "United States", "etats-unis": "United States", "united states": "United States",
   "pays-bas": "Netherlands", "netherlands": "Netherlands", "portugal": "Portugal", "canada": "Canada",
+  "émirats arabes unis": "United Arab Emirates", "emirats arabes unis": "United Arab Emirates", "uae": "United Arab Emirates",
+  "autriche": "Austria", "irlande": "Ireland", "suède": "Sweden", "danemark": "Denmark", "norvège": "Norway", "pologne": "Poland",
+  "grèce": "Greece", "japon": "Japan", "australie": "Australia", "arabie saoudite": "Saudi Arabia", "qatar": "Qatar", "maroc": "Morocco",
 };
-const toEN = (n: string) => COUNTRY_EN[n.trim().toLowerCase()] ?? n.trim();
+// Codes ISO 3166-1 alpha-2 (exports Shopify / 3PL) → noms de la carte. DOM-TOM et Monaco rattachés à la France.
+const ISO2_EN: Record<string, string> = {
+  FR: "France", RE: "France", GP: "France", MQ: "France", GF: "France", YT: "France", MC: "France",
+  BE: "Belgium", CH: "Switzerland", LU: "Luxembourg", DE: "Germany", ES: "Spain", IT: "Italy", PT: "Portugal", NL: "Netherlands",
+  GB: "United Kingdom", UK: "United Kingdom", IE: "Ireland", AT: "Austria", SE: "Sweden", DK: "Denmark", NO: "Norway", FI: "Finland",
+  PL: "Poland", CZ: "Czech Rep.", GR: "Greece", RO: "Romania", HU: "Hungary",
+  US: "United States", CA: "Canada", MX: "Mexico", BR: "Brazil", AU: "Australia", NZ: "New Zealand", JP: "Japan", KR: "Korea", CN: "China",
+  SG: "Singapore", HK: "China", AE: "United Arab Emirates", SA: "Saudi Arabia", QA: "Qatar", KW: "Kuwait", IL: "Israel", TR: "Turkey",
+  MA: "Morocco", TN: "Tunisia", DZ: "Algeria", ZA: "South Africa", IN: "India",
+};
+const toEN = (n: string) => { const t = n.trim(); return ISO2_EN[t.toUpperCase()] ?? COUNTRY_EN[t.toLowerCase()] ?? t; };
 
 // FEUILLE DE STYLE « RAPPORT » (défaut) : éditoriale, claire, filets fins, chiffres dans la police des titres.
 // Appliquée APRÈS l'ancienne feuille (elle prime) ; tout passe par les tokens du thème → réutilisable pour
@@ -276,8 +289,15 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const bk = w.breakdown ? ctx.breakdowns?.[w.breakdown] : undefined;
         if (!bk || !bk.rows?.length) return "";
         const id = `ch${cid++}`;
-        const items = bk.rows.map((r) => ({ name: toEN(r.label), value: r.value }));
-        charts.push({ id, kind: "map", items, color: primary, max: Math.max(...bk.rows.map((r) => r.value)) || 1 });
+        // Codes pays agrégés (RE + FR → France). Couleur sur la RACINE de la valeur : le pays n°1 n'écrase
+        // pas les autres (sinon tout sauf lui paraît gris) ; le tooltip garde la valeur réelle.
+        const agg = new Map<string, number>();
+        for (const r of bk.rows) { const n = toEN(r.label); agg.set(n, (agg.get(n) ?? 0) + r.value); }
+        const items = [...agg].map(([name, v]) => ({ name, value: Math.sqrt(Math.max(0, v)), raw: v }));
+        const EU = /^(France|Belgium|Switzerland|Luxembourg|Germany|Spain|Italy|Portugal|Netherlands|United Kingdom|Ireland|Austria|Sweden|Denmark|Norway|Finland|Poland|Czech Rep\.|Greece|Romania|Hungary)$/;
+        const tot = [...agg.values()].reduce((s, v) => s + v, 0) || 1;
+        const euShare = [...agg].filter(([n]) => EU.test(n)).reduce((s, [, v]) => s + v, 0) / tot;
+        charts.push({ id, kind: "map", items, color: primary, min: Math.min(...items.map((x) => x.value)), max: Math.max(...items.map((x) => x.value)) || 1, europe: euShare >= 0.7 });
         return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? bk.label)}</div><div class="echart echart-map" id="${id}"></div></div>`;
       }
       case "ranking": {
@@ -615,13 +635,18 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         if (!f || !f.weeks?.length) return "";
         const d = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
         const id = `ch${cid++}`;
-        charts.push({ id, kind: "line", labels: [d(f.start.date), ...f.weeks.map((x) => d(x.week_start))],
-          series: [{ name: "Trésorerie projetée", data: [f.start.balance, ...f.weeks.map((x) => x.balance)], color: f.below_zero ? "#e24b4a" : primary }] });
-        const lowTxt = f.below_zero ? `Passage sous zéro le ${d(f.below_zero)} · point bas ${fmt(f.low.balance, ctx.currency, ctx.currency)} le ${d(f.low.date)}`
-          : `Point bas ${fmt(f.low.balance, ctx.currency, ctx.currency)} le ${d(f.low.date)}`;
+        const series = [{ name: f.plan ? "Au rythme actuel" : "Trésorerie projetée", data: [f.start.balance, ...f.weeks.map((x) => x.balance)], color: f.below_zero ? "#e24b4a" : primary }];
+        if (f.plan?.weeks?.length) series.push({ name: `Selon ton ${f.plan.label}`, data: [f.start.balance, ...f.plan.weeks.map((x) => x.balance)], color: distinctFrom(primary) });
+        charts.push({ id, kind: "line", labels: [d(f.start.date), ...f.weeks.map((x) => d(x.week_start))], series });
+        const m = (x: number) => fmt(x, ctx.currency, ctx.currency);
+        const lowOf = (s: { low: { date: string; balance: number }; below_zero?: string }) => s.below_zero
+          ? `passage sous zéro le ${d(s.below_zero)} · point bas ${m(s.low.balance)} le ${d(s.low.date)}` : `point bas ${m(s.low.balance)} le ${d(s.low.date)}`;
+        const lowTxt = f.plan ? `Au rythme actuel : ${lowOf(f)} — selon ton ${f.plan.label} : ${lowOf(f.plan)}` : lowOf(f).replace(/^./, (c) => c.toUpperCase());
+        const notes = [f.hypotheses?.[0] ?? "", ...(f.oneoffs?.length ? [`Sorties ponctuelles non reconduites : ${f.oneoffs.slice(0, 3).map((o) => `${o.counterparty} ${m(o.amount)}`).join(", ")}.`] : []),
+          ...(f.neutralized ? [`Virements entre tes comptes neutralisés (${m(f.neutralized)}).`] : [])].filter(Boolean);
         return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Trésorerie à 13 semaines")}</div>` +
           `<div class="co-t" style="margin:2px 0 6px;color:${f.below_zero ? "#dc2626" : "inherit"}">${esc(lowTxt)}</div><div class="echart" id="${id}"></div>` +
-          `<div style="font-size:11.5px;opacity:.7;margin-top:6px">Projection à rythme constant (hypothèse) : ${esc(f.hypotheses?.[0] ?? "")}</div></div>`;
+          `<div style="font-size:11.5px;opacity:.7;margin-top:6px">Projection (hypothèse) : ${esc(notes.join(" "))}</div></div>`;
       }
       case "callout": {
         if (!w.text) return "";
@@ -772,7 +797,7 @@ function opt(e,d){const ax={axisLine:{show:false},axisTick:{show:false},splitLin
  if(d.kind==='line')return{...BASE,animationDuration:850,tooltip:LTIP,legend:REPORT?{show:d.series.length>1,top:0,right:0,icon:'roundRect',itemWidth:12,itemHeight:4,textStyle:{color:MUT,fontSize:11}}:{show:d.series.length>1,bottom:0,icon:'circle',itemWidth:8,textStyle:{color:MUT}},xAxis:{type:'category',boundaryGap:false,data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(s=>({name:s.name,type:'line',data:s.data,smooth:CS.smooth,symbol:'circle',symbolSize:7,showSymbol:false,emphasis:{focus:'series'},lineStyle:{width:CS.lineWidth,color:s.color,shadowBlur:CS.glow?14:6,shadowColor:s.color+'66',shadowOffsetY:3},itemStyle:{color:s.color,borderColor:'#fff',borderWidth:2},areaStyle:(CS.area&&d.series.length===1)?{color:gr(e,s.color)}:undefined}))};
  if(d.kind==='bar')return{...BASE,animationDuration:800,tooltip:STIP,xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false},axisLabel:{color:MUT,interval:0,hideOverlap:true}},yAxis:{type:'value',...ax},series:[{type:'bar',label:{show:REPORT,position:'top',color:INK,fontSize:11,formatter:function(p){return nk(p.value);}},data:d.data.map((v,i)=>({value:v,itemStyle:{color:gbar(e,d.colors[i]),borderRadius:[CS.barRadius,CS.barRadius,0,0],shadowBlur:CS.glow?10:0,shadowColor:d.colors[i]+'66'}})),emphasis:{itemStyle:{shadowBlur:14,shadowColor:'rgba(0,0,0,.22)'}},barMaxWidth:52}]};
  if(d.kind==='pie')return{...BASE,animationDuration:800,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+' : <b>'+nf(p.value)+'</b> ('+p.percent+'%)';}},legend:{type:'scroll',bottom:0,left:'center',icon:'circle',itemWidth:9,itemHeight:9,textStyle:{color:MUT,fontSize:11},pageIconColor:MUT,pageTextStyle:{color:MUT}},series:[{type:'pie',radius:['50%','72%'],center:['50%','44%'],avoidLabelOverlap:true,itemStyle:{borderColor:SURF,borderWidth:2,borderRadius:5},label:{show:false},emphasis:{scale:true,scaleSize:8,itemStyle:{shadowBlur:18,shadowColor:'rgba(0,0,0,.22)'},label:{show:true,fontSize:14,fontWeight:'bold',color:INK,formatter:function(p){return p.name+'\\n'+p.percent+'%';}}},data:d.items.map(it=>({name:it.name,value:it.value,itemStyle:{color:it.color}}))}]};
- if(d.kind==='map')return{tooltip:{...TIP,trigger:'item',formatter:function(p){return p.name+(p.value?(': <b>'+nf(p.value)+'</b>'):'');}},visualMap:{show:!REPORT,min:0,max:d.max,left:8,bottom:8,calculable:true,inRange:{color:REPORT?['#E9E6E0',PRIMARY+'99',PRIMARY]:[PRIMARY+'18',PRIMARY+'66',PRIMARY]},textStyle:{color:MUT}},series:[{type:'map',map:'world',roam:false,emphasis:{label:{show:false},itemStyle:{areaColor:${JSON.stringify(accent)}}},itemStyle:{borderColor:GRID,areaColor:DARK?'#1d2236':'#eef0f6'},data:d.items}]};
+ if(d.kind==='map')return{tooltip:{...TIP,trigger:'item',formatter:function(p){var v=p.data&&p.data.raw!=null?p.data.raw:p.value;return p.name+(v?(': <b>'+nf(v)+'</b>'):'');}},visualMap:{show:false,min:d.min*0.85,max:d.max,left:8,bottom:8,calculable:true,inRange:{color:REPORT?['#C9C5BD',PRIMARY+'B3',PRIMARY]:[PRIMARY+'40',PRIMARY+'80',PRIMARY]},textStyle:{color:MUT}},series:[{type:'map',map:'world',roam:false,...(d.europe?{center:[6,49],zoom:6.5}:{}),emphasis:{label:{show:false},itemStyle:{areaColor:${JSON.stringify(accent)}}},itemStyle:{borderColor:DARK?GRID:'#FFFFFF',borderWidth:0.6,areaColor:DARK?'#1d2236':(REPORT?'#F1EFEA':'#eef0f6')},data:d.items}]};
  if(d.kind==='gauge')return{series:[{type:'gauge',startAngle:215,endAngle:-35,min:0,max:Math.max(d.target,d.value)||1,progress:{show:true,width:13,roundCap:true,itemStyle:{color:d.color}},axisLine:{lineStyle:{width:13,color:[[1,GRID]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},title:{offsetCenter:[0,'32%'],color:MUT,fontSize:12},detail:{offsetCenter:[0,'-6%'],fontSize:22,fontWeight:'bold',color:INK,formatter:function(){return d.fmt;}},data:[{value:d.value,name:'objectif '+d.targetFmt+(d.target?(' · '+Math.round(d.value/d.target*100)+'%'):'')}]}]};
  if(d.kind==='stackbar')return{...BASE,animationDuration:800,tooltip:STIP,legend:{bottom:0,icon:'circle',textStyle:{color:MUT}},xAxis:{type:'category',data:d.labels,...ax,splitLine:{show:false}},yAxis:{type:'value',...ax},series:d.series.map(function(s){return{name:s.name,type:'bar',stack:'t',data:s.data,emphasis:{focus:'series'},itemStyle:{color:s.color},barMaxWidth:48};})};
  if(d.kind==='sankey')return{...BASE,tooltip:{...TIP,trigger:'item',formatter:function(p){return p.data&&p.data.source?(p.data.source+' → '+p.data.target+' : <b>'+nf(p.value)+'</b>'):(p.name+' : <b>'+nf(p.value)+'</b>');}},series:[{type:'sankey',data:d.nodes,links:d.links,emphasis:{focus:'adjacency',lineStyle:{opacity:.72}},nodeGap:18,nodeWidth:16,label:{color:INK,fontSize:12,fontWeight:600},itemStyle:{borderWidth:0,borderRadius:3},lineStyle:{color:'source',opacity:.48,curveness:.55}}]};

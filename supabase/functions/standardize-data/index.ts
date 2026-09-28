@@ -19,7 +19,7 @@ import { MISSING_CONTENT, readClientFiles, readOneFile, filesToContentBlocks, ty
 import { getCatalog, inputLines, type CatalogLine } from "../_shared/templates.ts";
 import { type FileExtract } from "../_shared/reconcile.ts";
 import { ratesToReporting } from "../_shared/fx.ts";
-import { parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
+import { classifyDebit, parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
 import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact } from "../_shared/registry.ts";
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash } from "../_shared/cashForecast.ts";
@@ -30,7 +30,7 @@ import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeC
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-28.3";
+const ENGINE_VERSION = "2026-09-28.4";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
       const costParams = ((client as { cost_params?: CostParams }).cost_params ?? null) as CostParams | null;
       const ctxData = (ctx?.data ?? {}) as { fx_rates?: Record<string, number>; bank_rules?: BankRule[]; playbook?: { bank_rules?: { match: string; category: string }[] };
         value_overrides?: Record<string, Record<string, { value: number; source: string }>>;
-        bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[] };
+        bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[]; objectives?: Record<string, number> };
       const { factor, source: fxSource } = await ratesToReporting(period, currency, ctxData.fx_rates);
       // Priorité : règles du dossier > playbook > dictionnaire global des contreparties (> classement intégré).
       const { data: globalCp } = await admin.from("std_counterparties").select("match, category").order("match");
@@ -443,9 +443,9 @@ Deno.serve(async (req) => {
           const [y, mo] = period.slice(0, 7).split("-").map(Number);
           const asOf = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
           const since = new Date(Date.UTC(y, mo, 0) - 90 * 86400000).toISOString().slice(0, 10);
-          const txs: { tx_date: string; amount: number; counterparty: string | null; label: string | null; currency?: string | null; source?: string }[] = [];
+          const txs: { tx_date: string; amount: number; counterparty: string | null; label: string | null; account?: string | null; currency?: string | null; source?: string }[] = [];
           for (let off = 0; off < 20000; off += 1000) {
-            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, currency, source")
+            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, account, currency, source")
               .eq("client_id", client_id).gte("tx_date", since).lte("tx_date", asOf).order("tx_date").range(off, off + 999);
             // Devise d'origine conservée dans le registre : on ne projette que les flux dans la devise du client.
             txs.push(...((page ?? []) as typeof txs).filter((t) => !t.currency || t.currency === currency).map((t) => ({ ...t, amount: Number(t.amount) })));
@@ -453,7 +453,28 @@ Deno.serve(async (req) => {
           }
           // API Pennylane préférée au relevé déposé (jamais les deux : pas de double comptage).
           const useApi = txs.some((t) => t.source === "pennylane_api");
-          cashForecast = forecastCash(useApi ? txs.filter((t) => t.source !== "pennylane_file") : txs, asOf, cur.cash_end);
+          // Neutralisés : débits qualifiés « interne » par les règles du dossier (virements entre comptes, interco).
+          const exclude = (t: { amount: number; label?: string | null; counterparty?: string | null }) =>
+            t.amount < 0 && classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules).cat === "internal";
+          // Scénario PLAN : objectif de CA annuel (même base que le CA du dashboard) → CA mensuel nécessaire
+          // d'ici décembre, rapporté au rythme des 2 derniers mois → facteur appliqué aux flux variables.
+          let plan: { label: string; factor: (ym: string) => number } | undefined;
+          const caAnnual = Number(ctxData.objectives?.ca_annual);
+          if (caAnnual > 0 && typeof cur.ca === "number" && cur.ca > 0) {
+            const { data: ytd } = await admin.from("standardized_data").select("period, data").eq("client_id", client_id).eq("is_current", true)
+              .gte("period", `${y}-01-01`).lt("period", period);
+            const caOf = (d: unknown) => { const v = flatValues(d as never).ca; return typeof v === "number" ? v : 0; };
+            const done = (ytd ?? []).reduce((s, r) => s + caOf(r.data), 0) + cur.ca;
+            const prevCa = prevSd ? caOf(prevSd.data) : 0;
+            const recentMonthly = prevCa > 0 ? (cur.ca + prevCa) / 2 : cur.ca;
+            const left = 12 - mo;
+            if (left > 0) {
+              const need = Math.max(0, caAnnual - done) / left;
+              const k = Math.min(3, Math.max(0.3, need / recentMonthly));
+              plan = { label: `plan ${Math.round(caAnnual / 1e5) / 10} M`, factor: (ym) => (ym.startsWith(String(y)) ? k : 1) };
+            }
+          }
+          cashForecast = forecastCash(useApi ? txs.filter((t) => t.source !== "pennylane_file") : txs, asOf, cur.cash_end, { exclude, plan });
         } catch (e) { console.warn("trésorerie 13 semaines :", e instanceof Error ? e.message : String(e)); }
       }
       dataToSave = { ...out.data, controls, reliability, ...(cashForecast ? { cash_forecast: cashForecast } : {}), meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,

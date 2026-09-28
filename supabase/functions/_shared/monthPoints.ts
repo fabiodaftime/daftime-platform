@@ -13,7 +13,8 @@ type V = Record<string, number | undefined>;
 const LEVEL_FR = { cm1: "marge produit (CM1)", cm2: "marge après opérations (CM2)", cm3: "marge après pub (CM3)" } as const;
 
 export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR", baseLabel?: string,
-  forecast?: { start: { balance: number }; low: { date: string; balance: number }; below_zero?: string } | null): MonthPoint[] {
+  forecast?: { start: { balance: number }; low: { date: string; balance: number }; below_zero?: string;
+    plan?: { label: string; low: { date: string; balance: number }; below_zero?: string } } | null): MonthPoint[] {
   const eur = (x: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency, maximumFractionDigits: 0 }).format(x);
   const pct = (x: number) => `${x.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
   const xx = (x: number) => `${x.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}×`;
@@ -53,9 +54,10 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
   if (forecast && (forecast.below_zero || forecast.low.balance < forecast.start.balance * 0.5)) {
     // Double lecture « je tiens ? » : le POINT BAS à 13 semaines prime (projection à rythme constant).
     out.push({ key: "tresorerie", tone: "warn",
-      text: forecast.below_zero
+      text: (forecast.below_zero
         ? `À rythme constant, ta trésorerie passe sous zéro le ${dfr(forecast.below_zero)} (point bas ${eur(forecast.low.balance)} le ${dfr(forecast.low.date)}, sur 13 semaines).`
-        : `À rythme constant, ta trésorerie descend à ${eur(forecast.low.balance)} le ${dfr(forecast.low.date)} (point bas sur 13 semaines, contre ${eur(forecast.start.balance)} aujourd'hui).` });
+        : `À rythme constant, ta trésorerie descend à ${eur(forecast.low.balance)} le ${dfr(forecast.low.date)} (point bas sur 13 semaines, contre ${eur(forecast.start.balance)} aujourd'hui).`)
+        + (forecast.plan ? ` Selon ton ${forecast.plan.label} : ${forecast.plan.below_zero ? `sous zéro le ${dfr(forecast.plan.below_zero)}` : `point bas ${eur(forecast.plan.low.balance)} le ${dfr(forecast.plan.low.date)}`}.` : '') });
   } else if (cashVar != null && cashEnd != null && cashVar < 0 && (cashEnd <= 0 || -cashVar > Math.abs(cashEnd) * 0.1)) {
     const months = cashEnd > 0 ? Math.floor(cashEnd / -cashVar) : 0;
     out.push({ key: "tresorerie", tone: "warn",

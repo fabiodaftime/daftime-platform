@@ -34,3 +34,35 @@ describe("trésorerie à 13 semaines", () => {
     expect(forecastCash(txs.filter((t) => t.tx_date < "2026-08-15"), "2026-08-31", 20_000)).toBeNull();
   });
 });
+
+describe("trésorerie : neutralisations, sorties ponctuelles, scénario plan", () => {
+  const base = forecastCash(txs, "2026-08-31", 20_000)!;
+  it("virement entre deux comptes du dossier (débit A / crédit B à ±3 j) : neutralisé", () => {
+    const t2 = [...txs.map((t) => ({ ...t, account: "BNP" })),
+      { tx_date: "2026-08-13", amount: -23_000, counterparty: "BP RIVES DE PARIS", account: "BNP" },
+      { tx_date: "2026-08-14", amount: 23_000, counterparty: "VIR RECU", account: "BP" }];
+    const f = forecastCash(t2, "2026-08-31", 20_000)!;
+    expect(f.neutralized).toBe(23_000);
+    expect(f.run_rate).toEqual(base.run_rate);
+  });
+  it("sortie ponctuelle (nouvelle contrepartie, 2 débits) : listée, pas reconduite chaque semaine", () => {
+    const t3 = [...txs, { tx_date: "2026-08-13", amount: -23_000, counterparty: "BP RIVES DE PARIS" }, { tx_date: "2026-08-17", amount: -10_000, counterparty: "BP RIVES DE PARIS" }];
+    const f = forecastCash(t3, "2026-08-31", 20_000)!;
+    expect(f.oneoffs).toEqual([{ counterparty: "BP RIVES DE PARIS", amount: 33_000 }]);
+    expect(f.run_rate.outflow_week).toBe(5_000);
+    expect(f.hypotheses.join(" ")).toMatch(/non reconduites/);
+  });
+  it("exclusion par règle (interco) : écartée des flux", () => {
+    const t4 = [...txs, { tx_date: "2026-08-10", amount: -40_000, counterparty: "FZCO" }];
+    const f = forecastCash(t4, "2026-08-31", 20_000, { exclude: (t) => t.counterparty === "FZCO" })!;
+    expect(f.neutralized).toBe(40_000);
+    expect(f.oneoffs).toBeUndefined();
+  });
+  it("scénario plan : flux variables × facteur, charges fixes inchangées", () => {
+    const f = forecastCash(txs, "2026-08-31", 20_000, { plan: { label: "plan 3,5 M", factor: () => 2 } })!;
+    // marge variable hebdo 2 000 → 4 000 : +2 000/semaine vs rythme actuel
+    expect(f.plan!.weeks[12].balance - f.weeks[12].balance).toBeCloseTo(2_000 * 13, -2);
+    expect(f.plan!.below_zero).toBeUndefined();
+    expect(f.below_zero).toBe("2026-11-05");
+  });
+});
