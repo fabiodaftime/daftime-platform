@@ -21,7 +21,7 @@ import { KpiPins } from '@/components/generic/KpiPins';
 import { ErrorBoundary } from '@/components/generic/ErrorBoundary';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { legacyDashboardRoute } from '@/lib/staff';
-import { ADVISOR, DEFAULT_DOCS } from '@/lib/config';
+import { ADVISOR } from '@/lib/config';
 
 const BUCKET = 'client-files';
 const STAFF_ROLES = ['admin', 'manager', 'collaborateur', 'super_admin'];
@@ -32,8 +32,8 @@ const NAV: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: 'dashboard', label: 'Rapport complet', icon: FileBarChart2 },
   { key: 'flux', label: 'Mes flux', icon: Waypoints },
   { key: 'quotidien', label: 'Au quotidien', icon: Sunrise },
-  { key: 'documents', label: 'Mes documents', icon: FolderOpen },
   { key: 'assistant', label: 'Poser une question', icon: MessageCircle },
+  { key: 'documents', label: 'Envoyer un document', icon: FolderOpen },
   { key: 'activity', label: 'Activité', icon: Activity },
 ];
 
@@ -377,8 +377,6 @@ export default function ClientSpace() {
 
   if (!client) return <div className="p-8 text-muted-foreground">{legacyRedirecting ? 'Ouverture de ton espace…' : 'Chargement…'}</div>;
 
-  const cfgDocs = (client as any)?.activity_types?.config?.documents as string[] | undefined;
-  const requiredDocs = (Array.isArray(cfgDocs) && cfgDocs.length) ? cfgDocs : DEFAULT_DOCS;
   const advisor = (client as any)?.advisor as { name: string; email?: string; whatsapp?: string; photo_url?: string; booking_url?: string } | null | undefined;
   const advisorName = advisor?.name ?? ADVISOR.name;
   const advisorInitials = advisorName.split(/\s+/).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -439,7 +437,7 @@ export default function ClientSpace() {
       <p className="text-sm text-muted-foreground mt-1 max-w-xl">Chaque mois, tu retrouveras ici ce que ton shop gagne vraiment, si ta pub est rentable et comment évolue ta trésorerie.</p>
       <ol className="mt-5 grid gap-3 sm:grid-cols-3">
         {[
-          { t: 'Tu déposes tes documents', d: 'Exports Shopify, relevés, factures — ce que tu as.', a: () => go('documents'), cta: 'Déposer' },
+          { t: 'On récupère tes données', d: "Shopify, banque, compta : on s'en occupe, tu n'as rien à faire." },
           { t: 'On analyse', d: `${advisorName} vérifie et construit ton rapport.` },
           { t: 'Tu reçois ton rapport', d: 'Les 3 points du mois, tes marges, ta trésorerie.' },
         ].map((s, i) => (
@@ -447,7 +445,6 @@ export default function ClientSpace() {
             <div className="text-xs font-semibold text-muted-foreground">Étape {i + 1}</div>
             <div className="font-medium mt-1">{s.t}</div>
             <p className="text-xs text-muted-foreground mt-1">{s.d}</p>
-            {s.a && <button onClick={s.a} className="mt-2 text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">{s.cta} <ArrowRight className="w-3.5 h-3.5" /></button>}
           </li>
         ))}
       </ol>
@@ -539,11 +536,6 @@ export default function ClientSpace() {
                         <p className="text-sm text-muted-foreground mt-1">Qui te paye, qui tu payes, et depuis quel compte.</p>
                       </button>
                     )}
-                    <div className="rounded-xl border bg-card p-5">
-                      <h2 className="font-semibold mb-2 flex items-center gap-2"><UploadCloud className="w-4 h-4 text-accent" /> Pour le prochain rapport</h2>
-                      <p className="text-sm text-muted-foreground mb-3">Dépose tes documents de {periodLabel(docPeriod).toLowerCase()}.</p>
-                      <button onClick={() => go('documents')} className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">Déposer mes documents <ArrowRight className="w-3.5 h-3.5" /></button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -579,9 +571,10 @@ export default function ClientSpace() {
             {tab === 'documents' && (
               <div className="space-y-4">
                 <section className="rounded-xl border bg-card p-6">
-                  <h2 className="font-semibold mb-1 flex items-center gap-2"><UploadCloud className="w-4 h-4 text-accent" /> Déposer mes documents</h2>
-                  <div className="flex flex-wrap items-center gap-2 mt-3 mb-4 text-sm">
-                    <span className="text-muted-foreground">Tu déposes pour</span>
+                  <h2 className="font-semibold mb-1 flex items-center gap-2"><UploadCloud className="w-4 h-4 text-accent" /> Envoyer un document</h2>
+                  <p className="text-sm text-muted-foreground max-w-2xl">On récupère nous-mêmes tes données (Shopify, banque, compta…) : <span className="text-foreground font-medium">tu n'as rien à déposer</span>. Ce dépôt sert seulement si tu veux transmettre un document précis à {advisorName} (contrat, facture, devis…).</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-4 mb-4 text-sm">
+                    <span className="text-muted-foreground">Il concerne</span>
                     <select value={docPeriod} onChange={(e) => setDocPeriod(e.target.value)} aria-label="Mois des documents"
                       className="h-9 rounded-md border bg-background px-3 text-sm font-medium capitalize">
                       {docPeriods.map((p) => <option key={p} value={p}>{periodLabel(p)}</option>)}
@@ -596,7 +589,7 @@ export default function ClientSpace() {
                   </label>
                   {files.length > 0 && (
                     <div className="mt-6">
-                      <div className="text-xs font-medium text-muted-foreground mb-2">Déjà déposés pour {periodLabel(docPeriod).toLowerCase()} ({files.length})</div>
+                      <div className="text-xs font-medium text-muted-foreground mb-2">Déjà envoyés pour {periodLabel(docPeriod).toLowerCase()} ({files.length})</div>
                       <ul className="space-y-1.5">
                         {files.map((f) => (
                           <li key={f.id} className="text-sm flex items-center gap-2 text-muted-foreground"><FileText className="w-3.5 h-3.5 shrink-0 text-primary/60" /> <span className="truncate">{f.original_name}</span></li>
@@ -604,13 +597,6 @@ export default function ClientSpace() {
                       </ul>
                     </div>
                   )}
-                </section>
-                <section className="rounded-xl border bg-card p-6">
-                  <h2 className="font-semibold mb-1 flex items-center gap-2"><FileText className="w-4 h-4 text-accent" /> Ce qui nous aide le plus</h2>
-                  <p className="text-xs text-muted-foreground mb-3">Liste indicative — dépose ce que tu as, {advisorName} revient vers toi s'il manque quelque chose.</p>
-                  <ul className="space-y-2">
-                    {requiredDocs.map((d) => <li key={d} className="text-sm flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary/50 shrink-0" /> {d}</li>)}
-                  </ul>
                 </section>
               </div>
             )}
