@@ -318,6 +318,27 @@ export function returnsByProduct(m: Merged): void {
     columns: [{ key: "sold", label: "Vendus", unit: "" }, { key: "returned", label: "Retournés", unit: "", sort: true }, { key: "rate", label: "Taux de retour", unit: "%", emphasis: true }] };
 }
 
+// PUB EN ENGAGEMENT (doctrine) : la dépense des plateformes du mois (Triple Whale, gestionnaires de pub) remplace
+// les PAIEMENTS vus en banque (paliers, recharges PayPal, décalages). Les paiements restent la base de la trésorerie.
+export interface AdsSpend { platforms: Record<string, number>; source: string }
+export function applyAdsSpend(m: Merged, spend: AdsSpend | null | undefined, reporting: string): void {
+  const entries = Object.entries(spend?.platforms ?? {}).filter(([, v]) => typeof v === "number" && isFinite(v) && v >= 0);
+  if (!spend || !entries.length) return;
+  const total = r2(entries.reduce((s, [, v]) => s + v, 0));
+  const paid = m.values.ads_total;
+  const plat = (re: RegExp) => entries.filter(([k]) => re.test(k)).reduce((s, [, v]) => s + v, 0);
+  m.values.ads_total = total;
+  m.sources.ads_total = `dépense des plateformes du mois (${spend.source}) : ${entries.map(([k, v]) => `${k} ${fmt(v)}`).join(" + ")}`;
+  m.traces.ads_total = [{ src: m.sources.ads_total, value: total }, ...(paid != null ? [{ src: `paiements vus en banque (remplacés : base trésorerie)`, value: paid }] : [])];
+  delete m.confidence.ads_total;
+  const meta = plat(/meta|facebook|instagram/i), google = plat(/google/i);
+  if (meta > 0) { m.values.ads_meta = r2(meta); m.sources.ads_meta = `dépense Meta du mois (${spend.source})`; }
+  if (google > 0) { m.values.ads_google = r2(google); m.sources.ads_google = `dépense Google du mois (${spend.source})`; }
+  m.breakdowns.ads_by_platform = { label: `Dépense pub par plateforme (${spend.source})`, rows: entries.map(([label, value]) => ({ label, value: r2(value) })).sort((a, b) => b.value - a.value) };
+  m.flags.push({ id: "_ads_engagement", severity: "info", label: `Pub en engagement : ${fmt(total)} ${reporting} dépensés sur les plateformes (${spend.source})` +
+    (paid != null ? ` vs ${fmt(paid)} ${reporting} payés en banque ce mois (écart ${paid - total >= 0 ? "+" : ""}${fmt(paid - total)} : paliers de facturation, recharges, solde PayPal).` : ".") });
+}
+
 // COMPOSANTES ≤ TOTAL : une valeur lue par l'IA qui dépasse le total du même mois vient d'une autre période
 // (cumul, capture non datée) → écartée et signalée. Le total fait foi quand il vient d'une source déterministe.
 const COMPONENTS: [string, string, string][] = [["ads_meta", "ads_total", "pub Meta"], ["ads_google", "ads_total", "pub Google"],

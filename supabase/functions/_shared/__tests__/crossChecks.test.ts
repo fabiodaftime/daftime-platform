@@ -65,3 +65,22 @@ describe("valeurs de l'IA hors période", () => {
     expect(flags[0].label).toMatch(/Screenshot\.png.*pub Meta.*autre période/);
   });
 });
+
+describe("pub en engagement (dépense des plateformes)", () => {
+  it("remplace les paiements bancaires, garde la trace et l'écart", async () => {
+    const { applyAdsSpend } = await import("../standardizeCore.ts");
+    const m = { values: { ads_total: 155_874 }, sources: {}, traces: {}, confidence: {}, flags: [], breakdowns: {}, questions: [], kept: [], revenueDocs: [], effRoleOf: () => "" } as unknown as Merged;
+    applyAdsSpend(m, { platforms: { Meta: 58_290.16, TikTok: 28_483.3, Snapchat: 39_402.66, Google: 21_483.16 }, source: "Triple Whale" }, "EUR");
+    expect(m.values.ads_total).toBe(147_659.28);
+    expect(m.values.ads_meta).toBe(58_290.16);
+    expect(m.values.ads_google).toBe(21_483.16);
+    expect(m.breakdowns.ads_by_platform.rows[0]).toEqual({ label: "Meta", value: 58_290.16 });
+    expect(m.flags[0].label).toMatch(/payés en banque/);
+  });
+  it("sans dépense fournie : rien ne change", async () => {
+    const { applyAdsSpend } = await import("../standardizeCore.ts");
+    const m = { values: { ads_total: 100 }, sources: {}, traces: {}, confidence: {}, flags: [], breakdowns: {} } as unknown as Merged;
+    applyAdsSpend(m, undefined, "EUR");
+    expect(m.values.ads_total).toBe(100);
+  });
+});

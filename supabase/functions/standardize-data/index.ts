@@ -24,7 +24,7 @@ import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact }
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
 import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
-import { applyCostParams, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, type CostParams } from "../_shared/standardizeCore.ts";
+import { applyAdsSpend, applyCostParams, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, type AdsSpend, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls, type Control } from "../_shared/controls.ts";
 import { sanitizeFlowMap, type FlowMap } from "../_shared/flowMap.ts";
 import { isOutOfTreasury, leverDefsFromMap, mapDiscrepancies, rulesFromMap, treasuryPerimeter } from "../_shared/flowRules.ts";
@@ -201,7 +201,8 @@ Deno.serve(async (req) => {
       const costParams = ((client as { cost_params?: CostParams }).cost_params ?? null) as CostParams | null;
       const ctxData = (ctx?.data ?? {}) as { fx_rates?: Record<string, number>; bank_rules?: BankRule[]; playbook?: { bank_rules?: { match: string; category: string }[] };
         value_overrides?: Record<string, Record<string, { value: number; source: string }>>;
-        bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[]; objectives?: Record<string, number> };
+        bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[]; objectives?: Record<string, number>;
+        ads_spend?: Record<string, AdsSpend> };
       const { factor, source: fxSource } = await ratesToReporting(period, currency, ctxData.fx_rates);
       // CARTE DES FLUX publiée (relue par le conseiller) : périmètre de trésorerie, règles, leviers, contrôle.
       const { data: fmRow } = await admin.from("client_flow_maps").select("data").eq("client_id", client_id).eq("status", "published").maybeSingle();
@@ -362,6 +363,7 @@ Deno.serve(async (req) => {
       netShippingBilled(merged, currency);
       estimatePaymentFees(merged, currency, costParams?.psp_rates);
       returnsByProduct(merged);
+      applyAdsSpend(merged, ctxData.ads_spend?.[period], currency); // dépense des plateformes (engagement) si fournie
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
         if (typeof o?.value !== "number" || !isFinite(o.value)) continue;

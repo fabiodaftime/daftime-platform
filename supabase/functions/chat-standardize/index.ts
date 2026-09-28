@@ -28,6 +28,7 @@ Trois types de modifications :
    ads (publicité), stock (achats de marchandises / fournisseurs de stock / emballages), internal (virement entre ses propres comptes, apport, transfert vers une autre société du dirigeant), loan (remboursement d'emprunt — capital), payroll (salaires, rémunération du dirigeant, freelances récurrents), tools (logiciels/abonnements), logistics (transport, 3PL), tax (impôts), vat (TVA), bankfees (frais bancaires), other (autre charge d'exploitation), ignore (à exclure).
 2) bank_anchors — solde CONNU d'UN compte NOMMÉ à une date (nom du compte tel qu'il apparaît dans les données, date ISO YYYY-MM-DD, solde en devise).
 4) psp_rates — TARIF RÉEL d'un prestataire de paiement donné par le conseiller (contrat) : « Klarna 3,29 % + 0,35 € » → { psp: "Klarna", pct: 3.29, fixed: 0.35 }. Noms : Shopify Payments, Stripe, PayPal, Klarna, Scalapay, Alma, Oney, Floa, Adyen, Mollie, Checkout.com, SumUp, PayPlug, Amazon Pay. Valable pour tous les mois ; jamais d'override de payment_fees dans ce cas.
+5) ads_spend — DÉPENSE PUB PAR PLATEFORME d'un mois (Triple Whale, gestionnaire de pub) donnée par le conseiller : une entrée par plateforme { period, platform, amount, source } (ex. « juillet Triple Whale : Meta 44 019, TikTok 27 146 » → deux entrées). Jamais d'override de ads_total dans ce cas : le moteur somme les plateformes.
 3) overrides — UNIQUEMENT si le conseiller donne un CHIFFRE explicite pour un poste, ou demande explicitement de prendre une autre source/colonne (tu recalcules alors depuis le fichier fourni, provenance précise). Chaque override porte le mois concerné dans « period » (YYYY-MM-01) : « juillet = 139 675 » → period du mois de juillet de l'année en cours ; sans mois précisé → le MOIS de la conversation.
    - TRÉSORERIE : une trésorerie TOTALE de fin de mois donnée par le conseiller (« trésorerie de juillet = … », ou un chiffre par mois en réponse à la question sur la trésorerie) → override cash_end de CE mois. En revanche le solde d'UN compte nommé → bank_anchors (ce n'est pas la trésorerie totale).
    JAMAIS d'override :
@@ -91,6 +92,10 @@ Deno.serve(async (req) => {
           bank_anchors: { type: "array", items: { type: "object", properties: {
             account: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD" }, balance: { type: "number" },
           }, required: ["account", "date", "balance"], additionalProperties: false } },
+          ads_spend: { type: "array", items: { type: "object", properties: {
+            period: { type: "string", description: "mois concerné, YYYY-MM-01" }, platform: { type: "string", description: "Meta, TikTok, Snapchat, Google, Pinterest…" },
+            amount: { type: "number" }, source: { type: "string", description: "ex. Triple Whale, Meta Ads Manager" },
+          }, required: ["period", "platform", "amount"], additionalProperties: false } },
           psp_rates: { type: "array", items: { type: "object", properties: {
             psp: { type: "string", description: "nom du prestataire (ex. Klarna)" }, pct: { type: "number", description: "pourcentage, ex. 3.29" },
             fixed: { type: "number", description: "part fixe par transaction en devise, ex. 0.35" },
@@ -119,6 +124,7 @@ Deno.serve(async (req) => {
       bank_rules?: { match: string; category: string; label?: string }[];
       bank_anchors?: { account: string; date: string; balance: number }[];
       psp_rates?: { psp: string; pct: number; fixed?: number }[];
+      ads_spend?: { period: string; platform: string; amount: number; source?: string }[];
       overrides?: { id: string; value: number; source: string; period?: string }[];
       summary?: string;
     }>({ model: MODELS.quality, system: SYSTEM, messages: [...history, { role: "user", content } as AnthropicMessage], tool: TOOL, max_tokens: 2000, signal: AbortSignal.timeout(120_000) });
@@ -142,8 +148,17 @@ Deno.serve(async (req) => {
         && !(["cash_end", "cash_start"].includes(o.id) && anchorBalances.has(Math.round(o.value * 100))));
     // Diagnostic : renvoie le patch compris SANS l'enregistrer.
     const pspRates = (input.psp_rates ?? []).filter((r) => r.psp?.trim() && typeof r.pct === "number" && r.pct >= 0 && r.pct < 20 && (r.fixed == null || (r.fixed >= 0 && r.fixed < 5)));
-    if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, psp_rates: pspRates, overrides, usage });
-    if (rules.length || overrides.length) {
+    const adsSpend = (input.ads_spend ?? []).filter((a) => /^\d{4}-\d{2}-01$/.test(a.period) && a.platform?.trim() && typeof a.amount === "number" && isFinite(a.amount) && a.amount >= 0);
+    if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, psp_rates: pspRates, ads_spend: adsSpend, overrides, usage });
+    if (adsSpend.length) {
+      const cur = { ...((ctxData as { ads_spend?: Record<string, { platforms: Record<string, number>; source: string }> }).ads_spend ?? {}) };
+      for (const a of adsSpend) {
+        const e = cur[a.period] ?? { platforms: {}, source: a.source?.trim() || "dépense des plateformes" };
+        cur[a.period] = { platforms: { ...e.platforms, [a.platform.trim()]: a.amount }, source: a.source?.trim() || e.source };
+      }
+      (ctxData as { ads_spend?: unknown }).ads_spend = cur;
+    }
+    if (rules.length || overrides.length || adsSpend.length) {
       // Décision du conseiller → règle « staff » (prime sur une règle IA) ; la proposition IA couverte disparaît.
       // Clé = libellé + montant éventuel : une règle « au montant » n'est pas écrasée par la règle générale.
       const byMatch = new Map((ctxData.bank_rules ?? []).map((r) => [`${r.match.toLowerCase()}|${r.amount ?? ""}`, r]));
@@ -178,7 +193,8 @@ Deno.serve(async (req) => {
     // le mois suivant aussi, sa trésorerie de début en dépend).
     const next = (p: string) => { const [y, m] = p.slice(0, 7).split("-").map(Number); const d = new Date(Date.UTC(y, m, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`; };
     const touched = new Set<string>();
-    if (rules.length || anchors.length) touched.add(period);
+    if (rules.length || anchors.length || pspRates.length) touched.add(period);
+    for (const a of adsSpend) touched.add(a.period);
     for (const o of overrides) { touched.add(o.period); if (o.id === "cash_end") touched.add(next(o.period)); }
     return json({ ok: true, rerun: touched.size > 0, rerun_periods: [...touched].sort(), summary: input.summary ?? "",
       applied: { rules: rules.length, anchors: anchors.length, overrides: overrides.length }, usage });
