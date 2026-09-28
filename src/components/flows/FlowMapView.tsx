@@ -116,6 +116,12 @@ export function FlowMapView({ map, currency = 'EUR' }: { map: FlowMap; currency?
         </section>
       )}
 
+      {(map.entities.length + map.outflows.length) >= 3 && (
+        <Section icon={<Network className="w-4 h-4 text-accent" />} title="Tout ton écosystème" hint="Qui gravite autour de ton shop : associés, sociétés, qui te paye, qui tu payes. Plus le trait est épais, plus le montant mensuel est gros ; les pointillés sont des liens sans flux régulier. En vue Réseau ou Cercle, survole un point pour isoler ses liens.">
+          <FlowNetwork map={map} />
+        </Section>
+      )}
+
       {sankey && (
         <Section icon={<ArrowRight className="w-4 h-4 text-accent" />} title="Comment l'argent circule" hint="De gauche à droite : d'où vient l'argent, sur quel compte il arrive, où il repart (moyenne mensuelle).">
           <div className="w-full overflow-x-auto overflow-y-hidden">
@@ -128,12 +134,6 @@ export function FlowMapView({ map, currency = 'EUR' }: { map: FlowMap; currency?
               </ResponsiveContainer>
             </div>
           </div>
-        </Section>
-      )}
-
-      {(map.entities.length + map.outflows.length) >= 3 && (
-        <Section icon={<Network className="w-4 h-4 text-accent" />} title="Tout ton écosystème" hint="Qui gravite autour de ton shop : associés, sociétés, qui te paye, qui tu payes. Plus le trait est épais, plus le montant mensuel est gros ; les pointillés sont des liens sans flux régulier. En vue Réseau ou Cercle, survole un point pour isoler ses liens.">
-          <FlowNetwork map={map} />
         </Section>
       )}
 
