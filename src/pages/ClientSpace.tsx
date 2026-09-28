@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft, ChevronRight, UploadCloud, Activity, FileText,
   Headset, CheckCircle2, Clock, LayoutDashboard, FolderOpen, X, MessageCircle, Send,
-  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone, Sunrise,
+  FileBarChart2, ArrowRight, TrendingUp, Mail, Phone, Sunrise, Waypoints,
 } from 'lucide-react';
+import { FlowMapView } from '@/components/flows/FlowMapView';
+import type { FlowMap } from '../../supabase/functions/_shared/flowMap';
 import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { DailyView } from '@/components/generic/DailyView';
 import { KpiPins } from '@/components/generic/KpiPins';
@@ -26,6 +28,7 @@ const NAV = [
   { key: 'accueil', label: 'Accueil', icon: LayoutDashboard },
   { key: 'quotidien', label: 'Quotidien', icon: Sunrise },
   { key: 'dashboard', label: 'Rapport complet', icon: FileBarChart2 },
+  { key: 'flux', label: 'Mes flux', icon: Waypoints },
   { key: 'documents', label: 'Mes documents', icon: FolderOpen },
   { key: 'assistant', label: 'Poser une question', icon: MessageCircle },
   { key: 'activity', label: 'Activité', icon: Activity },
@@ -321,7 +324,13 @@ export default function ClientSpace() {
     })));
   }, [id]);
 
-  useEffect(() => { loadClient(); loadAvailable(); loadActivity(); loadTrend(); }, [loadClient, loadAvailable, loadActivity, loadTrend]);
+  // Cartographie des flux : seule la version PUBLIÉE par le conseiller est lisible (RLS) ; onglet masqué sinon.
+  const [flowMap, setFlowMap] = useState<FlowMap | null>(null);
+  const loadFlowMap = useCallback(async () => {
+    const { data } = await supabase.from('client_flow_maps' as any).select('data').eq('client_id', id).eq('status', 'published').maybeSingle();
+    setFlowMap(((data as { data?: FlowMap } | null)?.data) ?? null);
+  }, [id]);
+  useEffect(() => { loadClient(); loadAvailable(); loadActivity(); loadTrend(); loadFlowMap(); }, [loadClient, loadAvailable, loadActivity, loadTrend, loadFlowMap]);
   useEffect(() => { loadDashboard(); loadFiles(); }, [loadDashboard, loadFiles]);
 
   // Marque le dernier rapport comme vu quand le client le consulte.
@@ -491,7 +500,7 @@ export default function ClientSpace() {
           {/* Sidebar : menu + conseiller */}
           <aside className="space-y-4">
             <nav className="rounded-xl border bg-card p-2 space-y-1">
-              {NAV.map((item) => {
+              {NAV.filter((item) => item.key !== 'flux' || !!flowMap).map((item) => {
                 const active = tab === item.key;
                 return (
                   <button
@@ -616,6 +625,16 @@ export default function ClientSpace() {
                     Votre rapport pour {periodLabel(period)} est en préparation.
                   </div>
                 )}
+              </div>
+            )}
+
+            {tab === 'flux' && flowMap && (
+              <div className="space-y-4">
+                <div className="rounded-xl border bg-card p-6">
+                  <h2 className="font-semibold flex items-center gap-2"><Waypoints className="w-4 h-4 text-accent" /> La carte de tes flux</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Qui est qui, où est ton argent, d'où il vient et où il part — préparée avec ton conseiller.</p>
+                </div>
+                <FlowMapView map={flowMap} currency={client?.currency} />
               </div>
             )}
 

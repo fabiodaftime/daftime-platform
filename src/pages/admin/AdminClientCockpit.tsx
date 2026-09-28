@@ -5,7 +5,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal, Waypoints } from 'lucide-react';
+import { FlowMapPanel } from '@/components/flows/FlowMapPanel';
 import { ShopOnboardingPanel } from '@/components/generic/ShopOnboardingPanel';
 import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
 import { AppShell } from '@/components/layout/AppShell';
@@ -99,8 +100,8 @@ export default function AdminClientCockpit() {
   // Onglet actif stocké dans l'URL (?tab=…) : le bouton « retour » du navigateur restaure
   // l'onglet où l'on était (ex. Audit) au lieu de repartir sur Home.
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard' | 'shop';
-  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'custom' | 'dashboard' | 'shop') =>
+  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'flows' | 'custom' | 'dashboard' | 'shop';
+  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'flows' | 'custom' | 'dashboard' | 'shop') =>
     setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('tab', t); return p; }, { replace: true });
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
@@ -498,6 +499,7 @@ export default function AdminClientCockpit() {
     { id: 'data' as const, label: 'Données', icon: <Wand2 className="w-4 h-4" /> },
     { id: 'audit' as const, label: 'Audit', icon: <FileSearch className="w-4 h-4" /> },
     { id: 'context' as const, label: 'Contexte', icon: <BookOpen className="w-4 h-4" /> },
+    { id: 'flows' as const, label: 'Flux', icon: <Waypoints className="w-4 h-4" /> },
     { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
     { id: 'shop' as const, label: 'Paramètres shop', icon: <SlidersHorizontal className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -695,6 +697,8 @@ export default function AdminClientCockpit() {
           )}
         </Section>
         )}
+
+        {tab === 'flows' && <FlowMapPanel clientId={id!} currency={client?.currency} />}
 
         {tab === 'data' && (<>
         <details className="mb-4 border rounded-lg p-3 bg-muted/30">
