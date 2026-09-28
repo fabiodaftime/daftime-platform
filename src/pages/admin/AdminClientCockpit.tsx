@@ -9,7 +9,8 @@ import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2
 import { FlowMapPanel } from '@/components/flows/FlowMapPanel';
 import { ShopOnboardingPanel } from '@/components/generic/ShopOnboardingPanel';
 import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
-import { AppShell } from '@/components/layout/AppShell';
+import { AppShell, type ShellNavItem } from '@/components/layout/AppShell';
+import { PageFade } from '@/components/motion';
 import { BrandPanel } from '@/components/generic/BrandPanel';
 import { BenchmarksPanel } from '@/components/generic/BenchmarksPanel';
 import { DataAudit } from '@/components/generic/DataAudit';
@@ -64,9 +65,10 @@ const DOC_CATEGORIES: Record<string, { value: string; label: string }[]> = {
 
 function Section({ icon, title, children, action }: { icon: ReactNode; title: string; children: ReactNode; action?: ReactNode }) {
   return (
-    <section className="border rounded-lg p-5">
-      <div className="flex items-center gap-2 mb-4">
-        {icon}<h2 className="font-semibold flex-1">{title}</h2>{action}
+    <section className="surface p-5 sm:p-6">
+      <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+        <span className="h-8 w-8 grid place-items-center rounded-lg bg-muted text-primary shrink-0">{icon}</span>
+        <h2 className="font-semibold flex-1 min-w-0">{title}</h2>{action}
       </div>
       {children}
     </section>
@@ -504,6 +506,9 @@ export default function AdminClientCockpit() {
     { id: 'shop' as const, label: 'Paramètres shop', icon: <SlidersHorizontal className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
+  const TAB_ICONS: Record<string, ShellNavItem['icon']> = { home: Home, data: Wand2, audit: FileSearch, context: BookOpen, flows: Waypoints, custom: Palette, shop: SlidersHorizontal, dashboard: LayoutDashboard };
+  const TAB_SHORT: Record<string, string> = { custom: 'Perso', shop: 'Shop' };
+  const shellNav: ShellNavItem[] = TABS.map((t) => ({ key: t.id, label: t.label, short: TAB_SHORT[t.id], icon: TAB_ICONS[t.id] }));
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
   const isTemplate = !!editData?.meta?.template;
@@ -538,7 +543,10 @@ export default function AdminClientCockpit() {
   return (
     <AppShell
       title={client.name}
-      maxWidth="max-w-6xl"
+      maxWidth="max-w-7xl"
+      nav={shellNav}
+      active={tab}
+      onNav={(k) => setTab(k as typeof tab)}
       onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
       actions={
         <>
@@ -596,18 +604,8 @@ export default function AdminClientCockpit() {
         )}
         {error && !notice && <div className="border border-destructive text-destructive rounded-lg px-4 py-2 text-sm">{error}</div>}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-          <aside>
-            <nav className="rounded-xl border bg-card p-2 space-y-1 lg:sticky lg:top-[4.5rem]">
-              {TABS.map((t) => (
-                <button key={t.id} onClick={() => setTab(t.id)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${tab === t.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}>
-                  {t.icon}{t.label}
-                </button>
-              ))}
-            </nav>
-          </aside>
-          <div className="space-y-6 min-w-0">
+        <div className="min-w-0">
+          <PageFade id={tab} className="space-y-6">
 
         {tab === 'home' && (
           <div className="space-y-5">
@@ -940,7 +938,7 @@ export default function AdminClientCockpit() {
         )}
         <ClientAccessPanel clientId={id!} published={dash?.status === 'publie'} />
         </>)}
-        </div>
+          </PageFade>
         </div>
       </div>
     </AppShell>

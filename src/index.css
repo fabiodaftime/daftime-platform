@@ -250,3 +250,6 @@
 @media (prefers-reduced-motion: reduce) {
   .v2 *, .v2 *::before, .v2 *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Cartes existantes des pages de l'équipe (bordure + fond carte) : même relief doux que les surfaces v2. */
+.v2 .rounded-xl.border.bg-card, .v2 .rounded-lg.border.bg-card { box-shadow: var(--shadow-card); }

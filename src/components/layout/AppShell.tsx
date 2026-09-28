@@ -8,6 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, MoreHorizontal, X } from 'lucide-react';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
+import { StaffCommand } from './StaffCommand';
+
+const STAFF_ROLES = ['admin', 'manager', 'collaborateur', 'super_admin'];
 
 export interface ShellNavItem { key: string; label: string; short?: string; icon: ComponentType<{ className?: string }>; badge?: boolean } // short : libellé de la barre mobile
 
@@ -26,7 +29,8 @@ export function AppShell({
   aside?: ReactNode;                    // contenu sous le menu latéral (ex. carte du conseiller)
 }) {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, roles } = useAuth();
+  const isStaff = (roles ?? []).some((r: { role: string }) => STAFF_ROLES.includes(r.role));
   const [menu, setMenu] = useState(false);
   const [more, setMore] = useState(false);
   const doSignOut = async () => { await signOut(); navigate('/auth'); };
@@ -47,6 +51,7 @@ export function AppShell({
           <img src={daftimeLogo} alt="Daftime" className="h-[20px] w-auto shrink-0" />
           {title && <div className="font-medium text-sm md:text-[15px] border-l pl-3 truncate text-foreground/90">{title}</div>}
           <div className="flex-1" />
+          {isStaff && <StaffCommand />}
           {/* Actions des pages : écrites pour l'ancienne barre bleu nuit (texte blanc) → recolorées pour la barre claire. */}
           {actions && (
             <div className="flex items-center gap-2 [&_button:hover]:bg-muted [&_.text-emerald-300]:text-[hsl(var(--good))] [&_select]:border [&_input]:border"
