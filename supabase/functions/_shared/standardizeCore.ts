@@ -173,26 +173,53 @@ export function applyCostParams(m: Merged, cp: CostParams | null | undefined, re
     m.cogsMissing = Object.values(zero).reduce((s, x) => s + x, 0);
     m.cogsMissingProducts = Object.entries(zero).map(([title, lines]) => ({ title, lines })).sort((a, b) => b.lines - a.lines);
   }
-  if (!cp) return;
-  if (cogsEx && m.values.cogs != null && Object.keys(zero).length && cp.sku_costs?.length) {
-    const costByName = new Map<string, number>();
-    for (const s of cp.sku_costs) { const n = norm(s.name ?? s.sku ?? ""); if (n && typeof s.product_cost === "number" && s.product_cost > 0 && !costByName.has(n)) costByName.set(n, s.product_cost); }
-    let add = 0, lines = 0, miss = 0; const still: { title: string; lines: number }[] = [];
-    for (const [title, count] of Object.entries(zero)) {
-      const c = costByName.get(norm(title));
-      if (c != null) { add += c * count; lines += count; } else { miss += count; still.push({ title, lines: count }); }
+  if (cogsEx && m.values.cogs != null && Object.keys(zero).length) {
+    let remaining: Record<string, number> = { ...zero };
+    // 1) Coût de revient SKU saisi par l'équipe (onboarding) — prime.
+    if (cp?.sku_costs?.length) {
+      const costByName = new Map<string, number>();
+      for (const s of cp.sku_costs) { const n = norm(s.name ?? s.sku ?? ""); if (n && typeof s.product_cost === "number" && s.product_cost > 0 && !costByName.has(n)) costByName.set(n, s.product_cost); }
+      let add = 0, lines = 0; const left: Record<string, number> = {};
+      for (const [title, count] of Object.entries(remaining)) {
+        const c = costByName.get(norm(title));
+        if (c != null) { add += c * count; lines += count; } else left[title] = count;
+      }
+      remaining = left;
+      if (add > 0) {
+        m.values.cogs = r2(m.values.cogs + add);
+        (m.traces.cogs ??= []).push({ src: `complément coûts SKU (onboarding) : ${lines} ligne(s) sans coût Shopify × coût de revient, 1 unité par ligne (estimation)`, value: r2(add) });
+        m.sources.cogs = `${m.sources.cogs ?? ""} + complément coûts SKU onboarding (${lines} ligne(s))`;
+        m.confidence.cogs = "estimated";
+      }
+    }
+    // 2) Coût OBSERVÉ du même produit sur ses autres ventes (variante, sinon produit) — estimation signalée.
+    const obs = (cogsEx.aux?.cogsObserved ?? {}) as Record<string, number>;
+    const zv = (cogsEx.aux?.cogsZeroVariants ?? {}) as Record<string, number>;
+    let addO = 0, linesO = 0; const byTitle: { title: string; value: number }[] = [];
+    const left: Record<string, number> = {};
+    for (const [title, count] of Object.entries(remaining)) {
+      let n = count, v = 0;
+      const vars = Object.entries(zv).filter(([k]) => k.slice(0, k.lastIndexOf("§")) === title);
+      for (const [k, c] of vars) { const u = obs[k] ?? obs[title]; if (u > 0) { v += u * c; n -= c; } }
+      if (!vars.length && obs[title] > 0) { v += obs[title] * count; n = 0; }
+      if (v > 0) { addO += v; linesO += count - n; byTitle.push({ title, value: v }); }
+      if (n > 0) left[title] = n;
+    }
+    remaining = left;
+    if (addO > 0) {
+      m.values.cogs = r2(m.values.cogs + addO);
+      (m.traces.cogs ??= []).push({ src: `coût observé du même produit (médiane de ses autres ventes avec coût, par variante sinon par produit) : ${linesO} ligne(s) sans coût Shopify, 1 unité par ligne (estimation)`, value: r2(addO) });
+      m.sources.cogs = `${m.sources.cogs ?? ""} + coût observé du même produit (${linesO} ligne(s))`;
+      m.confidence.cogs = "estimated";
+      const top = byTitle.sort((a, b) => b.value - a.value).slice(0, 5).map((x) => x.title).join(", ");
+      m.flags.push({ id: "_cogs_observed", severity: "warn", label: `COGS : ${linesO} ligne(s) vendues sans coût dans Shopify, complétées par le coût du même produit sur ses autres ventes (+${fmt(addO)} ${reporting}, estimation). Renseigne le coût dans Shopify pour : ${top}${byTitle.length > 5 ? "…" : ""}.` });
     }
     // Réponse structurée (A2) : produits vendus encore sans coût → saisie directe dans le cockpit.
-    m.cogsMissingProducts = still.sort((a, b) => b.lines - a.lines);
-    if (add > 0) {
-      m.values.cogs = r2(m.values.cogs + add);
-      (m.traces.cogs ??= []).push({ src: `complément coûts SKU (onboarding) : ${lines} ligne(s) sans coût Shopify × coût de revient, 1 unité par ligne (estimation)`, value: r2(add) });
-      m.sources.cogs = `${m.sources.cogs ?? ""} + complément coûts SKU onboarding (${lines} ligne(s))`;
-      m.confidence.cogs = "estimated";
-    }
-    m.cogsMissing = miss;
-    if (miss) m.flags.push({ id: "_cogs_gap", severity: "warn", label: `COGS : ${miss} ligne(s) de vente sans coût ni dans Shopify ni dans tes coûts SKU — COGS encore sous-estimé. Complète « Coûts de revient par SKU » (Paramètres shop).` });
+    m.cogsMissingProducts = Object.entries(remaining).map(([title, lines]) => ({ title, lines })).sort((a, b) => b.lines - a.lines);
+    m.cogsMissing = Object.values(remaining).reduce((s, x) => s + x, 0);
+    if (m.cogsMissing) m.flags.push({ id: "_cogs_gap", severity: "warn", label: `COGS : ${m.cogsMissing} ligne(s) de vente sans coût ni dans Shopify, ni dans tes coûts SKU, ni sur d'autres ventes du produit — COGS encore sous-estimé. Complète « Coûts de revient par SKU » (Paramètres shop).` });
   }
+  if (!cp) return;
   // Logistique : facture 3PL = fait ; sinon paramètre pick & pack × commandes = hypothèse.
   const pp = cp.fulfillment?.pick_pack_per_order;
   if (typeof pp === "number" && pp > 0 && m.values.orders) {

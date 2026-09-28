@@ -372,14 +372,24 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     // Coût des marchandises vendues PAR COMMANDE (coût par article Shopify) → COGS exact du mois.
     if (has(h, "Cost of goods sold") && (has(h, "Order name") || has(h, "Sale ID"))) {
       const iC = col("Cost of goods sold"), iT = idx(h, "Product title at time of sale"), iV = idx(h, "Product variant title at time of sale");
-      let cogs = 0, lines = 0; const zero: Record<string, number> = {};
+      let cogs = 0, lines = 0; const zero: Record<string, number> = {}, zeroVar: Record<string, number> = {};
+      const vKey = (r: string[]) => `${(r[iT] ?? "").trim()}§${iV >= 0 ? (r[iV] ?? "").trim() : ""}`;
       for (const r of rowsM) {
         const c = toNum(r[iC]); if (c == null) continue; cogs += c; lines++;
-        if (c === 0 && iT >= 0) { const t = (r[iT] ?? "").trim(); if (t) zero[t] = (zero[t] ?? 0) + 1; }
+        if (c === 0 && iT >= 0) { const t = (r[iT] ?? "").trim(); if (t) { zero[t] = (zero[t] ?? 0) + 1; zeroVar[vKey(r)] = (zeroVar[vKey(r)] ?? 0) + 1; } }
       }
+      // COÛT OBSERVÉ des produits concernés : médiane du coût par ligne sur leurs AUTRES ventes avec coût (tout le
+      // fichier), par variante et par produit — le coût manque souvent sur une variante ou avant sa saisie.
+      const obsL: Record<string, number[]> = {};
+      if (Object.keys(zero).length) for (const r of data) {
+        const c = toNum(r[iC]); const t = (r[iT] ?? "").trim(); if (c == null || !(c > 0) || !zero[t]) continue;
+        (obsL[t] ??= []).push(c); (obsL[vKey(r)] ??= []).push(c);
+      }
+      const med = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); const k = Math.floor(s.length / 2); return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2; };
+      const observed = Object.fromEntries(Object.entries(obsL).map(([k, xs]) => [k, r2(med(xs))]));
       const nZero = Object.values(zero).reduce((a, x) => a + x, 0);
       return mk("analytics", { cogs: r2(cogs) }, { cogs: `Σ «Cost of goods sold» (coût par article Shopify) · Month=${ym} · ${lines} ligne(s) de vente` },
-        { exclusive: true, priority: 100, aux: { cogsZeroLines: zero, cogsLines: lines },
+        { exclusive: true, priority: 100, aux: { cogsZeroLines: zero, cogsZeroVariants: zeroVar, cogsObserved: observed, cogsLines: lines },
           note: nZero ? `COGS Shopify : ${nZero} ligne(s) de vente sur ${lines} sans coût renseigné en ${ym} — complétées par tes coûts SKU (onboarding) quand ils existent.` : undefined });
     }
     // Shopify Payments : réception, PAS le CA.
