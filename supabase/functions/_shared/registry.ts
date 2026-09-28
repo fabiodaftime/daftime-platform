@@ -87,14 +87,14 @@ export function bankTxsToPennylaneCsv(txs: { tx_date: string; amount: number; la
 
 // Lecture bancaire d'un mois avec les RÈGLES DU MOMENT (catégories calculées, jamais stockées).
 export function readBankMonth(txs: { tx_date: string; amount: number; label: string; account: string }[], period: string,
-  rules: { match: string; category: string }[] = []): { inflow: number; debitsByCat: Record<string, number>; netFlow: number; accounts: string[] } {
+  rules: { match: string; category: string; amount?: number }[] = []): { inflow: number; debitsByCat: Record<string, number>; netFlow: number; accounts: string[] } {
   const ym = period.slice(0, 7);
   const debitsByCat: Record<string, number> = {}; let inflow = 0, net = 0;
   for (const t of txs) {
     if (t.tx_date.slice(0, 7) !== ym) continue;
     net += t.amount;
     if (t.amount >= 0) { inflow += t.amount; continue; }
-    const { cat } = classifyDebit(t.label, rules);
+    const { cat } = classifyDebit(t.label, rules, t.amount);
     debitsByCat[cat] = (debitsByCat[cat] ?? 0) - t.amount;
   }
   const r2 = (x: number) => Math.round(x * 100) / 100;

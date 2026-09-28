@@ -16,7 +16,9 @@ export const CP_CATEGORY_LABELS: Record<CpCategory, string> = {
 };
 export const AUTO_THRESHOLD = 0.9;
 
-export interface BankRule { match: string; category: string; label?: string; source?: "ia" | "staff"; confidence?: number }
+export interface BankRule { match: string; category: string; label?: string; source?: "ia" | "staff"; confidence?: number; amount?: number }
+// Identité d'une règle : fragment de libellé + montant exact éventuel (deux règles « paypal » peuvent coexister).
+export const ruleKey = (r: { match: string; amount?: number | null }) => `${normMatch(r.match)}|${r.amount ?? ""}`;
 export interface Proposal { match: string; category: CpCategory; label: string; confidence: number; amount: number; period: string; reason?: string }
 export interface Classified { counterparty: string; match: string; category: CpCategory; label: string; confidence: number; universal: boolean; reason?: string }
 
@@ -102,23 +104,24 @@ export function splitByConfidence(cls: Classified[], amounts: Map<string, number
 // Revue par le conseiller (panneau « Contreparties »). Toute décision humaine devient une règle « staff ».
 //  accept / set : règle (retire la proposition correspondante) · reject : proposition écartée, jamais redemandée ·
 //  delete : règle retirée (une règle IA retirée passe en « rejetée » pour ne pas être recréée).
-export type RuleOp = { op: "accept" | "set" | "reject" | "delete"; match: string; category?: string; label?: string };
+export type RuleOp = { op: "accept" | "set" | "reject" | "delete"; match: string; category?: string; label?: string; amount?: number };
 export interface RuleState { bank_rules?: BankRule[]; bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[] }
 export function applyRuleOps(state: RuleState, ops: RuleOp[]): Required<RuleState> {
   let rules = [...(state.bank_rules ?? [])], props = [...(state.bank_rule_proposals ?? [])];
   const rejected = new Set((state.bank_rules_rejected ?? []).map(normMatch));
   for (const o of ops) {
     const k = normMatch(o.match ?? ""); if (k.length < 2) continue;
+    const same = (r: BankRule) => ruleKey(r) === ruleKey({ match: k, amount: o.amount });
     if (o.op === "accept" || o.op === "set") {
       if (!(CP_CATEGORIES as readonly string[]).includes(String(o.category))) continue;
-      const prev = rules.find((r) => normMatch(r.match) === k) ?? props.find((p) => normMatch(p.match) === k);
-      rules = [...rules.filter((r) => normMatch(r.match) !== k), { match: k, category: o.category!, label: o.label ?? prev?.label, source: "staff" }];
+      const prev = rules.find(same) ?? props.find((p) => normMatch(p.match) === k);
+      rules = [...rules.filter((r) => !same(r)), { match: k, category: o.category!, label: o.label ?? prev?.label, source: "staff", ...(o.amount != null ? { amount: o.amount } : {}) }];
       props = props.filter((p) => normMatch(p.match) !== k); rejected.delete(k);
     } else if (o.op === "reject") {
       props = props.filter((p) => normMatch(p.match) !== k); rejected.add(k);
     } else if (o.op === "delete") {
-      const r = rules.find((x) => normMatch(x.match) === k);
-      rules = rules.filter((x) => normMatch(x.match) !== k);
+      const r = rules.find(same);
+      rules = rules.filter((x) => !same(x));
       if (r?.source === "ia") rejected.add(k);
     }
   }
@@ -127,11 +130,11 @@ export function applyRuleOps(state: RuleState, ops: RuleOp[]): Required<RuleStat
 
 // Fusion par « match » : une règle du conseiller n'est jamais écrasée par une règle IA.
 export function mergeRules(existing: BankRule[], incoming: BankRule[]): BankRule[] {
-  const m = new Map(existing.map((r) => [normMatch(r.match), r]));
+  const m = new Map(existing.map((r) => [ruleKey(r), r]));
   for (const r of incoming) {
-    const k = normMatch(r.match); const cur = m.get(k);
+    const k = ruleKey(r); const cur = m.get(k);
     if (cur && cur.source !== "ia" && r.source === "ia") continue;
-    m.set(k, { ...r, match: k });
+    m.set(k, { ...r, match: normMatch(r.match) });
   }
   return [...m.values()];
 }

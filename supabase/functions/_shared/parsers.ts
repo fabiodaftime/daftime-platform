@@ -12,7 +12,7 @@ import type { SourceType } from "./reconcile.ts";
 export interface ParseCtx {
   reporting: string; factor: Record<string, number>; period: string;
   activity?: string;                                  // slug d'activité (mappe les charges vers les bons postes)
-  categoryRules?: { match: string; category: string }[]; // règles par client (ex. "paypal" -> "ads")
+  categoryRules?: { match: string; category: string; amount?: number }[]; // règles par client (ex. "paypal" -> "ads" ; avec amount : débit de ce montant exact)
   // Soldes bancaires de référence (onboarding) : un solde connu à une date permet de reconstituer
   // la trésorerie de fin de mois à partir d'un relevé SANS colonne de solde (ex. Pennylane).
   bankAnchors?: { account: string; date: string; balance: number }[];
@@ -664,9 +664,12 @@ const counterparty = (w: string): string => {
     ?? s.match(/\b(?:to|from)\s+([^(]{3,40}?)(?:\s*\(|$)/i);
   return (m ? m[1] : s.slice(0, 32)).trim().replace(/\s{2,}/g, " ");
 };
-function classifyDebit(w: string, rules?: { match: string; category: string }[]): { cat: DebitCat; platform?: string } {
+function classifyDebit(w: string, rules?: { match: string; category: string; amount?: number }[], amount?: number): { cat: DebitCat; platform?: string } {
   const d = w.toLowerCase().replace(/\s+/g, " ");
-  for (const r of rules ?? []) if (r.match && d.includes(r.match.toLowerCase().replace(/\s+/g, " ").trim())) {
+  // Règle « au montant » (ex. PayPal 6 628 € = remboursement de prêt) avant les règles au libellé seul (PayPal = pub).
+  const abs = amount == null ? null : Math.round(Math.abs(amount) * 100);
+  const ordered = [...(rules ?? []).filter((r) => r.amount != null && abs != null && Math.round(Math.abs(r.amount) * 100) === abs), ...(rules ?? []).filter((r) => r.amount == null)];
+  for (const r of ordered) if (r.match && d.includes(r.match.toLowerCase().replace(/\s+/g, " ").trim())) {
     const c = r.category.toLowerCase();
     const map: Record<string, DebitCat> = { ads: "ads", pub: "ads", publicite: "ads", tools: "tools", outils: "tools", payroll: "payroll", salaires: "payroll",
       cogs: "stock", stock: "stock", achats: "stock", internal: "internal", interne: "internal", ignore: "ignore", fin: "fx", other: "other", autre: "other",
@@ -736,7 +739,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
     used++;
     if (a >= 0) { inflow += a; continue; } // encaissements (Shopify, Klarna, Scalapay, PayPal…) = RÉCEPTION, jamais du CA
     const w = [r[iW], iT >= 0 ? r[iT] : "", iCm >= 0 ? r[iCm] : ""].filter(Boolean).join(" ");
-    const { cat, platform } = classifyDebit(w, ctx.categoryRules);
+    const { cat, platform } = classifyDebit(w, ctx.categoryRules, amt);
     const x = -a; debits += x; if (cat === "vat") vatPaid += x;
     switch (cat) {
       case "ads": add(v, "ads_total", x); if (platform === "Meta") add(v, "ads_meta", x); if (platform === "Google") add(v, "ads_google", x); byPlat[platform ?? "Autre"] = (byPlat[platform ?? "Autre"] ?? 0) + x; break;

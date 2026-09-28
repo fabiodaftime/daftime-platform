@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
     // 1) Règles bancaires + corrections du mois → nouvelle version du CONTEXTE (tous les mois en profitent).
     const ctxData = { ...((ctx?.data as Record<string, unknown>) ?? {}) } as Record<string, unknown> & {
-      bank_rules?: { match: string; category: string; label?: string; source?: string }[];
+      bank_rules?: { match: string; category: string; label?: string; source?: string; amount?: number }[];
       value_overrides?: Record<string, Record<string, { value: number; source: string }>>;
     };
     const rules = (input.bank_rules ?? []).filter((r) => r.match?.trim() && (CATEGORIES as readonly string[]).includes(r.category))
@@ -138,8 +138,9 @@ Deno.serve(async (req) => {
     if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, overrides, usage });
     if (rules.length || overrides.length) {
       // Décision du conseiller → règle « staff » (prime sur une règle IA) ; la proposition IA couverte disparaît.
-      const byMatch = new Map((ctxData.bank_rules ?? []).map((r) => [r.match.toLowerCase(), r]));
-      for (const r of rules) byMatch.set(r.match, { ...r, source: "staff" });
+      // Clé = libellé + montant éventuel : une règle « au montant » n'est pas écrasée par la règle générale.
+      const byMatch = new Map((ctxData.bank_rules ?? []).map((r) => [`${r.match.toLowerCase()}|${r.amount ?? ""}`, r]));
+      for (const r of rules) byMatch.set(`${r.match}|`, { ...r, source: "staff" });
       ctxData.bank_rules = [...byMatch.values()];
       const props = (ctxData as { bank_rule_proposals?: { match: string }[] }).bank_rule_proposals;
       if (props?.length) (ctxData as { bank_rule_proposals?: { match: string }[] }).bank_rule_proposals =

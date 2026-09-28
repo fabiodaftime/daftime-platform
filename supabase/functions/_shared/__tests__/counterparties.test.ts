@@ -66,3 +66,21 @@ describe("question au conseiller", () => {
     expect(m.questions[0]).toMatch(/Contreparties/);
   });
 });
+
+describe("règle au montant (ex. PayPal 6 628 €/semaine = remboursement de prêt)", async () => {
+  const { classifyDebit } = await import("../parsers.ts");
+  const { applyRuleOps, mergeRules } = await import("../counterparties.ts");
+  const rules = [{ match: "paypal", category: "ads" }, { match: "paypal", category: "loan", amount: 6628 }];
+  const w = "PRELEVEMENT EUROPEEN DE: PayPal Europe S.a.r.l. et Cie S.C.A MOTIF: 1052277134549/PAYPAL";
+  it("le débit du montant exact prend la règle au montant, les autres la règle générale", () => {
+    expect(classifyDebit(w, rules, -6628).cat).toBe("loan");
+    expect(classifyDebit(w, rules, -1500).cat).toBe("ads");
+    expect(classifyDebit(w, rules).cat).toBe("ads");
+  });
+  it("les deux règles coexistent (fusion et décisions du conseiller)", () => {
+    expect(mergeRules([{ match: "paypal", category: "ads", source: "staff" }], [{ match: "paypal", category: "loan", amount: 6628, source: "staff" }])).toHaveLength(2);
+    const st = applyRuleOps({ bank_rules: [{ match: "paypal", category: "ads", source: "staff" }, { match: "paypal", category: "loan", amount: 6628, source: "staff" }] },
+      [{ op: "set", match: "paypal", category: "stock" }]);
+    expect(st.bank_rules.map((r) => [r.category, r.amount ?? null])).toEqual([["loan", 6628], ["stock", null]]);
+  });
+});

@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
       const { factor, source: fxSource } = await ratesToReporting(period, currency, ctxData.fx_rates);
       // Priorité : règles du dossier > playbook > dictionnaire global des contreparties (> classement intégré).
       const { data: globalCp } = await admin.from("std_counterparties").select("match, category").order("match");
-      const categoryRules = [...(ctxData.bank_rules ?? []).map((r) => ({ match: r.match, category: r.category })),
+      const categoryRules = [...(ctxData.bank_rules ?? []).map((r) => ({ match: r.match, category: r.category, ...(typeof r.amount === "number" ? { amount: r.amount } : {}) })),
         ...(ctxData.playbook?.bank_rules ?? []), ...((globalCp ?? []) as { match: string; category: string }[])];
       const bankAnchors = costParams?.bank_anchors;
       const pctx = { reporting: currency, factor, period, activity, categoryRules, bankAnchors };
@@ -459,7 +459,7 @@ Deno.serve(async (req) => {
           const useApi = txs.some((t) => t.source === "pennylane_api");
           // Neutralisés : débits qualifiés « interne » par les règles du dossier (virements entre comptes, interco).
           const exclude = (t: { amount: number; label?: string | null; counterparty?: string | null }) =>
-            t.amount < 0 && classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules).cat === "internal";
+            t.amount < 0 && classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount).cat === "internal";
           // Scénario PLAN : objectif de CA annuel (même base que le CA du dashboard) → CA mensuel nécessaire
           // d'ici décembre, rapporté au rythme des 2 derniers mois → facteur appliqué aux flux variables.
           let plan: { label: string; factor: (ym: string) => number } | undefined;
@@ -483,7 +483,7 @@ Deno.serve(async (req) => {
           // LEVIERS DE DÉCALAGE : argent avancé dans le mois par poste (débits classés par les règles du dossier)
           // + scénario de projection si 30 jours de délai sont obtenus.
           const debits = txsUsed.filter((t) => t.amount < 0).map((t) => {
-            const c = classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules);
+            const c = classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount);
             return { tx_date: t.tx_date, amount: t.amount, cat: c.cat, platform: c.platform, counterparty: t.counterparty };
           });
           const lv = paymentLevers(debits, period, ((cashForecast as CashForecast | null)?.oneoffs ?? []).map((o) => o.counterparty));
