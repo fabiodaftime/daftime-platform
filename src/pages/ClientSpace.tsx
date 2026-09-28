@@ -480,7 +480,7 @@ export default function ClientSpace() {
             {/* Bandeau du mois */}
             <Item>
               <section className="brand-panel p-6 sm:p-8">
-                <div className="relative z-[1] grid gap-8 lg:grid-cols-[1fr_1.15fr] lg:items-end">
+                <div className="relative z-[1] grid gap-8 lg:grid-cols-[1fr_1.15fr] lg:items-start">
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
                       <MonthSwitch dark />
@@ -491,7 +491,7 @@ export default function ClientSpace() {
                       )}
                     </div>
                     {hero ? (
-                      <div className="mt-8">
+                      <div className="mt-6">
                         <div className="text-white/60 text-sm">{hero.key === 'cm3' ? 'Ce que ton shop a vraiment gagné' : hero.label}</div>
                         <CountUp value={hero.raw} format={hero.fmt} duration={1.4} className="num block text-[44px] sm:text-6xl font-semibold tracking-tight mt-1 leading-none" />
                         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70">
