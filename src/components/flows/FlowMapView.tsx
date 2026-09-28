@@ -2,7 +2,8 @@
 // Sankey « d'où vient l'argent → sur quel compte → où il part », organigramme, comptes, qui on paye et comment.
 import { Fragment, useMemo } from 'react';
 import { ResponsiveContainer, Sankey, Tooltip } from 'recharts';
-import { ArrowRight, Building2, CreditCard, HelpCircle, Landmark, User, Wallet, Repeat } from 'lucide-react';
+import { ArrowRight, Building2, CreditCard, HelpCircle, Landmark, User, Wallet, Repeat, Network } from 'lucide-react';
+import { FlowNetwork } from './FlowNetwork';
 import type { FlowAccount, FlowEntity, FlowMap, OutCategory } from '../../../supabase/functions/_shared/flowMap';
 
 const CAT_LABEL: Record<OutCategory, string> = {
@@ -127,6 +128,12 @@ export function FlowMapView({ map, currency = 'EUR' }: { map: FlowMap; currency?
               </ResponsiveContainer>
             </div>
           </div>
+        </Section>
+      )}
+
+      {(map.entities.length + map.outflows.length) >= 3 && (
+        <Section icon={<Network className="w-4 h-4 text-accent" />} title="Tout ton écosystème" hint="Qui gravite autour de ton shop : sociétés et associés, qui te paye, qui tu payes. Plus le trait est épais, plus le montant mensuel est gros ; les pointillés sont des liens sans flux régulier. Survole un point pour isoler ses liens.">
+          <FlowNetwork map={map} />
         </Section>
       )}
 
