@@ -1,165 +1,249 @@
-// Écosystème du shop en « toile » : la société au centre, autour d'elle par famille — sociétés & associés,
-// encaissements, fournisseurs, logistique, pub, équipe, État, banques & financement, outils. Chaque lien porte
-// le flux mensuel (épaisseur) et son sens (flèche). Dérivé de la cartographie (aucune donnée en plus).
-import { useMemo, useState } from 'react';
-import type { FlowMap, OutCategory } from '../../../supabase/functions/_shared/flowMap';
+// Écosystème du shop — trois lectures des mêmes données (cartographie des flux) :
+//  - Organigramme : associés en haut, sociétés au milieu, parties prenantes par famille en dessous ;
+//  - Réseau : placement libre par attraction des liens (les acteurs les plus liés se rapprochent) ;
+//  - Cercle : la société au centre, les familles en couronne.
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { FlowMap } from '../../../supabase/functions/_shared/flowMap';
+import { buildEcosystem, cut, GCOLOR, kMonth, type EcoNode, type Ecosystem, type GroupKey } from './ecosystem';
+import { EcoGraph, EcoLegend, type Placed } from './EcoGraph';
 
-type GroupKey = 'structure' | 'in' | Exclude<OutCategory, 'interne'>;
-const GROUPS: { key: GroupKey; label: string; color: string }[] = [
-  { key: 'structure', label: 'Sociétés & associés', color: '#1F2937' },
-  { key: 'stock', label: 'Fournisseurs', color: '#7C3AED' },
-  { key: 'logistique', label: 'Logistique', color: '#0F766E' },
-  { key: 'pub', label: 'Pub', color: '#C2410C' },
-  { key: 'outils', label: 'Outils', color: '#65A30D' },
-  { key: 'autre', label: 'Autres', color: '#64748B' },
-  { key: 'équipe', label: 'Équipe', color: '#2563EB' },
-  { key: 'impôts & taxes', label: 'État', color: '#B7791F' },
-  { key: 'financement', label: 'Banques & financement', color: '#BE185D' },
-  { key: 'in', label: 'Encaissements', color: '#1E7B4F' },
-];
-const GCOLOR = Object.fromEntries(GROUPS.map((g) => [g.key, g.color])) as Record<GroupKey, string>;
+const W = 1100, H = 780;
 
-interface Node { id: string; name: string; sub?: string; group: GroupKey; amount?: number; person?: boolean; x: number; y: number; angle: number }
-interface Edge { from: string; to: string; amount?: number; color: string; dashed?: boolean; label?: string }
+// ---- Cercle -------------------------------------------------------------------------------------------
+const RADIAL_ORDER: GroupKey[] = ['structure', 'stock', 'logistique', 'pub', 'outils', 'autre', 'équipe', 'impôts & taxes', 'financement', 'in'];
+function radialLayout(eco: Ecosystem): { pos: Map<string, Placed>; center: Placed } {
+  const center = { x: W / 2, y: H / 2 + 10 }, R = 290;
+  const groups = RADIAL_ORDER.filter((g) => eco.members[g].length);
+  const weight = (g: GroupKey) => (g === 'structure' ? Math.max(eco.members[g].length * 1.8, 3) : Math.max(eco.members[g].length, 1.6));
+  const total = groups.reduce((s, g) => s + weight(g), 0);
+  const pos = new Map<string, Placed>();
+  let a0 = -Math.PI / 2 - (weight(groups[0] ?? 'structure') / total) * Math.PI;
+  for (const g of groups) {
+    const span = (weight(g) / total) * 2 * Math.PI, list = eco.members[g];
+    list.forEach((m, i) => { const ang = a0 + span * ((i + 0.5) / list.length); pos.set(m.id, { x: center.x + R * Math.cos(ang), y: center.y + R * Math.sin(ang) }); });
+    a0 += span;
+  }
+  return { pos, center };
+}
 
-const W = 1100, H = 780, CX = W / 2, CY = H / 2 + 10, R = 290;
-const k = (x: number) => (x >= 1000 ? `${Math.round(x / 1000).toLocaleString('fr-FR')} k€/mois` : `${Math.round(x)} €/mois`);
-const cut = (s: string, n = 24) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-
-export function FlowNetwork({ map }: { map: FlowMap }) {
-  const [hover, setHover] = useState<string | null>(null);
-
-  const { center, nodes, edges, legend } = useMemo(() => {
-    // Société au centre : la société racine qui porte le plus de flux.
-    const acctEntity = new Map(map.accounts.map((a) => [a.id, a.entity]));
-    const usage = (id: string) => map.outflows.filter((f) => (acctEntity.get(f.account) ?? '') === id).length + map.inflows.filter((f) => (acctEntity.get(f.account) ?? '') === id).length;
-    const companies = map.entities.filter((e) => e.kind === 'société');
-    const main = [...companies].sort((a, b) => (a.parent ? 1 : 0) - (b.parent ? 1 : 0) || usage(b.id) - usage(a.id))[0] ?? map.entities[0];
-    const centerNode = { id: main?.id ?? 'shop', name: main?.name ?? 'Le shop' };
-
-    // Un bénéficiaire qui est une entité du dossier (ex. la société sœur qui reçoit des management fees) → son nœud.
-    const norm = (x: string) => x.toLowerCase().normalize("NFD").replace(/[^a-z]/g, "");
-    const entityOf = (name: string) => { const n = norm(name); return map.entities.find((e) => { const en = norm(e.name); return en.length >= 6 && (n.startsWith(en.slice(0, 12)) || en.startsWith(n.slice(0, 12))); }); };
-    // Membres par famille.
-    const members: Record<GroupKey, Omit<Node, 'x' | 'y' | 'angle'>[]> = Object.fromEntries(GROUPS.map((g) => [g.key, []])) as never;
-    for (const e of map.entities) if (e.id !== centerNode.id) members.structure.push({ id: `e:${e.id}`, name: e.name, sub: e.link || e.role, group: 'structure', person: e.kind === 'personne' });
-    for (const f of map.inflows) members.in.push({ id: `in:${f.channel}`, name: f.channel, group: 'in', amount: f.amount_month });
-    for (const f of map.outflows) if (f.category !== 'interne' && !entityOf(f.payee)) {
-      const g = f.category as GroupKey; const id = `out:${f.payee}`;
-      const ex = members[g].find((m) => m.id === id);
-      if (ex) ex.amount = (ex.amount ?? 0) + (f.amount_month ?? 0); else members[g].push({ id, name: f.payee, group: g, amount: f.amount_month });
+// ---- Réseau (forces, déterministe) --------------------------------------------------------------------
+function forceLayout(eco: Ecosystem): { pos: Map<string, Placed>; center: Placed } {
+  const start = radialLayout(eco);
+  const ids = [...start.pos.keys()];
+  const p = new Map<string, { x: number; y: number; vx: number; vy: number }>([['center', { ...start.center, vx: 0, vy: 0 }], ...ids.map((id) => [id, { ...start.pos.get(id)!, vx: 0, vy: 0 }] as const)]);
+  const groupOf = new Map(eco.groups.flatMap((g) => eco.members[g.key].map((m) => [m.id, g.key] as const)));
+  const max = Math.max(1, ...eco.edges.map((e) => e.amount ?? 0));
+  const all = ['center', ...ids];
+  for (let it = 0; it < 450; it++) {
+    const cool = 1 - it / 450;
+    // répulsion entre tous les nœuds
+    for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+      const a = p.get(all[i])!, b = p.get(all[j])!; let dx = a.x - b.x, dy = a.y - b.y; const d2 = Math.max(dx * dx + dy * dy, 100);
+      const f = 24000 / d2, d = Math.sqrt(d2); dx /= d; dy /= d;
+      a.vx += dx * f; a.vy += dy * f; b.vx -= dx * f; b.vy -= dy * f;
     }
-    const groups = GROUPS.filter((g) => members[g.key].length);
-    // Secteurs proportionnels au nombre de membres (minimum pour les familles d'un seul membre) ; structure en haut.
-    const weight = (g: GroupKey) => (g === 'structure' ? Math.max(members[g].length * 1.8, 3) : Math.max(members[g].length, 1.6));
-    const total = groups.reduce((s, g) => s + weight(g.key), 0);
-    const nodes: Node[] = [];
-    let a0 = -Math.PI / 2 - (weight(groups[0]?.key ?? 'structure') / total) * Math.PI; // centre la 1re famille sur le haut
-    const legend: { key: GroupKey; label: string; color: string; mid: number }[] = [];
-    for (const g of groups) {
-      const span = (weight(g.key) / total) * 2 * Math.PI, list = members[g.key];
-      list.sort((x, y) => (y.amount ?? 0) - (x.amount ?? 0));
-      list.forEach((m, i) => {
-        const ang = a0 + span * ((i + 0.5) / list.length);
-        nodes.push({ ...m, angle: ang, x: CX + R * Math.cos(ang), y: CY + R * Math.sin(ang) });
-      });
-      legend.push({ key: g.key, label: g.label, color: g.color, mid: a0 + span / 2 });
-      a0 += span;
+    // ressorts le long des liens : plus le flux est gros, plus le lien est court
+    for (const e of eco.edges) {
+      const a = p.get(e.from), b = p.get(e.to); if (!a || !b) continue;
+      const L = e.amount ? 270 - 90 * Math.sqrt(e.amount / max) : 190;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.max(Math.hypot(dx, dy), 1), f = 0.04 * (d - L);
+      a.vx += (dx / d) * f; a.vy += (dy / d) * f; b.vx -= (dx / d) * f; b.vy -= (dy / d) * f;
     }
+    // cohésion des familles + gravité douce vers le centre
+    const cent = new Map<string, { x: number; y: number; n: number }>();
+    for (const id of ids) { const g = groupOf.get(id)!, q = p.get(id)!, c = cent.get(g) ?? { x: 0, y: 0, n: 0 }; c.x += q.x; c.y += q.y; c.n++; cent.set(g, c); }
+    for (const id of ids) {
+      const q = p.get(id)!, c = cent.get(groupOf.get(id)!)!;
+      q.vx += (c.x / c.n - q.x) * 0.02 + (start.center.x - q.x) * 0.004; q.vy += (c.y / c.n - q.y) * 0.02 + (start.center.y - q.y) * 0.004;
+    }
+    const c0 = p.get('center')!; c0.vx = 0; c0.vy = 0; c0.x = start.center.x; c0.y = start.center.y; // la société reste au centre
+    for (const id of ids) { const q = p.get(id)!; const v = Math.hypot(q.vx, q.vy), lim = 18 * cool + 1; if (v > lim) { q.vx *= lim / v; q.vy *= lim / v; } q.x += q.vx; q.y += q.vy; q.vx *= 0.55; q.vy *= 0.55; }
+  }
+  // anti-chevauchement des libellés : distance « elliptique » (un libellé est large et peu haut)
+  for (let it = 0; it < 250; it++) {
+    let moved = false;
+    for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+      const a = p.get(all[i])!, b = p.get(all[j])!; const dx = a.x - b.x, dy = a.y - b.y;
+      const minD = all[i] === 'center' || all[j] === 'center' ? 95 : 44, d = Math.hypot(dx / 2.4, dy);
+      if (d < minD) {
+        const push = (minD - d) / 2 + 0.5, ux = d ? dx / 2.4 / d : 1, uy = d ? dy / d : 0;
+        if (all[i] !== 'center') { a.x += ux * push * 2.4; a.y += uy * push; }
+        if (all[j] !== 'center') { b.x -= ux * push * 2.4; b.y -= uy * push; }
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  // cadrage dans la zone de dessin (marges pour les libellés)
+  const xs = all.map((id) => p.get(id)!.x), ys = all.map((id) => p.get(id)!.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const s = Math.min((W - 360) / Math.max(x1 - x0, 1), (H - 140) / Math.max(y1 - y0, 1));
+  const fit = (q: { x: number; y: number }) => ({ x: 180 + (q.x - x0) * s + ((W - 360) - (x1 - x0) * s) / 2, y: 70 + (q.y - y0) * s + ((H - 140) - (y1 - y0) * s) / 2 });
+  return { pos: new Map(ids.map((id) => [id, fit(p.get(id)!)])), center: fit(p.get('center')!) };
+}
 
-    // Liens : encaissements → centre ; centre (ou entité qui paye) → bénéficiaire ; structure (parent, interco, dirigeant).
-    const byId = new Map(nodes.map((n) => [n.id, n]));
-    const edges: Edge[] = [];
-    const payer = (account: string) => { const ent = acctEntity.get(account); return ent && ent !== centerNode.id && byId.has(`e:${ent}`) ? `e:${ent}` : 'center'; };
-    for (const f of map.inflows) edges.push({ from: `in:${f.channel}`, to: payer(f.account), amount: f.amount_month, color: GCOLOR.in });
-    const seen = new Set<string>();
-    for (const f of map.outflows) if (f.category !== 'interne') {
-      const ent = entityOf(f.payee);
-      const from = payer(f.account), to = ent ? (ent.id === centerNode.id ? 'center' : `e:${ent.id}`) : `out:${f.payee}`, key = `${from}>${to}`;
-      const ex = edges.find((e) => `${e.from}>${e.to}` === key);
-      if (ex) ex.amount = (ex.amount ?? 0) + (f.amount_month ?? 0); else if (!seen.has(key) && from !== to) { seen.add(key); edges.push({ from, to, amount: f.amount_month, color: ent ? GCOLOR.structure : GCOLOR[f.category as GroupKey], ...(ent ? { label: f.payee } : {}) }); }
-    }
-    const entByName = (s: string) => map.entities.find((e) => e.id === s || e.name.toLowerCase() === s.toLowerCase() || s.toLowerCase().includes(e.id.toLowerCase()));
-    for (const e of map.entities) if (e.parent && e.id !== centerNode.id) {
-      const p = e.parent === centerNode.id ? 'center' : `e:${e.parent}`;
-      if (p === 'center' || byId.has(p)) edges.push({ from: p, to: `e:${e.id}`, color: GCOLOR.structure, label: e.link });
-    }
-    for (const f of map.interco) {
-      const a = entByName(f.from), b = entByName(f.to);
-      const A = a ? (a.id === centerNode.id ? 'center' : `e:${a.id}`) : null, B = b ? (b.id === centerNode.id ? 'center' : `e:${b.id}`) : null;
-      if (A && B && A !== B && !edges.some((e) => e.from === A && e.to === B && e.dashed)) edges.push({ from: A, to: B, color: GCOLOR.structure, dashed: true, label: f.nature });
-    }
-    // Entités sans aucun lien (ex. dirigeant) : rattachées au centre en pointillé.
-    for (const n of nodes) if (n.group === 'structure' && !edges.some((e) => e.from === n.id || e.to === n.id))
-      edges.push({ from: n.id, to: 'center', color: GCOLOR.structure, dashed: true, label: n.sub });
-    return { center: centerNode, nodes, edges, legend };
-  }, [map]);
+// ---- Organigramme ---------------------------------------------------------------------------------------
+type Line = { x1: number; y1: number; x2: number; y2: number; color: string; dashed?: boolean; w: number; label?: string; straight?: boolean };
+function OrgChart({ eco }: { eco: Ecosystem }) {
+  const box = useRef<HTMLDivElement>(null);
+  const refs = useRef(new Map<string, HTMLElement>());
+  const [lines, setLines] = useState<Line[]>([]);
+  const reg = (id: string) => (el: HTMLElement | null) => { if (el) refs.current.set(id, el); else refs.current.delete(id); };
 
-  const max = Math.max(1, ...edges.map((e) => e.amount ?? 0));
-  const pos = (id: string) => (id === 'center' ? { x: CX, y: CY } : nodes.find((n) => n.id === id) ?? { x: CX, y: CY });
-  const active = (e: Edge) => !hover || e.from === hover || e.to === hover || (hover === 'center' && (e.from === 'center' || e.to === 'center'));
-  const nodeOn = (id: string) => !hover || hover === id || edges.some((e) => active(e) && (e.from === id || e.to === id));
+  const persons = eco.members.structure.filter((n) => n.person);
+  const companies = [{ id: 'center', name: eco.center.name, sub: 'le shop', group: 'structure' as GroupKey } as EcoNode, ...eco.members.structure.filter((n) => !n.person)];
+  const families = eco.groups.filter((g) => g.key !== 'structure');
+  const nameOf = (id: string) => (id === 'center' ? eco.center.name : eco.members.structure.find((n) => n.id === id)?.name ?? id);
+  const max = Math.max(1, ...families.map((g) => eco.members[g.key].reduce((s, m) => s + (m.amount ?? 0), 0)));
+
+  useLayoutEffect(() => {
+    const compute = () => {
+      const root = box.current; if (!root) return;
+      const R0 = root.getBoundingClientRect();
+      const rect = (id: string) => { const el = refs.current.get(id); if (!el) return null; const r = el.getBoundingClientRect(); return { l: r.left - R0.left, r: r.right - R0.left, t: r.top - R0.top, b: r.bottom - R0.top, cx: (r.left + r.right) / 2 - R0.left, cy: (r.top + r.bottom) / 2 - R0.top }; };
+      const out: Line[] = [];
+      // liens de structure (détention, dirigeant, interco) — fusionnés par paire
+      const pairs = new Map<string, { a: string; b: string; labels: string[]; dashed: boolean; amount: number }>();
+      for (const e of eco.edges) {
+        const isStruct = (id: string) => id === 'center' || id.startsWith('e:');
+        if (!isStruct(e.from) || !isStruct(e.to)) continue;
+        const key = [e.from, e.to].sort().join('|');
+        const p = pairs.get(key) ?? { a: e.from, b: e.to, labels: [], dashed: true, amount: 0 };
+        if (e.label && !p.labels.includes(e.label)) p.labels.push(e.label);
+        if (!e.dashed) p.dashed = false; p.amount += e.amount ?? 0; pairs.set(key, p);
+      }
+      for (const p of pairs.values()) {
+        const A = rect(p.a), B = rect(p.b); if (!A || !B) continue;
+        const sameRow = Math.abs(A.cy - B.cy) < 20;
+        const [up, down] = A.cy <= B.cy ? [A, B] : [B, A];
+        // sans libellé : la nature du lien est écrite sur les cartes (évite les textes qui se chevauchent)
+        out.push(sameRow
+          ? { x1: A.cx < B.cx ? A.r : A.l, y1: A.cy, x2: A.cx < B.cx ? B.l : B.r, y2: B.cy, color: GCOLOR.structure, dashed: p.dashed, w: 1.6 }
+          : { x1: up.cx, y1: up.b, x2: down.cx, y2: down.t, color: GCOLOR.structure, dashed: p.dashed, w: 1.6 });
+      }
+      // société → familles : arbre (tronc, une barre par rangée, départs dont l'épaisseur = flux mensuel de la famille)
+      const C = rect('center');
+      const fam = families.map((g) => ({ g, r: rect(`fam:${g.key}`) })).filter((x) => !!x.r) as { g: (typeof families)[number]; r: NonNullable<ReturnType<typeof rect>> }[];
+      if (C && fam.length) {
+        const rows = [...new Set(fam.map((x) => Math.round(x.r.t)))].sort((a, b) => a - b);
+        const trunkX = Math.min(...fam.map((x) => x.r.l)) - 14;
+        const bus = (t: number) => t - 16;
+        const grey = '#9CA3AF';
+        out.push({ x1: C.cx, y1: C.b, x2: C.cx, y2: bus(rows[0]), color: grey, w: 2, straight: true });
+        if (rows.length > 1) out.push({ x1: trunkX, y1: bus(rows[0]), x2: trunkX, y2: bus(rows[rows.length - 1]), color: grey, w: 2, straight: true });
+        rows.forEach((t, i) => {
+          const inRow = fam.filter((x) => Math.round(x.r.t) === t);
+          const xs = [...inRow.map((x) => x.r.cx), ...(i === 0 ? [C.cx] : []), ...(rows.length > 1 ? [trunkX] : [])];
+          out.push({ x1: Math.min(...xs), y1: bus(t), x2: Math.max(...xs), y2: bus(t), color: grey, w: 2, straight: true });
+          for (const x of inRow) {
+            const tot = eco.members[x.g.key].reduce((s2, m) => s2 + (m.amount ?? 0), 0);
+            out.push({ x1: x.r.cx, y1: bus(t), x2: x.r.cx, y2: x.r.t, color: x.g.color, w: tot ? 2 + 8 * Math.sqrt(tot / max) : 2, straight: true });
+          }
+        });
+      }
+      setLines(out);
+    };
+    compute();
+    const ro = new ResizeObserver(compute); if (box.current) ro.observe(box.current);
+    return () => ro.disconnect();
+  }, [eco]);
+
+  // Flux entre la société au centre et une autre entité (interco, frais…) : résumés sur la carte de cette entité.
+  const linkInfo = (id: string) => {
+    const parts = eco.edges.filter((e) => (e.from === id && e.to === 'center') || (e.from === 'center' && e.to === id))
+      .map((e) => [e.label, e.amount ? kMonth(e.amount) : ''].filter(Boolean).join(' ')).filter((t) => t && t !== eco.members.structure.find((n) => n.id === id)?.sub);
+    return parts.length ? `Avec ${cut(eco.center.name, 20)} : ${[...new Set(parts)].join(' · ')}` : '';
+  };
+  const Card = ({ n, dark, children }: { n: EcoNode; dark?: boolean; children?: ReactNode }) => (
+    <div ref={reg(n.id)} className={`rounded-lg border px-3 py-2 min-w-[170px] max-w-[280px] text-center shadow-sm ${dark ? 'bg-[#1F2937] text-white border-[#1F2937]' : 'bg-background'}`}>
+      <div className="font-semibold text-sm">{n.person ? '● ' : ''}{n.name}</div>
+      {n.sub && <div className={`text-[11px] mt-0.5 ${dark ? 'text-gray-300' : 'text-muted-foreground'}`}>{cut(n.sub, 60)}</div>}
+      {!dark && linkInfo(n.id) && <div className="text-[11px] mt-1.5 pt-1.5 border-t text-foreground/80">{cut(linkInfo(n.id), 140)}</div>}
+      {children}
+    </div>
+  );
 
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-2 text-xs">
-        {legend.map((g) => (
-          <span key={g.key} className="inline-flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: g.color }} />{g.label}</span>
-        ))}
-        <span className="text-muted-foreground">● personne · ■ société ou prestataire</span>
-      </div>
-      <div className="w-full overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[720px] w-full h-auto select-none" role="img" aria-label="Écosystème du shop">
-        <defs>
-          {[...new Set(edges.map((e) => e.color))].map((c) => (
-            <marker key={c} id={`arr-${c.slice(1)}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" fill={c} />
-            </marker>
-          ))}
-        </defs>
-        {/* Anneau guide */}
-        <circle cx={CX} cy={CY} r={R} fill="none" stroke="currentColor" strokeOpacity={0.06} strokeWidth={1} />
-        {/* Liens */}
-        {edges.map((e, i) => {
-          const a = pos(e.from), b = pos(e.to);
-          const mx = (a.x + b.x) / 2 + (CY - (a.y + b.y) / 2) * 0.12, my = (a.y + b.y) / 2 + ((a.x + b.x) / 2 - CX) * 0.12;
-          // on raccourcit l'extrémité pour que la flèche s'arrête au bord du nœud
-          const tx = b.x - (b.x - mx) * (e.to === 'center' ? 0.2 : 0.07), ty = b.y - (b.y - my) * (e.to === 'center' ? 0.2 : 0.07);
-          const w = e.amount ? 1.5 + 9 * Math.sqrt(e.amount / max) : 1.4;
+    <div ref={box} className="relative w-full">
+      <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+        {lines.map((l, i) => {
+          const my = (l.y1 + l.y2) / 2;
+          const d = l.straight || Math.abs(l.y1 - l.y2) < 20 ? `M${l.x1},${l.y1} L${l.x2},${l.y2}` : `M${l.x1},${l.y1} C${l.x1},${my} ${l.x2},${my} ${l.x2},${l.y2}`;
           return (
-            <path key={i} d={`M${a.x},${a.y} Q${mx},${my} ${tx},${ty}`} fill="none" stroke={e.color} strokeWidth={w} strokeOpacity={active(e) ? 0.55 : 0.07}
-              strokeDasharray={e.dashed ? '6 5' : undefined} markerEnd={`url(#arr-${e.color.slice(1)})`}>
-              <title>{[e.label, e.amount ? k(e.amount) : ''].filter(Boolean).join(' · ')}</title>
-            </path>
-          );
-        })}
-        {/* Nœuds */}
-        {nodes.map((n) => {
-          const c = GCOLOR[n.group], right = Math.cos(n.angle) > 0.12, left = Math.cos(n.angle) < -0.12;
-          const idx = nodes.indexOf(n);
-          const lx = n.x + Math.cos(n.angle) * 22, ly = n.y + Math.sin(n.angle) * 22;
-          const anchor = right ? 'start' : left ? 'end' : 'middle';
-          const dy = !right && !left ? (Math.sin(n.angle) > 0 ? 14 + (idx % 2) * 28 : -18 - (idx % 2) * 28) : 0;
-          return (
-            <g key={n.id} opacity={nodeOn(n.id) ? 1 : 0.18} onMouseEnter={() => setHover(n.id)} onMouseLeave={() => setHover(null)} style={{ cursor: 'default' }}>
-              <circle cx={n.x} cy={n.y} r={n.group === 'structure' ? 13 : 10} fill="#fff" stroke={c} strokeWidth={2.5} />
-              {n.person ? <circle cx={n.x} cy={n.y} r={4} fill={c} /> : <rect x={n.x - 4} y={n.y - 4} width={8} height={8} rx={1.5} fill={c} />}
-              <text x={lx} y={ly + dy} textAnchor={anchor} fontSize={12.5} fontWeight={600} fill="currentColor">{cut(n.name)}</text>
-              {(n.amount || n.group === 'structure') && (
-                <text x={lx} y={ly + dy + 15} textAnchor={anchor} fontSize={11} fill="#6B7280">{n.amount ? k(n.amount) : cut(n.sub ?? '', 34)}</text>
-              )}
-              <title>{[n.name, n.sub, n.amount ? k(n.amount) : ''].filter(Boolean).join(' — ')}</title>
+            <g key={i}>
+              <path d={d} fill="none" stroke={l.color} strokeOpacity={l.straight ? 0.8 : 0.55} strokeWidth={l.w} strokeLinecap="round" strokeDasharray={l.dashed ? '6 5' : undefined} />
+              {l.label && <text x={(l.x1 + l.x2) / 2} y={my - 4} textAnchor="middle" fontSize={11} fill="#4B5563" stroke="hsl(var(--card))" strokeWidth={4} paintOrder="stroke">{cut(l.label, 60)}</text>}
             </g>
           );
         })}
-        {/* Centre */}
-        <g onMouseEnter={() => setHover('center')} onMouseLeave={() => setHover(null)}>
-          <circle cx={CX} cy={CY} r={58} fill="#1F2937" />
-          <text x={CX} y={CY - 2} textAnchor="middle" fontSize={12} fontWeight={700} fill="#fff">{cut(center.name, 16)}</text>
-          <text x={CX} y={CY + 15} textAnchor="middle" fontSize={10} fill="#D1D5DB">le shop</text>
-        </g>
       </svg>
+      <div className="relative flex flex-col gap-12">
+        {persons.length > 0 && (
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground text-center mb-2">Associés & dirigeants</div>
+            <div className="flex flex-wrap justify-center items-start gap-6">{persons.map((n) => <Card key={n.id} n={n} />)}</div>
+          </div>
+        )}
+        <div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground text-center mb-2">Sociétés</div>
+          <div className="flex flex-wrap justify-center items-start gap-10">{companies.map((n) => <Card key={n.id} n={n} dark={n.id === 'center'} />)}</div>
+        </div>
+        <div>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground text-center mb-9">Parties prenantes</div>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', columnGap: 12, rowGap: 36 }}>
+            {families.map((g) => {
+              const list = eco.members[g.key], tot = list.reduce((s, m) => s + (m.amount ?? 0), 0);
+              return (
+                <div key={g.key} ref={reg(`fam:${g.key}`)} className="rounded-lg border bg-background overflow-hidden" style={{ borderTop: `3px solid ${g.color}` }}>
+                  <div className="px-3 pt-2 pb-1.5 flex items-baseline justify-between gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wide" style={{ color: g.color }}>{g.label}</span>
+                    {tot > 0 && <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">{kMonth(tot)}</span>}
+                  </div>
+                  {g.hint && <div className="px-3 -mt-1 pb-1 text-[10px] text-muted-foreground">{g.hint}</div>}
+                  <ul className="px-3 pb-2.5 space-y-1">
+                    {list.slice(0, 7).map((m) => (
+                      <li key={m.id} className="text-[12.5px] leading-tight flex justify-between gap-2">
+                        <span>{cut(m.name, 30)}{m.payer && m.payer !== 'center' ? <span className="block text-[10.5px] text-muted-foreground">via le compte de {nameOf(m.payer)}</span> : null}</span>
+                        {m.amount ? <span className="text-muted-foreground tabular-nums whitespace-nowrap">{kMonth(m.amount).replace('/mois', '')}</span> : null}
+                      </li>
+                    ))}
+                    {list.length > 7 && <li className="text-[11px] text-muted-foreground">+ {list.length - 7} autre(s)</li>}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ---- Sélecteur -------------------------------------------------------------------------------------------
+type Mode = 'org' | 'network' | 'circle';
+const MODES: { key: Mode; label: string }[] = [{ key: 'org', label: 'Organigramme' }, { key: 'network', label: 'Réseau' }, { key: 'circle', label: 'Cercle' }];
+const LS = 'daftime.flowmap.view';
+
+export function FlowNetwork({ map }: { map: FlowMap }) {
+  const eco = useMemo(() => buildEcosystem(map), [map]);
+  const [mode, setMode] = useState<Mode>(() => { try { const v = localStorage.getItem(LS); return (MODES.some((m) => m.key === v) ? v : 'org') as Mode; } catch { return 'org'; } });
+  const choose = (m: Mode) => { setMode(m); try { localStorage.setItem(LS, m); } catch { /* stockage indisponible */ } };
+  const radial = useMemo(() => radialLayout(eco), [eco]);
+  const force = useMemo(() => (mode === 'network' ? forceLayout(eco) : null), [eco, mode]);
+  return (
+    <div className="w-full">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="inline-flex rounded-lg border bg-muted/40 p-0.5" role="tablist" aria-label="Vue de l'écosystème">
+          {MODES.map((m) => (
+            <button key={m.key} role="tab" aria-selected={mode === m.key} onClick={() => choose(m.key)}
+              className={`px-3 py-1.5 text-xs rounded-md transition ${mode === m.key ? 'bg-background shadow-sm font-semibold' : 'text-muted-foreground hover:text-foreground'}`}>{m.label}</button>
+          ))}
+        </div>
+        {mode !== 'org' && <EcoLegend eco={eco} />}
+      </div>
+      {mode === 'org' && <OrgChart eco={eco} />}
+      {mode === 'network' && force && <EcoGraph eco={eco} pos={force.pos} center={force.center} width={W} height={H} bulge={0.06} stagger={false} />}
+      {mode === 'circle' && <EcoGraph eco={eco} pos={radial.pos} center={radial.center} width={W} height={H} />}
     </div>
   );
 }

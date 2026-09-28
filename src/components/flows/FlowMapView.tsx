@@ -132,7 +132,7 @@ export function FlowMapView({ map, currency = 'EUR' }: { map: FlowMap; currency?
       )}
 
       {(map.entities.length + map.outflows.length) >= 3 && (
-        <Section icon={<Network className="w-4 h-4 text-accent" />} title="Tout ton écosystème" hint="Qui gravite autour de ton shop : sociétés et associés, qui te paye, qui tu payes. Plus le trait est épais, plus le montant mensuel est gros ; les pointillés sont des liens sans flux régulier. Survole un point pour isoler ses liens.">
+        <Section icon={<Network className="w-4 h-4 text-accent" />} title="Tout ton écosystème" hint="Qui gravite autour de ton shop : associés, sociétés, qui te paye, qui tu payes. Plus le trait est épais, plus le montant mensuel est gros ; les pointillés sont des liens sans flux régulier. En vue Réseau ou Cercle, survole un point pour isoler ses liens.">
           <FlowNetwork map={map} />
         </Section>
       )}
