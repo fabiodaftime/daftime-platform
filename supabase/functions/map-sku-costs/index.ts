@@ -48,7 +48,7 @@ interface SkuCost { sku: string; name?: string; product_cost?: number; packaging
 const COST_KEYS = ["product_cost", "packaging", "inbound_transport", "duties"] as const;
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-sonnet-5"; // réflexion coupée ci-dessous : latence inchangée, appel d'outil forcé autorisé
 const MAX_ROWS = 5000;
 
 const pickDelim = (line: string): string => {
@@ -78,7 +78,7 @@ async function anthropicTool(system: string, content: unknown[], tool: Record<st
     method: "POST",
     headers: { "x-api-key": ANTHROPIC_API_KEY!, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
-      model: MODEL, max_tokens: maxTokens, system,
+      model: MODEL, max_tokens: maxTokens, thinking: { type: "disabled" }, system,
       messages: [{ role: "user", content }],
       tools: [tool], tool_choice: { type: "tool", name: (tool as { name: string }).name },
     }),
@@ -86,6 +86,7 @@ async function anthropicTool(system: string, content: unknown[], tool: Record<st
   const raw = await resp.text();
   if (!resp.ok) throw new Error(`Anthropic ${resp.status}: ${raw}`);
   const data = JSON.parse(raw);
+  if (data.stop_reason === "refusal") throw new Error("Anthropic refus");
   const block = (data.content ?? []).find((b: { type: string; name?: string }) => b.type === "tool_use" && b.name === (tool as { name: string }).name);
   return { input: block?.input ?? null, usage: data.usage };
 }

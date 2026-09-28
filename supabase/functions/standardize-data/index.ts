@@ -30,7 +30,7 @@ import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeC
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-28.4";
+const ENGINE_VERSION = "2026-09-28.5";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -236,10 +236,11 @@ Deno.serve(async (req) => {
         if (r.item.kind === "skipped") row = { file_id: f.id, fingerprint: fpOf(f), status: "skipped", extract: null, reason: r.item.reason };
         else if (r.item.kind === "text") {
           const p = parseFile(name, r.item.content, pctx);
-          if (p) { p.file = name; row = { file_id: f.id, fingerprint: fpOf(f, isBank(p)), status: "parsed", extract: p, reason: null }; }
-          // REGISTRE (double écriture) : transactions bancaires BRUTES, une seule fois par version du fichier.
-          if (p?.parser === "pennylane_bank") await registerBankFile(admin, client_id, f, r.item.content);
-          else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "format non reconnu → IA" };
+          if (p) {
+            p.file = name; row = { file_id: f.id, fingerprint: fpOf(f, isBank(p)), status: "parsed", extract: p, reason: null };
+            // REGISTRE (double écriture) : transactions bancaires BRUTES, une seule fois par version du fichier.
+            if (p.parser === "pennylane_bank") await registerBankFile(admin, client_id, f, r.item.content);
+          } else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "format non reconnu → IA" };
         } else row = { file_id: f.id, fingerprint: fpOf(f), status: "llm", extract: null, reason: "PDF/image → IA" };
         spent += performance.now() - t0 + r.cpuMs; doneNow++;
         await admin.from("std_file_extracts").delete().eq("file_id", f.id).eq("period", period).neq("fingerprint", row.fingerprint);
