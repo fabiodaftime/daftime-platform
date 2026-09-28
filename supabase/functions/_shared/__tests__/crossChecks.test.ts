@@ -140,3 +140,17 @@ describe("doctrine §4.3 — cohortes de réachat (3PL)", () => {
     expect(a.text).toMatch(/22,2\s% de réachat à 60 jours, soit 54\s€ de marge par client sur 60 jours — remboursé en 60 jours, sans marge d'erreur/);
   });
 });
+
+describe("doctrine §8.2 — marge par canal", () => {
+  it("CA net réparti au prorata de la valeur attribuée ; la somme des canaux = CM3 ; canal perdant signalé", async () => {
+    const { channelMargin } = await import("../standardizeCore.ts");
+    const m = { values: { ca: 100_000, cogs: 30_000, shipping_cost: 10_000, payment_fees: 3_000 }, sources: {}, traces: {}, confidence: {}, flags: [], breakdowns: {} } as unknown as Merged;
+    channelMargin(m, { source: "Triple Whale", platforms: { Meta: 30_000, Google: 10_000 }, cv: { Meta: 100_000, Google: 150_000 } }, "EUR");
+    const rows = m.breakdowns.channel_margin.rows;
+    // CM2 = 57 % ; Meta : 40 % des ventes attribuées → 40 000 × 57 % − 30 000 = −7 200 ; Google : 60 000 × 57 % − 10 000 = 24 200
+    expect(rows.map((r) => [r.label, r.value])).toEqual([["Meta", -7_200], ["Google", 24_200]]);
+    expect(rows.reduce((s, r) => s + r.value, 0)).toBe(57_000 - 40_000);
+    expect(m.flags[0].severity).toBe("warn");
+    expect(m.flags[0].label).toMatch(/Meta −?-?7\s200/);
+  });
+});

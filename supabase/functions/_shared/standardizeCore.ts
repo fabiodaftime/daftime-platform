@@ -363,7 +363,8 @@ export function cohortMetrics(m: Merged): void {
 
 // PUB EN ENGAGEMENT (doctrine) : la dépense des plateformes du mois (Triple Whale, gestionnaires de pub) remplace
 // les PAIEMENTS vus en banque (paliers, recharges PayPal, décalages). Les paiements restent la base de la trésorerie.
-export interface AdsSpend { platforms: Record<string, number>; source: string }
+// cv : valeur attribuée par plateforme (outil d'attribution) — sert à la marge par canal, jamais au CA.
+export interface AdsSpend { platforms: Record<string, number>; source: string; cv?: Record<string, number> }
 export function applyAdsSpend(m: Merged, spend: AdsSpend | null | undefined, reporting: string): void {
   const entries = Object.entries(spend?.platforms ?? {}).filter(([, v]) => typeof v === "number" && isFinite(v) && v >= 0);
   if (!spend || !entries.length) return;
@@ -380,6 +381,32 @@ export function applyAdsSpend(m: Merged, spend: AdsSpend | null | undefined, rep
   m.breakdowns.ads_by_platform = { label: `Dépense pub par plateforme (${spend.source})`, rows: entries.map(([label, value]) => ({ label, value: r2(value) })).sort((a, b) => b.value - a.value) };
   m.flags.push({ id: "_ads_engagement", severity: "info", label: `Pub en engagement : ${fmt(total)} ${reporting} dépensés sur les plateformes (${spend.source})` +
     (paid != null ? ` vs ${fmt(paid)} ${reporting} payés en banque ce mois (écart ${paid - total >= 0 ? "+" : ""}${fmt(paid - total)} : paliers de facturation, recharges, solde PayPal).` : ".") });
+}
+
+// MARGE PAR CANAL (doctrine §8.2) : un blended correct peut cacher un canal qui perd. Les outils d'attribution
+// comptent une même vente sur plusieurs plateformes (Σ valeur attribuée > ventes réelles) → le CA NET du mois est
+// réparti au prorata de la valeur attribuée (hypothèse affichée), × taux de CM2 du shop, − dépense du canal.
+// La somme des canaux retombe sur la CM3 du mois.
+export function channelMargin(m: Merged, spend: AdsSpend | null | undefined, reporting: string): void {
+  const cv = Object.entries(spend?.cv ?? {}).filter(([, v]) => typeof v === "number" && v > 0);
+  const v = m.values;
+  if (!spend || !cv.length || v.ca == null || v.cogs == null || v.shipping_cost == null) return;
+  const cm2Rate = (v.ca - v.cogs - v.shipping_cost - (v.payment_fees ?? 0)) / v.ca;
+  const totCv = cv.reduce((s, [, x]) => s + x, 0);
+  const names = [...new Set([...cv.map(([k]) => k), ...Object.keys(spend.platforms ?? {})])];
+  const rows = names.map((label) => {
+    const c = spend.cv?.[label] ?? 0, sp = spend.platforms?.[label] ?? 0;
+    const rev = v.ca! * (c / totCv), margin = rev * cm2Rate - sp;
+    return { label, value: r2(margin), values: { spend: r2(sp), share: r2((c / totCv) * 100), revenue: r2(rev), margin: r2(margin), ...(sp > 0 ? { roas_tool: r2(c / sp) } : {}) } };
+  }).sort((a, b) => a.value - b.value);
+  m.breakdowns.channel_margin = { label: `Marge après pub par canal (CA net réparti au prorata de la valeur attribuée — ${spend.source})`, rows,
+    columns: [{ key: "spend", label: "Dépense", unit: "CUR" }, { key: "share", label: "Part des ventes attribuées", unit: "%" }, { key: "revenue", label: "CA net réparti", unit: "CUR" },
+      { key: "margin", label: "Marge après pub", unit: "CUR", emphasis: true, sort: true }, { key: "roas_tool", label: "ROAS de l'outil", unit: "x" }] };
+  const losing = rows.filter((r) => r.value < 0 && r.values.spend > 0);
+  m.flags.push({ id: "_channel_margin", severity: losing.length ? "warn" : "info",
+    label: losing.length
+      ? `Canal qui perd de l'argent ce mois : ${losing.map((r) => `${r.label} ${fmt(r.value)} ${reporting} après pub (dépense ${fmt(r.values.spend)}, ${r.values.share.toLocaleString("fr-FR")} % des ventes attribuées)`).join(" · ")} — le blended le masque. Hypothèse : CA net réparti au prorata de la valeur attribuée par ${spend.source} (qui compte une vente plusieurs fois).`
+      : `Tous les canaux payés dégagent de la marge après pub ce mois (répartition au prorata de la valeur attribuée par ${spend.source}).` });
 }
 
 // COMPOSANTES ≤ TOTAL : une valeur lue par l'IA qui dépasse le total du même mois vient d'une autre période

@@ -24,7 +24,7 @@ import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact }
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
 import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
-import { applyAdsSpend, applyCostParams, cohortMetrics, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, stockByProduct, type AdsSpend, type CostParams } from "../_shared/standardizeCore.ts";
+import { applyAdsSpend, applyCostParams, channelMargin, cohortMetrics, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, stockByProduct, type AdsSpend, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls, type Control } from "../_shared/controls.ts";
 import { sanitizeFlowMap, type FlowMap } from "../_shared/flowMap.ts";
 import { isOutOfTreasury, leverDefsFromMap, mapDiscrepancies, rulesFromMap, treasuryPerimeter } from "../_shared/flowRules.ts";
@@ -366,6 +366,7 @@ Deno.serve(async (req) => {
       stockByProduct(merged, period, currency);
       cohortMetrics(merged);
       applyAdsSpend(merged, ctxData.ads_spend?.[period], currency); // dépense des plateformes (engagement) si fournie
+      channelMargin(merged, ctxData.ads_spend?.[period], currency);  // marge par canal si la valeur attribuée est fournie
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
         if (typeof o?.value !== "number" || !isFinite(o.value)) continue;

@@ -83,6 +83,7 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = [], tailor: Ta
     ...W(trend("ads_total") && trend("mer") && { type: "combo", title: "Dépense pub et MER", metrics: ["ads_total"], line: "mer" }),
     ...W(pick("new_customers", "returning_customers").length === 2 && { type: "bar", title: "Nouveaux vs récurrents", metrics: ["new_customers", "returning_customers"] }),
     ...W(bk("ads_by_platform") && { type: "ranking", title: "Dépense par plateforme", breakdown: bk("ads_by_platform") }),
+    ...W(bk("channel_margin") && { type: "matrix_table", title: "Quel canal te fait vraiment gagner de l'argent ?", breakdown: "channel_margin", highlight: "both" }),
     ...W(bk("cohorts") && { type: "matrix_table", title: "Tes clients reviennent-ils ? (cohortes)", breakdown: "cohorts", highlight: "both" }),
     ...W(pick("sessions", "add_to_carts", "orders").length >= 2 && { type: "funnel", title: "Des visites aux commandes", metrics: pick("sessions", "add_to_carts", "orders") }),
   ];

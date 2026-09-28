@@ -28,7 +28,7 @@ Trois types de modifications :
    ads (publicité), stock (achats de marchandises / fournisseurs de stock / emballages), internal (virement entre ses propres comptes, apport, transfert vers une autre société du dirigeant), loan (remboursement d'emprunt — capital), payroll (salaires, rémunération du dirigeant, freelances récurrents), tools (logiciels/abonnements), logistics (transport, 3PL), tax (impôts), vat (TVA), bankfees (frais bancaires), other (autre charge d'exploitation), ignore (à exclure).
 2) bank_anchors — solde CONNU d'UN compte NOMMÉ à une date (nom du compte tel qu'il apparaît dans les données, date ISO YYYY-MM-DD, solde en devise).
 4) psp_rates — TARIF RÉEL d'un prestataire de paiement donné par le conseiller (contrat) : « Klarna 3,29 % + 0,35 € » → { psp: "Klarna", pct: 3.29, fixed: 0.35 }. Noms : Shopify Payments, Stripe, PayPal, Klarna, Scalapay, Alma, Oney, Floa, Adyen, Mollie, Checkout.com, SumUp, PayPlug, Amazon Pay. Valable pour tous les mois ; jamais d'override de payment_fees dans ce cas.
-5) ads_spend — DÉPENSE PUB PAR PLATEFORME d'un mois (Triple Whale, gestionnaire de pub) donnée par le conseiller : une entrée par plateforme { period, platform, amount, source } (ex. « juillet Triple Whale : Meta 44 019, TikTok 27 146 » → deux entrées). Jamais d'override de ads_total dans ce cas : le moteur somme les plateformes.
+5) ads_spend — (avec « attributed_revenue » si le conseiller donne la valeur attribuée / CV de la plateforme) DÉPENSE PUB PAR PLATEFORME d'un mois (Triple Whale, gestionnaire de pub) donnée par le conseiller : une entrée par plateforme { period, platform, amount, source } (ex. « juillet Triple Whale : Meta 44 019, TikTok 27 146 » → deux entrées). Jamais d'override de ads_total dans ce cas : le moteur somme les plateformes.
 3) overrides — UNIQUEMENT si le conseiller donne un CHIFFRE explicite pour un poste, ou demande explicitement de prendre une autre source/colonne (tu recalcules alors depuis le fichier fourni, provenance précise). Chaque override porte le mois concerné dans « period » (YYYY-MM-01) : « juillet = 139 675 » → period du mois de juillet de l'année en cours ; sans mois précisé → le MOIS de la conversation.
    - TRÉSORERIE : une trésorerie TOTALE de fin de mois donnée par le conseiller (« trésorerie de juillet = … », ou un chiffre par mois en réponse à la question sur la trésorerie) → override cash_end de CE mois. En revanche le solde d'UN compte nommé → bank_anchors (ce n'est pas la trésorerie totale).
    JAMAIS d'override :
@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
           ads_spend: { type: "array", items: { type: "object", properties: {
             period: { type: "string", description: "mois concerné, YYYY-MM-01" }, platform: { type: "string", description: "Meta, TikTok, Snapchat, Google, Pinterest…" },
             amount: { type: "number" }, source: { type: "string", description: "ex. Triple Whale, Meta Ads Manager" },
+            attributed_revenue: { type: "number", description: "valeur attribuée à la plateforme (colonne CV / Conversion value), si donnée" },
           }, required: ["period", "platform", "amount"], additionalProperties: false } },
           psp_rates: { type: "array", items: { type: "object", properties: {
             psp: { type: "string", description: "nom du prestataire (ex. Klarna)" }, pct: { type: "number", description: "pourcentage, ex. 3.29" },
@@ -124,7 +125,7 @@ Deno.serve(async (req) => {
       bank_rules?: { match: string; category: string; label?: string }[];
       bank_anchors?: { account: string; date: string; balance: number }[];
       psp_rates?: { psp: string; pct: number; fixed?: number }[];
-      ads_spend?: { period: string; platform: string; amount: number; source?: string }[];
+      ads_spend?: { period: string; platform: string; amount: number; source?: string; attributed_revenue?: number }[];
       overrides?: { id: string; value: number; source: string; period?: string }[];
       summary?: string;
     }>({ model: MODELS.quality, system: SYSTEM, messages: [...history, { role: "user", content } as AnthropicMessage], tool: TOOL, max_tokens: 2000, signal: AbortSignal.timeout(120_000) });
@@ -151,10 +152,11 @@ Deno.serve(async (req) => {
     const adsSpend = (input.ads_spend ?? []).filter((a) => /^\d{4}-\d{2}-01$/.test(a.period) && a.platform?.trim() && typeof a.amount === "number" && isFinite(a.amount) && a.amount >= 0);
     if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, psp_rates: pspRates, ads_spend: adsSpend, overrides, usage });
     if (adsSpend.length) {
-      const cur = { ...((ctxData as { ads_spend?: Record<string, { platforms: Record<string, number>; source: string }> }).ads_spend ?? {}) };
+      const cur = { ...((ctxData as { ads_spend?: Record<string, { platforms: Record<string, number>; source: string; cv?: Record<string, number> }> }).ads_spend ?? {}) };
       for (const a of adsSpend) {
         const e = cur[a.period] ?? { platforms: {}, source: a.source?.trim() || "dépense des plateformes" };
-        cur[a.period] = { platforms: { ...e.platforms, [a.platform.trim()]: a.amount }, source: a.source?.trim() || e.source };
+        const cv = typeof a.attributed_revenue === "number" && a.attributed_revenue > 0 ? { ...(e.cv ?? {}), [a.platform.trim()]: a.attributed_revenue } : e.cv;
+        cur[a.period] = { platforms: { ...e.platforms, [a.platform.trim()]: a.amount }, source: a.source?.trim() || e.source, ...(cv ? { cv } : {}) };
       }
       (ctxData as { ads_spend?: unknown }).ads_spend = cur;
     }
