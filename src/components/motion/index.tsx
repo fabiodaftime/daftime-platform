@@ -66,7 +66,7 @@ export function Reveal({ children, className, delay = 0 }: { children: ReactNode
 export function Shimmer({ className }: { className?: string }) {
   return (
     <div className={`relative overflow-hidden rounded-lg bg-muted ${className ?? ''}`}>
-      <motion.div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent"
+      <motion.div className="shimmer-sweep absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent"
         animate={{ x: ['-100%', '100%'] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'linear' }} />
     </div>
   );

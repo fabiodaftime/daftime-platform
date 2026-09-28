@@ -18,6 +18,7 @@ import { DashboardFrame } from '@/components/generic/DashboardFrame';
 import { DailyView } from '@/components/generic/DailyView';
 import { KpiPins } from '@/components/generic/KpiPins';
 import { ErrorBoundary } from '@/components/generic/ErrorBoundary';
+import { AppLoading } from '@/components/layout/AppLoading';
 import { CountUp, GrowBar, Item, PageFade, Reveal, Shimmer, Stagger, motion } from '@/components/motion';
 import { currentPeriod, shiftPeriod, periodLabel, logActivity } from '@/lib/genericApi';
 import { legacyDashboardRoute } from '@/lib/staff';
@@ -197,25 +198,12 @@ function ChatPanel({ chat, input, setInput, busy, onSend, suggestions, compact =
   );
 }
 
-function PageSkeleton() {
-  return (
-    <div className="v2 min-h-screen">
-      <div className="h-16 border-b" />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-4">
-        <Shimmer className="h-56 rounded-2xl" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4"><Shimmer className="h-36" /><Shimmer className="h-36" /><Shimmer className="h-36" /></div>
-        <Shimmer className="h-64" />
-      </div>
-    </div>
-  );
-}
-
 export default function ClientSpace() {
   const { id } = useParams<{ id: string }>();
   const { user, roles } = useAuth();
   const isStaff = (roles ?? []).some((r: { role: string }) => STAFF_ROLES.includes(r.role));
   const navigate = useNavigate();
-  const [legacyRedirecting, setLegacyRedirecting] = useState(false);
+  const [, setLegacyRedirecting] = useState(false);
 
   const [tab, setTab] = useState<TabKey>('accueil');
   const [client, setClient] = useState<any>(null);
@@ -374,7 +362,7 @@ export default function ClientSpace() {
     return out.slice(0, 4);
   }, [dj, client, series, period]);
 
-  if (!client) return legacyRedirecting ? <div className="p-8 text-muted-foreground">Ouverture de ton espace…</div> : <PageSkeleton />;
+  if (!client) return <AppLoading nav />;
 
   const advisor = (client as any)?.advisor as { name: string; email?: string; whatsapp?: string; photo_url?: string; booking_url?: string } | null | undefined;
   const advisorName = advisor?.name ?? ADVISOR.name;

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 // Landing pub en EAGER (dans le bundle principal) : pas d'aller-retour réseau supplémentaire au
 // chargement de /ecommerce → meilleur FCP/LCP sur la page qui reçoit le trafic pub.
 import LandingEcommerce from "./pages/LandingEcommerce";
@@ -10,14 +10,32 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppLoading } from "@/components/layout/AppLoading";
+
+// Pages principales du front v2 : chargées en tâche de fond dès que le navigateur est libre, pour que le passage
+// d'une page à l'autre soit immédiat (pas d'écran d'attente le temps de télécharger la page).
+const load = {
+  Index: () => import("./pages/Index"),
+  Auth: () => import("./pages/Auth"),
+  Welcome: () => import("./pages/Welcome"),
+  ClientSpace: () => import("./pages/ClientSpace"),
+  AdminClientCockpit: () => import("./pages/admin/AdminClientCockpit"),
+};
+function usePrefetchPages() {
+  useEffect(() => {
+    const run = () => Object.values(load).forEach((f) => f().catch(() => { /* réessayé à la navigation */ }));
+    const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (w.requestIdleCallback) w.requestIdleCallback(run); else setTimeout(run, 1200);
+  }, []);
+}
 // Pages en lazy-loading : chaque route devient un chunk séparé (chargé à la demande).
 // → la landing ne télécharge plus toute l'app (dashboards, admin, recharts…), d'où un FCP/LCP bien plus rapide.
-const Index = lazy(() => import("./pages/Index"));
+const Index = lazy(load.Index);
 const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
 const Confidentialite = lazy(() => import("./pages/Confidentialite"));
 const ShopifyInstall = lazy(() => import("./pages/ShopifyInstall"));
-const Welcome = lazy(() => import("./pages/Welcome"));
-const Auth = lazy(() => import("./pages/Auth"));
+const Welcome = lazy(load.Welcome);
+const Auth = lazy(load.Auth);
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -48,28 +66,26 @@ const AdminCsvImport = lazy(() => import("./pages/AdminCsvImport"));
 const AdminLabarileImport = lazy(() => import("./pages/AdminLabarileImport"));
 const AdminDataroomUpload = lazy(() => import("./pages/AdminDataroomUpload"));
 const AdminClients = lazy(() => import("./pages/admin/AdminClients"));
-const AdminClientCockpit = lazy(() => import("./pages/admin/AdminClientCockpit"));
+const AdminClientCockpit = lazy(load.AdminClientCockpit);
 const AdminClientSettings = lazy(() => import("./pages/admin/AdminClientSettings"));
 const AdminAdvisors = lazy(() => import("./pages/admin/AdminAdvisors"));
 const AdminActivities = lazy(() => import("./pages/admin/AdminActivities"));
 const AdminCatalog = lazy(() => import("./pages/admin/AdminCatalog"));
-const ClientSpace = lazy(() => import("./pages/ClientSpace"));
+const ClientSpace = lazy(load.ClientSpace);
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+const PageLoader = () => <AppLoading />;
 
-const App = () => (
+const App = () => {
+  usePrefetchPages();
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true }}>
         <AuthProvider>
           <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -365,5 +381,6 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
+};
 
 export default App;

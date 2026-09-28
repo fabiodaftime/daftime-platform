@@ -1,5 +1,6 @@
 // Cockpit d'un client générique : contexte → fichiers → charte → standardisation →
 // génération dashboard → workflow de statut → chat d'itération (Phase 3, jalon de preuve).
+import { AppLoading } from '@/components/layout/AppLoading';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -527,7 +528,7 @@ export default function AdminClientCockpit() {
   const homeKpis = ['ca', 'ebitda', 'resultat_net', 'cash_end'].map(findRow).filter(Boolean) as any[];
   const fmtV = (r: any) => { const v = r?.value; if (typeof v !== 'number') return '—'; const u = r.unit; if (u === '%') return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'; if (u === 'x') return v.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + '×'; return v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + (u ? ` ${u}` : ''); };
 
-  if (!client) return <div className="p-8 text-muted-foreground">Chargement…</div>;
+  if (!client) return <AppLoading nav maxWidth="max-w-7xl" />;
 
   // Données disponibles pour les graphiques obligatoires : celles du mois STANDARDISÉ (dispo avant toute
   // génération), complétées par celles du dashboard (répartitions dérivées à la génération).

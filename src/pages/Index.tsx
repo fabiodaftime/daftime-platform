@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AppLoading } from '@/components/layout/AppLoading';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,16 +29,7 @@ const Index = () => {
     return () => { cancelled = true; };
   }, [user]);
 
-  if (loading || (user && checking)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading || (user && checking)) return <AppLoading />;
 
   if (!user) return <Landing />;
   if (clientId) return <Navigate to={`/client/${clientId}`} replace />;

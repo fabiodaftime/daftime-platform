@@ -1,7 +1,7 @@
 // Shell applicatif Daftime (front v2) : barre du haut translucide (logo, titre, menu utilisateur) et, si la page
 // fournit une navigation, un menu latéral fin sur ordinateur + une barre d'onglets en bas sur mobile (façon app).
 // Le style v2 (`.v2`, index.css) ne s'applique qu'aux pages qui utilisent ce shell.
-import { useLayoutEffect, useState, type ComponentType, type ReactNode } from 'react';
+import { useState, type ComponentType, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,23 +9,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, LogOut, Monitor, Moon, MoreHorizontal, Sun, X } from 'lucide-react';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import { StaffCommand } from './StaffCommand';
+import { useV2Theme } from './theme';
 
 const STAFF_ROLES = ['admin', 'manager', 'collaborateur', 'super_admin'];
-
-// Thème (clair par défaut, sombre, ou celui du système) mémorisé par navigateur. Appliqué sur <html> avant
-// l'affichage (pas de flash entre deux pages) et retiré en quittant le shell (les anciens dashboards restent clairs).
-type Theme = 'light' | 'dark' | 'system';
-const THEME_KEY = 'daftime.theme';
-function useV2Theme(): [Theme, (t: Theme) => void] {
-  const [theme, setTheme] = useState<Theme>(() => { try { return (localStorage.getItem(THEME_KEY) as Theme) || 'light'; } catch { return 'light'; } });
-  useLayoutEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => document.documentElement.classList.toggle('v2-dark', theme === 'dark' || (theme === 'system' && mq.matches));
-    apply(); mq.addEventListener('change', apply);
-    return () => { mq.removeEventListener('change', apply); document.documentElement.classList.remove('v2-dark'); };
-  }, [theme]);
-  return [theme, (t) => { setTheme(t); try { localStorage.setItem(THEME_KEY, t); } catch { /* stockage indisponible */ } }];
-}
+// Entrée du contenu à chaque page : fondu court (la barre du haut ne bouge pas → pas de « coupure »).
+const ENTER = { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } } as const;
 
 export interface ShellNavItem { key: string; label: string; short?: string; icon: ComponentType<{ className?: string }>; badge?: boolean } // short : libellé de la barre mobile
 
@@ -125,10 +113,10 @@ export function AppShell({
               {aside}
             </div>
           </aside>
-          <main className="min-w-0">{children}</main>
+          <motion.main className="min-w-0" {...ENTER}>{children}</motion.main>
         </div>
       ) : (
-        <main className={`${maxWidth} mx-auto px-4 sm:px-6 py-8`}>{children}</main>
+        <motion.main className={`${maxWidth} mx-auto px-4 sm:px-6 py-8`} {...ENTER}>{children}</motion.main>
       )}
 
       {/* Barre d'onglets mobile */}
