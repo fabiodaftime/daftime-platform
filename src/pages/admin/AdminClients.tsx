@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2 } from 'lucide-react';
 import { deleteClient } from '@/lib/genericApi';
 import { AppShell } from '@/components/layout/AppShell';
+import { Shimmer } from '@/components/motion';
 
 function slugify(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -62,8 +63,9 @@ export default function AdminClients() {
   return (
     <AppShell title="Clients — pipeline IA" onBack={() => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}>
       <div className="space-y-8">
-        <section className="border rounded-lg p-5">
-          <h2 className="font-semibold mb-4 flex items-center gap-2"><Plus className="w-4 h-4" /> Nouveau client</h2>
+        <section className="surface p-6 sm:p-7">
+          <span className="eyebrow">Créer un dossier</span>
+          <h1 className="text-2xl font-semibold tracking-tight mt-1 mb-5 flex items-center gap-2"><Plus className="w-5 h-5" /> Nouveau client</h1>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs text-muted-foreground">Nom</label>
@@ -71,7 +73,7 @@ export default function AdminClients() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Type d'activité</label>
-              <select className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+              <select className="w-full h-10 rounded-xl border bg-card px-3 text-sm"
                 value={activityTypeId} onChange={(e) => setActivityTypeId(e.target.value)}>
                 <option value="">—</option>
                 {activityTypes.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -87,23 +89,23 @@ export default function AdminClients() {
             </label>
           </div>
           {error && <p className="text-sm text-destructive mt-3">{error}</p>}
-          <Button className="mt-4" onClick={create} disabled={creating || !name.trim()}>
+          <Button className="mt-5 rounded-xl" onClick={create} disabled={creating || !name.trim()}>
             {creating ? 'Création…' : 'Créer le client'}
           </Button>
         </section>
 
         <section>
-          <h2 className="font-semibold mb-3">Clients ({clients.length})</h2>
+          <div className="mb-3"><span className="eyebrow">Pipeline IA</span><h2 className="font-semibold mt-0.5">Clients ({clients.length})</h2></div>
           {loading ? (
-            <p className="text-muted-foreground text-sm">Chargement…</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((i) => <Shimmer key={i} className="h-20 rounded-xl" />)}</div>
           ) : clients.length === 0 ? (
             <p className="text-muted-foreground text-sm">Aucun client générique pour l'instant.</p>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
               {clients.map((c) => (
-                <div key={c.id} className="border rounded-lg p-4 hover:border-primary transition flex items-start justify-between gap-2">
+                <div key={c.id} className="surface surface-hover p-4 flex items-start justify-between gap-2">
                   <button onClick={() => navigate(`/admin/clients/${c.id}`)} className="text-left flex-1">
-                    <div className="font-medium">{c.name}</div>
+                    <div className="font-semibold">{c.name}</div>
                     <div className="text-xs text-muted-foreground">{c.currency}{c.requires_supervision ? ' · supervision' : ''}</div>
                   </button>
                   <button onClick={() => removeClient(c)} title="Supprimer" className="text-muted-foreground hover:text-destructive">

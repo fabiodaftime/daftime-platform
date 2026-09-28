@@ -1,16 +1,31 @@
 // Shell applicatif Daftime (front v2) : barre du haut translucide (logo, titre, menu utilisateur) et, si la page
 // fournit une navigation, un menu latéral fin sur ordinateur + une barre d'onglets en bas sur mobile (façon app).
 // Le style v2 (`.v2`, index.css) ne s'applique qu'aux pages qui utilisent ce shell.
-import { useState, type ComponentType, type ReactNode } from 'react';
+import { useLayoutEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, LogOut, MoreHorizontal, X } from 'lucide-react';
+import { ArrowLeft, LogOut, Monitor, Moon, MoreHorizontal, Sun, X } from 'lucide-react';
 import daftimeLogo from '@/assets/daftime-logo-trans.png';
 import { StaffCommand } from './StaffCommand';
 
 const STAFF_ROLES = ['admin', 'manager', 'collaborateur', 'super_admin'];
+
+// Thème (clair par défaut, sombre, ou celui du système) mémorisé par navigateur. Appliqué sur <html> avant
+// l'affichage (pas de flash entre deux pages) et retiré en quittant le shell (les anciens dashboards restent clairs).
+type Theme = 'light' | 'dark' | 'system';
+const THEME_KEY = 'daftime.theme';
+function useV2Theme(): [Theme, (t: Theme) => void] {
+  const [theme, setTheme] = useState<Theme>(() => { try { return (localStorage.getItem(THEME_KEY) as Theme) || 'light'; } catch { return 'light'; } });
+  useLayoutEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => document.documentElement.classList.toggle('v2-dark', theme === 'dark' || (theme === 'system' && mq.matches));
+    apply(); mq.addEventListener('change', apply);
+    return () => { mq.removeEventListener('change', apply); document.documentElement.classList.remove('v2-dark'); };
+  }, [theme]);
+  return [theme, (t) => { setTheme(t); try { localStorage.setItem(THEME_KEY, t); } catch { /* stockage indisponible */ } }];
+}
 
 export interface ShellNavItem { key: string; label: string; short?: string; icon: ComponentType<{ className?: string }>; badge?: boolean } // short : libellé de la barre mobile
 
@@ -33,6 +48,7 @@ export function AppShell({
   const isStaff = (roles ?? []).some((r: { role: string }) => STAFF_ROLES.includes(r.role));
   const [menu, setMenu] = useState(false);
   const [more, setMore] = useState(false);
+  const [theme, setTheme] = useV2Theme();
   const doSignOut = async () => { await signOut(); navigate('/auth'); };
   const initials = (user?.email ?? '?').slice(0, 2).toUpperCase();
 
@@ -48,14 +64,14 @@ export function AppShell({
           {onBack && (
             <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2 shrink-0" aria-label="Retour"><ArrowLeft className="w-4 h-4" /></Button>
           )}
-          <img src={daftimeLogo} alt="Daftime" className="h-[20px] w-auto shrink-0" />
+          <img src={daftimeLogo} alt="Daftime" className="logo-auto h-[20px] w-auto shrink-0" />
           {title && <div className="font-medium text-sm md:text-[15px] border-l pl-3 truncate text-foreground/90">{title}</div>}
           <div className="flex-1" />
           {isStaff && <StaffCommand />}
           {/* Actions des pages : écrites pour l'ancienne barre bleu nuit (texte blanc) → recolorées pour la barre claire. */}
           {actions && (
             <div className="flex items-center gap-2 [&_button:hover]:bg-muted [&_.text-emerald-300]:text-[hsl(var(--good))] [&_select]:border [&_input]:border"
-              style={{ ['--primary-foreground' as string]: '236 42% 13%' }}>{actions}</div>
+              style={{ ['--primary-foreground' as string]: 'var(--foreground)' }}>{actions}</div>
           )}
           {user && (
             <div className="relative shrink-0">
@@ -68,6 +84,17 @@ export function AppShell({
                   <motion.div initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }} transition={{ duration: 0.16 }}
                     className="surface absolute right-0 mt-2 w-64 p-2 z-40" onMouseLeave={() => setMenu(false)}>
                     <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
+                    <div className="px-3 pt-1 pb-2">
+                      <div className="eyebrow mb-1.5">Apparence</div>
+                      <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+                        {([['light', 'Clair', Sun], ['dark', 'Sombre', Moon], ['system', 'Système', Monitor]] as const).map(([k, l, Icon]) => (
+                          <button key={k} onClick={() => setTheme(k)} aria-pressed={theme === k}
+                            className={`flex flex-col items-center gap-1 rounded-md py-1.5 text-[11px] transition ${theme === k ? 'bg-card shadow-[var(--shadow-card)] text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'}`}>
+                            <Icon className="w-3.5 h-3.5" /> {l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <button onClick={doSignOut} className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-muted transition"><LogOut className="w-4 h-4" /> Se déconnecter</button>
                   </motion.div>
                 )}

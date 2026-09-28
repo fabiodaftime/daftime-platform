@@ -9,6 +9,7 @@ import {
   Home, Briefcase, FileCheck2, Clock, Activity as ActivityIcon, ClipboardList, Headset, Boxes, AlertTriangle, Target,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
+import { CountUp, GrowBar, Item, PageFade, Shimmer, Stagger, motion } from '@/components/motion';
 import { LOCATIONS, legacyDashboardRoute } from '@/lib/staff';
 import { currentPeriod, periodLabel, STATUS_LABELS } from '@/lib/genericApi';
 import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
@@ -126,7 +127,7 @@ export default function AdminHome() {
   };
   const countForFilter = (key: string) => clients.filter((c) => matchesFilter(c, key)).length;
   const currentFilter = CLIENT_FILTERS.find((l) => l.key === loc) ?? CLIENT_FILTERS[0];
-  const group = useMemo(() => clients.filter((c) => matchesFilter(c, loc) && c.name.toLowerCase().includes(q.toLowerCase())), [clients, loc, q]);
+  const group = useMemo(() => clients.filter((c) => matchesFilter(c, currentFilter.key) && c.name.toLowerCase().includes(q.toLowerCase())), [clients, currentFilter.key, q]); // filtre inconnu dans l'URL → même repli que le titre
 
   const prodCount = clients.filter(isProd).length;
   const testCount = clients.filter((c) => c.category === 'test').length;
@@ -167,48 +168,56 @@ export default function AdminHome() {
   }, [clients, statusByClient, prodStatusByClient, missingByClient, advisorById, q]);
 
   const item = (active: boolean, icon: React.ReactNode, label: string, onClick: () => void, right?: React.ReactNode) => (
-    <button onClick={onClick}
-      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition ${active ? 'bg-primary text-primary-foreground font-medium' : 'text-foreground hover:bg-muted'}`}>
-      {icon} <span className="flex-1 text-left">{label}</span> {right}
+    <button onClick={onClick} aria-current={active ? 'page' : undefined}
+      className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${active ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/70'}`}>
+      {active && <motion.span layoutId="home-nav" className="absolute inset-0 rounded-lg bg-card border shadow-[var(--shadow-card)]" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
+      <span className="relative flex items-center gap-2.5 flex-1 text-left">{icon} {label}</span> {right && <span className="relative">{right}</span>}
     </button>
   );
   const subLink = (icon: React.ReactNode, label: string, onClick: () => void) => (
-    <button onClick={onClick} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted">{icon} {label}</button>
+    <button onClick={onClick} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors">{icon} {label}</button>
   );
+  const pill = (s: string) => <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${STATUS_STYLE[s] ?? 'bg-muted text-muted-foreground'}`}>{statusLabel(s)}</span>;
+  const legacyTag = <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 align-middle">legacy</span>;
+  const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+  const searchBox = (
+    <div className="relative">
+      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrer…" className="h-10 w-full sm:w-60 rounded-xl border bg-card pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition" />
+    </div>
+  );
+  const pct = dueProd.length ? Math.round((publishedCount / dueProd.length) * 100) : 0;
 
   return (
-    <AppShell maxWidth="max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-[230px_1fr] gap-6">
+    <AppShell maxWidth="max-w-7xl">
+      <div className="grid grid-cols-1 lg:grid-cols-[228px_1fr] gap-8">
         {/* Menu */}
-        <aside className="space-y-4">
-          <nav className="rounded-xl border bg-card p-2 space-y-1">
+        <aside className="lg:sticky lg:top-24 self-start space-y-4">
+          <nav className="space-y-0.5" aria-label="Sections">
             {item(view === 'accueil', <Home className="w-4 h-4 shrink-0" />, 'Accueil', () => setView('accueil'))}
             {item(view === 'production', <ClipboardList className="w-4 h-4 shrink-0" />, 'Production', () => setView('production'))}
-
             {item(view === 'clients', <Briefcase className="w-4 h-4 shrink-0" />, 'Clients',
               () => { setOpen((o) => ({ ...o, clients: !o.clients })); setView('clients'); },
               <ChevronDown className={`w-4 h-4 transition-transform ${open.clients ? 'rotate-180' : ''}`} />)}
             {open.clients && (
-              <div className="pl-3 space-y-0.5">
+              <div className="pl-3 space-y-0.5 border-l ml-5">
                 {CLIENT_FILTERS.map((l) => {
                   const active = view === 'clients' && loc === l.key;
                   return (
                     <button key={l.key} onClick={() => goClients(l.key)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition ${active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted'}`}>
-                      <span className="text-base leading-none">{l.flag}</span> {l.label}<span className="ml-auto text-xs">{countForFilter(l.key)}</span>
+                      className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted/70'}`}>
+                      <span className="text-base leading-none">{l.flag}</span> {l.label}<span className="ml-auto font-mono text-[11px]">{countForFilter(l.key)}</span>
                     </button>
                   );
                 })}
               </div>
             )}
-
             {item(view === 'commercial', <Target className="w-4 h-4 shrink-0" />, 'Commercial', () => setView('commercial'))}
-
             {item(false, <Settings className="w-4 h-4 shrink-0" />, 'Configuration',
               () => setOpen((o) => ({ ...o, config: !o.config })),
               <ChevronDown className={`w-4 h-4 transition-transform ${open.config ? 'rotate-180' : ''}`} />)}
             {open.config && (
-              <div className="pl-3 space-y-0.5">
+              <div className="pl-3 space-y-0.5 border-l ml-5">
                 {subLink(<Headset className="w-4 h-4" />, 'Conseillers', () => navigate('/admin/advisors'))}
                 {subLink(<Boxes className="w-4 h-4" />, 'Activités & templates', () => navigate('/admin/activities'))}
                 {subLink(<Users className="w-4 h-4" />, 'Utilisateurs', () => navigate('/admin/users'))}
@@ -217,149 +226,176 @@ export default function AdminHome() {
               </div>
             )}
           </nav>
-          <Button className="w-full" onClick={() => navigate('/admin/clients')}><Plus className="w-4 h-4 mr-2" /> Nouveau client</Button>
+          <Button className="w-full rounded-xl" onClick={() => navigate('/admin/clients')}><Plus className="w-4 h-4 mr-2" /> Nouveau client</Button>
         </aside>
 
         {/* Contenu */}
-        <div className="space-y-5">
+        <PageFade id={view} className="space-y-5 min-w-0">
           {/* ───────── ACCUEIL ───────── */}
           {view === 'accueil' && (
-            <>
-              <div>
-                <h1 className="text-xl font-semibold">Performance du cabinet</h1>
-                <p className="text-sm text-muted-foreground capitalize">{periodLabel(currentPeriod())}</p>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { icon: <Briefcase className="w-4 h-4" />, label: 'Clients', value: clients.length, sub: `${prodCount} prod${toClassifyCount ? ` · ${toClassifyCount} à classer` : ''} · ${testCount} test · ${ponctCount} ponct.` },
-                  { icon: <ClipboardList className="w-4 h-4" />, label: 'À produire ce mois', value: dueProd.length },
-                  { icon: <FileCheck2 className="w-4 h-4" />, label: 'Publiés ce mois', value: publishedCount, sub: `sur ${dueProd.length}` },
-                  { icon: <AlertTriangle className="w-4 h-4" />, label: 'Pièces manquantes', value: missingClients, sub: 'clients concernés' },
-                ].map((k, i) => (
-                  <div key={i} className="rounded-xl border bg-card p-4">
-                    <div className="text-xs text-muted-foreground flex items-center gap-1.5">{k.icon} {k.label}</div>
-                    <div className="text-2xl font-semibold tabular-nums mt-1">{k.value}</div>
-                    {k.sub && <div className="text-xs text-muted-foreground mt-0.5">{k.sub}</div>}
+            <Stagger className="space-y-5">
+              <Item>
+                <section className="brand-panel p-6 sm:p-8">
+                  <div className="relative z-[1]">
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                      <div>
+                        <div className="text-[10.5px] tracking-[0.12em] uppercase text-white/50 font-mono">Performance du cabinet</div>
+                        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1 capitalize">{periodLabel(currentPeriod())}</h1>
+                      </div>
+                      <button onClick={() => setView('production')} className="inline-flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-full bg-white/10 ring-1 ring-white/15 hover:bg-white/15 transition">
+                        Suivre la production <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="mt-7 grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                      {[
+                        { label: 'Clients', v: clients.length, sub: `${prodCount} en prod${toClassifyCount ? ` · ${toClassifyCount} à classer` : ''}` },
+                        { label: 'À produire ce mois', v: dueProd.length, sub: `${testCount} test · ${ponctCount} ponctuel` },
+                        { label: 'Publiés ce mois', v: publishedCount, sub: `sur ${dueProd.length} · ${pct} %` },
+                        { label: 'Pièces manquantes', v: missingClients, sub: 'clients concernés' },
+                      ].map((k) => (
+                        <div key={k.label}>
+                          <div className="text-white/60 text-xs">{k.label}</div>
+                          <CountUp value={k.v} format={(x) => Math.round(x).toLocaleString('fr-FR')} className="num block text-4xl font-semibold mt-1" />
+                          <div className="text-white/50 text-xs mt-1">{k.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-6">
+                      <div className="flex justify-between text-xs text-white/60 mb-1.5"><span>Avancement de la production</span><span className="font-mono">{publishedCount}/{dueProd.length}</span></div>
+                      <div className="h-2 rounded-full bg-white/10 overflow-hidden"><GrowBar pct={pct} className="h-full rounded-full bg-[hsl(var(--accent))]" /></div>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </section>
+              </Item>
 
               {todo.length > 0 && (
-                <div className="rounded-xl border bg-card p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-accent" /> À traiter en priorité</h2>
-                    <button onClick={() => setView('production')} className="text-xs text-primary hover:underline">Toute la production</button>
-                  </div>
-                  <ul className="divide-y">
-                    {todo.map((c) => (
-                      <li key={c.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                        <span className="font-medium truncate">{c.name}{c.legacy_company_id && <span className="ml-2 text-[10px] uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700">legacy</span>}</span>
-                        <span className="flex items-center gap-2 shrink-0">
-                          <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[statusFor(c)]}`}>{statusLabel(statusFor(c))}</span>
-                          <button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <Item>
+                  <section className="surface p-5 sm:p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div><span className="eyebrow">Priorités</span><h2 className="font-semibold mt-0.5">À traiter en priorité</h2></div>
+                      <button onClick={() => setView('production')} className="text-xs text-primary hover:underline">Toute la production</button>
+                    </div>
+                    <ul className="divide-y">
+                      {todo.map((c) => (
+                        <li key={c.id}>
+                          <button onClick={() => openClient(c)} className="w-full flex items-center justify-between gap-3 py-2.5 text-sm group">
+                            <span className="flex items-center gap-3 min-w-0">
+                              <span className="h-8 w-8 shrink-0 rounded-lg bg-muted grid place-items-center text-[11px] font-semibold text-primary">{initials(c.name)}</span>
+                              <span className="font-medium truncate">{c.name}{c.legacy_company_id && legacyTag}</span>
+                            </span>
+                            <span className="flex items-center gap-2 shrink-0">{pill(statusFor(c))}<ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition" /></span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </Item>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="rounded-xl border bg-card p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-semibold flex items-center gap-2"><ClipboardList className="w-4 h-4 text-accent" /> Production du mois</h2>
-                    <button onClick={() => setView('production')} className="text-xs text-primary hover:underline">Voir le détail</button>
-                  </div>
-                  <div className="space-y-2">
-                    {PROD_ORDER.filter((s) => prodCounts[s]).map((s) => (
-                      <div key={s} className="flex items-center justify-between text-sm">
-                        <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[s]}`}>{statusLabel(s)}</span>
-                        <span className="tabular-nums text-muted-foreground">{prodCounts[s]}</span>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <Item>
+                  <section className="surface p-5 sm:p-6 h-full">
+                    <div className="flex items-center justify-between mb-4">
+                      <div><span className="eyebrow">Production</span><h2 className="font-semibold mt-0.5">Où en est le mois</h2></div>
+                      <button onClick={() => setView('production')} className="text-xs text-primary hover:underline">Voir le détail</button>
+                    </div>
+                    {Object.keys(prodCounts).length === 0 ? <p className="text-sm text-muted-foreground">Aucun client IA pour l'instant.</p> : (
+                      <div className="space-y-3">
+                        {PROD_ORDER.filter((s) => prodCounts[s]).map((s, i) => (
+                          <div key={s}>
+                            <div className="flex items-center justify-between text-sm mb-1">{pill(s)}<span className="num text-muted-foreground">{prodCounts[s]}</span></div>
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden"><GrowBar pct={(prodCounts[s] / Math.max(dueProd.length, 1)) * 100} delay={i * 0.06} className="h-full rounded-full bg-primary" /></div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    {Object.keys(prodCounts).length === 0 && <p className="text-sm text-muted-foreground">Aucun client IA pour l'instant.</p>}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border bg-card p-5">
-                  <h2 className="font-semibold mb-3 flex items-center gap-2"><Building2 className="w-4 h-4 text-accent" /> Répartition par implantation</h2>
-                  <div className="space-y-2.5">
-                    {LOCATIONS.map((l) => {
-                      const n = countForFilter(l.key); const w = prodCount ? (n / prodCount) * 100 : 0;
-                      return (
-                        <button key={l.key} onClick={() => { goClients(l.key); setOpen((o) => ({ ...o, clients: true })); }} className="w-full text-left group">
-                          <div className="flex justify-between text-sm mb-1"><span>{l.flag} {l.label}</span><span className="tabular-nums text-muted-foreground">{n}</span></div>
-                          <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full bg-primary group-hover:bg-primary/80" style={{ width: `${Math.max(w, 2)}%` }} /></div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                    )}
+                  </section>
+                </Item>
+                <Item>
+                  <section className="surface p-5 sm:p-6 h-full">
+                    <span className="eyebrow">Implantations</span><h2 className="font-semibold mt-0.5 mb-4">Répartition des clients en production</h2>
+                    <div className="space-y-3">
+                      {LOCATIONS.map((l, i) => {
+                        const n = countForFilter(l.key); const w = prodCount ? (n / prodCount) * 100 : 0;
+                        return (
+                          <button key={l.key} onClick={() => { goClients(l.key); setOpen((o) => ({ ...o, clients: true })); }} className="w-full text-left group">
+                            <div className="flex justify-between text-sm mb-1"><span>{l.flag} {l.label}</span><span className="num text-muted-foreground">{n}</span></div>
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden"><GrowBar pct={w > 0 ? Math.max(w, 2) : 0} delay={i * 0.06} className="h-full rounded-full bg-primary group-hover:bg-[hsl(var(--accent))] transition-colors" /></div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </Item>
               </div>
 
-              <div className="rounded-xl border bg-card p-5">
-                <h2 className="font-semibold mb-3 flex items-center gap-2"><ActivityIcon className="w-4 h-4 text-accent" /> Activité récente</h2>
-                {activity.length === 0 ? <p className="text-sm text-muted-foreground">Aucune activité récente.</p> : (
-                  <ul className="space-y-3">
-                    {activity.map((a) => (
-                      <li key={a.id} className="text-sm flex gap-3">
-                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                        <span><span className="text-foreground">{labelAct(a)}</span>{a.clients?.name && <span className="text-muted-foreground"> · {a.clients.name}</span>}
-                          <span className="block text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString('fr-FR')}</span></span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </>
+              <Item>
+                <section className="surface p-5 sm:p-6">
+                  <span className="eyebrow">Fil d'activité</span><h2 className="font-semibold mt-0.5 mb-4">Activité récente</h2>
+                  {activity.length === 0 ? <p className="text-sm text-muted-foreground">Aucune activité récente.</p> : (
+                    <ol className="relative border-l pl-5 space-y-4">
+                      {activity.map((a) => (
+                        <li key={a.id} className="text-sm">
+                          <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-background" />
+                          <div>{labelAct(a)}{a.clients?.name && <span className="text-muted-foreground"> · {a.clients.name}</span>}</div>
+                          <div className="text-xs text-muted-foreground font-mono mt-0.5">{new Date(a.created_at).toLocaleString('fr-FR')}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </section>
+              </Item>
+            </Stagger>
           )}
 
           {/* ───────── PRODUCTION ───────── */}
           {view === 'production' && (
             <>
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h1 className="text-xl font-semibold">Production mensuelle</h1>
-                  <p className="text-sm text-muted-foreground"><span className="capitalize">{periodLabel(currentPeriod())}</span> · IA (auto) + legacy (manuel)</p>
+                  <span className="eyebrow">Production mensuelle</span>
+                  <h1 className="text-2xl font-semibold tracking-tight mt-1 capitalize">{periodLabel(currentPeriod())}</h1>
+                  <p className="text-sm text-muted-foreground">IA (automatique) et legacy (suivi manuel)</p>
                 </div>
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher…" className="h-9 w-56 rounded-md border pl-8 pr-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
+                {searchBox}
               </div>
               {prodRows.length === 0 ? (
-                <div className="text-center py-16 border border-dashed rounded-xl"><ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground text-sm">Aucun client IA.</p></div>
+                <div className="text-center py-16 border border-dashed rounded-2xl"><ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground text-sm">Aucun client IA.</p></div>
               ) : (
-                <div className="rounded-xl border bg-card overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead><tr className="text-left text-xs text-muted-foreground border-b bg-muted/30">
-                      <th className="px-4 py-2">Client</th><th className="px-4 py-2 hidden sm:table-cell">Activité</th>
-                      <th className="px-4 py-2 hidden md:table-cell">Conseiller</th><th className="px-4 py-2">Statut</th>
-                      <th className="px-4 py-2 text-center">Pièces</th><th className="px-4 py-2"></th>
-                    </tr></thead>
-                    <tbody>
-                      {prodRows.map(({ c, legacy, status, missing, advisor }) => (
-                        <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-4 py-2.5 font-medium">{c.name}{legacy && <span className="ml-2 text-[10px] uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700">legacy</span>}</td>
-                          <td className="px-4 py-2.5 hidden sm:table-cell text-muted-foreground">{c.activity_types?.name ?? (legacy ? 'Sur-mesure' : '—')}</td>
-                          <td className="px-4 py-2.5 hidden md:table-cell text-muted-foreground">{advisor ?? '—'}</td>
-                          <td className="px-4 py-2.5">
-                            {legacy
-                              ? <select value={status} onChange={(e) => setLegacyStatus(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
-                                  {LEGACY_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
-                                </select>
-                              : <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${STATUS_STYLE[status]}`}>{statusLabel(status)}</span>}
-                          </td>
-                          <td className="px-4 py-2.5 text-center whitespace-nowrap">{missing > 0 ? <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{missing}</span> : <span className="text-muted-foreground">—</span>}
-                            {reliabilityByClient[c.id] != null && (
-                              <span className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded border tabular-nums ${reliabilityTone(reliabilityByClient[c.id])}`} title="Indice de fiabilité du mois (cible ≥ 90 avant envoi)">{reliabilityByClient[c.id]}/100</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2.5 text-right"><button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="surface overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead><tr className="text-left border-b bg-muted/40">
+                        <th className="px-4 py-2.5 eyebrow font-normal">Client</th><th className="px-4 py-2.5 eyebrow font-normal hidden sm:table-cell">Activité</th>
+                        <th className="px-4 py-2.5 eyebrow font-normal hidden md:table-cell">Conseiller</th><th className="px-4 py-2.5 eyebrow font-normal">Statut</th>
+                        <th className="px-4 py-2.5 eyebrow font-normal text-center">Pièces · fiabilité</th><th className="px-4 py-2.5"></th>
+                      </tr></thead>
+                      <tbody>
+                        {prodRows.map(({ c, legacy, status, missing, advisor }) => (
+                          <tr key={c.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                            <td className="px-4 py-3 font-medium">
+                              <span className="flex items-center gap-3"><span className="h-8 w-8 shrink-0 rounded-lg bg-muted grid place-items-center text-[11px] font-semibold text-primary">{initials(c.name)}</span><span>{c.name}{legacy && legacyTag}</span></span>
+                            </td>
+                            <td className="px-4 py-3 hidden sm:table-cell text-muted-foreground">{c.activity_types?.name ?? (legacy ? 'Sur-mesure' : '—')}</td>
+                            <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{advisor ?? '—'}</td>
+                            <td className="px-4 py-3">
+                              {legacy
+                                ? <select value={status} onChange={(e) => setLegacyStatus(c.id, e.target.value)} className="text-xs h-8 rounded-lg border bg-background px-2 outline-none">
+                                    {LEGACY_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                                  </select>
+                                : pill(status)}
+                            </td>
+                            <td className="px-4 py-3 text-center whitespace-nowrap">{missing > 0 ? <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{missing}</span> : <span className="text-muted-foreground">—</span>}
+                              {reliabilityByClient[c.id] != null && (
+                                <span className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded border font-mono ${reliabilityTone(reliabilityByClient[c.id])}`} title="Indice de fiabilité du mois (cible ≥ 90 avant envoi)">{reliabilityByClient[c.id]}/100</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right"><button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
@@ -368,58 +404,63 @@ export default function AdminHome() {
           {/* ───────── CLIENTS ───────── */}
           {view === 'clients' && (
             <>
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h1 className="text-xl font-semibold flex items-center gap-2"><span>{currentFilter.flag}</span> {currentFilter.label}</h1>
+                  <span className="eyebrow">Clients</span>
+                  <h1 className="text-2xl font-semibold tracking-tight mt-1 flex items-center gap-2"><span>{currentFilter.flag}</span> {currentFilter.label}</h1>
                   <p className="text-sm text-muted-foreground">{countForFilter(loc)} client{countForFilter(loc) > 1 ? 's' : ''}</p>
                 </div>
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher…" className="h-9 w-56 rounded-md border pl-8 pr-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
+                {searchBox}
               </div>
               {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />)}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{[1, 2, 3, 4, 5, 6].map((i) => <Shimmer key={i} className="h-32 rounded-xl" />)}</div>
               ) : group.length === 0 ? (
-                <div className="text-center py-16 border border-dashed rounded-xl"><Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground text-sm">{q ? 'Aucun client ne correspond.' : `Aucun client dans « ${currentFilter.label} ».`}</p></div>
+                <div className="text-center py-16 border border-dashed rounded-2xl"><Building2 className="w-10 h-10 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground text-sm">{q ? 'Aucun client ne correspond.' : `Aucun client dans « ${currentFilter.label} ».`}</p></div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <Stagger className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {group.map((c) => {
                     const legacy = !!c.legacy_company_id;
+                    const st = statusFor(c);
                     return (
-                      <div key={c.id} className="rounded-xl border bg-card p-4 hover:shadow-md hover:border-primary/30 transition">
-                        <button onClick={() => openClient(c)} className="text-left w-full">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-medium truncate">{c.name}</span>
-                            <span className={`shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${legacy ? 'bg-amber-100 text-amber-700' : 'bg-primary/10 text-primary'}`}>{legacy ? 'Legacy' : 'IA'}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1 truncate">{c.activity_types?.name ?? (legacy ? 'Dashboard sur-mesure' : 'Activité non définie')} · {c.currency}{c.cadence === 'quarterly' ? ' · Trimestriel' : ''}</div>
-                        </button>
-                        {/* flex-wrap : sur une carte étroite, « Classer… » + « Ouvrir » passent à la ligne au lieu de déborder */}
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                            <select value={c.location ?? 'dubai'} onChange={(e) => changeLocation(c.id, e.target.value)} className="text-xs h-7 rounded border bg-background px-1.5 outline-none">
-                              {LOCATIONS.map((l) => <option key={l.key} value={l.key}>{l.flag} {l.label}</option>)}
-                            </select>
-                            {c.category === 'a_categoriser' && (
-                              <select value={c.category} onChange={(e) => changeCategory(c.id, e.target.value)}
-                                className="text-xs h-7 rounded border border-amber-300 bg-amber-50 text-amber-800 px-1.5 outline-none">
-                                <option value="a_categoriser" disabled>🏷️ Classer…</option>
-                                <option value="production">✅ Production</option>
-                                <option value="test">🧪 Test</option>
-                                <option value="ponctuel">📌 Ponctuel</option>
+                      <Item key={c.id}>
+                        <div className="surface surface-hover p-4 h-full flex flex-col">
+                          <button onClick={() => openClient(c)} className="text-left w-full flex items-start gap-3">
+                            <span className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground grid place-items-center text-xs font-semibold">{initials(c.name)}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-start justify-between gap-2">
+                                <span className="font-semibold truncate">{c.name}</span>
+                                <span className={`shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded font-mono ${legacy ? 'bg-amber-100 text-amber-700' : 'bg-primary/10 text-primary'}`}>{legacy ? 'Legacy' : 'IA'}</span>
+                              </span>
+                              <span className="block text-xs text-muted-foreground mt-0.5 truncate">{c.activity_types?.name ?? (legacy ? 'Dashboard sur-mesure' : 'Activité non définie')} · {c.currency}{c.cadence === 'quarterly' ? ' · Trimestriel' : ''}</span>
+                              {isProd(c) && <span className="mt-2 inline-block">{pill(st)}</span>}
+                            </span>
+                          </button>
+                          {/* flex-wrap : sur une carte étroite, « Classer… » + « Ouvrir » passent à la ligne au lieu de déborder */}
+                          <div className="mt-auto pt-3 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                              <select value={c.location ?? 'dubai'} onChange={(e) => changeLocation(c.id, e.target.value)} className="text-xs h-8 rounded-lg border bg-background px-2 outline-none">
+                                {LOCATIONS.map((l) => <option key={l.key} value={l.key}>{l.flag} {l.label}</option>)}
                               </select>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0 ml-auto">
-                            <button onClick={() => navigate(`/admin/clients/${c.id}/settings`)} title="Réglages" className="p-1 text-muted-foreground hover:text-foreground"><Settings className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button>
+                              {c.category === 'a_categoriser' && (
+                                <select value={c.category} onChange={(e) => changeCategory(c.id, e.target.value)}
+                                  className="text-xs h-8 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 px-2 outline-none">
+                                  <option value="a_categoriser" disabled>🏷️ Classer…</option>
+                                  <option value="production">✅ Production</option>
+                                  <option value="test">🧪 Test</option>
+                                  <option value="ponctuel">📌 Ponctuel</option>
+                                </select>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0 ml-auto">
+                              <button onClick={() => navigate(`/admin/clients/${c.id}/settings`)} title="Réglages" className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"><Settings className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => openClient(c)} className="text-xs text-primary inline-flex items-center gap-0.5 hover:underline">Ouvrir <ChevronRight className="w-3 h-3" /></button>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Item>
                     );
                   })}
-                </div>
+                </Stagger>
               )}
             </>
           )}
@@ -428,23 +469,24 @@ export default function AdminHome() {
           {view === 'commercial' && (
             <>
               <div>
-                <h1 className="text-xl font-semibold">Commercial — Checklists documents</h1>
+                <span className="eyebrow">Commercial</span>
+                <h1 className="text-2xl font-semibold tracking-tight mt-1">Checklists documents</h1>
                 <p className="text-sm text-muted-foreground">Ce qu'il faut demander au prospect, par activité. Copie-colle pour l'envoyer.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(DOC_CHECKLIST).map(([slug, c]) => (
                   <button key={slug} onClick={() => setChecklistSlug(slug)}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition ${checklistSlug === slug ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'}`}>
+                    className={`px-3.5 py-1.5 rounded-full text-sm border transition ${checklistSlug === slug ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted'}`}>
                     {c.label}
                   </button>
                 ))}
               </div>
-              <div className="rounded-xl border bg-card p-5">
+              <div className="surface p-5 sm:p-6">
                 <DocChecklistPanel activitySlug={checklistSlug} />
               </div>
             </>
           )}
-        </div>
+        </PageFade>
       </div>
     </AppShell>
   );

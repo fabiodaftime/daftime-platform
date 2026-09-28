@@ -253,3 +253,46 @@
 
 /* Cartes existantes des pages de l'équipe (bordure + fond carte) : même relief doux que les surfaces v2. */
 .v2 .rounded-xl.border.bg-card, .v2 .rounded-lg.border.bg-card { box-shadow: var(--shadow-card); }
+
+/* ---- DAFTIME v2 · MODE SOMBRE : classe `v2-dark` posée sur <html> par AppShell (choix mémorisé par navigateur).
+   Posée sur <html> pour que les fenêtres ouvertes en portail (recherche ⌘K, rendez-vous) suivent aussi. ---- */
+html.v2-dark, html.v2-dark .v2 {
+  color-scheme: dark;
+  --background: 236 36% 7%;
+  --foreground: 228 30% 94%;
+  --card: 236 32% 11%;
+  --card-foreground: 228 30% 94%;
+  --popover: 236 32% 11%;
+  --popover-foreground: 228 30% 94%;
+  --primary: 229 82% 74%;
+  --primary-foreground: 236 50% 9%;
+  --secondary: 236 26% 15%;
+  --secondary-foreground: 228 30% 94%;
+  --muted: 236 26% 15%;
+  --muted-foreground: 230 14% 64%;
+  --accent: 59 92% 52%;
+  --accent-foreground: 236 50% 9%;
+  --border: 236 22% 20%;
+  --input: 236 22% 22%;
+  --ring: 229 82% 74%;
+  --good: 152 55% 55%;
+  --warn: 38 90% 62%;
+  --bad: 0 82% 68%;
+  --shadow-card: 0 1px 1px rgb(0 0 0 / 0.35), 0 12px 28px -14px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.4), 0 22px 44px -16px rgb(0 0 0 / 0.8);
+}
+html.v2-dark body { background: hsl(var(--background)); }
+html.v2-dark .v2 .logo-auto { filter: brightness(0) invert(1); }
+html.v2-dark .v2 .brand-panel { box-shadow: 0 0 0 1px hsl(0 0% 100% / 0.06), 0 24px 50px -24px rgb(0 0 0 / 0.8); }
+/* Couleurs claires écrites en dur dans des pages existantes → équivalents lisibles sur fond sombre. */
+html.v2-dark .v2 .bg-white { background-color: hsl(var(--card)); }
+html.v2-dark .v2 .bg-emerald-50, html.v2-dark .v2 .bg-emerald-100 { background-color: hsl(152 60% 45% / 0.14); }
+html.v2-dark .v2 .text-emerald-600, html.v2-dark .v2 .text-emerald-700 { color: hsl(152 55% 62%); }
+html.v2-dark .v2 .bg-amber-50, html.v2-dark .v2 .bg-amber-100 { background-color: hsl(38 90% 55% / 0.14); }
+html.v2-dark .v2 .text-amber-700, html.v2-dark .v2 .text-amber-800 { color: hsl(38 90% 68%); }
+html.v2-dark .v2 .border-amber-300, html.v2-dark .v2 .border-amber-200 { border-color: hsl(38 90% 55% / 0.35); }
+html.v2-dark .v2 .border-emerald-200 { border-color: hsl(152 60% 45% / 0.35); }
+html.v2-dark .v2 .bg-blue-100, html.v2-dark .v2 .bg-indigo-100 { background-color: hsl(229 82% 70% / 0.16); }
+html.v2-dark .v2 .text-blue-700, html.v2-dark .v2 .text-indigo-700 { color: hsl(229 82% 80%); }
+html.v2-dark .v2 .bg-red-50 { background-color: hsl(0 80% 60% / 0.12); }
+html.v2-dark .v2 .bg-sky-50 { background-color: hsl(200 80% 60% / 0.12); }
