@@ -84,7 +84,7 @@ function fmt(value: number | null | undefined, unit = "", currency = "EUR"): str
 // Montant en texte BRUT (jeton retiré) — pour les attributs HTML et libellés où on ne peut pas injecter de <span>.
 const fmtPlain = (value: number | null | undefined, unit = "", currency = "EUR"): string => detokMoney(fmt(value, unit, currency));
 // Indicateurs où MOINS = MIEUX (coûts, retours, point mort…) : une hausse s'affiche en rouge.
-export const LOWER_IS_BETTER = /^(refunds|refund_rate|ads_total|ads_meta|ads_google|cogs|shipping_cost|payment_fees|platform_fees|marketplace_fees|payroll|other_opex|total_opex|cac|cpa_order|cpc|cpm|breakeven_roas|stock_days|bfr|bfr_days|payback_cac|commission_rate_global|marketplace_fee_rate|psp_fee_rate)$/;
+export const LOWER_IS_BETTER = /^(refunds|discounts|logistics_per_order|variable_costs|fixed_costs|refund_rate|ads_total|ads_meta|ads_google|cogs|shipping_cost|payment_fees|platform_fees|marketplace_fees|payroll|other_opex|total_opex|cac|cpa_order|cpc|cpm|breakeven_roas|stock_days|bfr|bfr_days|payback_cac|commission_rate_global|marketplace_fee_rate|psp_fee_rate)$/;
 const changeHtml = (pct?: number | null, id?: string) => {
   if (pct == null) return "";
   const good = id && LOWER_IS_BETTER.test(id) ? pct <= 0 : pct >= 0;
@@ -249,10 +249,21 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         const push = (l: string, b: number, d: number, c: string, r: number) => { labels.push(l); base.push(b); delta.push(d); colors.push(c); real.push(r); };
         // Doctrine : cascade CA → CM1 → CM2 → CM3 quand elle existe ; sinon l'ancienne chaîne P&L.
         const cmChain = ["ca", "cm1", "cm2", "cm3"].filter(has);
-        const chain = cmChain.length >= 3 ? cmChain : ["ca", "marge_brute", "ebitda", "resultat_net"].filter(has);
+        // Chaîne demandée explicitement (ex. jusqu'à l'EBITDA) si elle ne contient que des paliers de la cascade.
+        const asked = ids[0] === "ca" && ids.length >= 3 && ids.every((x) => ["ca", "cm1", "cm2", "cm3", "ebitda"].includes(x)) ? ids : null;
+        const chain = asked ?? (cmChain.length >= 3 ? cmChain : ["ca", "marge_brute", "ebitda", "resultat_net"].filter(has));
         const dl: Record<string, string> = { "ca>marge_brute": M["cogs"]?.label ?? "Coût des ventes", "marge_brute>ebitda": M["total_opex"]?.label ?? "Charges", "ebitda>resultat_net": "Impôts & autres",
-          "ca>cm1": "Coût des marchandises", "cm1>cm2": "Logistique & paiement", "cm2>cm3": "Publicité", "cm1>cm3": "Opérations & pub" };
-        if (chain.length >= 2 && chain[0] === "ca") {
+          "ca>cm1": "Coût des marchandises", "cm1>cm2": "Logistique & paiement", "cm2>cm3": "Publicité", "cm1>cm3": "Opérations & pub", "cm3>ebitda": "Charges fixes" };
+        if (ids[0] === "gross_sales" && ids.length >= 2) {
+          // Du CA BRUT au CA NET : brut, puis chaque déduction (remises, retours) en barre flottante, puis le net.
+          const SH: Record<string, string> = { gross_sales: "CA brut", discounts: "Remises", refunds: "Retours", ca: "CA net" };
+          let run = M[ids[0]].value as number;
+          push(SH[ids[0]], 0, run, primary, run);
+          for (const mid of ids.slice(1, -1)) { const v = Math.abs(M[mid].value as number); run -= v; push(th.report ? (SH[mid] ?? M[mid].label) : M[mid].label, run, v, BAD, -v); }
+          const last = ids[ids.length - 1], lv = M[last].value as number;
+          if (Math.abs(run - lv) > Math.abs(lv) * 0.005) push("Autres écarts", Math.min(run, lv), Math.abs(run - lv), run > lv ? BAD : GOOD, lv - run);
+          push(SH[last] ?? M[last].label, 0, lv, primary, lv);
+        } else if (chain.length >= 2 && chain[0] === "ca") {
           for (let i = 0; i < chain.length; i++) {
             const v = M[chain[i]].value as number;
             if (i > 0) {

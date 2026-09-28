@@ -15,7 +15,37 @@ export const REPORT_PAGES = ["Le mois", "Acquisition", "Produits & retours", "Tr
 // Le livrable doctrinal s'applique dès que la cascade de marges existe (e-commerce, marketplaces…).
 export const hasCascade = (d: ReportData) => ["ca", "cm1"].every((k) => d.metrics[k]?.value != null);
 
-export function buildReportPlan(d: ReportData, forced: Widget[] = []): DashPlan {
+// ADAPTATION AU DOSSIER : l'ordre des indicateurs de tête et des BLOCS OPTIONNELS, choisis (IA ou mots-clés)
+// d'après les consignes du conseiller et le contexte — toujours parmi ce qui a de la donnée.
+export interface Tailoring { kpis?: string[]; extras?: string[] }
+export const DEFAULT_HEAD_KPIS = ["cm3", "cm3_rate", "mer", "ca", "cash_end"];
+export interface Extra { id: string; label: string; page: "mois" | "tresorerie" }
+export function availableExtras(d: ReportData): Extra[] {
+  const has = (id: string) => d.metrics[id]?.value != null;
+  const out: Extra[] = [];
+  if (["aov", "cm2_per_order", "cm3_per_order", "logistics_per_order", "cpa_order"].filter(has).length >= 3) out.push({ id: "par_commande", label: "Rangée « par commande » : panier, CM2/CM3 par commande, logistique par commande, coût pub par commande", page: "mois" });
+  if (has("gross_sales") && has("ca") && (has("discounts") || has("refunds"))) out.push({ id: "brut_net", label: "Cascade du CA brut au CA net (remises, retours)", page: "mois" });
+  if (has("cm3") && has("ebitda")) out.push({ id: "jusqu_ebitda", label: "Cascade de marges prolongée jusqu'à l'EBITDA (charges fixes)", page: "mois" });
+  if (has("variable_costs") && has("fixed_costs")) out.push({ id: "structure_couts", label: "Où part chaque euro : postes de coûts, variables (au-dessus du CM3) vs fixes (sous le CM3)", page: "mois" });
+  if (has("inventory_value") || has("stock_days")) out.push({ id: "stock", label: "Stock : valeur et jours de ventes couverts", page: "tresorerie" });
+  return out;
+}
+// Repli sans IA : mots-clés des consignes / du contexte.
+export function tailorFromText(text: string, d: ReportData): Tailoring {
+  const t = text.toLowerCase();
+  const ex = new Set(availableExtras(d).map((x) => x.id));
+  const extras = [
+    /par commande|unit economics|par order/.test(t) && "par_commande",
+    /brut.{0,60}net|remises?|ttc/.test(t) && "brut_net",
+    /ebitda/.test(t) && "jusqu_ebitda",
+    /cost kill|co[uû]ts? fixes|charges fixes|variables?|chaque euro|structure de co[uû]ts|compr[ée]hension des co[uû]ts/.test(t) && "structure_couts",
+    /stock|cycle de conversion|bfr/.test(t) && "stock",
+  ].filter((x): x is string => !!x && ex.has(x));
+  const kpis = [/cm3 par commande/.test(t) && "cm3_per_order", /\bmer\b/.test(t) && "mer", /tr[ée]so|cash/.test(t) && "cash_end"].filter((x): x is string => !!x);
+  return { kpis: kpis.length ? kpis : undefined, extras };
+}
+
+export function buildReportPlan(d: ReportData, forced: Widget[] = [], tailor: Tailoring = {}): DashPlan {
   const has = (id: string) => d.metrics[id]?.value != null;
   const pick = (...ids: string[]) => ids.filter(has);
   const months = d.history.months.length;
@@ -24,14 +54,25 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = []): DashPlan 
   const kpis = (...ids: string[]): Widget | null => { const m = pick(...ids).slice(0, 5); return m.length ? { type: "kpi_row", items: m.map((metric) => ({ metric })) } : null; };
   const W = (w: Widget | null | false | undefined | "") => (w ? [w] : []);
   const pages: DashPlan["pages"] = [];
+  const ex = new Set((tailor.extras ?? []).filter((x) => availableExtras(d).some((a) => a.id === x)));
+  // Indicateurs de tête : ceux demandés d'abord, complétés par le socle doctrinal (5 max, sans doublon).
+  const head = [...new Set([...(tailor.kpis ?? []), ...DEFAULT_HEAD_KPIS])].filter(has).slice(0, 5);
 
   // 1. LE MOIS
   const cmChain = pick("ca", "cm1", "cm2", "cm3");
+  const costIds = ["cogs", "shipping_cost", "payment_fees", "ads_total", "payroll", "other_opex", "platform_fees"].filter(has)
+    .sort((a, b) => (d.metrics[b].value as number) - (d.metrics[a].value as number));
   pages.push({ key: "mois", title: REPORT_PAGES[0], widgets: [
     { type: "points", title: "Les 3 points du mois" },
-    ...W(kpis("cm3", "cm3_rate", "mer", "ca", "cash_end")),
-    ...W(cmChain.length >= 3 && { type: "waterfall", title: "Du CA à la marge après pub", metrics: cmChain }),
+    ...W(head.length && { type: "kpi_row", items: head.map((metric) => ({ metric })) }),
+    ...W(ex.has("par_commande") && kpis(...["cm3_per_order", "cm2_per_order", "logistics_per_order", "cpa_order", "aov"].filter((x) => !head.includes(x)))),
+    ...W(cmChain.length >= 3 && (ex.has("jusqu_ebitda")
+      ? { type: "waterfall", title: "Du CA net à l'EBITDA", metrics: [...cmChain, "ebitda"] }
+      : { type: "waterfall", title: "Du CA à la marge après pub", metrics: cmChain })),
     ...W(d.mainBridge && { type: "bridge" }),
+    ...W(ex.has("brut_net") && { type: "waterfall", title: "Du CA brut au CA net", metrics: pick("gross_sales", "discounts", "refunds", "ca") }),
+    ...W(ex.has("structure_couts") && kpis("variable_costs", "fixed_costs")),
+    ...W(ex.has("structure_couts") && costIds.length >= 3 && { type: "ranking", title: "Où part l'argent : postes de coûts (part du total)", metrics: costIds }),
     ...W(trend("ca") && trend("cm3_rate") && { type: "combo", title: "CA et marge après pub (%) — 6 derniers mois", metrics: ["ca"], line: "cm3_rate" }),
     ...W(trend("ca") && !trend("cm3_rate") && { type: "line", title: "CA — 6 derniers mois", metrics: ["ca"] }),
   ] });
@@ -61,7 +102,7 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = []): DashPlan 
 
   // 4. TRÉSORERIE
   const cash: Widget[] = [
-    ...W(kpis("cash_end", "cash_variation", "cash_start", "inventory_value")),
+    ...W(kpis("cash_end", "cash_variation", "cash_start", ...(ex.has("stock") ? ["inventory_value", "stock_days"] : ["inventory_value"]))),
     ...W(d.cashForecast && { type: "cash_forecast" }),
     ...W(trend("cash_end") && { type: "line", title: "Trésorerie de fin de mois", metrics: ["cash_end"] }),
   ];

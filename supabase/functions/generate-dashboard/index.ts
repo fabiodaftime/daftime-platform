@@ -13,7 +13,7 @@ import { renderDashboardWithFx, type DashPlan, type Metric, type Widget } from "
 import { assess } from "../_shared/benchmarks.ts";
 import type { Bridge } from "../_shared/marginBridge.ts";
 import { prepareReport } from "../_shared/reportData.ts";
-import { buildReportPlan, hasCascade } from "../_shared/reportPlan.ts";
+import { availableExtras, buildReportPlan, hasCascade, tailorFromText, type Tailoring } from "../_shared/reportPlan.ts";
 import { numbersPreserved } from "../_shared/monthPoints.ts";
 import type { CashForecast } from "../_shared/cashForecast.ts";
 
@@ -406,6 +406,10 @@ Deno.serve(async (req) => {
     const prevPlan = (prevDash?.data_json as { plan?: DashPlan } | null)?.plan ?? null;
     const prevTheme = (prevDash?.data_json as { theme?: unknown } | null)?.theme ?? null;
     const guidance = ((client as { dashboard_guidance?: string } | null)?.dashboard_guidance ?? "").trim();
+    // CONTEXTE DU DOSSIER (résumé + champs structurés : objectifs, vigilance, saisonnalité…) — nourrit l'adaptation et les lectures.
+    const ctxD = (ctxRow?.data ?? {}) as { summary?: unknown; fields?: unknown };
+    const ctxText = [typeof ctxD.summary === "string" ? ctxD.summary.slice(0, 2500) : "",
+      ctxD.fields && typeof ctxD.fields === "object" ? JSON.stringify(ctxD.fields).slice(0, 3500) : ""].filter(Boolean).join("\n");
 
     // Graphiques OBLIGATOIRES du client (config `forced_widgets`) — nettoyés en Widget[] sûrs.
     const forcedRaw = ((client as { forced_widgets?: unknown } | null)?.forced_widgets ?? []) as Array<Record<string, unknown>>;
@@ -474,7 +478,30 @@ Deno.serve(async (req) => {
 
       // 1) COMPOSITION (IA) : l'IA conçoit la structure ET l'analyse, MAIS uniquement avec les types
       //    DISPONIBLES (calculés depuis la donnée) → plus de graphe vide. Riche : ≥6 graphes/page.
-      let plan: DashPlan | null = doctrinal ? buildReportPlan(rep, forcedWidgets) : null;
+      // ADAPTATION AU DOSSIER (livrable doctrinal) : indicateurs de tête + blocs optionnels choisis d'après les
+      // consignes et le contexte, UNIQUEMENT parmi ce qui a de la donnée ; demandes non servies notées pour l'équipe.
+      let tailoring: Tailoring & { unmet?: { demande: string; raison: string }[]; source: string } = { source: "aucune" };
+      if (doctrinal && (guidance || ctxText)) {
+        const kw = tailorFromText(guidance, rep);
+        tailoring = { ...kw, source: "mots-clés" };
+        const extras = availableExtras(rep);
+        try {
+          const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 30_000);
+          let raw: string;
+          try {
+            raw = (await callAnthropic({ model: MODELS.quality, max_tokens: 900, signal: ctrl.signal,
+              system: `${DOCTRINE}\nTu ADAPTES un rapport mensuel à structure fixe aux demandes d'un client. Tu choisis : (1) jusqu'à 5 indicateurs de tête (ids EXACTS de la liste), les plus demandés d'abord, en gardant la marge après pub et la trésorerie si possible ; (2) les blocs optionnels utiles (ids EXACTS de la liste) ; (3) les demandes du client que les données ne permettent PAS encore de servir (demande courte + raison factuelle : donnée absente, source à brancher…). N'invente aucun id. Réponds UNIQUEMENT en JSON : {"kpis":["…"],"extras":["…"],"unmet":[{"demande":"…","raison":"…"}]}`,
+              messages: [{ role: "user", content: `CONSIGNES DU CONSEILLER :\n${guidance.slice(0, 4000) || "—"}\n\nCONTEXTE DU DOSSIER :\n${ctxText || "—"}\n\nINDICATEURS DISPONIBLES (id — libellé) :\n${Object.entries(metrics).map(([id, m]) => `${id} — ${m.label}`).join("\n")}\n\nBLOCS OPTIONNELS DISPONIBLES :\n${extras.map((x) => `${x.id} — ${x.label}`).join("\n") || "aucun"}\n\nDÉJÀ PRÉSENT PAR DÉFAUT : 3 points du mois, cascade CA → CM1 → CM2 → CM3, pont d'écarts, pub vs point mort, nouveaux vs récurrents, produits, retours, pays, trésorerie à 13 semaines.` }] })).text;
+          } finally { clearTimeout(timer); }
+          const ia = extractJson<{ kpis?: unknown[]; extras?: unknown[]; unmet?: { demande?: unknown; raison?: unknown }[] }>(raw);
+          const kpis = (ia.kpis ?? []).filter((x): x is string => typeof x === "string" && !!metrics[x]).slice(0, 5);
+          const ex = (ia.extras ?? []).filter((x): x is string => typeof x === "string" && extras.some((e) => e.id === x));
+          const unmet = (ia.unmet ?? []).filter((u) => typeof u?.demande === "string" && u.demande.trim())
+            .slice(0, 8).map((u) => ({ demande: String(u.demande).slice(0, 200), raison: String(u.raison ?? "").slice(0, 200) }));
+          tailoring = { kpis: kpis.length ? kpis : kw.kpis, extras: [...new Set([...ex, ...(kw.extras ?? [])])], unmet, source: "ia" };
+        } catch (e) { console.warn("adaptation IA ignorée (repli mots-clés)", e instanceof Error ? e.message : String(e)); }
+      }
+      let plan: DashPlan | null = doctrinal ? buildReportPlan(rep, forcedWidgets, tailoring) : null;
       // Thème : le système « rapport » (clair, marque) s'applique à tous ; seules les icônes viennent de l'IA.
       let theme: Record<string, unknown> = {};
       const composeMsg = [{ role: "user" as const, content:
@@ -542,7 +569,7 @@ Deno.serve(async (req) => {
           try {
             raw = (await callAnthropic({ model: MODELS.quality, max_tokens: 1500, signal: ctrl.signal,
               system: `${DOCTRINE}\nTu écris la LECTURE de chaque page d'un rapport mensuel e-commerce (le rapport, ses graphes et « les 3 points du mois » existent déjà). Pour chaque page : 2 à 3 phrases, tutoiement, concret — le constat chiffré le plus important de la page, sa cause probable, et quoi regarder. N'invente AUCUN chiffre (uniquement ceux fournis), ne répète pas les 3 points mot pour mot. Réponds UNIQUEMENT en JSON : {"insights":[{"page":0,"text":"…","tone":"good|warn|info"}]}`,
-              messages: [{ role: "user", content: `Client : ${client?.name ?? ""} — ${period}\nPAGES : ${readable.map((x) => `${x.i}. ${x.title}`).join(" · ")}\n\nCHIFFRES :\n${metricsText}\n\nPONT D'ÉCARTS : ${bridgeText(mainBridge) || "—"}\nLES 3 POINTS : ${points.map((x) => x.text).join(" | ")}${cashForecast ? `\nTRÉSORERIE 13 SEMAINES : point bas ${fmtE(cashForecast.low.balance)} le ${cashForecast.low.date}${cashForecast.below_zero ? ` (sous zéro le ${cashForecast.below_zero})` : ""}` : ""}${guidance ? `\n\nCONSIGNES DU CONSEILLER :\n${guidance.slice(0, 1500)}` : ""}` }] })).text;
+              messages: [{ role: "user", content: `Client : ${client?.name ?? ""} — ${period}\nPAGES : ${readable.map((x) => `${x.i}. ${x.title}`).join(" · ")}\n\nCHIFFRES :\n${metricsText}\n\nPONT D'ÉCARTS : ${bridgeText(mainBridge) || "—"}\nLES 3 POINTS : ${points.map((x) => x.text).join(" | ")}${cashForecast ? `\nTRÉSORERIE 13 SEMAINES : point bas ${fmtE(cashForecast.low.balance)} le ${cashForecast.low.date}${cashForecast.below_zero ? ` (sous zéro le ${cashForecast.below_zero})` : ""}` : ""}${guidance ? `\n\nCONSIGNES DU CONSEILLER (à respecter : angles, indicateurs et vocabulaire demandés) :\n${guidance.slice(0, 4000)}` : ""}${ctxText ? `\n\nCONTEXTE DU DOSSIER (enjeux, objectifs, points de vigilance — relie tes lectures à ces enjeux) :\n${ctxText}` : ""}${cashForecast?.oneoffs?.length ? `\nSORTIES PONCTUELLES NON RECONDUITES dans la projection : ${cashForecast.oneoffs.map((o) => `${o.counterparty} ${fmtE(o.amount)}`).join(", ")}` : ""}${cashForecast?.plan ? `\nSCÉNARIO « ${cashForecast.plan.label} » : point bas ${fmtE(cashForecast.plan.low.balance)} le ${cashForecast.plan.low.date}` : ""}` }] })).text;
           } finally { clearTimeout(timer); }
           const ins = extractJson<{ insights?: { page: number; text: string; tone?: string }[] }>(raw).insights ?? [];
           for (const x of ins) {
@@ -569,10 +596,22 @@ Deno.serve(async (req) => {
         plan,
       );
       const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, sections, history, plan, theme, breakdowns, targets,
-        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg }, cash_forecast: cashForecast };
+        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg }, cash_forecast: cashForecast, tailoring: { kpis: tailoring.kpis, extras: tailoring.extras } };
       const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });
+      // Adaptation au dossier (dont les demandes NON servies) : note ÉQUIPE dans le contexte du dossier —
+      // jamais dans data_json, que l'espace client peut lire.
+      if (tailoring.source !== "aucune") {
+        try {
+          const { data: cr } = await admin.from("contexts").select("id, data").eq("client_id", client_id).eq("is_current", true).maybeSingle();
+          if (cr) {
+            const cd = (cr.data ?? {}) as Record<string, unknown>;
+            const dt = { ...((cd.dashboard_tailoring as Record<string, unknown>) ?? {}), [period!]: { ...tailoring, at: new Date().toISOString() } };
+            await admin.from("contexts").update({ data: { ...cd, dashboard_tailoring: dt } }).eq("id", cr.id);
+          }
+        } catch (e) { console.warn("note d'adaptation non enregistrée", e instanceof Error ? e.message : String(e)); }
+      }
       await admin.from("dashboard_status_history").insert({
         dashboard_id: saved.id, from_status: null, to_status: "draft_ia", changed_by: user.id, note: doctrinal ? "Généré (rapport doctrinal, textes IA)" : "Généré (composition IA + filets anti-vide/densité)",
       });

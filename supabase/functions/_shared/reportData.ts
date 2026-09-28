@@ -49,6 +49,7 @@ export function prepareReport(inp: ReportInput): ReportData {
   // Dérivés du catalogue COURANT (cascade CM, point mort…) recalculés sur chaque mois (valeurs stockées prioritaires).
   const cat = getCatalog(inp.activityConfig);
   if (cat) for (const m of monthsRaw) m.map = { ...flatValues(buildStandardized(cat, m.map, {}, "EUR").data), ...m.map };
+  for (const m of monthsRaw) m.map = { ...deriveUnit(m.map), ...m.map };
   const curMap = monthsRaw[monthsRaw.length - 1].map;
   const prevEntry = monthsRaw.find((m) => m.period.slice(0, 7) === shiftP(period, -1).slice(0, 7));
   const bridgePrev = prevEntry ? marginBridge(curMap, prevEntry.map, monthName(prevEntry.period)) : null;
@@ -83,6 +84,17 @@ export function prepareReport(inp: ReportInput): ReportData {
     });
     if (add.length) sections.unshift({ label: "Cascade de marges", rows: add });
   }
+  // Indicateurs DÉRIVÉS (par commande, écart brut → net, coûts variables / fixes) : ajoutés s'ils manquent.
+  {
+    const have = new Set(sections.flatMap((s) => s.rows.map((r) => r.id)));
+    const pm = prevEntry?.map ?? {};
+    const add: Row[] = DERIVED.filter((x) => !have.has(x.id) && typeof curMap[x.id] === "number").map((x) => {
+      const v = curMap[x.id], pv = pm[x.id];
+      return { id: x.id, label: x.label, value: v, unit: x.unit === "CUR" ? currency : x.unit,
+        ...(typeof pv === "number" && pv !== 0 ? { change_pct: Math.round(((v - pv) / Math.abs(pv)) * 1000) / 10 } : {}) };
+    });
+    if (add.length) sections.push({ label: "Par commande & structure de coûts", rows: add });
+  }
 
   const labels: Record<string, string> = {};
   for (const s of sections) for (const r of s.rows) if (r.id) labels[r.id] = r.label ?? r.id;
@@ -101,6 +113,31 @@ export function prepareReport(inp: ReportInput): ReportData {
   for (const s of sections) for (const r of s.rows) if (typeof r.value === "number" && r.id) metrics[r.id] = { value: r.value, label: r.label ?? r.id, unit: r.unit ?? "", change_pct: r.change_pct ?? null };
 
   return { sections, metrics, history, breakdowns, targets, curMap, prevMap, bridgePrev, bridgeAvg, mainBridge, pointFacts, cashForecast };
+}
+
+// Indicateurs dérivés au rendu, sur chaque mois (valeurs stockées prioritaires). Coûts variables = CA − CM3
+// (produit + logistique/paiement + pub : tout ce qui bouge avec les ventes) ; charges fixes = CM3 − EBITDA.
+export const DERIVED: { id: string; label: string; unit: string }[] = [
+  { id: "cm3_per_order", label: "Marge après pub (CM3) par commande", unit: "CUR" },
+  { id: "logistics_per_order", label: "Logistique par commande", unit: "CUR" },
+  { id: "discounts", label: "Remises", unit: "CUR" },
+  { id: "variable_costs", label: "Coûts variables (produit, logistique, pub)", unit: "CUR" },
+  { id: "fixed_costs", label: "Charges fixes", unit: "CUR" },
+];
+export function deriveUnit(m: Record<string, number>): Record<string, number> {
+  const o: Record<string, number> = {};
+  const n = (k: string) => (typeof m[k] === "number" && isFinite(m[k]) ? m[k] : null);
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  const orders = n("orders"), ca = n("ca"), cm3 = n("cm3"), ship = n("shipping_cost"), gross = n("gross_sales"), refunds = n("refunds"), ebitda = n("ebitda");
+  if (orders && orders > 0) {
+    if (cm3 != null) o.cm3_per_order = r2(cm3 / orders);
+    if (ship != null) o.logistics_per_order = r2(ship / orders);
+  }
+  // Remises implicites : brut − retours − net (seulement si l'écart est cohérent : positif et < 50 % du brut).
+  if (gross != null && ca != null && gross > 0) { const disc = gross - (refunds ?? 0) - ca; if (disc > gross * 0.005 && disc < gross * 0.5) o.discounts = r2(disc); }
+  if (ca != null && cm3 != null) o.variable_costs = r2(ca - cm3);
+  if (cm3 != null && ebitda != null && cm3 - ebitda > 0) o.fixed_costs = r2(cm3 - ebitda);
+  return o;
 }
 
 // Répartitions MULTI-COLONNES dérivées (performance par canal / par catégorie), calculées au rendu.

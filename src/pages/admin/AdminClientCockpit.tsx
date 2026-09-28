@@ -178,6 +178,8 @@ export default function AdminClientCockpit() {
   useEffect(() => { loadClient(); loadContext(); }, [loadClient, loadContext]);
   useEffect(() => { loadFiles(); loadStandardized(); loadDashboard(); }, [loadFiles, loadStandardized, loadDashboard]);
   useEffect(() => { setGuidanceText(client?.dashboard_guidance ?? ''); }, [client]);
+  // La génération écrit sa note d'adaptation dans le contexte → rechargé à chaque nouvelle version du dashboard.
+  useEffect(() => { if (dash?.id) loadContext(); }, [dash?.id, loadContext]);
 
   // Reprise d'une tâche de fond : si une standardisation/génération a été lancée puis la page quittée,
   // on retrouve le marqueur au retour et on suit jusqu'à l'apparition du résultat.
@@ -913,6 +915,7 @@ export default function AdminClientCockpit() {
                 </select>
                 <span className="text-muted-foreground text-xs">v{dash.version}</span>
               </div>
+              <TailoringNote note={(currentContext as any)?.data?.dashboard_tailoring?.[period]} />
               <DashboardFrame html={dash.html ?? ''} />
               {history.length > 0 && (
                 <details className="mt-3 text-xs text-muted-foreground">
@@ -937,5 +940,30 @@ export default function AdminClientCockpit() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+// Note d'adaptation du dernier dashboard généré (équipe uniquement) : blocs ajoutés d'après les consignes / le
+// contexte, et demandes du client que les données ne permettent pas encore de servir.
+const EXTRA_LABELS: Record<string, string> = {
+  par_commande: 'Par commande', brut_net: 'CA brut → net', jusqu_ebitda: "Cascade jusqu'à l'EBITDA",
+  structure_couts: 'Structure de coûts', stock: 'Stock',
+};
+function TailoringNote({ note }: { note?: { extras?: string[]; kpis?: string[]; unmet?: { demande: string; raison: string }[]; source?: string } }) {
+  if (!note || (!note.extras?.length && !note.unmet?.length)) return null;
+  const unmet = note.unmet ?? [];
+  return (
+    <details className="mb-3 rounded-md border bg-muted/30 px-3 py-2 text-sm" open={unmet.length > 0}>
+      <summary className="cursor-pointer font-medium">
+        Adapté au dossier{note.source === 'ia' ? '' : ' (mots-clés)'} : {note.extras?.length ? note.extras.map((x) => EXTRA_LABELS[x] ?? x).join(' · ') : 'aucun bloc ajouté'}
+        {unmet.length > 0 && <span className="text-amber-700"> — {unmet.length} demande{unmet.length > 1 ? 's' : ''} non servie{unmet.length > 1 ? 's' : ''}</span>}
+      </summary>
+      {unmet.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+          {unmet.map((u, i) => <li key={i}><span className="text-foreground">{u.demande}</span>{u.raison ? ` — ${u.raison}` : ''}</li>)}
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-muted-foreground">Visible uniquement par l'équipe (non publié au client).</p>
+    </details>
   );
 }
