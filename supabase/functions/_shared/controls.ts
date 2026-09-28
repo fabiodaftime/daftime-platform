@@ -79,10 +79,16 @@ export function runControls(v: V, prev: V | null, kept: ParsedExtract[], currenc
   const taxes = auxOf(kept, "taxesCollected"), vat = auxOf(kept, "vatPaid");
   if (taxes == null || vat == null) out.push({ id: "vat", label: "TVA collectée vs reversée", status: "non_controlable", detail: taxes == null ? "TVA collectée inconnue." : "Pas de relevé bancaire du mois.", action: taxes == null ? "Dépose l'export Shopify « Total sales over time »." : "Dépose le relevé bancaire du mois." });
   else {
-    const ok = taxes > 0 && Math.abs(vat - taxes) <= taxes * 0.3;
+    // La TVA reversée en M porte sur M-1 (collectée − déductible sur les achats) : cohérente si elle représente
+    // 20 à 110 % de la TVA collectée le mois précédent (estimée au taux de TVA observé ce mois sur le CA de M-1).
+    const rate = n("ca") ? taxes / n("ca")! : null;
+    const prevCollected = prev && num(prev.ca) != null && rate != null ? num(prev.ca)! * rate : taxes;
+    const ratio = prevCollected > 0 ? vat / prevCollected : 0, ok = ratio >= 0.2 && ratio <= 1.1;
     out.push({ id: "vat", label: "TVA collectée vs reversée", status: ok ? "ok" : "ecart",
-      detail: `TVA collectée ${eur(taxes)}, reversée ce mois ${eur(vat)}.`,
-      ...(ok ? {} : { action: "Normal si la déclaration est décalée d'un mois ou si la TVA déductible est élevée (gros achats de stock) ; sinon, à vérifier sur la déclaration." }) });
+      detail: `TVA reversée ce mois ${eur(vat)} pour ≈ ${eur(prevCollected)} collectée le mois précédent (${pct(ratio * 100)} ; le reste = TVA déductible sur les achats). Collectée ce mois : ${eur(taxes)}.`,
+      ...(ok ? {} : { action: ratio < 0.2
+        ? "Aucune TVA (ou très peu) reversée : déclaration trimestrielle, crédit de TVA, ou paiement classé ailleurs dans le relevé (vérifie la règle « DGFIP »)."
+        : "TVA reversée supérieure à la collectée du mois précédent : régularisation, pénalités, ou paiement de plusieurs périodes — à vérifier sur la déclaration." }) });
   }
 
   // 6) Débits bancaires qualifiés.
@@ -92,6 +98,43 @@ export function runControls(v: V, prev: V | null, kept: ParsedExtract[], currenc
     out.push({ id: "debits", label: "Débits bancaires qualifiés", status: ok ? "ok" : "ecart",
       detail: `${pct(share)} des débits classés (${eur(unq)} à qualifier).`,
       ...(ok ? {} : { action: "Valide les propositions dans « Contreparties » (onglet Données)." }) });
+  }
+
+  // 8) Commandes vendues (boutique) vs expédiées (3PL) — même mois de création.
+  const shipped = auxOf(kept, "shippedOrders");
+  if (shipped != null && n("orders")) {
+    const d = (shipped / n("orders")! - 1) * 100, ok = Math.abs(d) <= 5;
+    out.push({ id: "orders_3pl", label: "Commandes vendues vs expédiées", status: ok ? "ok" : "ecart",
+      detail: `${Math.round(n("orders")!)} commandes vendues, ${Math.round(shipped)} au 3PL (${d >= 0 ? "+" : ""}${dec1(d)} %).`,
+      ...(ok ? {} : { action: d < 0 ? "Commandes non transmises au 3PL (précommandes, dropshipping, autre entrepôt) ou export 3PL incomplet ?" : "Plus d'envois que de ventes : renvois, échanges, commandes manuelles ou export Shopify filtré ?" }) });
+  }
+
+  // 9) Versements du prestataire Shopify Payments retrouvés sur les relevés.
+  const spGross = auxOf(kept, "shopifyPaymentsGross");
+  if (spGross != null && spGross >= 1000) {
+    const psp = kept.map((e) => e.aux?.pspInflows as Record<string, { net: number }> | undefined).find(Boolean);
+    if (psp) {
+      const paid = psp["Shopify Payments"]?.net ?? 0, ok = paid >= spGross * 0.8;
+      out.push({ id: "psp_payouts", label: "Versements Shopify Payments sur les relevés", status: ok ? "ok" : "ecart",
+        detail: `Shopify Payments : ${eur(spGross)} payés par les clients ce mois, ${eur(paid)} versés sur les comptes du relevé.`,
+        ...(ok ? {} : { action: "Les versements arrivent sur un compte absent des relevés : dépose-le (ou son solde) — sinon trésorerie et encaissements sont incomplets." }) });
+    }
+  }
+
+  // 10) Retours du mois : taux (boutique) vs mois précédent, recoupé avec le 3PL (commandes retournées, motif principal).
+  if (n("refunds") != null && n("gross_sales")) {
+    const rate = (n("refunds")! / n("gross_sales")!) * 100;
+    const prate = prev && num(prev.refunds) != null && num(prev.gross_sales) ? (num(prev.refunds)! / num(prev.gross_sales)!) * 100 : null;
+    const ret3 = auxOf(kept, "returnedOrders");
+    const reasons = kept.map((e) => e.aux?.returnsByReason as Record<string, number> | undefined).find(Boolean);
+    const top = reasons ? Object.entries(reasons).sort((a, b) => b[1] - a[1])[0] : undefined;
+    const totR = reasons ? Object.values(reasons).reduce((s, x) => s + x, 0) : 0;
+    const jump = prate != null && rate > prate * 1.5 && rate - prate >= 3;
+    out.push({ id: "returns", label: "Retours du mois", status: jump ? "ecart" : "ok",
+      detail: `Retours ${dec1(rate)} % du CA brut${prate != null ? ` (mois précédent ${dec1(prate)} %)` : ""}` +
+        (shipped && ret3 != null ? ` · 3PL : ${Math.round(ret3)} commandes du mois retournées sur ${Math.round(shipped)} (${dec1((ret3 / shipped) * 100)} %)` : "") +
+        (top && totR ? ` · motif principal : ${top[0]} (${pct((top[1] / totR) * 100)})` : "") + ".",
+      ...(jump ? { action: "Hausse des retours : regarde les produits concernés (page « Produits & retours ») — guide des tailles, description, qualité." } : {}) });
   }
 
   // 7) Mois vs historique : poste qui bouge de plus de 40 % sans cause identifiée.

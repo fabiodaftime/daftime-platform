@@ -372,10 +372,11 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     // Coût des marchandises vendues PAR COMMANDE (coût par article Shopify) → COGS exact du mois.
     if (has(h, "Cost of goods sold") && (has(h, "Order name") || has(h, "Sale ID"))) {
       const iC = col("Cost of goods sold"), iT = idx(h, "Product title at time of sale"), iV = idx(h, "Product variant title at time of sale");
-      let cogs = 0, lines = 0; const zero: Record<string, number> = {}, zeroVar: Record<string, number> = {};
+      let cogs = 0, lines = 0; const zero: Record<string, number> = {}, zeroVar: Record<string, number> = {}, soldBy: Record<string, number> = {};
       const vKey = (r: string[]) => `${(r[iT] ?? "").trim()}§${iV >= 0 ? (r[iV] ?? "").trim() : ""}`;
       for (const r of rowsM) {
         const c = toNum(r[iC]); if (c == null) continue; cogs += c; lines++;
+        if (c >= 0 && iT >= 0) { const pk = productKey(r[iT] ?? ""); if (pk) soldBy[pk] = (soldBy[pk] ?? 0) + 1; } // ventes (hors lignes de retour, coût négatif)
         if (c === 0 && iT >= 0) { const t = (r[iT] ?? "").trim(); if (t) { zero[t] = (zero[t] ?? 0) + 1; zeroVar[vKey(r)] = (zeroVar[vKey(r)] ?? 0) + 1; } }
       }
       // COÛT OBSERVÉ des produits concernés : médiane du coût par ligne sur leurs AUTRES ventes avec coût (tout le
@@ -389,13 +390,14 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
       const observed = Object.fromEntries(Object.entries(obsL).map(([k, xs]) => [k, r2(med(xs))]));
       const nZero = Object.values(zero).reduce((a, x) => a + x, 0);
       return mk("analytics", { cogs: r2(cogs) }, { cogs: `Σ «Cost of goods sold» (coût par article Shopify) · Month=${ym} · ${lines} ligne(s) de vente` },
-        { exclusive: true, priority: 100, aux: { cogsZeroLines: zero, cogsZeroVariants: zeroVar, cogsObserved: observed, cogsLines: lines },
+        { exclusive: true, priority: 100, aux: { cogsZeroLines: zero, cogsZeroVariants: zeroVar, cogsObserved: observed, cogsLines: lines, soldByProduct: soldBy },
           note: nZero ? `COGS Shopify : ${nZero} ligne(s) de vente sur ${lines} sans coût renseigné en ${ym} — complétées par tes coûts SKU (onboarding) quand ils existent.` : undefined });
     }
     // Shopify Payments : réception, PAS le CA.
     if (has(h, "Gross payments")) {
       const g = pick("Gross payments"), t = pick("Transactions");
-      return mk("payment", {}, {}, { exclusive: true, priority: 0, note: g != null ? `Shopify Payments (réception, pas le CA) : ${fmtE(g)} ${ctx.reporting} · ${t ?? "?"} transaction(s) en ${ym}.` : undefined });
+      return mk("payment", {}, {}, { exclusive: true, priority: 0, ...(g != null && g > 0 ? { aux: { shopifyPaymentsGross: g, shopifyPaymentsTx: t ?? 0 } } : {}),
+        note: g != null ? `Shopify Payments (réception, pas le CA) : ${fmtE(g)} ${ctx.reporting} · ${t ?? "?"} transaction(s) en ${ym}.` : undefined });
     }
     // Séries ventes / trafic : mapping par NOM DE COLONNE exact.
     const v: Record<string, number> = {}; const s: Record<string, string> = {};
@@ -618,19 +620,25 @@ function bigblueInvoice(name: string, rows: string[][], ctx: ParseCtx): ParsedEx
 function bigblueOrders(_name: string, rows: string[][], ctx: ParseCtx): ParsedExtract {
   const h = rows[0];
   const iD = idx(h, "Date"), iSt = idx(h, "Order Status"), iTp = idx(h, "Total Price"), iN = idx(h, "Number Items Ordered"), iCo = idx(h, "Country");
-  let orders = 0, units = 0, ttc = 0, cancelled = 0; const byCo: Record<string, number> = {};
+  let orders = 0, units = 0, ttc = 0, cancelled = 0, returned = 0; const byCo: Record<string, number> = {};
   for (const r of rows.slice(1)) {
     if (!inMonth(r[iD], ctx.period)) continue;
     if (/cancel/i.test(r[iSt] ?? "")) { cancelled++; continue; }
+    if (/^return/i.test((r[iSt] ?? "").trim())) returned++;
     orders++; units += toNum(r[iN]) ?? 0; const p = toNum(r[iTp]) ?? 0; ttc += p;
     const co = (r[iCo] ?? "").trim(); if (co) byCo[co] = (byCo[co] ?? 0) + p;
   }
   return { parser: "bigblue_orders", role: "analytics", source_type: "sales_export", currency: ctx.reporting,
-    values: orders ? { units } : {}, exclusive: true, priority: 100,
+    values: orders ? { units } : {}, exclusive: true, priority: 100, ...(orders ? { aux: { shippedOrders: orders, returnedOrders: returned } } : {}),
     sources: { units: `Σ «Number Items Ordered» des commandes Bigblue de ${ctx.period.slice(0, 7)} (hors annulées) · ${orders} commande(s)` },
     breakdowns: orders ? { sales_by_country: { label: "Ventes expédiées par pays (TTC, Bigblue)", rows: topN(byCo, 10) } } : undefined,
     note: orders ? `Bigblue ${ctx.period.slice(0, 7)} : ${orders} commandes expédiées (${cancelled} annulée(s)), ${units} articles, ${fmtE(ttc)} ${ctx.reporting} TTC.` : undefined };
 }
+
+// Clé produit commune Shopify / 3PL : titre en capitales, sans la taille en suffixe (« BODY NOIR - M » → « BODY NOIR »).
+export const productKey = (t: string) => t.toUpperCase().replace(/\s+/g, " ").trim()
+  .replace(/\s*[-/]\s*(XXS|XS|S|M|L|XL|XXL|XXXL|TU|T\.?U\.?|ONE SIZE|\d{2})$/i, "")
+  .replace(/\s+(XXS|XS|S|M|L|XL|XXL|XXXL|TU)$/, "").trim(); // taille collée au nom (« TOP COL ROULÉ NOIR S »)
 
 // Export retours Bigblue : volume et motifs (le montant remboursé est déjà dans les « reversals » Shopify).
 const RETURN_REASON: Record<string, string> = {
@@ -639,14 +647,16 @@ const RETURN_REASON: Record<string, string> = {
 };
 function bigblueReturns(_name: string, rows: string[][], ctx: ParseCtx): ParsedExtract {
   const h = rows[0];
-  const iD = idx(h, "Return creation date"), iR = idx(h, "Return reason"), iF = idx(h, "Refund fee amount");
-  let n = 0, fees = 0; const byR: Record<string, number> = {};
+  const iD = idx(h, "Return creation date"), iR = idx(h, "Return reason"), iF = idx(h, "Refund fee amount"), iP = idx(h, "Product Name");
+  let n = 0, fees = 0; const byR: Record<string, number> = {}, byP: Record<string, number> = {};
   for (const r of rows.slice(1)) {
     if (!inMonth(r[iD], ctx.period)) continue;
     n++; fees += toNum(r[iF]) ?? 0;
+    if (iP >= 0) { const pk = productKey(r[iP] ?? ""); if (pk) byP[pk] = (byP[pk] ?? 0) + 1; }
     const k = RETURN_REASON[(r[iR] ?? "").trim()] ?? ((r[iR] ?? "").trim() || "Non précisé"); byR[k] = (byR[k] ?? 0) + 1;
   }
   return { parser: "bigblue_returns", role: "analytics", source_type: "other", currency: ctx.reporting, values: {}, sources: {},
+    ...(n ? { aux: { returnedItems: n, returnsByProduct: byP, returnsByReason: byR } } : {}),
     breakdowns: n ? { returns_by_reason: { label: "Retours par motif (Bigblue)", rows: topN(byR, 10) } } : undefined,
     note: n ? `Bigblue ${ctx.period.slice(0, 7)} : ${n} article(s) retourné(s)${fees ? `, frais de retour facturés aux clients ${r2(fees)} ${ctx.reporting}` : ""}.` : undefined };
 }
@@ -742,7 +752,7 @@ const PSP_PATTERNS: [RegExp, string][] = [
   [/paypal/i, "PayPal"], [/stripe/i, "Stripe"], [/adyen/i, "Adyen"], [/mollie/i, "Mollie"], [/checkout\.?com/i, "Checkout.com"],
   [/sumup/i, "SumUp"], [/payplug/i, "PayPlug"], [/amazon pay/i, "Amazon Pay"], [/shopify/i, "Shopify Payments"],
 ];
-// Journal d'un prestataire synchronisé comme un « compte » (ex. Stripe de Shopify Payments dans Pennylane) :
+// Journal d'un prestataire synchronisé comme un « compte » (ex. compte Stripe branché sur la boutique, dans Pennylane) :
 // une ligne par paiement de commande, montant BRUT (les frais ne sont pas déduits ligne à ligne).
 const PSP_LEDGER_CHARGE = /^charge:|gid:\/\/shopify\/payment/i;
 export type PspInflows = Record<string, { gross: number; net: number; n: number }>;
@@ -768,7 +778,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
       inflow += a;
       if (!isOutOfTreasury(acc, ctx.treasuryPerimeter)) {
         const w = [r[iW], iT >= 0 ? r[iT] : "", iCm >= 0 ? r[iCm] : ""].filter(Boolean).join(" ");
-        if (PSP_LEDGER_CHARGE.test(w)) { const x = (psp["Shopify Payments"] ??= { gross: 0, net: 0, n: 0 }); x.gross += a; x.n++; }
+        if (PSP_LEDGER_CHARGE.test(w)) { const x = (psp["Stripe"] ??= { gross: 0, net: 0, n: 0 }); x.gross += a; x.n++; }
         else { const hit = PSP_PATTERNS.find(([re]) => re.test(w)); if (hit) { const x = (psp[hit[1]] ??= { gross: 0, net: 0, n: 0 }); x.net += a; x.n++; } }
       }
       continue;

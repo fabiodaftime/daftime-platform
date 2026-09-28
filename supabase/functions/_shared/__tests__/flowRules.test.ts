@@ -49,6 +49,9 @@ describe("règles bancaires issues de la carte", () => {
   it("seules les sorties avec un mot-clé du relevé deviennent des règles (au montant si précisé)", () => {
     expect(rulesFromMap(map).map((r) => [r.match, r.category, r.amount ?? null])).toEqual([["textilia", "stock", null], ["paypal", "loan", 6628]]);
     expect(rulesFromMap(map)[0].source).toBe("carte");
+    const vatMap = sanitizeFlowMap({ outflows: [{ payee: "DGFIP (TVA)", category: "impôts & taxes", account: "main", match: "dgfip", rhythm: "mensuel", terms: "échéance", certainty: "confirmé" },
+      { payee: "DGFIP (impôt sur les sociétés)", category: "impôts & taxes", account: "main", match: "impot societes", rhythm: "trimestriel", terms: "échéance", certainty: "confirmé" }] });
+    expect(rulesFromMap(vatMap).map((r) => r.category)).toEqual(["vat", "tax"]);
   });
 });
 

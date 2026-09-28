@@ -19,9 +19,15 @@ describe("contrôles croisés", () => {
     expect(c.cogs_cov.status).toBe("ecart");
     expect(c.cogs_cov.action).toMatch(/coûts de revient/);
   });
-  it("TVA reversée moitié de la collectée = à expliquer (décalage)", () => {
-    expect(c.vat.status).toBe("ecart");
-    expect(c.vat.action).toMatch(/décalée d'un mois/);
+  it("TVA reversée ≈ moitié de la collectée du mois précédent (déductible sur achats) = cohérent", () => {
+    expect(c.vat.status).toBe("ok");
+    expect(c.vat.detail).toMatch(/pour ≈ 19\s000\s€ collectée le mois précédent \(53\s%/);
+  });
+  it("aucune TVA reversée = écart avec piste (règle DGFIP)", () => {
+    const k2 = [ex({ netFlow: -1_000, inflow: 118_000, totalDebits: 100_000, unqualifiedTotal: 5_000, vatPaid: 0 }), ex({ salesTTC: 120_000, taxesCollected: 20_000, cogsLines: 1_000 })];
+    const c2 = byId(runControls(v, prev, k2, "EUR"));
+    expect(c2.vat.status).toBe("ecart");
+    expect(c2.vat.action).toMatch(/DGFIP/);
   });
   it("pub doublée vs M-1 = poste qui bouge de plus de 40 %", () => {
     expect(c.history.status).toBe("ecart");

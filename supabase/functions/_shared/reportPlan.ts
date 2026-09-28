@@ -94,6 +94,7 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = [], tailor: Ta
     ...W(kpis("cm1_rate", "refund_rate", "refunds", "aov", "units")),
     ...W(prodBk && { type: "matrix_table", title: d.breakdowns?.[prodBk]?.label, breakdown: prodBk, highlight: "both", total_row: true }),
     ...W(!prodBk && rankBk && { type: "ranking", title: d.breakdowns?.[rankBk]?.label, breakdown: rankBk }),
+    ...W(bk("returns_by_product") && { type: "matrix_table", title: "Retours par produit", breakdown: "returns_by_product", highlight: "both" }),
     ...W(bk("returns_by_reason") && { type: "ranking", title: "Retours par motif", breakdown: "returns_by_reason" }),
     ...W(trend("refund_rate") && { type: "line", title: "Taux de retour — 6 derniers mois", metrics: ["refund_rate"] }),
     ...W(bk("sales_by_country") && { type: "map", title: "Ventes par pays", breakdown: "sales_by_country" }),

@@ -25,7 +25,7 @@ describe("encaissements par prestataire (relevé)", () => {
   const p = parseFile("PENNYLANE_transaction_banking.xlsx", CSV, F.ctx("2026-08-01", { treasuryPerimeter: perimeter }))!;
   it("journal brut (paiements de commandes) vs versements nets ; virement client et compte hors trésorerie ignorés", () => {
     expect(p.aux?.pspInflows).toEqual({
-      "Shopify Payments": { gross: 100, net: 0, n: 2 },
+      Stripe: { gross: 100, net: 0, n: 2 },               // journal des paiements de commandes (compte Stripe)
       Klarna: { gross: 0, net: 965, n: 1 },
       PayPal: { gross: 0, net: 200, n: 1 },   // « PayPal … MOTIF: Shopify » = versement PayPal
     });

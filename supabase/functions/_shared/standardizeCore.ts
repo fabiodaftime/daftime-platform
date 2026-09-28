@@ -266,6 +266,10 @@ export function estimatePaymentFees(m: Merged, reporting: string, custom?: Recor
   for (const e of m.kept) for (const [k, x] of Object.entries((e.aux?.pspInflows ?? {}) as Record<string, { gross: number; net: number; n: number }>)) {
     const t = (inflows[k] ??= { gross: 0, net: 0, n: 0 }); t.gross += x.gross; t.net += x.net; t.n += x.n;
   }
+  // Shopify Payments : le rapport Shopify donne le volume BRUT et le nombre de transactions → base plus sûre que ses
+  // versements (qui peuvent arriver sur un compte absent des relevés).
+  const spx = m.kept.find((e) => typeof e.aux?.shopifyPaymentsGross === "number");
+  if (spx) inflows["Shopify Payments"] = { gross: spx.aux!.shopifyPaymentsGross as number, net: 0, n: Number(spx.aux!.shopifyPaymentsTx) || 0 };
   if (!Object.keys(inflows).length) return;
   const ca = m.values.ca, orders = m.values.orders;
   const aov = ca && orders && ca > 0 && orders > 0 ? ca / orders : null;
@@ -298,6 +302,35 @@ export function estimatePaymentFees(m: Merged, reporting: string, custom?: Recor
       (std.length ? ` Aucun relevé des prestataires : tarifs standards utilisés pour ${std.join(", ")}. Donne les tarifs réels de tes contrats dans le chat du dossier pour un chiffre exact.` : "") +
       (unknownPsp.length ? ` Prestataire(s) sans tarif connu, non comptés : ${unknownPsp.join(", ")}.` : "") });
   if (std.length) m.questions.push(`Quels sont tes tarifs réels par prestataire de paiement (${std.join(", ")}) ? Ex. « Klarna 3,29 % + 0,35 € ».`);
+}
+
+// RETOURS PAR PRODUIT : articles retournés (3PL) face aux lignes vendues du mois (Shopify) → où se concentrent les
+// retours (taille, qualité, description). Répartition pour la page « Produits & retours ».
+export function returnsByProduct(m: Merged): void {
+  const ret = m.kept.find((e) => e.aux?.returnsByProduct)?.aux?.returnsByProduct as Record<string, number> | undefined;
+  const sold = m.kept.find((e) => e.aux?.soldByProduct)?.aux?.soldByProduct as Record<string, number> | undefined;
+  if (!ret || !Object.keys(ret).length) return;
+  const rows = Object.entries(ret).map(([label, r]) => {
+    const s = sold?.[label] ?? 0;
+    return { label, value: r, values: { returned: r, ...(s ? { sold: s, rate: r2(Math.min(100, (r / s) * 100)) } : {}) } };
+  }).sort((a, b) => b.value - a.value).slice(0, 12);
+  m.breakdowns.returns_by_product = { label: "Retours par produit (3PL) face aux ventes du mois", rows,
+    columns: [{ key: "sold", label: "Vendus", unit: "" }, { key: "returned", label: "Retournés", unit: "", sort: true }, { key: "rate", label: "Taux de retour", unit: "%", emphasis: true }] };
+}
+
+// COMPOSANTES ≤ TOTAL : une valeur lue par l'IA qui dépasse le total du même mois vient d'une autre période
+// (cumul, capture non datée) → écartée et signalée. Le total fait foi quand il vient d'une source déterministe.
+const COMPONENTS: [string, string, string][] = [["ads_meta", "ads_total", "pub Meta"], ["ads_google", "ads_total", "pub Google"],
+  ["new_customers", "orders", "nouveaux clients"], ["refunds", "gross_sales", "retours"]];
+export function guardComponents(llm: { file: string; values: Record<string, number> }[], values: Record<string, number>, flags: Flag[], reporting: string): void {
+  for (const x of llm) for (const [part, total, label] of COMPONENTS) {
+    const v = x.values[part], t = values[total] ?? x.values[total];
+    if (typeof v !== "number" || typeof t !== "number" || !(t > 0) || v <= t * 1.05) continue;
+    delete x.values[part];
+    flags.push({ id: "_llm_period", severity: "warn", label: `« ${x.file} » : ${label} ${fmt(v)} ignoré(e) — supérieur(e) au total du mois (${fmt(t)}${total === "orders" ? " commandes" : ` ${reporting}`}) : la pièce couvre sans doute une autre période (cumul, capture sans date).` });
+  }
+  // Un indicateur de trafic lu dans une pièce qui a été écartée pour cette raison n'est pas plus fiable.
+  for (const x of llm) if (flags.some((f) => f.id === "_llm_period" && f.label.startsWith(`« ${x.file} »`))) for (const k of ["sessions", "add_to_carts"]) delete x.values[k];
 }
 
 // PORT FACTURÉ AUX CLIENTS : c'est la recette de la livraison. Le CA reste les ventes nettes Shopify (validé

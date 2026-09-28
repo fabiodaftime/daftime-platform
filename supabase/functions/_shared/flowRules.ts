@@ -44,7 +44,9 @@ export function isOutOfTreasury(account: string | null | undefined, p: TreasuryP
 export interface MapRule { match: string; category: string; amount?: number; label: string; source: "carte" }
 export function rulesFromMap(map: FlowMap | null | undefined): MapRule[] {
   return (map?.outflows ?? []).filter((o) => o.match && norm(o.match).length >= 3).map((o) => ({
-    match: o.match!.toLowerCase().replace(/\s+/g, " ").trim(), category: ENGINE_CAT[o.category],
+    // « Impôts & taxes » qui est de la TVA (ex. « DGFIP (TVA) ») → reversement de TVA, pas un impôt du résultat.
+    match: o.match!.toLowerCase().replace(/\s+/g, " ").trim(),
+    category: o.category === "impôts & taxes" && /\btva\b|\bvat\b/i.test(`${o.payee} ${o.note ?? ""}`) ? "vat" : ENGINE_CAT[o.category],
     ...(typeof o.amount === "number" && o.amount > 0 ? { amount: o.amount } : {}), label: `${o.payee} (carte des flux)`, source: "carte" as const,
   }));
 }

@@ -24,7 +24,7 @@ import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact }
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
 import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
-import { applyCostParams, completeLogistics, estimatePaymentFees, finalize, mergeParsed, netShippingBilled, type CostParams } from "../_shared/standardizeCore.ts";
+import { applyCostParams, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls, type Control } from "../_shared/controls.ts";
 import { sanitizeFlowMap, type FlowMap } from "../_shared/flowMap.ts";
 import { isOutOfTreasury, leverDefsFromMap, mapDiscrepancies, rulesFromMap, treasuryPerimeter } from "../_shared/flowRules.ts";
@@ -33,7 +33,7 @@ import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeC
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-28.7";
+const ENGINE_VERSION = "2026-09-28.8";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -76,6 +76,7 @@ const PERFILE_SYSTEM = (activity: string, lines: CatalogLine[], ctxText: string,
 MOIS CIBLE : ${period.slice(0, 7)} (du 1er au dernier jour du mois). N'extrais QUE des montants qui concernent CE mois.
 - Si le document couvre PLUSIEURS mois et que tu ne peux pas isoler ce mois (cumul, capture d'un tableau de bord sur une plage de dates, total annuel…) : n'inclus AUCUNE valeur pour ces postes (value=null, provenance = « cumul multi-mois, mois non isolable »). Ne divise JAMAIS un cumul par le nombre de mois.
 - Vérifie la plage de dates affichée (en-tête, filtre, titre) AVANT d'extraire.
+- Si AUCUNE date ni période n'est visible (capture d'écran recadrée, tableau sans en-tête de période) : tu ne peux pas savoir quel mois elle couvre → n'inclus AUCUNE valeur (provenance = « période non visible »).
 
 ${ctxText ? `CONTEXTE DU DOSSIER (rôle des sources, montage financier — à respecter) :\n${ctxText}\n` : ""}
 1) IDENTIFIE le type de source (source_type) parmi : "sales_export", "ads_dashboard", "bank_statement", "invoice", "payroll", "pnl", "other".
@@ -360,6 +361,7 @@ Deno.serve(async (req) => {
       completeLogistics(merged, period, currency);
       netShippingBilled(merged, currency);
       estimatePaymentFees(merged, currency, costParams?.psp_rates);
+      returnsByProduct(merged);
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
         if (typeof o?.value !== "number" || !isFinite(o.value)) continue;
@@ -442,6 +444,9 @@ Deno.serve(async (req) => {
         : [];
 
       // 5) FINALISATION (calcul, contrôles, tri des absences).
+      // Garde-fou de cohérence sur les valeurs lues par l'IA : une composante ne dépasse pas son total du mois
+      // (ex. une capture Triple Whale non datée, cumul janv.→août, lue comme « pub Meta de juillet »).
+      guardComponents(llmExtracts, merged.values, merged.flags, currency);
       const out = finalize({ tpl, activity, currency, period, entity: (client as { name?: string }).name ?? null,
         merged, llmExtracts, factor, fxSource, skipped,
         expectedBreakdowns: (at?.config as { expected_breakdowns?: { key: string; label: string }[] })?.expected_breakdowns });
