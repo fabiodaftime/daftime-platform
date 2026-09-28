@@ -91,8 +91,8 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
 
   return (
     <div className="v2 min-h-screen">
-      {/* HEADER */}
-      <header className="glass sticky top-0 z-30 border-b">
+      {/* HEADER — ordinateur seulement : sur mobile (trafic pub), pas de bandeau, le logo est dans le haut de page */}
+      <header className="hidden md:block glass sticky top-0 z-30 border-b">
         <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-4">
           <img src={daftimeLogo} alt="Daftime Advisory" className="h-7 w-auto" />
           <div className="flex items-center gap-5">
@@ -106,7 +106,8 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
 
       {/* HERO — bleu nuit ; sur ordinateur, l'espace client à droite */}
       <section className="brand-panel !rounded-none !shadow-none">
-        <div className="relative z-[1] max-w-6xl mx-auto px-5 pt-10 pb-12 lg:py-20 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center min-h-[calc(100dvh-4rem)] lg:min-h-0">
+        <img src={daftimeLogo} alt="Daftime Advisory" className="md:hidden absolute z-[1] top-6 left-1/2 -translate-x-1/2 h-6 w-auto brightness-0 invert" />
+        <div className="relative z-[1] max-w-6xl mx-auto px-5 pt-16 md:pt-10 pb-12 lg:py-20 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center min-h-[100dvh] md:min-h-[calc(100dvh-4rem)] lg:min-h-0">
           <div className="max-w-lg mx-auto lg:mx-0 flex flex-col items-center text-center lg:items-start lg:text-left">
             <span className="eyebrow !text-[hsl(var(--accent))] !text-[11px]">Marques e-commerce</span>
             <h1 className="mt-4 text-[2.1rem] sm:text-[2.7rem] lg:text-[3.4rem] leading-[1.04] font-semibold tracking-[-0.03em] text-balance">
@@ -312,6 +313,7 @@ export default function LandingEcommerce2({ advisor }: { advisor?: string } = {}
             <button onClick={() => navigate('/mentions-legales')} className="hover:text-white transition-colors">Mentions légales</button>
             <button onClick={() => navigate('/confidentialite')} className="hover:text-white transition-colors">Politique de confidentialité</button>
             <a href="mailto:fabio@daftime.ae" className="hover:text-white transition-colors">Contact</a>
+            <button onClick={() => navigate('/auth')} className="md:hidden hover:text-white transition-colors">Accéder à mon espace</button>
           </nav>
           <p className="text-xs">© 2026 Daftime Advisory - FZCO · Dubai. Tous droits réservés.</p>
         </div>
