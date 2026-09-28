@@ -8,6 +8,7 @@
 
 import { convert } from "./fx.ts";
 import type { SourceType } from "./reconcile.ts";
+import { isOutOfTreasury, type TreasuryPerimeter } from "./flowRules.ts";
 
 export interface ParseCtx {
   reporting: string; factor: Record<string, number>; period: string;
@@ -16,6 +17,9 @@ export interface ParseCtx {
   // Soldes bancaires de référence (onboarding) : un solde connu à une date permet de reconstituer
   // la trésorerie de fin de mois à partir d'un relevé SANS colonne de solde (ex. Pennylane).
   bankAnchors?: { account: string; date: string; balance: number }[];
+  // Carte des flux publiée : comptes HORS trésorerie (ex. compte perso qui paie des dépenses du shop) — leurs dépenses
+  // restent dans le résultat, mais ni leur solde ni leurs flux ne comptent dans la trésorerie du shop.
+  treasuryPerimeter?: TreasuryPerimeter;
 }
 // Rôle COMPTABLE du document — déterminé par le type de source, jamais deviné :
 //  revenue  = ce qui est FACTURÉ (= le CA). Une seule source fait foi (ex. Quaderno).
@@ -757,14 +761,17 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   const baseSrc = `relevé bancaire (Pennylane), débits de ${ym} classés par contrepartie · base décaissements`;
   for (const k of Object.keys(v)) sources[k] = k === "ads_total" ? `${baseSrc} : ${Object.entries(byPlat).map(([p, x]) => `${p} ${fmtE(x)}`).join(" + ")}` : baseSrc;
 
-  // Trésorerie : pas de solde dans l'export → reconstitution depuis un SOLDE DE RÉFÉRENCE par compte.
-  const accounts = Object.keys(flowsByAcc);
+  // Trésorerie : pas de solde dans l'export → reconstitution depuis un SOLDE DE RÉFÉRENCE par compte,
+  // sur les seuls comptes du périmètre de trésorerie (carte des flux).
+  const allAccounts = Object.keys(flowsByAcc);
+  const outside = allAccounts.filter((a) => isOutOfTreasury(a, ctx.treasuryPerimeter));
+  const accounts = allAccounts.filter((a) => !outside.includes(a));
   const anchors = ctx.bankAnchors ?? [];
   // Correspondance EXACTE du nom de compte (« Error Company » ≠ « ERROR COMPANY » : deux comptes distincts) ;
   // tolérance à la casse seulement si elle reste sans ambiguïté.
   const lc = (s: string) => s.trim().toLowerCase();
   const anchorOf = (acc: string) => anchors.find((x) => x.account.trim() === acc.trim())
-    ?? (accounts.filter((a) => lc(a) === lc(acc)).length === 1 ? anchors.find((x) => lc(x.account) === lc(acc)) : undefined);
+    ?? (allAccounts.filter((a) => lc(a) === lc(acc)).length === 1 ? anchors.find((x) => lc(x.account) === lc(acc)) : undefined);
   const balAt = (acc: string, dateISO: string): number | null => {
     const an = anchorOf(acc);
     if (!an || !isoOf(an.date) || typeof an.balance !== "number" || !isFinite(an.balance)) return null;
@@ -789,14 +796,16 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   }
   const unkTop = Object.entries(unk).sort((a, b) => b[1] - a[1]);
   const unkTot = unkTop.reduce((s, [, x]) => s + x, 0);
+  const outNet = outside.map((acc) => ({ acc, net: flowsByAcc[acc].filter((f) => f.d.slice(0, 7) === ym).reduce((a, f) => a + f.a, 0) }));
   const notes = [
     `Banque ${ym} : encaissements ${fmtE(inflow)} ${ctx.reporting} (réception clients/PSP, hors CA).`,
+    outside.length ? `Hors trésorerie (carte des flux) : ${outNet.map((o) => `${o.acc} (flux net du mois ${o.net >= 0 ? "+" : ""}${fmtE(o.net)} ${ctx.reporting})`).join(", ")} — ses dépenses restent dans le résultat, son solde et ses flux ne comptent pas dans ta trésorerie.` : "",
     Object.keys(excl).length ? `Exclu des charges : ${Object.entries(excl).map(([k, x]) => `${k} ${fmtE(x)}`).join(" · ")}.` : "",
     ...cashNotes,
   ].filter(Boolean);
   return { parser: "pennylane_bank", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, sources, count: used,
     breakdowns: Object.keys(byPlat).length ? { ads_by_platform: { label: "Dépense pub par plateforme (banque)", rows: topN(byPlat, 8) } } : undefined,
-    aux: { bankAccounts: accounts, inflow: r2(inflow), totalDebits: r2(debits), vatPaid: r2(vatPaid),
+    aux: { bankAccounts: allAccounts, ...(outside.length ? { outsideTreasury: outside } : {}), inflow: r2(inflow), totalDebits: r2(debits), vatPaid: r2(vatPaid),
       netFlow: r2(accounts.reduce((s, acc) => s + flowsByAcc[acc].filter((f) => f.d.slice(0, 7) === ym).reduce((a, f) => a + f.a, 0), 0)),
       ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 40).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
     note: notes.join(" ") };

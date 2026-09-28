@@ -25,7 +25,9 @@ import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
 import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
 import { applyCostParams, completeLogistics, finalize, mergeParsed, netShippingBilled, type CostParams } from "../_shared/standardizeCore.ts";
-import { reliabilityIndex, runControls } from "../_shared/controls.ts";
+import { reliabilityIndex, runControls, type Control } from "../_shared/controls.ts";
+import { sanitizeFlowMap, type FlowMap } from "../_shared/flowMap.ts";
+import { isOutOfTreasury, leverDefsFromMap, mapDiscrepancies, rulesFromMap, treasuryPerimeter } from "../_shared/flowRules.ts";
 import { flatValues } from "../_shared/marginBridge.ts";
 import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeClassified, splitByConfidence, toClassify,
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
@@ -200,16 +202,24 @@ Deno.serve(async (req) => {
         value_overrides?: Record<string, Record<string, { value: number; source: string }>>;
         bank_rule_proposals?: Proposal[]; bank_rules_rejected?: string[]; objectives?: Record<string, number> };
       const { factor, source: fxSource } = await ratesToReporting(period, currency, ctxData.fx_rates);
-      // Priorité : règles du dossier > playbook > dictionnaire global des contreparties (> classement intégré).
+      // CARTE DES FLUX publiée (relue par le conseiller) : périmètre de trésorerie, règles, leviers, contrôle.
+      const { data: fmRow } = await admin.from("client_flow_maps").select("data").eq("client_id", client_id).eq("status", "published").maybeSingle();
+      const flowMap: FlowMap | null = fmRow?.data ? sanitizeFlowMap(fmRow.data) : null;
+      const perimeter = treasuryPerimeter(flowMap);
+      // Priorité : décisions du conseiller > carte des flux > hypothèses de l'IA > playbook > dictionnaire global (> classement intégré).
       const { data: globalCp } = await admin.from("std_counterparties").select("match, category").order("match");
-      const categoryRules = [...(ctxData.bank_rules ?? []).map((r) => ({ match: r.match, category: r.category, ...(typeof r.amount === "number" ? { amount: r.amount } : {}) })),
+      const asRule = (r: BankRule) => ({ match: r.match, category: r.category, ...(typeof r.amount === "number" ? { amount: r.amount } : {}) });
+      const ctxRules = ctxData.bank_rules ?? [];
+      const categoryRules = [...ctxRules.filter((r) => r.source !== "ia").map(asRule),
+        ...rulesFromMap(flowMap).map(({ match, category, amount }) => ({ match, category, ...(amount != null ? { amount } : {}) })),
+        ...ctxRules.filter((r) => r.source === "ia").map(asRule),
         ...(ctxData.playbook?.bank_rules ?? []), ...((globalCp ?? []) as { match: string; category: string }[])];
       const bankAnchors = costParams?.bank_anchors;
-      const pctx = { reporting: currency, factor, period, activity, categoryRules, bankAnchors };
+      const pctx = { reporting: currency, factor, period, activity, categoryRules, bankAnchors, treasuryPerimeter: perimeter };
       // Empreinte à 2 niveaux : les règles bancaires / soldes de référence n'invalident QUE les relevés
       // bancaires (une nouvelle règle « paypal → pub » ne relit pas les 34 fichiers).
       const baseHash = await sha1(JSON.stringify({ ENGINE_VERSION, currency, factor }));
-      const bankHash = await sha1(JSON.stringify({ baseHash, categoryRules, bankAnchors: bankAnchors ?? null }));
+      const bankHash = await sha1(JSON.stringify({ baseHash, categoryRules, bankAnchors: bankAnchors ?? null, perimeter: perimeter ?? null }));
       const fpOf = (f: FileRow, bank = false) => `${f.updated_at ?? ""}|${bank ? bankHash : baseHash}`;
       const isBank = (e: ParsedExtract | null | undefined) => e?.role === "bank";
 
@@ -438,25 +448,47 @@ Deno.serve(async (req) => {
       const { data: prevSd } = await admin.from("standardized_data").select("data").eq("client_id", client_id).eq("period", prevP).eq("is_current", true).maybeSingle();
       const cur = flatValues(out.data);
       const controls = runControls(cur, prevSd ? flatValues(prevSd.data) : null, merged.kept, currency, { cogsMissing: merged.cogsMissing });
+      // Transactions brutes des 90 derniers jours (registre) : projection de trésorerie, leviers, contrôle de la carte.
+      const [y, mo] = period.slice(0, 7).split("-").map(Number);
+      const asOf = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
+      type RegTx = { tx_date: string; amount: number; counterparty: string | null; label: string | null; account?: string | null; currency?: string | null; source?: string };
+      let txsUsed: RegTx[] = [];
+      if (typeof cur.cash_end === "number" || flowMap) {
+        try {
+          const since = new Date(Date.UTC(y, mo, 0) - 90 * 86400000).toISOString().slice(0, 10);
+          const txs: RegTx[] = [];
+          for (let off = 0; off < 20000; off += 1000) {
+            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, account, currency, source")
+              .eq("client_id", client_id).gte("tx_date", since).lte("tx_date", asOf).order("tx_date").range(off, off + 999);
+            // Devise d'origine conservée dans le registre : on ne projette que les flux dans la devise du client.
+            txs.push(...((page ?? []) as RegTx[]).filter((t) => !t.currency || t.currency === currency).map((t) => ({ ...t, amount: Number(t.amount) })));
+            if (!page || page.length < 1000) break;
+          }
+          // API Pennylane préférée au relevé déposé (jamais les deux : pas de double comptage).
+          txsUsed = txs.some((t) => t.source === "pennylane_api") ? txs.filter((t) => t.source !== "pennylane_file") : txs;
+        } catch (e) { console.warn("registre bancaire :", e instanceof Error ? e.message : String(e)); }
+      }
+      const classOf = (t: RegTx) => classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount);
+      // CONTRÔLE CARTE ↔ CLASSEMENT : un coût mal classé fausse la cascade (doctrine) — tous comptes, mois du rapport.
+      if (flowMap?.outflows?.length && txsUsed.length) {
+        const ym = period.slice(0, 7);
+        const monthDebits = txsUsed.filter((t) => t.amount < 0 && t.tx_date.slice(0, 7) === ym).map((t) => ({ amount: t.amount, cat: classOf(t).cat, text: `${t.label ?? ""} ${t.counterparty ?? ""}` }));
+        const gaps = mapDiscrepancies(flowMap, monthDebits);
+        const catFr: Record<string, string> = { ...CP_CATEGORY_LABELS, unknown: "non classé", social: "charges sociales", refund: "remboursements" };
+        const fe = (x: number) => Math.round(x).toLocaleString("fr-FR");
+        const ctl: Control = gaps.length
+          ? { id: "carte_flux", label: "Carte des flux ↔ classement du relevé", status: "ecart",
+              detail: gaps.slice(0, 6).map((g) => `« ${g.payee} » : ${fe(g.amount)} ${currency} classés « ${catFr[g.found] ?? g.found} » alors que la carte dit « ${g.expected} » (${g.count} débit${g.count > 1 ? "s" : ""})`).join(" · "),
+              action: "Corrige la règle dans « Contreparties », ou mets à jour la carte des flux si c'est elle qui est fausse." }
+          : { id: "carte_flux", label: "Carte des flux ↔ classement du relevé", status: "ok", detail: `Les dépenses du mois sont classées comme le décrit la carte des flux (${flowMap.outflows.length} postes de sortie).` };
+        controls.push(ctl);
+      }
       const reliability = reliabilityIndex(cur, controls, merged.kept);
       // 7) TRÉSORERIE À 13 SEMAINES (registre : flux au jour) — seulement si la trésorerie de fin de mois est connue.
       let cashForecast: unknown = null;
       let paymentLv: PaymentLevers | null = null;
       if (typeof cur.cash_end === "number") {
         try {
-          const [y, mo] = period.slice(0, 7).split("-").map(Number);
-          const asOf = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
-          const since = new Date(Date.UTC(y, mo, 0) - 90 * 86400000).toISOString().slice(0, 10);
-          const txs: { tx_date: string; amount: number; counterparty: string | null; label: string | null; account?: string | null; currency?: string | null; source?: string }[] = [];
-          for (let off = 0; off < 20000; off += 1000) {
-            const { data: page } = await admin.from("src_bank_transactions").select("tx_date, amount, counterparty, label, account, currency, source")
-              .eq("client_id", client_id).gte("tx_date", since).lte("tx_date", asOf).order("tx_date").range(off, off + 999);
-            // Devise d'origine conservée dans le registre : on ne projette que les flux dans la devise du client.
-            txs.push(...((page ?? []) as typeof txs).filter((t) => !t.currency || t.currency === currency).map((t) => ({ ...t, amount: Number(t.amount) })));
-            if (!page || page.length < 1000) break;
-          }
-          // API Pennylane préférée au relevé déposé (jamais les deux : pas de double comptage).
-          const useApi = txs.some((t) => t.source === "pennylane_api");
           // Neutralisés : débits qualifiés « interne » par les règles du dossier (virements entre comptes, interco).
           const exclude = (t: { amount: number; label?: string | null; counterparty?: string | null }) =>
             t.amount < 0 && classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount).cat === "internal";
@@ -478,15 +510,22 @@ Deno.serve(async (req) => {
               plan = { label: `plan ${Math.round(caAnnual / 1e5) / 10} M`, factor: (ym) => (ym.startsWith(String(y)) ? k : 1) };
             }
           }
-          const txsUsed = useApi ? txs.filter((t) => t.source !== "pennylane_file") : txs;
-          cashForecast = forecastCash(txsUsed, asOf, cur.cash_end, { exclude, plan });
+          // Périmètre (carte des flux) : un compte hors trésorerie ne pèse ni sur la projection ni sur les leviers.
+          const inScope = txsUsed.filter((t) => !isOutOfTreasury(t.account, perimeter));
+          const outAccounts = [...new Set(txsUsed.filter((t) => isOutOfTreasury(t.account, perimeter)).map((t) => t.account as string))];
+          cashForecast = forecastCash(inScope, asOf, cur.cash_end, { exclude, plan });
+          if (cashForecast && outAccounts.length) {
+            const outMonthly = -txsUsed.filter((t) => t.amount < 0 && outAccounts.includes(t.account as string)).reduce((s, t) => s + t.amount, 0) / 3;
+            (cashForecast as CashForecast).hypotheses.push(`Hors trésorerie (carte des flux) : ${outAccounts.join(", ")} — ses paiements (≈ ${Math.round(outMonthly).toLocaleString("fr-FR")} ${currency}/mois) ne sont pas projetés sur ta trésorerie ; s'ils doivent être remboursés par le shop, c'est une dette à prévoir.`);
+          }
           // LEVIERS DE DÉCALAGE : argent avancé dans le mois par poste (débits classés par les règles du dossier)
           // + scénario de projection si 30 jours de délai sont obtenus.
-          const debits = txsUsed.filter((t) => t.amount < 0).map((t) => {
-            const c = classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules, t.amount);
-            return { tx_date: t.tx_date, amount: t.amount, cat: c.cat, platform: c.platform, counterparty: t.counterparty };
+          const debits = inScope.filter((t) => t.amount < 0).map((t) => {
+            const c = classOf(t);
+            return { tx_date: t.tx_date, amount: t.amount, cat: c.cat, platform: c.platform, counterparty: t.counterparty, label: t.label };
           });
-          const lv = paymentLevers(debits, period, ((cashForecast as CashForecast | null)?.oneoffs ?? []).map((o) => o.counterparty));
+          // Leviers décrits par la carte (un par poste pub / stock / logistique payé depuis la trésorerie) ; à défaut, postes par défaut.
+          const lv = paymentLevers(debits, period, ((cashForecast as CashForecast | null)?.oneoffs ?? []).map((o) => o.counterparty), leverDefsFromMap(flowMap));
           if (lv) { if (cashForecast) lv.scenario = leverScenario(cashForecast as CashForecast, lv.total); paymentLv = lv; }
         } catch (e) { console.warn("trésorerie 13 semaines :", e instanceof Error ? e.message : String(e)); }
       }

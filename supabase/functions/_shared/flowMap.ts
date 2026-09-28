@@ -8,7 +8,9 @@ export interface FlowEntity { id: string; name: string; kind: "société" | "per
 export interface FlowAccount { id: string; name: string; bank?: string; entity?: string; kind: "banque" | "prestataire de paiement" | "carte" | "autre"; role: string; in_treasury: boolean }
 export interface FlowIn { source: string; channel: string; account: string; amount_month?: number; delay: string; certainty: Certainty; note?: string }
 export type OutCategory = "pub" | "stock" | "logistique" | "équipe" | "impôts & taxes" | "financement" | "outils" | "interne" | "autre";
-export interface FlowOut { payee: string; category: OutCategory; account: string; via?: string; amount_month?: number; rhythm: string; terms: string; certainty: Certainty; note?: string }
+// match / amount : clé du relevé bancaire (mot-clé de la contrepartie, montant exact si la même contrepartie porte
+// deux flux, ex. PayPal = pub ET prêt à 6 628 €) → devient une règle bancaire du moteur (flowRules.rulesFromMap).
+export interface FlowOut { payee: string; category: OutCategory; account: string; via?: string; match?: string; amount?: number; amount_month?: number; rhythm: string; terms: string; certainty: Certainty; note?: string }
 export interface FlowInterco { from: string; to: string; nature: string; amount?: string; treatment: string }
 export interface FlowMap {
   summary: string;
@@ -47,6 +49,8 @@ export const FLOW_TOOL = {
         required: ["source", "channel", "account", "delay", "certainty"] } },
       outflows: { type: "array", items: { type: "object", properties: {
         payee: S("qui est payé"), category: { type: "string", enum: OUT_CATEGORIES }, account: S("id du compte débité"), via: S("intermédiaire (ex. PayPal, carte)"),
+        match: S("mot-clé de la contrepartie TEL QU'IL APPARAÎT dans le relevé (colonne contrepartie du résumé, en minuscules, ex. « hanayaka », « bigblue », « paypal ») ; vide si le poste regroupe plusieurs contreparties"),
+        amount: N("montant EXACT d'une opération (EUR) seulement si la même contrepartie porte deux flux différents (ex. prêt PayPal 6628 vs pub PayPal) ; sinon vide"),
         amount_month: N("montant mensuel récent (EUR), si connu"), rhythm: S("fréquence / mode (ex. prélevé au fil de la dépense, 2 fois par mois)"),
         terms: S("conditions de paiement (ex. avant réception, 30 jours fin de mois, inconnu)"), certainty: CERT, note: S("précision utile") },
         required: ["payee", "category", "account", "rhythm", "terms", "certainty"] } },
@@ -77,7 +81,8 @@ export function sanitizeFlowMap(x: unknown): FlowMap {
     inflows: arr(o.inflows, (f) => str(f.channel) ? { source: str(f.source, 120) || "clients", channel: str(f.channel, 120), account: str(f.account, 40),
       ...(num(f.amount_month) != null ? { amount_month: num(f.amount_month) } : {}), delay: str(f.delay, 160) || "inconnu", certainty: cert(f.certainty), ...(str(f.note) ? { note: str(f.note) } : {}) } : null, 20),
     outflows: arr(o.outflows, (f) => str(f.payee) ? { payee: str(f.payee, 120), category: (OUT_CATEGORIES.includes(f.category as OutCategory) ? f.category : "autre") as OutCategory,
-      account: str(f.account, 40), ...(str(f.via) ? { via: str(f.via, 80) } : {}), ...(num(f.amount_month) != null ? { amount_month: num(f.amount_month) } : {}),
+      account: str(f.account, 40), ...(str(f.via) ? { via: str(f.via, 80) } : {}), ...(str(f.match) ? { match: str(f.match, 60).toLowerCase() } : {}),
+      ...(typeof f.amount === "number" && isFinite(f.amount) && f.amount > 0 ? { amount: Math.round(f.amount * 100) / 100 } : {}), ...(num(f.amount_month) != null ? { amount_month: num(f.amount_month) } : {}),
       rhythm: str(f.rhythm, 160) || "inconnu", terms: str(f.terms, 160) || "inconnues", certainty: cert(f.certainty), ...(str(f.note) ? { note: str(f.note) } : {}) } : null, 30),
     interco: arr(o.interco, (f) => str(f.from) && str(f.to) ? { from: str(f.from, 80), to: str(f.to, 80), nature: str(f.nature, 160), ...(str(f.amount) ? { amount: str(f.amount, 120) } : {}), treatment: str(f.treatment, 200) } : null, 10),
     open_questions: (Array.isArray(o.open_questions) ? o.open_questions : []).map((q) => str(q, 240)).filter(Boolean).slice(0, 10),

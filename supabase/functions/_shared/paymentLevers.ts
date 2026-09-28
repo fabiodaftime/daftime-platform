@@ -6,7 +6,8 @@
 
 import type { CashForecast } from "./cashForecast.ts";
 
-export type LeverKey = "ads_paypal" | "stock" | "logistics";
+// Clés par défaut (sans carte des flux) ; avec une carte publiée : « carte_<n> », un levier par poste de la carte.
+export type LeverKey = "ads_paypal" | "stock" | "logistics" | `carte_${number}`;
 export interface LeverItem { key: LeverKey; label: string; monthly: number; count: number; how: string; lever: string }
 export interface PaymentLevers {
   period: string;
@@ -15,28 +16,30 @@ export interface PaymentLevers {
   scenario?: { weeks: { week_start: string; balance: number }[]; low: { date: string; balance: number }; below_zero?: string };
   hypothesis: string;
 }
-export interface ClassifiedDebit { tx_date: string; amount: number; cat: string; platform?: string; counterparty?: string | null }
+export interface ClassifiedDebit { tx_date: string; amount: number; cat: string; platform?: string; counterparty?: string | null; label?: string | null }
+/** Définition d'un levier : quels débits il couvre, comment ils sont payés aujourd'hui, quel délai négocier. */
+export interface LeverDef { key: LeverKey; label: string; test: (d: ClassifiedDebit) => boolean; how: (n: number) => string; lever: string }
 
 const r0 = (x: number) => Math.round(x);
 const LEVER_DAYS = 30;
 
 // excludeCounterparties : sorties ponctuelles à confirmer (ex. virement exceptionnel classé « logistique ») — pas un flux récurrent.
-export function paymentLevers(debits: ClassifiedDebit[], period: string, excludeCounterparties: string[] = []): PaymentLevers | null {
+// defs : leviers décrits par la carte des flux (flowRules.leverDefsFromMap) ; à défaut, les 3 postes par défaut.
+export function paymentLevers(debits: ClassifiedDebit[], period: string, excludeCounterparties: string[] = [], defs?: LeverDef[] | null): PaymentLevers | null {
   const ym = period.slice(0, 7);
   const ex = new Set(excludeCounterparties.map((x) => x.toLowerCase().trim()));
   const month = debits.filter((d) => d.tx_date.slice(0, 7) === ym && d.amount < 0 && !ex.has(String(d.counterparty ?? "").toLowerCase().trim()));
-  const sum = (f: (d: ClassifiedDebit) => boolean) => { const xs = month.filter(f); return { total: -xs.reduce((s, d) => s + d.amount, 0), n: xs.length }; };
   const viaPaypal = (d: ClassifiedDebit) => d.cat === "ads" && /paypal/i.test(`${d.platform ?? ""} ${d.counterparty ?? ""}`);
-  const defs: [LeverKey, string, (d: ClassifiedDebit) => boolean, (n: number) => string, string][] = [
-    ["ads_paypal", "Pub Meta / TikTok (via PayPal)", viaPaypal, (n) => `prélevée au fil de la dépense (${n} prélèvements)`, "facturation mensuelle de la régie (paiement à 30 jours)"],
-    ["stock", "Stock (fournisseurs)", (d) => d.cat === "stock", (n) => `payé avant réception (${n} virements)`, "paiement à 30 jours après livraison, ou acompte réduit"],
-    ["logistics", "Logistique (3PL)", (d) => d.cat === "logistics", (n) => `${n} prélèvement${n > 1 ? "s" : ""} dans le mois`, "facture mensuelle payée à 30 jours"],
+  const list: LeverDef[] = defs?.length ? defs : [
+    { key: "ads_paypal", label: "Pub Meta / TikTok (via PayPal)", test: viaPaypal, how: (n) => `prélevée au fil de la dépense (${n} prélèvements)`, lever: "facturation mensuelle de la régie (paiement à 30 jours)" },
+    { key: "stock", label: "Stock (fournisseurs)", test: (d) => d.cat === "stock", how: (n) => `payé avant réception (${n} virements)`, lever: "paiement à 30 jours après livraison, ou acompte réduit" },
+    { key: "logistics", label: "Logistique (3PL)", test: (d) => d.cat === "logistics", how: (n) => `${n} prélèvement${n > 1 ? "s" : ""} dans le mois`, lever: "facture mensuelle payée à 30 jours" },
   ];
+  // Chaque débit compte pour UN levier (le premier qui le couvre) : pas de double comptage.
+  const acc = list.map(() => ({ total: 0, n: 0 }));
+  for (const d of month) { const i = list.findIndex((l) => l.test(d)); if (i >= 0) { acc[i].total -= d.amount; acc[i].n++; } }
   const items: LeverItem[] = [];
-  for (const [key, label, f, how, lever] of defs) {
-    const { total, n } = sum(f);
-    if (total >= 1000) items.push({ key, label, monthly: r0(total), count: n, how: how(n), lever });
-  }
+  list.forEach((l, i) => { if (acc[i].total >= 1000) items.push({ key: l.key, label: l.label, monthly: r0(acc[i].total), count: acc[i].n, how: l.how(acc[i].n), lever: l.lever }); });
   if (!items.length) return null;
   const total = items.reduce((s, i) => s + i.monthly, 0);
   return { period, items: items.sort((a, b) => b.monthly - a.monthly), total,

@@ -21,6 +21,8 @@ Règles :
 - Les remboursements de prêt (catégorie « loan » du relevé, même via PayPal) vont en « financement », avec leur rythme (ex. chaque semaine).
 - Un flux ponctuel (1 ou 2 opérations sur la période) n'a PAS de montant mensuel : mets le montant total et la date dans « note ».
 - « open_questions » : ce qu'il faut demander au client pour compléter la carte (délais fournisseurs, comptes manquants, nature d'un flux).
+- La carte ALIMENTE LE MOTEUR : pour chaque sortie qui correspond à UNE contrepartie du relevé, renseigne « match » avec le mot-clé de cette contrepartie tel qu'il apparaît dans le résumé (minuscules, le plus court qui reste sans ambiguïté, ex. « hanayaka », « bigblue »). Si une même contrepartie porte deux flux différents (ex. PayPal = pub ET prêt), mets le mot-clé sur les deux et « amount » (montant exact d'une opération) sur celui qui a un montant fixe. Laisse « match » vide pour un poste qui regroupe plusieurs contreparties.
+- « in_treasury » d'un compte = son solde fait partie de la trésorerie du shop. Un compte personnel ou d'une autre société qui paie des dépenses du shop est HORS trésorerie (false) : ses dépenses restent des charges du shop.
 Réponds en appelant l'outil.`;
 
 Deno.serve(async (req) => {
