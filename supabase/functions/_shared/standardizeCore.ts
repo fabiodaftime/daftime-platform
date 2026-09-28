@@ -345,6 +345,22 @@ export function stockByProduct(m: Merged, period: string, reporting: string): vo
     label: `Stock dormant : ${fmt(dVal)} ${reporting} sur ${dormant.length} produit(s) sans aucune vente ce mois (${dormant.slice(0, 3).map((r) => r.label).join(", ")}${dormant.length > 3 ? "…" : ""}) — cash gelé : déstockage, bundle ou mise en avant.` });
 }
 
+// COHORTES → réachat et marge à 60 jours (doctrine §4.3–4.5) : dernière cohorte dont la fenêtre de 60 jours est
+// complète (≥ 100 clients). Répartition « cohortes » pour la page Acquisition ; lignes du catalogue pour les points.
+export function cohortMetrics(m: Merged): void {
+  const rows = m.kept.find((e) => Array.isArray(e.aux?.cohorts))?.aux?.cohorts as { month: string; customers: number; n60: number; repeat60: number; orders60: number; n90: number; repeat90: number }[] | undefined;
+  if (!rows?.length) return;
+  const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  const lab = (ym: string) => `${MOIS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+  m.breakdowns.cohorts = { label: "Cohortes : réachat des clients acquis chaque mois (hors échanges de taille)",
+    rows: rows.map((r) => ({ label: lab(r.month), value: r.repeat60, values: { customers: r.customers, ...(r.n60 >= 50 && r.n60 >= r.customers * 0.9 ? { repeat60: r.repeat60, orders60: r.orders60 } : {}), ...(r.n90 >= 50 && r.n90 >= r.customers * 0.9 ? { repeat90: r.repeat90 } : {}) } })), // fenêtre complète seulement
+    columns: [{ key: "customers", label: "Nouveaux clients", unit: "" }, { key: "repeat60", label: "Réachat à 60 j", unit: "%", emphasis: true }, { key: "orders60", label: "Commandes / client à 60 j", unit: "" }, { key: "repeat90", label: "Réachat à 90 j", unit: "%" }] };
+  const last = [...rows].reverse().find((r) => r.n60 >= 100 && r.n60 >= r.customers * 0.9);
+  if (!last) return;
+  m.values.repeat_60d = last.repeat60; m.values.orders_60d = last.orders60;
+  m.sources.repeat_60d = m.sources.orders_60d = `cohorte de ${lab(last.month)} (${last.n60} nouveaux clients), commandes du 3PL, hors échanges de taille`;
+}
+
 // PUB EN ENGAGEMENT (doctrine) : la dépense des plateformes du mois (Triple Whale, gestionnaires de pub) remplace
 // les PAIEMENTS vus en banque (paliers, recharges PayPal, décalages). Les paiements restent la base de la trésorerie.
 export interface AdsSpend { platforms: Record<string, number>; source: string }

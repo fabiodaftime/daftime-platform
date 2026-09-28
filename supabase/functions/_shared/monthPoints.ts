@@ -50,7 +50,12 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
       text: ratio >= 1
         ? `Chaque nouveau client est rentable dès sa 1re commande : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)})${merTail}.`
         : ratio >= 0.7
-          ? `Tu perds de l'argent à la 1re commande : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)}). Ça ne se rattrape qu'avec un réachat prouvé${rep != null ? ` (${pct(rep)} de clients récurrents ce mois)` : ""} et un payback court — sinon freine la pub ou répare la marge${merTail}.`
+          ? (n("orders_60d") != null && n("repeat_60d") != null
+            ? (() => {
+              const ltv = n("orders_60d")! * cpo, cover = ltv / cac;
+              return `Tu perds de l'argent à la 1re commande (ratio ${dec2(ratio)} : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client). Tes cohortes : ${pct(n("repeat_60d")!)} de réachat à 60 jours, soit ${eur(ltv)} de marge par client sur 60 jours — ${cover >= 1.2 ? "l'acquisition se rembourse en moins de 60 jours" : cover >= 1 ? "remboursé en 60 jours, sans marge d'erreur : si le coût par nouveau client monte encore, ça ne se rattrape plus" : "pas remboursé en 60 jours : freine la pub ou répare la marge"}${merTail}.`;
+            })()
+            : `Tu perds de l'argent à la 1re commande : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)}). Ça ne se rattrape qu'avec un réachat prouvé${rep != null ? ` (${pct(rep)} de clients récurrents ce mois)` : ""} et un payback court — sinon freine la pub ou répare la marge${merTail}.`)
           : `Stop scale : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)}, sous 0,7) — le trou ne se rebouchera probablement pas. Répare d'abord la marge (cascade)${merTail}.` });
   } else if (mer != null && be != null) {
     const head = (mer / be - 1) * 100;

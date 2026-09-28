@@ -624,10 +624,39 @@ function bigblueInvoice(name: string, rows: string[][], ctx: ParseCtx): ParsedEx
 }
 
 // Export commandes Bigblue : articles expédiés et ventes par pays (TTC). Le CA reste celui de Shopify.
+// COHORTES DE RÉACHAT (doctrine §4.3) depuis l'export commandes du 3PL : mois de 1re commande, puis réachat à 60 et
+// 90 jours. Un « réachat » juste après une 1re commande RETOURNÉE (≤ 30 j, seule commande suivante) est un échange
+// de taille, pas un réachat. Le premier mois du fichier est écarté (historique antérieur inconnu). L'e-mail ne sert
+// qu'à regrouper les commandes d'un même client dans cette fonction : il n'est ni stocké ni renvoyé.
+export interface CohortRow { month: string; customers: number; n60: number; repeat60: number; orders60: number; n90: number; repeat90: number }
+export function repeatCohorts(orders: { key: string; date: string; returned: boolean }[], end: string): CohortRow[] {
+  const add = (d: string, n: number) => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const by = new Map<string, { date: string; returned: boolean }[]>();
+  for (const o of orders) if (o.key && o.date) (by.get(o.key) ?? by.set(o.key, []).get(o.key)!).push(o);
+  const first = [...orders].map((o) => o.date).filter(Boolean).sort()[0]?.slice(0, 7);
+  const acc: Record<string, { c: number; n60: number; r60: number; o60: number; n90: number; r90: number }> = {};
+  for (const os of by.values()) {
+    os.sort((a, b) => (a.date < b.date ? -1 : 1));
+    const f0 = os[0], m = f0.date.slice(0, 7);
+    if (m === first) continue;
+    const x = (acc[m] ??= { c: 0, n60: 0, r60: 0, o60: 0, n90: 0, r90: 0 }); x.c++;
+    const after = (days: number) => os.slice(1).filter((o) => o.date > f0.date && o.date <= add(f0.date, days));
+    const isExchange = (next: { date: string }[]) => f0.returned && next.length === 1 && next[0].date <= add(f0.date, 30);
+    if (add(f0.date, 60) <= end) { const nx = after(60); x.n60++; const real = isExchange(nx) ? 0 : nx.length; if (real) x.r60++; x.o60 += 1 + real; }
+    if (add(f0.date, 90) <= end) { const nx = after(90); x.n90++; if (nx.length && !isExchange(nx)) x.r90++; }
+  }
+  const pc = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
+  return Object.entries(acc).sort().map(([month, x]) => ({ month, customers: x.c, n60: x.n60, repeat60: pc(x.r60, x.n60), orders60: x.n60 ? Math.round((x.o60 / x.n60) * 100) / 100 : 0, n90: x.n90, repeat90: pc(x.r90, x.n90) }));
+}
+
 function bigblueOrders(_name: string, rows: string[][], ctx: ParseCtx): ParsedExtract {
   const h = rows[0];
-  const iD = idx(h, "Date"), iSt = idx(h, "Order Status"), iTp = idx(h, "Total Price"), iN = idx(h, "Number Items Ordered"), iCo = idx(h, "Country");
+  const iD = idx(h, "Date"), iSt = idx(h, "Order Status"), iTp = idx(h, "Total Price"), iN = idx(h, "Number Items Ordered"), iCo = idx(h, "Country"), iE = idx(h, "Customer Email");
   let orders = 0, units = 0, ttc = 0, cancelled = 0, returned = 0; const byCo: Record<string, number> = {};
+  // Cohortes : sur TOUT le fichier (pas seulement le mois), jusqu'à la fin du mois standardisé.
+  const cohortOrders = iE >= 0 ? rows.slice(1).filter((r) => !/cancel/i.test(r[iSt] ?? "")).map((r) => ({ key: (r[iE] ?? "").trim().toLowerCase(), date: isoOf(r[iD]) ?? "", returned: /^return/i.test((r[iSt] ?? "").trim()) }))
+    .filter((o) => o.date && o.date <= lastDayOf(ctx.period)) : [];
+  const cohorts = cohortOrders.length ? repeatCohorts(cohortOrders, lastDayOf(ctx.period)) : [];
   for (const r of rows.slice(1)) {
     if (!inMonth(r[iD], ctx.period)) continue;
     if (/cancel/i.test(r[iSt] ?? "")) { cancelled++; continue; }
@@ -636,7 +665,7 @@ function bigblueOrders(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
     const co = (r[iCo] ?? "").trim(); if (co) byCo[co] = (byCo[co] ?? 0) + p;
   }
   return { parser: "bigblue_orders", role: "analytics", source_type: "sales_export", currency: ctx.reporting,
-    values: orders ? { units } : {}, exclusive: true, priority: 100, ...(orders ? { aux: { shippedOrders: orders, returnedOrders: returned } } : {}),
+    values: orders ? { units } : {}, exclusive: true, priority: 100, ...(orders ? { aux: { shippedOrders: orders, returnedOrders: returned, ...(cohorts.length ? { cohorts } : {}) } } : {}),
     sources: { units: `Σ «Number Items Ordered» des commandes Bigblue de ${ctx.period.slice(0, 7)} (hors annulées) · ${orders} commande(s)` },
     breakdowns: orders ? { sales_by_country: { label: "Ventes expédiées par pays (TTC, Bigblue)", rows: topN(byCo, 10) } } : undefined,
     note: orders ? `Bigblue ${ctx.period.slice(0, 7)} : ${orders} commandes expédiées (${cancelled} annulée(s)), ${units} articles, ${fmtE(ttc)} ${ctx.reporting} TTC.` : undefined };
@@ -875,7 +904,7 @@ export function parseFile(name: string, text: string, ctx: ParseCtx): ParsedExtr
   const head = parseCsv(nl > 0 ? text.slice(0, nl) : text)[0] ?? [];
   const lean = (names: string[]) => parseCsvKeep(text, new Set(names.map((n) => idx(head, n)).filter((i) => i >= 0)));
   if (has(head, "External Order ID") && has(head, "Number Items Ordered"))
-    return bigblueOrders(name, lean(["Date", "Order Status", "Total Price", "Number Items Ordered", "Country"]), ctx);
+    return bigblueOrders(name, lean(["Date", "Order Status", "Total Price", "Number Items Ordered", "Country", "Customer Email"]), ctx); // e-mail : cohortes, jamais stocké
   if (has(head, "Cost of goods sold") && has(head, "Month") && (has(head, "Order name") || has(head, "Sale ID")))
     return shopify(name, lean(["Month", "Order name", "Sale ID", "Product title at time of sale", "Product variant title at time of sale", "Cost of goods sold"]), ctx);
 

@@ -120,3 +120,23 @@ describe("doctrine §7 — stock par produit", () => {
     expect(m.flags.find((f) => f.id === "_stock_dormant")!.label).toMatch(/4\s500 EUR sur 1 produit/);
   });
 });
+
+describe("doctrine §4.3 — cohortes de réachat (3PL)", () => {
+  it("réachat à 60 / 90 jours, échanges de taille exclus, 1er mois du fichier écarté", async () => {
+    const { repeatCohorts } = await import("../parsers.ts");
+    const o = (key: string, date: string, returned = false) => ({ key, date, returned });
+    const c = repeatCohorts([
+      o("old", "2026-01-05"), o("old", "2026-03-10"),                               // 1er mois du fichier : écarté
+      o("a", "2026-03-01"), o("a", "2026-04-15"),                                   // réachat à 45 j
+      o("b", "2026-03-02", true), o("b", "2026-03-12"),                             // échange de taille, pas un réachat
+      o("c", "2026-03-03"),                                                         // pas de réachat
+      o("d", "2026-03-04"), o("d", "2026-05-20"),                                   // réachat à 77 j (90 j seulement)
+    ], "2026-08-31");
+    expect(c.map((r) => [r.month, r.customers, r.repeat60, r.orders60, r.repeat90])).toEqual([["2026-03", 4, 25, 1.25, 50]]);
+  });
+  it("marge 60 jours vs CAC dans le point acquisition", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    const a = selectMonthPoints({ cm2_per_order: 39.63, cac: 51.45, repeat_60d: 22.2, orders_60d: 1.35, mer: 2.27, breakeven_roas: 1.85 }, null).find((x) => x.key === "acquisition")!;
+    expect(a.text).toMatch(/22,2\s% de réachat à 60 jours, soit 54\s€ de marge par client sur 60 jours — remboursé en 60 jours, sans marge d'erreur/);
+  });
+});
