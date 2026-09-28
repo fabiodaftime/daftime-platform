@@ -390,6 +390,7 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     set("gross_sales", "Gross sales", pick("Gross sales"));
     const rev = pick("Sales reversals"); set("refunds", rev != null ? "Sales reversals" : "Returns", rev ?? pick("Returns"), Math.abs);
     set("orders", "Orders", pick("Orders"));
+    set("shipping_billed", "Shipping charges", pick("Shipping charges")); // recette de livraison → déduite de la logistique
     set("sessions", "Sessions", pick("Sessions"));
     set("add_to_carts", "Sessions with cart additions", pick("Sessions with cart additions"));
     if (!Object.keys(v).length) return mk("analytics", {}, {}, { exclusive: true, priority: 0 }); // ratio dérivé (panier moyen, qté/commande…) : recalculé par le moteur
@@ -399,7 +400,7 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     const extras: string[] = [];
     const disc = pick("Discounts"), ship = pick("Shipping charges"), tax = pick("Taxes"), vis = pick("Online store visitors");
     if (disc != null) extras.push(`remises ${fmtE(Math.abs(disc))}`);
-    if (ship != null) extras.push(`frais de port facturés ${fmtE(ship)} (hors CA net)`);
+    if (ship != null) extras.push(`frais de port facturés ${fmtE(ship)} (hors CA net, déduits de la logistique)`);
     if (tax != null) extras.push(`taxes ${fmtE(tax)}`);
     if (vis != null) extras.push(`${fmtE(vis)} visiteurs`);
     const isRevenue = v.ca != null;

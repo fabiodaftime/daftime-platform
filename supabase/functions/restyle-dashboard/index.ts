@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     const html = await renderDashboardWithFx(
       { client: dataJson.client ?? client?.name ?? "", period: dataJson.period ?? (dash as any).period, currency: dataJson.currency ?? client?.currency ?? "EUR", activity: dataJson.activity, benchmarks,
         brand: client?.brand as any, theme, metrics, history: dataJson.history ?? { months: [], series: {}, labels: {} }, breakdowns: dataJson.breakdowns, targets: dataJson.targets,
-        points: (dataJson as any).points ?? null, bridge: (dataJson as any).bridge?.vs_prev ?? (dataJson as any).bridge?.vs_avg3 ?? null, cashForecast: (dataJson as any).cash_forecast ?? null },
+        points: (dataJson as any).points ?? null, bridge: (dataJson as any).bridge?.vs_prev ?? (dataJson as any).bridge?.vs_avg3 ?? null, cashForecast: (dataJson as any).cash_forecast ?? null, paymentLevers: (dataJson as any).payment_levers ?? null },
       { pages: dataJson.plan!.pages as any, theme },
     );
 

@@ -395,7 +395,7 @@ Deno.serve(async (req) => {
     const objectives = ((ctxRow?.data as { objectives?: Record<string, number> } | null)?.objectives) ?? {};
     const rep = prepareReport({ period: period!, currency: (client as { currency?: string } | null)?.currency ?? "EUR",
       activityConfig: (client as { activity_types?: { config?: unknown } } | null)?.activity_types?.config, sdData: sd.data, history: (hist ?? []) as { period: string; data: unknown }[], objectives });
-    const { sections, metrics, history, breakdowns, targets, bridgePrev, bridgeAvg, mainBridge, pointFacts, cashForecast } = rep;
+    const { sections, metrics, history, breakdowns, targets, bridgePrev, bridgeAvg, mainBridge, pointFacts, cashForecast, paymentLevers } = rep;
     const series = history.series;
     const fmtE = (x: number) => Math.round(x).toLocaleString("fr-FR");
     const bridgeText = (b: Bridge | null) => b ? `${b.level.toUpperCase()} ${fmtE(b.from)} (${b.base}) → ${fmtE(b.to)} ce mois (${b.delta >= 0 ? "+" : ""}${fmtE(b.delta)}) : ${b.effects.map((e) => `${e.label} ${e.value >= 0 ? "+" : ""}${fmtE(e.value)}`).join(" ; ")}${b.missing ? ` [${b.missing}]` : ""}` : "";
@@ -569,7 +569,8 @@ Deno.serve(async (req) => {
           try {
             raw = (await callAnthropic({ model: MODELS.quality, max_tokens: 1500, signal: ctrl.signal,
               system: `${DOCTRINE}\nTu écris la LECTURE de chaque page d'un rapport mensuel e-commerce (le rapport, ses graphes et « les 3 points du mois » existent déjà). Pour chaque page : 2 à 3 phrases, tutoiement, concret — le constat chiffré le plus important de la page, sa cause probable, et quoi regarder. N'invente AUCUN chiffre (uniquement ceux fournis), ne répète pas les 3 points mot pour mot. Réponds UNIQUEMENT en JSON : {"insights":[{"page":0,"text":"…","tone":"good|warn|info"}]}`,
-              messages: [{ role: "user", content: `Client : ${client?.name ?? ""} — ${period}\nPAGES : ${readable.map((x) => `${x.i}. ${x.title}`).join(" · ")}\n\nCHIFFRES :\n${metricsText}\n\nPONT D'ÉCARTS : ${bridgeText(mainBridge) || "—"}\nLES 3 POINTS : ${points.map((x) => x.text).join(" | ")}${cashForecast ? `\nTRÉSORERIE 13 SEMAINES : point bas ${fmtE(cashForecast.low.balance)} le ${cashForecast.low.date}${cashForecast.below_zero ? ` (sous zéro le ${cashForecast.below_zero})` : ""}` : ""}${guidance ? `\n\nCONSIGNES DU CONSEILLER (à respecter : angles, indicateurs et vocabulaire demandés) :\n${guidance.slice(0, 4000)}` : ""}${ctxText ? `\n\nCONTEXTE DU DOSSIER (enjeux, objectifs, points de vigilance — relie tes lectures à ces enjeux) :\n${ctxText}` : ""}${cashForecast?.oneoffs?.length ? `\nSORTIES PONCTUELLES NON RECONDUITES dans la projection : ${cashForecast.oneoffs.map((o) => `${o.counterparty} ${fmtE(o.amount)}`).join(", ")}` : ""}${cashForecast?.plan ? `\nSCÉNARIO « ${cashForecast.plan.label} » : point bas ${fmtE(cashForecast.plan.low.balance)} le ${cashForecast.plan.low.date}` : ""}` }] })).text;
+              messages: [{ role: "user", content: `Client : ${client?.name ?? ""} — ${period}\nPAGES : ${readable.map((x) => `${x.i}. ${x.title}`).join(" · ")}\n\nCHIFFRES :\n${metricsText}\n\nPONT D'ÉCARTS : ${bridgeText(mainBridge) || "—"}\nLES 3 POINTS : ${points.map((x) => x.text).join(" | ")}${cashForecast ? `\nTRÉSORERIE 13 SEMAINES : point bas ${fmtE(cashForecast.low.balance)} le ${cashForecast.low.date}${cashForecast.below_zero ? ` (sous zéro le ${cashForecast.below_zero})` : ""}` : ""}${guidance ? `\n\nCONSIGNES DU CONSEILLER (à respecter : angles, indicateurs et vocabulaire demandés) :\n${guidance.slice(0, 4000)}` : ""}${ctxText ? `\n\nCONTEXTE DU DOSSIER (enjeux, objectifs, points de vigilance — relie tes lectures à ces enjeux) :\n${ctxText}` : ""}${cashForecast?.oneoffs?.length ? `\nSORTIES PONCTUELLES NON RECONDUITES dans la projection : ${cashForecast.oneoffs.map((o) => `${o.counterparty} ${fmtE(o.amount)}`).join(", ")}` : ""}${paymentLevers ? `
+ARGENT AVANCÉ CE MOIS (fait) ET LEVIERS DE DÉCALAGE (hypothèse : +30 j de délai obtenus) : ${paymentLevers.items.map((i) => `${i.label} ${fmtE(i.monthly)} (${i.how} ; levier : ${i.lever})`).join(" ; ")} — gain total une fois ${fmtE(paymentLevers.total)}${paymentLevers.scenario ? `, point bas projeté ${fmtE(paymentLevers.scenario.low.balance)} le ${paymentLevers.scenario.low.date}` : ""}` : ""}${cashForecast?.plan ? `\nSCÉNARIO « ${cashForecast.plan.label} » : point bas ${fmtE(cashForecast.plan.low.balance)} le ${cashForecast.plan.low.date}` : ""}` }] })).text;
           } finally { clearTimeout(timer); }
           const ins = extractJson<{ insights?: { page: number; text: string; tone?: string }[] }>(raw).insights ?? [];
           for (const x of ins) {
@@ -592,11 +593,11 @@ Deno.serve(async (req) => {
       }
 
       const html = await renderDashboardWithFx(
-        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets, bridge: mainBridge, points, cashForecast },
+        { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, brand: client?.brand as any, theme: theme as any, metrics, history, breakdowns, targets, bridge: mainBridge, points, cashForecast, paymentLevers },
         plan,
       );
       const clientData = { client: client?.name ?? "", period, currency: client?.currency ?? "EUR", activity, benchmarks: clientBench, sections, history, plan, theme, breakdowns, targets,
-        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg }, cash_forecast: cashForecast, tailoring: { kpis: tailoring.kpis, extras: tailoring.extras } };
+        points, bridge: { vs_prev: bridgePrev, vs_avg3: bridgeAvg }, cash_forecast: cashForecast, payment_levers: paymentLevers, tailoring: { kpis: tailoring.kpis, extras: tailoring.extras } };
       const saved = await insertVersion(admin, "dashboards", { client_id, period }, {
         standardized_data_id: sd.id, html, data_json: clientData, status: "draft_ia", created_by: user.id,
       });

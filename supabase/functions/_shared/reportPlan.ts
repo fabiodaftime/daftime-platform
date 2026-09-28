@@ -104,6 +104,7 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = [], tailor: Ta
   const cash: Widget[] = [
     ...W(kpis("cash_end", "cash_variation", "cash_start", ...(ex.has("stock") ? ["inventory_value", "stock_days"] : ["inventory_value"]))),
     ...W(d.cashForecast && { type: "cash_forecast" }),
+    ...W(d.paymentLevers?.items?.length && { type: "payment_levers" }),
     ...W(trend("cash_end") && { type: "line", title: "Trésorerie de fin de mois", metrics: ["cash_end"] }),
   ];
   if (cash.length >= 2) pages.push({ key: "tresorerie", title: REPORT_PAGES[3], widgets: cash });

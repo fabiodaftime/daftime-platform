@@ -7,6 +7,7 @@ import { averageBase, flatValues, marginBridge, type Bridge } from "./marginBrid
 import { selectMonthPoints, type MonthPoint } from "./monthPoints.ts";
 import { buildStandardized, getCatalog } from "./templates.ts";
 import type { CashForecast } from "./cashForecast.ts";
+import type { PaymentLevers } from "./paymentLevers.ts";
 
 export type Row = { id?: string; label?: string; value?: unknown; unit?: string; type?: string; change_pct?: number };
 export type Sec = { label?: string; rows: Row[] };
@@ -36,7 +37,7 @@ export interface ReportData {
   breakdowns: Record<string, Bk> | undefined; targets: Record<string, number>;
   curMap: Record<string, number>; prevMap: Record<string, number>;
   bridgePrev: Bridge | null; bridgeAvg: Bridge | null; mainBridge: Bridge | null;
-  pointFacts: MonthPoint[]; cashForecast: CashForecast | null;
+  pointFacts: MonthPoint[]; cashForecast: CashForecast | null; paymentLevers: PaymentLevers | null;
 }
 
 export function prepareReport(inp: ReportInput): ReportData {
@@ -58,6 +59,7 @@ export function prepareReport(inp: ReportInput): ReportData {
   const bridgeAvg = avg3 ? marginBridge(curMap, avg3, "moyenne des 3 mois précédents") : null;
   const mainBridge = bridgePrev ?? bridgeAvg;
   const cashForecast = ((inp.sdData as { cash_forecast?: CashForecast })?.cash_forecast) ?? null;
+  const paymentLevers = ((inp.sdData as { payment_levers?: PaymentLevers })?.payment_levers) ?? null;
   const pointFacts = selectMonthPoints(curMap, mainBridge, currency, undefined, cashForecast);
 
   const breakdowns = (inp.sdData as { breakdowns?: Record<string, Bk> })?.breakdowns
@@ -112,7 +114,7 @@ export function prepareReport(inp: ReportInput): ReportData {
   const metrics: Record<string, Metric> = {};
   for (const s of sections) for (const r of s.rows) if (typeof r.value === "number" && r.id) metrics[r.id] = { value: r.value, label: r.label ?? r.id, unit: r.unit ?? "", change_pct: r.change_pct ?? null };
 
-  return { sections, metrics, history, breakdowns, targets, curMap, prevMap, bridgePrev, bridgeAvg, mainBridge, pointFacts, cashForecast };
+  return { sections, metrics, history, breakdowns, targets, curMap, prevMap, bridgePrev, bridgeAvg, mainBridge, pointFacts, cashForecast, paymentLevers };
 }
 
 // Indicateurs dérivés au rendu, sur chaque mois (valeurs stockées prioritaires). Coûts variables = CA − CM3

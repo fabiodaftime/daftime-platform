@@ -27,7 +27,7 @@ describe("dates et plages", () => {
 describe("Shopify — séries mensuelles (colonne Month)", () => {
   it("prend la ligne du mois, jamais la somme des mois ni la colonne N-1", () => {
     const aug = parseFile("Total sales over time - 2026-01-01 - 2026-08-31.csv", F.TOTAL_SALES, F.ctx(AUG))!;
-    expect(aug.values).toEqual({ ca: 1020, gross_sales: 1200, refunds: 60, orders: 120 });
+    expect(aug.values).toEqual({ ca: 1020, gross_sales: 1200, refunds: 60, orders: 120, shipping_billed: 36 });
     expect(aug.revenueCandidate).toBe(1020);
     expect(aug.exclusive).toBe(true);
     const jul = parseFile("Total sales over time - 2026-01-01 - 2026-08-31.csv", F.TOTAL_SALES, F.ctx(JUL))!;

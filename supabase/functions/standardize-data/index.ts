@@ -22,15 +22,16 @@ import { ratesToReporting } from "../_shared/fx.ts";
 import { classifyDebit, parseFile, pennylaneTransactions, type ParsedExtract } from "../_shared/parsers.ts";
 import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact } from "../_shared/registry.ts";
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
-import { forecastCash } from "../_shared/cashForecast.ts";
-import { applyCostParams, completeLogistics, finalize, mergeParsed, type CostParams } from "../_shared/standardizeCore.ts";
+import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
+import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
+import { applyCostParams, completeLogistics, finalize, mergeParsed, netShippingBilled, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls } from "../_shared/controls.ts";
 import { flatValues } from "../_shared/marginBridge.ts";
 import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeClassified, splitByConfidence, toClassify,
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-28.5";
+const ENGINE_VERSION = "2026-09-28.6";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -346,6 +347,7 @@ Deno.serve(async (req) => {
         label: `Débits qualifiés automatiquement par l'IA (hypothèse, à vérifier dans « Contreparties ») : ${iaRules.slice(0, 8).map((r) => `${r.label ?? r.match} → ${CP_CATEGORY_LABELS[r.category as CpCategory] ?? r.category}${r.confidence ? ` (${Math.round(r.confidence * 100)} %)` : ""}`).join(" · ")}${iaRules.length > 8 ? ` · +${iaRules.length - 8}` : ""}.` });
       applyCostParams(merged, costParams, currency);
       completeLogistics(merged, period, currency);
+      netShippingBilled(merged, currency);
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
         if (typeof o?.value !== "number" || !isFinite(o.value)) continue;
@@ -439,6 +441,7 @@ Deno.serve(async (req) => {
       const reliability = reliabilityIndex(cur, controls, merged.kept);
       // 7) TRÉSORERIE À 13 SEMAINES (registre : flux au jour) — seulement si la trésorerie de fin de mois est connue.
       let cashForecast: unknown = null;
+      let paymentLv: PaymentLevers | null = null;
       if (typeof cur.cash_end === "number") {
         try {
           const [y, mo] = period.slice(0, 7).split("-").map(Number);
@@ -475,10 +478,19 @@ Deno.serve(async (req) => {
               plan = { label: `plan ${Math.round(caAnnual / 1e5) / 10} M`, factor: (ym) => (ym.startsWith(String(y)) ? k : 1) };
             }
           }
-          cashForecast = forecastCash(useApi ? txs.filter((t) => t.source !== "pennylane_file") : txs, asOf, cur.cash_end, { exclude, plan });
+          const txsUsed = useApi ? txs.filter((t) => t.source !== "pennylane_file") : txs;
+          cashForecast = forecastCash(txsUsed, asOf, cur.cash_end, { exclude, plan });
+          // LEVIERS DE DÉCALAGE : argent avancé dans le mois par poste (débits classés par les règles du dossier)
+          // + scénario de projection si 30 jours de délai sont obtenus.
+          const debits = txsUsed.filter((t) => t.amount < 0).map((t) => {
+            const c = classifyDebit(`${t.label ?? ""} ${t.counterparty ?? ""}`, categoryRules);
+            return { tx_date: t.tx_date, amount: t.amount, cat: c.cat, platform: c.platform, counterparty: t.counterparty };
+          });
+          const lv = paymentLevers(debits, period, ((cashForecast as CashForecast | null)?.oneoffs ?? []).map((o) => o.counterparty));
+          if (lv) { if (cashForecast) lv.scenario = leverScenario(cashForecast as CashForecast, lv.total); paymentLv = lv; }
         } catch (e) { console.warn("trésorerie 13 semaines :", e instanceof Error ? e.message : String(e)); }
       }
-      dataToSave = { ...out.data, controls, reliability, ...(cashForecast ? { cash_forecast: cashForecast } : {}), meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,
+      dataToSave = { ...out.data, controls, reliability, ...(cashForecast ? { cash_forecast: cashForecast } : {}), ...(paymentLv ? { payment_levers: paymentLv } : {}), meta: { ...(out.data.meta as Record<string, unknown>), engine: ENGINE_VERSION, files_period: filesPeriod, registry_check: registryCheck,
         ...(merged.cogsMissingProducts?.length ? { cogs_missing_products: merged.cogsMissingProducts.slice(0, 60) } : {}),
         ...(bankAccounts.length ? { bank_accounts: bankAccounts } : {}) } };
       missing = out.missing;

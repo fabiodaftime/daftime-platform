@@ -218,6 +218,21 @@ export function completeLogistics(m: Merged, period: string, reporting: string):
   m.flags.push({ id: "_logistics_partial", severity: "warn", label: `Logistique : les factures reçues s'arrêtent au ${to.slice(8, 10)}/${to.slice(5, 7)} — le reste du mois est estimé (+${fmt(add)} ${reporting}, au rythme observé). Ajoute la facture suivante du 3PL pour le montant réel.` });
 }
 
+// PORT FACTURÉ AUX CLIENTS : c'est la recette de la livraison. Le CA reste les ventes nettes Shopify (validé
+// au centime) ; le port facturé vient donc en DÉDUCTION du coût logistique (CM2) — sinon la livraison est
+// comptée en coût sans sa recette et la marge est sous-estimée. Appliqué APRÈS l'estimation de fin de mois
+// (le port facturé couvre déjà le mois entier).
+export function netShippingBilled(m: Merged, reporting: string): void {
+  const billed = m.values.shipping_billed;
+  delete m.values.shipping_billed; delete m.sources.shipping_billed; delete m.traces.shipping_billed; delete m.confidence.shipping_billed;
+  if (billed == null || !(billed > 0) || m.values.shipping_cost == null) return;
+  const gross = m.values.shipping_cost;
+  m.values.shipping_cost = r2(gross - billed);
+  (m.traces.shipping_cost ??= [{ src: m.sources.shipping_cost ?? "logistique", value: gross }]).push({ src: "port facturé aux clients (Shopify « Shipping charges ») — déduit", value: -r2(billed) });
+  m.sources.shipping_cost = `${m.sources.shipping_cost ?? ""} − port facturé aux clients ${fmt(billed)} ${reporting}`;
+  m.flags.push({ id: "_shipping_billed", severity: "info", label: `Logistique nette du port facturé aux clients : ${fmt(gross)} − ${fmt(billed)} = ${fmt(m.values.shipping_cost)} ${reporting}.` });
+}
+
 // 3) FINALISATION : fusion IA (ne comble que les trous), calcul, flags, tri des absences.
 export interface FinalizeInput {
   tpl: Catalog; activity: string; currency: string; period: string; entity: string | null;

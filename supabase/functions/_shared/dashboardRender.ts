@@ -8,6 +8,7 @@ import { ratesToReporting } from "./fx.ts";
 import type { Bridge } from "./marginBridge.ts";
 import type { MonthPoint } from "./monthPoints.ts";
 import type { CashForecast } from "./cashForecast.ts";
+import type { PaymentLevers } from "./paymentLevers.ts";
 
 export interface Metric { value: number | null; label: string; unit: string; change_pct?: number | null }
 // Colonne d'un breakdown MULTI-COLONNES (ex. perf par canal : CA, commission, marge…).
@@ -28,6 +29,7 @@ export interface RenderCtx {
   fxRate?: number; // taux AED pour 1 EUR (bascule devise) — injecté par renderDashboardWithFx ; repli constant sinon
   bridge?: Bridge | null;      // pont d'écarts de marge (déterministe) — widget "bridge"
   cashForecast?: CashForecast | null; // trésorerie à 13 semaines — widget "cash_forecast"
+  paymentLevers?: PaymentLevers | null; // argent avancé + leviers de décalage — widget "payment_levers"
   points?: MonthPoint[] | null; // les 3 points du mois — widget "points"
 }
 export interface Widget {
@@ -41,7 +43,8 @@ export interface Widget {
     | "scatter" // nuage de points volume (CA) vs marge % — lit un breakdown à colonnes
     | "points"  // les 3 points du mois (doctrine) — lit ctx.points
     | "bridge" // pont d'écarts de marge vs M-1 — lit ctx.bridge
-    | "cash_forecast"; // trésorerie à 13 semaines (point bas) — lit ctx.cashForecast
+    | "cash_forecast" // trésorerie à 13 semaines (point bas) — lit ctx.cashForecast
+    | "payment_levers"; // argent avancé par poste + leviers de décalage — lit ctx.paymentLevers
   title?: string; metrics?: string[]; items?: { metric: string }[]; breakdown?: string;
   line?: string; // widget "combo" : id de la métrique tracée en courbe (2e axe)
   rows?: { label: string; value: number | null; unit?: string; type?: string; change_pct?: number | null }[];
@@ -140,7 +143,7 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
   const has = (id: string) => M[id] && M[id].value != null;
   // "full" = pleine largeur (graphes larges) ; "wide" = 2/3 ; le reste tient en 1/3 pour densifier (4-10 widgets/page).
   // callout = bandeau d'analyse → TOUJOURS pleine largeur (bande fine sur toute la largeur, jamais un bloc 1/3 épais).
-  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table", "callout", "points"]);
+  const fullTypes = new Set(["kpi_row", "map", "flow", "calendar", "matrix", "river", "table", "trend_grid", "sankey", "scorecard", "matrix_table", "callout", "points", "payment_levers"]);
   const wideTypes = new Set(["funnel", "waterfall", "combo", "stacked_area", "stacked", "comparison", "histogram", "scatter", "bridge", "cash_forecast"]);
   const cellCls = (t: string) => (fullTypes.has(t) ? "full" : wideTypes.has(t) ? "wide" : "half");
   const col = (i: number) => palette[i % palette.length];
@@ -646,18 +649,34 @@ export function renderDashboard(ctx: RenderCtx, plan: DashPlan): string {
         if (!f || !f.weeks?.length) return "";
         const d = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
         const id = `ch${cid++}`;
-        const series = [{ name: f.plan ? "Au rythme actuel" : "Trésorerie projetée", data: [f.start.balance, ...f.weeks.map((x) => x.balance)], color: f.below_zero ? "#e24b4a" : primary }];
+        const series = [{ name: f.plan || ctx.paymentLevers?.scenario ? "Au rythme actuel" : "Trésorerie projetée", data: [f.start.balance, ...f.weeks.map((x) => x.balance)], color: f.below_zero ? "#e24b4a" : primary }];
         if (f.plan?.weeks?.length) series.push({ name: `Selon ton ${f.plan.label}`, data: [f.start.balance, ...f.plan.weeks.map((x) => x.balance)], color: distinctFrom(primary) });
+        const lvs = ctx.paymentLevers?.scenario;
+        if (lvs?.weeks?.length === f.weeks.length) series.push({ name: "Avec 30 j de délai négociés", data: [f.start.balance, ...lvs.weeks.map((x) => x.balance)], color: GOOD });
         charts.push({ id, kind: "line", labels: [d(f.start.date), ...f.weeks.map((x) => d(x.week_start))], series });
         const m = (x: number) => fmt(x, ctx.currency, ctx.currency);
         const lowOf = (s: { low: { date: string; balance: number }; below_zero?: string }) => s.below_zero
           ? `passage sous zéro le ${d(s.below_zero)} · point bas ${m(s.low.balance)} le ${d(s.low.date)}` : `point bas ${m(s.low.balance)} le ${d(s.low.date)}`;
-        const lowTxt = f.plan ? `Au rythme actuel : ${lowOf(f)} — selon ton ${f.plan.label} : ${lowOf(f.plan)}` : lowOf(f).replace(/^./, (c) => c.toUpperCase());
+        const lowTxt = (f.plan ? `Au rythme actuel : ${lowOf(f)} — selon ton ${f.plan.label} : ${lowOf(f.plan)}` : lowOf(f).replace(/^./, (c) => c.toUpperCase()))
+          + (lvs ? (lvs.low.date === f.start.date ? " — avec les délais négociés : plus de baisse sous le niveau actuel" : ` — avec les délais négociés : ${lowOf(lvs)}`) : "");
         const notes = [f.hypotheses?.[0] ?? "", ...(f.oneoffs?.length ? [`Sorties ponctuelles non reconduites : ${f.oneoffs.slice(0, 3).map((o) => `${o.counterparty} ${m(o.amount)}`).join(", ")}.`] : []),
           ...(f.neutralized ? [`Virements entre tes comptes neutralisés (${m(f.neutralized)}).`] : [])].filter(Boolean);
         return `<div class="card chartcard"><div class="card-t">${esc(w.title ?? "Trésorerie à 13 semaines")}</div>` +
           `<div class="co-t" style="margin:2px 0 6px;color:${f.below_zero ? "#dc2626" : "inherit"}">${esc(lowTxt)}</div><div class="echart" id="${id}"></div>` +
           `<div style="font-size:11.5px;opacity:.7;margin-top:6px">Projection (hypothèse) : ${esc(notes.join(" "))}</div></div>`;
+      }
+      case "payment_levers": {
+        // ARGENT AVANCÉ CHAQUE MOIS + LEVIERS DE DÉCALAGE : fait (montants payés dans le mois) / hypothèse (gain à +30 j).
+        const L = ctx.paymentLevers;
+        if (!L?.items?.length) return "";
+        const m = (x: number) => esc(fmt(x, ctx.currency, ctx.currency));
+        const body = L.items.map((i) => `<tr><td>${esc(i.label)}<div style="font-size:11.5px;opacity:.65">${esc(i.how)}</div></td><td class="num">${m(i.monthly)}</td><td>${esc(i.lever)}</td><td class="num">+${m(i.monthly)}</td></tr>`).join("");
+        const sc = L.scenario;
+        const d = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+        return `<div class="card"><div class="card-t">${esc(w.title ?? "L'argent que tu avances chaque mois — et comment le décaler")}</div>` +
+          `<table class="tbl"><thead><tr><th>Poste</th><th class="num">Payé ce mois</th><th>Levier à négocier</th><th class="num">Trésorerie gagnée (+30 j)</th></tr></thead>` +
+          `<tbody>${body}<tr class="tot"><td>Total</td><td class="num">${m(L.items.reduce((s, i) => s + i.monthly, 0))}</td><td></td><td class="num">+${m(L.total)}</td></tr></tbody></table>` +
+          `<div style="font-size:11.5px;opacity:.7;margin-top:8px">${esc(L.hypothesis)}${sc ? (sc.low.date === ctx.cashForecast?.start.date ? ` Avec ces délais, ta trésorerie ne redescendrait plus sous son niveau d'aujourd'hui sur 13 semaines (courbe verte ci-dessus).` : ` Avec ces délais, le point bas à 13 semaines passerait à ${fmt(sc.low.balance, ctx.currency, ctx.currency)} (le ${d(sc.low.date)}).`) : ""}</div></div>`;
       }
       case "callout": {
         if (!w.text) return "";
