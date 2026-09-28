@@ -1,5 +1,6 @@
 // Bouton de prise de rendez-vous autonome : ouvre une modale avec le calendrier Cal.com.
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { CalendarCheck, X } from 'lucide-react';
 import { BOOKING_ADVISOR_URL } from '@/lib/config';
@@ -27,8 +28,9 @@ export function BookingButton({
       <Button onClick={() => setOpen(true)} className={className} variant={variant} size={size}>
         <CalendarCheck className="w-4 h-4 mr-2" /> {label}
       </Button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setOpen(false)}>
+      {/* Portail vers <body> : la modale ne dépend plus de la couche d'affichage de son parent (menu collant, animations). */}
+      {open && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60" onClick={() => setOpen(false)}>
           <div className="relative bg-card rounded-2xl shadow-2xl w-full max-w-3xl h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setOpen(false)}
@@ -39,7 +41,8 @@ export function BookingButton({
             </button>
             <iframe src={src} title="Prendre rendez-vous" className="w-full h-full border-0" />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
