@@ -442,8 +442,15 @@ function shopify(name: string, rows: string[][], ctx: ParseCtx): ParsedExtract |
     if (!isEnd) return mk("analytics", {}, {}, { exclusive: true, priority: 0, note: `« ${short} » couvre une autre période (${lab}) : non rattaché à ${ym}.` });
     // Stock valorisé : état à date (fin de plage) → valable pour le mois de fin.
     if (has(h, "Ending inventory value")) {
-      const i = col("Ending inventory value"); let tot = 0; for (const r of data) { const n = toNum(r[i]); if (n != null) tot += n; }
-      return mk("analytics", { inventory_value: r2(tot) }, { inventory_value: `Σ «Ending inventory value» au ${range.to} · ${data.length} variante(s)` }, { exclusive: true, priority: 100 });
+      const i = col("Ending inventory value"), iU = col("Ending inventory units"), iT = col("Product title"); let tot = 0;
+      const byP: Record<string, { units: number; value: number }> = {};
+      for (const r of data) {
+        const n = toNum(r[i]); if (n != null) tot += n;
+        const pk = iT >= 0 ? productKey(r[iT] ?? "") : ""; if (!pk) continue;
+        const x = (byP[pk] ??= { units: 0, value: 0 }); x.units += Math.max(0, toNum(r[iU]) ?? 0); x.value += Math.max(0, n ?? 0);
+      }
+      return mk("analytics", { inventory_value: r2(tot) }, { inventory_value: `Σ «Ending inventory value» au ${range.to} · ${data.length} variante(s)` },
+        { exclusive: true, priority: 100, aux: { stockByProduct: byP } });
     }
     if (multi) {
       const iT = col("Product title"), iNs = col("Net sales"), iCg = col("Cost of goods sold");

@@ -84,3 +84,39 @@ describe("pub en engagement (dépense des plateformes)", () => {
     expect(m.values.ads_total).toBe(100);
   });
 });
+
+describe("doctrine §4.2 — rentable à la 1re commande ?", () => {
+  it("ratio < 1 : perte à la 1re commande, réachat à prouver", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    const p = selectMonthPoints({ cm3: 32_789, cm3_rate: 9.8, cm2_per_order: 39.63, cac: 51.45, repeat_rate: 32.4, mer: 2.27, breakeven_roas: 1.85 }, null);
+    const a = p.find((x) => x.key === "acquisition")!;
+    expect(a.tone).toBe("warn");
+    expect(a.text).toMatch(/Tu perds de l'argent à la 1re commande/);
+    expect(a.text).toMatch(/ratio 0,77/);
+    expect(a.text).toMatch(/32,4 % de clients récurrents/);
+  });
+  it("ratio > 1 : rentable dès la 1re commande", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    const a = selectMonthPoints({ cm3: 84_271, cm2_per_order: 45.46, cac: 39.59, mer: 3.15, breakeven_roas: 1.78 }, null).find((x) => x.key === "acquisition")!;
+    expect(a.tone).toBe("good");
+    expect(a.text).toMatch(/rentable dès sa 1re commande.*ratio 1,15/);
+  });
+  it("ratio < 0,7 : stop scale", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    expect(selectMonthPoints({ cm2_per_order: 20, cac: 40 }, null).find((x) => x.key === "acquisition")!.text).toMatch(/^Stop scale/);
+  });
+});
+
+describe("doctrine §7 — stock par produit", () => {
+  it("jours de vente par produit, rupture proche sur un best-seller, stock dormant", async () => {
+    const { stockByProduct } = await import("../standardizeCore.ts");
+    const m = { values: {}, sources: {}, traces: {}, confidence: {}, flags: [], breakdowns: {}, questions: [], revenueDocs: [], effRoleOf: () => "",
+      kept: [ex({ stockByProduct: { "CAPRI NOIR": { units: 100, value: 2_000 }, "TOP ROUGE": { units: 600, value: 9_000 }, "VIEUX BODY": { units: 300, value: 4_500 } } }),
+        ex({ soldByProduct: { "CAPRI NOIR": 1_000, "TOP ROUGE": 300 } })] } as unknown as Merged;
+    stockByProduct(m, "2026-08-01", "EUR");
+    const rows = m.breakdowns.stock_days_by_product.rows;
+    expect(rows.map((r) => [r.label, r.values?.days ?? null])).toEqual([["TOP ROUGE", 62], ["VIEUX BODY", null], ["CAPRI NOIR", 3]]);
+    expect(m.flags.find((f) => f.id === "_stock_rupture")!.label).toMatch(/CAPRI NOIR \(3 j de vente en stock\)/);
+    expect(m.flags.find((f) => f.id === "_stock_dormant")!.label).toMatch(/4\s500 EUR sur 1 produit/);
+  });
+});

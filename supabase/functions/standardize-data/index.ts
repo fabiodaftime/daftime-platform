@@ -24,7 +24,7 @@ import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact }
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
 import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
-import { applyAdsSpend, applyCostParams, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, type AdsSpend, type CostParams } from "../_shared/standardizeCore.ts";
+import { applyAdsSpend, applyCostParams, completeLogistics, estimatePaymentFees, finalize, guardComponents, mergeParsed, netShippingBilled, returnsByProduct, stockByProduct, type AdsSpend, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls, type Control } from "../_shared/controls.ts";
 import { sanitizeFlowMap, type FlowMap } from "../_shared/flowMap.ts";
 import { isOutOfTreasury, leverDefsFromMap, mapDiscrepancies, rulesFromMap, treasuryPerimeter } from "../_shared/flowRules.ts";
@@ -33,7 +33,7 @@ import { CLASSIFY_SYSTEM, CLASSIFY_TOOL, classifyUserText, mergeRules, sanitizeC
   CP_CATEGORY_LABELS, type BankRule, type CpCategory, type Proposal } from "../_shared/counterparties.ts";
 
 // Changer cette version invalide tout le cache d'extraction (nouveaux parsers → re-lecture).
-const ENGINE_VERSION = "2026-09-28.8";
+const ENGINE_VERSION = "2026-09-28.9";
 // Temps de lecture+parsing (≈ CPU) par appel : marge confortable sous la limite ~2 s de l'edge.
 const PARSE_BUDGET_MS = 800;
 // Temps RÉEL par appel pour les téléchargements (limite edge ~150 s, agrégation + IA à garder derrière).
@@ -363,6 +363,7 @@ Deno.serve(async (req) => {
       netShippingBilled(merged, currency);
       estimatePaymentFees(merged, currency, costParams?.psp_rates);
       returnsByProduct(merged);
+      stockByProduct(merged, period, currency);
       applyAdsSpend(merged, ctxData.ads_spend?.[period], currency); // dépense des plateformes (engagement) si fournie
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {

@@ -35,10 +35,24 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
       text: `Ton shop dégage ${eur(m)} de ${LEVEL_FR[lvl]}${rate != null ? ` (${pct(rate)} du CA)` : ""}.${why}${caveat}` });
   }
 
-  // (2) L'acquisition est-elle rentable ? MER face au point mort du shop (1 / CM2), jamais une norme externe.
+  // (2) L'acquisition est-elle rentable ? D'abord le TEST DE BASE (doctrine §4.2) : CM2 par commande ÷ coût d'un
+  // nouveau client (> 1 : rentable dès la 1re commande ; 0,7–1 : seulement avec un réachat prouvé ; < 0,7 : stop) ;
+  // à défaut, le MER face au point mort du shop (1 / CM2), jamais une norme externe.
   const mer = n("mer") ?? (n("ca") != null && n("ads_total") ? n("ca")! / n("ads_total")! : null);
   const be = n("breakeven_roas");
-  if (mer != null && be != null) {
+  const cpo = n("cm2_per_order"), cac = n("cac");
+  const ratio = n("first_order_ratio") ?? (cpo != null && cac != null && cac > 0 ? cpo / cac : null);
+  const dec2 = (x: number) => x.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const merTail = mer != null && be != null ? ` (MER ${xx(mer)} pour un point mort à ${xx(be)})` : "";
+  if (ratio != null && cpo != null && cac != null) {
+    const rep = n("repeat_rate");
+    out.push({ key: "acquisition", tone: ratio >= 1 ? "good" : "warn",
+      text: ratio >= 1
+        ? `Chaque nouveau client est rentable dès sa 1re commande : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)})${merTail}.`
+        : ratio >= 0.7
+          ? `Tu perds de l'argent à la 1re commande : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)}). Ça ne se rattrape qu'avec un réachat prouvé${rep != null ? ` (${pct(rep)} de clients récurrents ce mois)` : ""} et un payback court — sinon freine la pub ou répare la marge${merTail}.`
+          : `Stop scale : ${eur(cpo)} de CM2 par commande pour ${eur(cac)} de pub par nouveau client (ratio ${dec2(ratio)}, sous 0,7) — le trou ne se rebouchera probablement pas. Répare d'abord la marge (cascade)${merTail}.` });
+  } else if (mer != null && be != null) {
     const head = (mer / be - 1) * 100;
     out.push({ key: "acquisition", tone: head < 0 ? "warn" : head < 30 ? "info" : "good",
       text: head < 0

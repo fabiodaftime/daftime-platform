@@ -318,6 +318,33 @@ export function returnsByProduct(m: Merged): void {
     columns: [{ key: "sold", label: "Vendus", unit: "" }, { key: "returned", label: "Retournés", unit: "", sort: true }, { key: "rate", label: "Taux de retour", unit: "%", emphasis: true }] };
 }
 
+// STOCK PAR PRODUIT (doctrine §7) : « combien de jours de vente devant moi ? » produit par produit, au rythme du mois
+// (stock de fin de mois Shopify ÷ ventes du mois) — jamais un montant global. Alertes : rupture proche sur un
+// best-seller (budget pub brûlé si les campagnes tournent) ; stock dormant (cash gelé).
+export function stockByProduct(m: Merged, period: string, reporting: string): void {
+  const stock = m.kept.find((e) => e.aux?.stockByProduct)?.aux?.stockByProduct as Record<string, { units: number; value: number }> | undefined;
+  const sold = m.kept.find((e) => e.aux?.soldByProduct)?.aux?.soldByProduct as Record<string, number> | undefined;
+  if (!stock || !sold || !Object.keys(stock).length) return;
+  const [y, mo] = period.slice(0, 7).split("-").map(Number);
+  const days = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const rows = Object.entries(stock).filter(([, s]) => s.units > 0).map(([label, s]) => {
+    const v = sold[label] ?? 0, d = v > 0 ? Math.round(s.units / (v / days)) : null;
+    return { label, value: r2(s.value), values: { stock_units: s.units, sold: v, ...(d != null ? { days: d } : {}), stock_value: r2(s.value) } };
+  }).filter((r) => r.values.stock_units > 0).sort((a, b) => b.value - a.value);
+  if (!rows.length) return;
+  m.breakdowns.stock_days_by_product = { label: "Jours de vente devant toi, par produit (au rythme du mois)", rows: rows.slice(0, 15),
+    columns: [{ key: "stock_units", label: "En stock", unit: "" }, { key: "sold", label: "Vendus ce mois", unit: "" }, { key: "days", label: "Jours de stock", unit: "j", emphasis: true }, { key: "stock_value", label: "Valeur", unit: "CUR", sort: true }] };
+  // Best-sellers = les 5 produits les plus vendus du mois.
+  const best = Object.entries(sold).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k]) => k);
+  const tight = best.map((k) => ({ k, d: stock[k] ? Math.round(stock[k].units / ((sold[k] || 1) / days)) : 0 })).filter((x) => x.d < 14);
+  if (tight.length) m.flags.push({ id: "_stock_rupture", severity: "warn",
+    label: `Rupture proche sur ${tight.length > 1 ? "des best-sellers" : "un best-seller"} : ${tight.map((x) => `${x.k} (${x.d} j de vente en stock)`).join(", ")} — réappro à lancer, ou pub à freiner sur ces produits pour ne pas payer des clics sans stock.` });
+  const dormant = rows.filter((r) => !r.values.sold && r.value > 0);
+  const dVal = dormant.reduce((s, r) => s + r.value, 0);
+  if (dVal >= 1000) m.flags.push({ id: "_stock_dormant", severity: "info",
+    label: `Stock dormant : ${fmt(dVal)} ${reporting} sur ${dormant.length} produit(s) sans aucune vente ce mois (${dormant.slice(0, 3).map((r) => r.label).join(", ")}${dormant.length > 3 ? "…" : ""}) — cash gelé : déstockage, bundle ou mise en avant.` });
+}
+
 // PUB EN ENGAGEMENT (doctrine) : la dépense des plateformes du mois (Triple Whale, gestionnaires de pub) remplace
 // les PAIEMENTS vus en banque (paliers, recharges PayPal, décalages). Les paiements restent la base de la trésorerie.
 export interface AdsSpend { platforms: Record<string, number>; source: string }
