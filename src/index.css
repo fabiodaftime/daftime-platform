@@ -185,3 +185,68 @@
 .dashboard-scrollbar::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--dashboard-text-muted));
 }
+
+/* ============================================================================================
+   DAFTIME v2 — système visuel du nouveau front (gabarit AppShell et pages qui l'utilisent).
+   Portée limitée à `.v2` : les anciens dashboards (Lovable) ne changent pas.
+   Bleu nuit #1A1D56 = structure · jaune #D6D303 = signal (le chiffre qui compte, l'action) ·
+   neutres teintés de bleu · Geist (interface) + Geist Mono (étiquettes, chiffres de tableaux).
+   ============================================================================================ */
+.v2 {
+  --background: 232 33% 98%;
+  --foreground: 236 42% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 236 42% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 236 42% 13%;
+  --primary: 237 54% 22%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 232 30% 95%;
+  --secondary-foreground: 237 54% 22%;
+  --muted: 232 26% 95%;
+  --muted-foreground: 234 12% 44%;
+  --accent: 59 97% 43%;
+  --accent-foreground: 237 54% 18%;
+  --border: 232 22% 90%;
+  --input: 232 22% 88%;
+  --ring: 237 54% 30%;
+  --radius: 0.75rem;
+  --good: 152 58% 34%;
+  --warn: 36 88% 40%;
+  --bad: 0 68% 46%;
+  --shadow-card: 0 1px 1px hsl(236 40% 20% / 0.03), 0 2px 6px -1px hsl(236 40% 20% / 0.05), 0 12px 28px -12px hsl(236 40% 20% / 0.10);
+  --shadow-lift: 0 2px 4px hsl(236 40% 20% / 0.05), 0 18px 40px -14px hsl(236 40% 20% / 0.22);
+  font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.v2 .font-mono, .v2 .eyebrow { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+/* Étiquette de section : petite, capitales espacées, mono. */
+.v2 .eyebrow { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+.v2 .num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.v2 .surface { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); box-shadow: var(--shadow-card); }
+.v2 .surface-hover { transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease; }
+.v2 .surface-hover:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); border-color: hsl(var(--primary) / 0.18); }
+/* Bandeau de marque : bleu nuit en profondeur + halo jaune discret + grain. */
+.v2 .brand-panel {
+  position: relative; overflow: hidden; color: #fff; border-radius: calc(var(--radius) + 4px);
+  background:
+    radial-gradient(60% 80% at 92% -10%, hsl(59 97% 55% / 0.10) 0%, transparent 60%),
+    radial-gradient(80% 110% at 100% 0%, hsl(228 85% 62% / 0.28) 0%, transparent 55%),
+    radial-gradient(90% 120% at 0% 100%, hsl(232 70% 45% / 0.30) 0%, transparent 55%),
+    linear-gradient(160deg, hsl(237 54% 24%) 0%, hsl(238 58% 14%) 100%);
+  box-shadow: 0 24px 50px -24px hsl(237 60% 15% / 0.55);
+}
+.v2 .brand-panel::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .18; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.v2 .glass { background: hsl(var(--background) / 0.78); backdrop-filter: saturate(1.6) blur(14px); -webkit-backdrop-filter: saturate(1.6) blur(14px); }
+.v2 .no-scrollbar { scrollbar-width: none; }
+.v2 .no-scrollbar::-webkit-scrollbar { display: none; }
+.v2 :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) {
+  .v2 *, .v2 *::before, .v2 *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

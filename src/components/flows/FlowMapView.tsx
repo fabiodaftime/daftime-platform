@@ -28,7 +28,7 @@ function Certainty({ c }: { c: string }) {
 
 function Section({ icon, title, hint, children }: { icon: React.ReactNode; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border bg-card p-5">
+    <section className="surface p-5 sm:p-6">
       <h3 className="font-semibold flex items-center gap-2">{icon}{title}</h3>
       {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
       <div className="mt-4">{children}</div>
@@ -104,7 +104,7 @@ export function FlowMapView({ map, currency = 'EUR' }: { map: FlowMap; currency?
   return (
     <div className="space-y-4">
       {map.summary && (
-        <section className="rounded-xl border bg-card p-5">
+        <section className="surface p-5 sm:p-6">
           <p className="text-[15px] leading-relaxed">{map.summary}</p>
           {(totalIn > 0 || totalOut > 0) && (
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
