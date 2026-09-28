@@ -5,18 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { TrendingUp, BarChart3, PieChart } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { AuthVisual } from '@/components/layout/AuthVisual';
 import { z } from 'zod';
 import { BrandLockup } from '@/components/layout/BrandLockup';
 
 const emailSchema = z.string().email('Email invalide');
 const passwordSchema = z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères');
-
-const FEATURES = [
-  { icon: TrendingUp, title: 'CFO & Advisory', desc: 'Conseil financier stratégique pour grandir sereinement' },
-  { icon: BarChart3, title: 'Reporting clair', desc: 'Des dashboards lisibles pour décider vite et bien' },
-  { icon: PieChart, title: 'Accompagnement sur-mesure', desc: 'Un suivi adapté à vos objectifs' },
-];
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -59,57 +55,21 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Panneau de marque */}
-      <div className="hidden lg:flex lg:w-[45%] bg-primary text-primary-foreground p-12 flex-col justify-between relative overflow-hidden">
-        <div className="absolute -top-32 -right-24 w-80 h-80 rounded-full bg-accent/10 blur-3xl" />
-        <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-accent/5 blur-3xl" />
-
-        <div className="relative">
-          <BrandLockup variant="light" center={false} />
-        </div>
-
-        <div className="relative space-y-10">
-          <div>
-            <h1 className="text-3xl xl:text-4xl font-semibold leading-tight">
-              Votre partenaire pour<br />structurer votre activité
-            </h1>
-            <p className="text-primary-foreground/70 mt-4 text-lg">
-              Pilotage financier, reporting clair, accompagnement sur-mesure.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-accent/15 text-accent shrink-0">
-                  <f.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{f.title}</h3>
-                  <p className="text-sm text-primary-foreground/60">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="relative text-sm text-primary-foreground/40">© 2026 Daftime Advisory. Tous droits réservés.</p>
-      </div>
+    <div className="v2 min-h-screen grid lg:grid-cols-[1.05fr_1fr]">
+      <div className="hidden lg:block"><AuthVisual /></div>
 
       {/* Formulaire de connexion */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-sm">
-          <div className="flex flex-col items-center text-center mb-8">
-            <div className="lg:hidden mb-6"><BrandLockup /></div>
-            <h2 className="text-2xl font-semibold text-foreground">Bienvenue</h2>
-            <p className="text-muted-foreground mt-1.5 text-sm">Connectez-vous pour accéder à vos dashboards</p>
-          </div>
+      <div className="flex items-center justify-center p-6 sm:p-10">
+        <motion.div className="w-full max-w-sm" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          <div className="lg:hidden mb-8 flex justify-center"><BrandLockup /></div>
+          <span className="eyebrow">Espace Daftime Advisory</span>
+          <h2 className="text-3xl font-semibold tracking-tight mt-2">Content de te revoir</h2>
+          <p className="text-muted-foreground mt-2 text-sm">Connecte-toi pour retrouver ton rapport du mois.</p>
 
-          <form onSubmit={handleSignIn} className="space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-4 mt-8">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="vous@exemple.com" className="h-11"
+              <Input id="email" type="email" autoComplete="email" placeholder="toi@tonshop.com" className="h-11 rounded-xl bg-card"
                 value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
@@ -117,18 +77,16 @@ export default function Auth() {
                 <Label htmlFor="password">Mot de passe</Label>
                 <Link to="/auth/reset-password" className="text-sm text-primary hover:underline">Mot de passe oublié ?</Link>
               </div>
-              <Input id="password" type="password" placeholder="••••••••" className="h-11"
+              <Input id="password" type="password" autoComplete="current-password" placeholder="••••••••" className="h-11 rounded-xl bg-card"
                 value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
-              {isLoading ? 'Connexion…' : 'Se connecter'}
+            <Button type="submit" className="w-full h-11 text-[15px] rounded-xl group" disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Se connecter <ArrowRight className="w-4 h-4 ml-1.5 transition group-hover:translate-x-0.5" /></>}
             </Button>
           </form>
 
-          <p className="text-center text-xs text-muted-foreground mt-8">
-            Accès réservé — vos identifiants vous sont fournis par Daftime Advisory.
-          </p>
-        </div>
+          <p className="text-xs text-muted-foreground mt-8">Accès réservé : tes identifiants te sont fournis par ton conseiller Daftime.</p>
+        </motion.div>
       </div>
     </div>
   );

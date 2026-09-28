@@ -3,9 +3,12 @@
 // Ensuite : redirection vers l'accueil, qui envoie le client sur son espace.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import { AuthVisual } from '@/components/layout/AuthVisual';
+import { BrandLockup } from '@/components/layout/BrandLockup';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -36,23 +39,39 @@ export default function Welcome() {
     navigate('/', { replace: true });
   };
 
+  const rules = [{ ok: pw.length >= 8, t: '8 caractères minimum' }, { ok: pw.length > 0 && pw === pw2, t: 'Les deux saisies correspondent' }];
+  const input = 'w-full h-11 rounded-xl border bg-card px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition';
+
   return (
-    <main className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-sm w-full border rounded-xl p-6 space-y-4 bg-card">
-        <h1 className="text-lg font-semibold">Bienvenue sur ton espace Daftime</h1>
-        {step === 'checking' && <p className="text-sm flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" />Vérification du lien…</p>}
-        {step === 'error' && <p className="text-sm text-destructive">{err}</p>}
-        {step === 'password' && (
-          <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); save(); }}>
-            <p className="text-sm text-muted-foreground">Choisis ton mot de passe : tu t'en serviras pour te reconnecter.</p>
-            <input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Mot de passe"
-              className="w-full h-10 rounded border bg-background px-3 text-sm" />
-            <input type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Confirme le mot de passe"
-              className="w-full h-10 rounded border bg-background px-3 text-sm" />
-            {err && <p className="text-xs text-destructive">{err}</p>}
-            <Button type="submit" className="w-full" disabled={saving}>{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Accéder à mon espace'}</Button>
-          </form>
-        )}
+    <main className="v2 min-h-screen grid lg:grid-cols-[1.05fr_1fr]">
+      <div className="hidden lg:block"><AuthVisual headline={'Bienvenue\ndans ton espace.'} /></div>
+      <div className="flex items-center justify-center p-6 sm:p-10">
+        <motion.div className="w-full max-w-sm" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          <div className="lg:hidden mb-8 flex justify-center"><BrandLockup /></div>
+          <span className="eyebrow">Espace Daftime Advisory</span>
+          <h1 className="text-3xl font-semibold tracking-tight mt-2">Bienvenue</h1>
+
+          {step === 'checking' && <p className="text-sm text-muted-foreground mt-6 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Vérification de ton lien…</p>}
+          {step === 'error' && <p className="text-sm text-destructive mt-6">{err}</p>}
+          {step === 'password' && (
+            <form className="mt-6 space-y-3" onSubmit={(e) => { e.preventDefault(); save(); }}>
+              <p className="text-sm text-muted-foreground">Choisis ton mot de passe : tu t'en serviras pour revenir sur ton espace.</p>
+              <input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Mot de passe" aria-label="Mot de passe" className={input} />
+              <input type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Confirme le mot de passe" aria-label="Confirme le mot de passe" className={input} />
+              <ul className="space-y-1 pt-1">
+                {rules.map((r) => (
+                  <li key={r.t} className={`text-xs flex items-center gap-1.5 transition-colors ${r.ok ? 'text-[hsl(var(--good))]' : 'text-muted-foreground'}`}>
+                    <Check className={`w-3.5 h-3.5 transition-opacity ${r.ok ? 'opacity-100' : 'opacity-30'}`} /> {r.t}
+                  </li>
+                ))}
+              </ul>
+              {err && <p className="text-xs text-destructive">{err}</p>}
+              <Button type="submit" className="w-full h-11 rounded-xl text-[15px] group" disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Accéder à mon espace <ArrowRight className="w-4 h-4 ml-1.5 transition group-hover:translate-x-0.5" /></>}
+              </Button>
+            </form>
+          )}
+        </motion.div>
       </div>
     </main>
   );
