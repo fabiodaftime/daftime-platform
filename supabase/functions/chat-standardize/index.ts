@@ -27,6 +27,7 @@ Trois types de modifications :
 1) bank_rules — qualification d'une contrepartie bancaire (valable pour tous les mois). « match » = un fragment DISTINCTIF du libellé bancaire tel qu'il apparaît dans la liste (ex. « paypal », « hanayaka », « bp rives de paris », « zaoui »), en minuscules. Catégories :
    ads (publicité), stock (achats de marchandises / fournisseurs de stock / emballages), internal (virement entre ses propres comptes, apport, transfert vers une autre société du dirigeant), loan (remboursement d'emprunt — capital), payroll (salaires, rémunération du dirigeant, freelances récurrents), tools (logiciels/abonnements), logistics (transport, 3PL), tax (impôts), vat (TVA), bankfees (frais bancaires), other (autre charge d'exploitation), ignore (à exclure).
 2) bank_anchors — solde CONNU d'UN compte NOMMÉ à une date (nom du compte tel qu'il apparaît dans les données, date ISO YYYY-MM-DD, solde en devise).
+4) psp_rates — TARIF RÉEL d'un prestataire de paiement donné par le conseiller (contrat) : « Klarna 3,29 % + 0,35 € » → { psp: "Klarna", pct: 3.29, fixed: 0.35 }. Noms : Shopify Payments, Stripe, PayPal, Klarna, Scalapay, Alma, Oney, Floa, Adyen, Mollie, Checkout.com, SumUp, PayPlug, Amazon Pay. Valable pour tous les mois ; jamais d'override de payment_fees dans ce cas.
 3) overrides — UNIQUEMENT si le conseiller donne un CHIFFRE explicite pour un poste, ou demande explicitement de prendre une autre source/colonne (tu recalcules alors depuis le fichier fourni, provenance précise). Chaque override porte le mois concerné dans « period » (YYYY-MM-01) : « juillet = 139 675 » → period du mois de juillet de l'année en cours ; sans mois précisé → le MOIS de la conversation.
    - TRÉSORERIE : une trésorerie TOTALE de fin de mois donnée par le conseiller (« trésorerie de juillet = … », ou un chiffre par mois en réponse à la question sur la trésorerie) → override cash_end de CE mois. En revanche le solde d'UN compte nommé → bank_anchors (ce n'est pas la trésorerie totale).
    JAMAIS d'override :
@@ -90,6 +91,10 @@ Deno.serve(async (req) => {
           bank_anchors: { type: "array", items: { type: "object", properties: {
             account: { type: "string" }, date: { type: "string", description: "YYYY-MM-DD" }, balance: { type: "number" },
           }, required: ["account", "date", "balance"], additionalProperties: false } },
+          psp_rates: { type: "array", items: { type: "object", properties: {
+            psp: { type: "string", description: "nom du prestataire (ex. Klarna)" }, pct: { type: "number", description: "pourcentage, ex. 3.29" },
+            fixed: { type: "number", description: "part fixe par transaction en devise, ex. 0.35" },
+          }, required: ["psp", "pct"], additionalProperties: false } },
           overrides: { type: "array", items: { type: "object", properties: {
             id: { type: "string", enum: inputIds.length ? inputIds : ["_none"] }, value: { type: "number" },
             period: { type: "string", description: "mois concerné, YYYY-MM-01 (défaut : le mois de la conversation)" },
@@ -113,6 +118,7 @@ Deno.serve(async (req) => {
     const { input, usage } = await callAnthropicTool<{
       bank_rules?: { match: string; category: string; label?: string }[];
       bank_anchors?: { account: string; date: string; balance: number }[];
+      psp_rates?: { psp: string; pct: number; fixed?: number }[];
       overrides?: { id: string; value: number; source: string; period?: string }[];
       summary?: string;
     }>({ model: MODELS.quality, system: SYSTEM, messages: [...history, { role: "user", content } as AnthropicMessage], tool: TOOL, max_tokens: 2000, signal: AbortSignal.timeout(120_000) });
@@ -135,7 +141,8 @@ Deno.serve(async (req) => {
       .filter((o) => inputIds.includes(o.id) && typeof o.value === "number" && isFinite(o.value)
         && !(["cash_end", "cash_start"].includes(o.id) && anchorBalances.has(Math.round(o.value * 100))));
     // Diagnostic : renvoie le patch compris SANS l'enregistrer.
-    if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, overrides, usage });
+    const pspRates = (input.psp_rates ?? []).filter((r) => r.psp?.trim() && typeof r.pct === "number" && r.pct >= 0 && r.pct < 20 && (r.fixed == null || (r.fixed >= 0 && r.fixed < 5)));
+    if (body.dry_run) return json({ ok: true, dry_run: true, summary: input.summary ?? "", rules, anchors, psp_rates: pspRates, overrides, usage });
     if (rules.length || overrides.length) {
       // Décision du conseiller → règle « staff » (prime sur une règle IA) ; la proposition IA couverte disparaît.
       // Clé = libellé + montant éventuel : une règle « au montant » n'est pas écrasée par la règle générale.
@@ -152,13 +159,17 @@ Deno.serve(async (req) => {
       }
       await insertVersion(admin, "contexts", { client_id }, { data: ctxData, created_by: user.id });
     }
-    // 2) Soldes de référence → onboarding (Paramètres shop), fusionnés par compte + date.
-    if (anchors.length) {
-      const cp = { ...(((client as { cost_params?: Record<string, unknown> }).cost_params) ?? {}) } as { bank_anchors?: { account: string; date: string; balance: number }[] };
-      const key = (a: { account: string; date: string }) => `${a.account.trim()}|${a.date}`;
-      const m = new Map((cp.bank_anchors ?? []).map((a) => [key(a), a]));
-      for (const a of anchors) m.set(key(a), { account: a.account.trim(), date: a.date, balance: a.balance });
-      cp.bank_anchors = [...m.values()];
+    // 2) Soldes de référence + tarifs des prestataires → onboarding (Paramètres shop), fusionnés.
+    if (anchors.length || pspRates.length) {
+      const cp = { ...(((client as { cost_params?: Record<string, unknown> }).cost_params) ?? {}) } as {
+        bank_anchors?: { account: string; date: string; balance: number }[]; psp_rates?: Record<string, { pct: number; fixed?: number }> };
+      if (anchors.length) {
+        const key = (a: { account: string; date: string }) => `${a.account.trim()}|${a.date}`;
+        const m = new Map((cp.bank_anchors ?? []).map((a) => [key(a), a]));
+        for (const a of anchors) m.set(key(a), { account: a.account.trim(), date: a.date, balance: a.balance });
+        cp.bank_anchors = [...m.values()];
+      }
+      if (pspRates.length) cp.psp_rates = { ...(cp.psp_rates ?? {}), ...Object.fromEntries(pspRates.map((r) => [r.psp.trim(), { pct: r.pct, ...(r.fixed != null ? { fixed: r.fixed } : {}) }])) };
       await admin.from("clients").update({ cost_params: cp }).eq("id", client_id);
     }
 

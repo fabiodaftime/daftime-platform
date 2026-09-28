@@ -725,6 +725,18 @@ export function pennylaneTransactions(text: string): BankTx[] | null {
   return out;
 }
 
+// PRESTATAIRES DE PAIEMENT reconnus dans les encaissements — base de l'estimation des frais de paiement quand
+// aucun relevé de prestataire ne les donne. Ordre = priorité (« PayPal … MOTIF: Shopify » est un versement PayPal).
+const PSP_PATTERNS: [RegExp, string][] = [
+  [/klarna/i, "Klarna"], [/scalapay/i, "Scalapay"], [/\balma\b/i, "Alma"], [/\boney\b/i, "Oney"], [/\bfloa\b/i, "Floa"],
+  [/paypal/i, "PayPal"], [/stripe/i, "Stripe"], [/adyen/i, "Adyen"], [/mollie/i, "Mollie"], [/checkout\.?com/i, "Checkout.com"],
+  [/sumup/i, "SumUp"], [/payplug/i, "PayPlug"], [/amazon pay/i, "Amazon Pay"], [/shopify/i, "Shopify Payments"],
+];
+// Journal d'un prestataire synchronisé comme un « compte » (ex. Stripe de Shopify Payments dans Pennylane) :
+// une ligne par paiement de commande, montant BRUT (les frais ne sont pas déduits ligne à ligne).
+const PSP_LEDGER_CHARGE = /^charge:|gid:\/\/shopify\/payment/i;
+export type PspInflows = Record<string, { gross: number; net: number; n: number }>;
+
 function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedExtract {
   const h = rows[0];
   const iD = idx(h, "Date"), iA = idx(h, "Amount"), iW = idx(h, "Wording", "Label", "Libellé"), iB = idx(h, "Bank account", "Account"),
@@ -734,6 +746,7 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   const byPlat: Record<string, number> = {}; const excl: Record<string, number> = {}; const unk: Record<string, number> = {};
   let inflow = 0, used = 0, debits = 0, vatPaid = 0;
   const flowsByAcc: Record<string, { d: string; a: number }[]> = {};
+  const psp: PspInflows = {};
   for (const r of rows.slice(1)) {
     const d = isoOf(r[iD]); const amt = toNum(r[iA]); if (!d || amt == null) continue;
     const acc = (iB >= 0 ? r[iB] : "") || "compte";
@@ -741,7 +754,15 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
     (flowsByAcc[acc] ??= []).push({ d, a });
     if (d.slice(0, 7) !== ym) continue;
     used++;
-    if (a >= 0) { inflow += a; continue; } // encaissements (Shopify, Klarna, Scalapay, PayPal…) = RÉCEPTION, jamais du CA
+    if (a >= 0) { // encaissements (Shopify, Klarna, Scalapay, PayPal…) = RÉCEPTION, jamais du CA
+      inflow += a;
+      if (!isOutOfTreasury(acc, ctx.treasuryPerimeter)) {
+        const w = [r[iW], iT >= 0 ? r[iT] : "", iCm >= 0 ? r[iCm] : ""].filter(Boolean).join(" ");
+        if (PSP_LEDGER_CHARGE.test(w)) { const x = (psp["Shopify Payments"] ??= { gross: 0, net: 0, n: 0 }); x.gross += a; x.n++; }
+        else { const hit = PSP_PATTERNS.find(([re]) => re.test(w)); if (hit) { const x = (psp[hit[1]] ??= { gross: 0, net: 0, n: 0 }); x.net += a; x.n++; } }
+      }
+      continue;
+    }
     const w = [r[iW], iT >= 0 ? r[iT] : "", iCm >= 0 ? r[iCm] : ""].filter(Boolean).join(" ");
     const { cat, platform } = classifyDebit(w, ctx.categoryRules, amt);
     const x = -a; debits += x; if (cat === "vat") vatPaid += x;
@@ -805,7 +826,8 @@ function pennylaneBank(_name: string, rows: string[][], ctx: ParseCtx): ParsedEx
   ].filter(Boolean);
   return { parser: "pennylane_bank", role: "bank", source_type: "bank_statement", currency: ctx.reporting, values: v, sources, count: used,
     breakdowns: Object.keys(byPlat).length ? { ads_by_platform: { label: "Dépense pub par plateforme (banque)", rows: topN(byPlat, 8) } } : undefined,
-    aux: { bankAccounts: allAccounts, ...(outside.length ? { outsideTreasury: outside } : {}), inflow: r2(inflow), totalDebits: r2(debits), vatPaid: r2(vatPaid),
+    aux: { bankAccounts: allAccounts, ...(outside.length ? { outsideTreasury: outside } : {}), inflow: r2(inflow),
+      ...(Object.keys(psp).length ? { pspInflows: Object.fromEntries(Object.entries(psp).map(([k, x]) => [k, { gross: r2(x.gross), net: r2(x.net), n: x.n }])) } : {}), totalDebits: r2(debits), vatPaid: r2(vatPaid),
       netFlow: r2(accounts.reduce((s, acc) => s + flowsByAcc[acc].filter((f) => f.d.slice(0, 7) === ym).reduce((a, f) => a + f.a, 0), 0)),
       ...(unkTot ? { unqualifiedDebits: unkTop.slice(0, 40).map(([label, value]) => ({ label, value: r2(value) })), unqualifiedTotal: r2(unkTot) } : {}) },
     note: notes.join(" ") };

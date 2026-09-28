@@ -24,7 +24,7 @@ import { bankRows, bankTxsToPennylaneCsv, extractToFacts, readFacts, type Fact }
 import { connectorFactsToExtract } from "../_shared/shopifyql.ts";
 import { forecastCash, type CashForecast } from "../_shared/cashForecast.ts";
 import { leverScenario, paymentLevers, type PaymentLevers } from "../_shared/paymentLevers.ts";
-import { applyCostParams, completeLogistics, finalize, mergeParsed, netShippingBilled, type CostParams } from "../_shared/standardizeCore.ts";
+import { applyCostParams, completeLogistics, estimatePaymentFees, finalize, mergeParsed, netShippingBilled, type CostParams } from "../_shared/standardizeCore.ts";
 import { reliabilityIndex, runControls, type Control } from "../_shared/controls.ts";
 import { sanitizeFlowMap, type FlowMap } from "../_shared/flowMap.ts";
 import { isOutOfTreasury, leverDefsFromMap, mapDiscrepancies, rulesFromMap, treasuryPerimeter } from "../_shared/flowRules.ts";
@@ -219,7 +219,8 @@ Deno.serve(async (req) => {
       // Empreinte à 2 niveaux : les règles bancaires / soldes de référence n'invalident QUE les relevés
       // bancaires (une nouvelle règle « paypal → pub » ne relit pas les 34 fichiers).
       const baseHash = await sha1(JSON.stringify({ ENGINE_VERSION, currency, factor }));
-      const bankHash = await sha1(JSON.stringify({ baseHash, categoryRules, bankAnchors: bankAnchors ?? null, perimeter: perimeter ?? null }));
+      // bankParser : version du lecteur de relevés (nouvelles données extraites → relecture des seuls relevés).
+      const bankHash = await sha1(JSON.stringify({ baseHash, categoryRules, bankAnchors: bankAnchors ?? null, perimeter: perimeter ?? null, bankParser: "psp-1" }));
       const fpOf = (f: FileRow, bank = false) => `${f.updated_at ?? ""}|${bank ? bankHash : baseHash}`;
       const isBank = (e: ParsedExtract | null | undefined) => e?.role === "bank";
 
@@ -358,6 +359,7 @@ Deno.serve(async (req) => {
       applyCostParams(merged, costParams, currency);
       completeLogistics(merged, period, currency);
       netShippingBilled(merged, currency);
+      estimatePaymentFees(merged, currency, costParams?.psp_rates);
       // Corrections explicites du conseiller pour ce mois (réponses aux pièces manquantes / audit) : priment.
       for (const [id, o] of Object.entries(ctxData.value_overrides?.[period] ?? {})) {
         if (typeof o?.value !== "number" || !isFinite(o.value)) continue;

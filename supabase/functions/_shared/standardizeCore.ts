@@ -12,7 +12,18 @@ export interface CostParams {
   sku_costs?: SkuCost[];
   fulfillment?: { pick_pack_per_order?: number; shipping_cost_model?: string };
   bank_anchors?: { account: string; date: string; balance: number }[];
+  psp_rates?: Record<string, PspRate>; // tarifs réels par prestataire (contrats), saisis par le conseiller
 }
+/** Tarif d'un prestataire de paiement : pourcentage du montant payé + part fixe par transaction. */
+export interface PspRate { pct: number; fixed?: number }
+// Tarifs STANDARDS approximatifs (Europe, paiements domestiques) — HYPOTHÈSE affichée comme telle, à remplacer
+// par les tarifs du contrat (cost_params.psp_rates) dès que le client les donne.
+export const PSP_DEFAULT_RATES: Record<string, PspRate> = {
+  "Shopify Payments": { pct: 1.8, fixed: 0.25 }, Stripe: { pct: 1.5, fixed: 0.25 }, PayPal: { pct: 2.9, fixed: 0.35 },
+  Klarna: { pct: 3.3, fixed: 0.35 }, Scalapay: { pct: 5 }, Alma: { pct: 4 }, Oney: { pct: 4 }, Floa: { pct: 4 },
+  Adyen: { pct: 1.4, fixed: 0.12 }, Mollie: { pct: 1.8, fixed: 0.25 }, "Checkout.com": { pct: 1.5, fixed: 0.2 },
+  SumUp: { pct: 1.7 }, PayPlug: { pct: 1.8, fixed: 0.25 }, "Amazon Pay": { pct: 2.7, fixed: 0.35 },
+};
 export type Flag = { id: string; severity: "info" | "warn" | "error"; label: string };
 type Trace = { src: string; value: number };
 
@@ -216,6 +227,50 @@ export function completeLogistics(m: Merged, period: string, reporting: string):
   m.sources.shipping_cost = `${m.sources.shipping_cost ?? ""} + estimation fin de mois`;
   m.confidence.shipping_cost = "estimated";
   m.flags.push({ id: "_logistics_partial", severity: "warn", label: `Logistique : les factures reçues s'arrêtent au ${to.slice(8, 10)}/${to.slice(5, 7)} — le reste du mois est estimé (+${fmt(add)} ${reporting}, au rythme observé). Ajoute la facture suivante du 3PL pour le montant réel.` });
+}
+
+// FRAIS DE PAIEMENT (CM2, doctrine) quand AUCUNE source ne les donne : estimés depuis les encaissements du mois
+// par prestataire (relevé bancaire, périmètre de trésorerie). Journal brut (Stripe/Shopify Payments) : brut × taux
+// + part fixe × transactions. Versements NETS (Klarna, Scalapay, PayPal…) : brut reconstitué = net / (1 − taux −
+// part fixe / panier moyen). Tarif du contrat si le conseiller l'a donné, sinon tarif standard (hypothèse signalée).
+export function estimatePaymentFees(m: Merged, reporting: string, custom?: Record<string, PspRate> | null): void {
+  if (m.values.payment_fees != null) return;
+  const inflows: Record<string, { gross: number; net: number; n: number }> = {};
+  for (const e of m.kept) for (const [k, x] of Object.entries((e.aux?.pspInflows ?? {}) as Record<string, { gross: number; net: number; n: number }>)) {
+    const t = (inflows[k] ??= { gross: 0, net: 0, n: 0 }); t.gross += x.gross; t.net += x.net; t.n += x.n;
+  }
+  if (!Object.keys(inflows).length) return;
+  const ca = m.values.ca, orders = m.values.orders;
+  const aov = ca && orders && ca > 0 && orders > 0 ? ca / orders : null;
+  const lc = new Map(Object.entries(custom ?? {}).map(([k, v]) => [k.toLowerCase(), v]));
+  const rows: { label: string; value: number }[] = []; const traces: Trace[] = [];
+  const std: string[] = [], unknownPsp: string[] = [];
+  let total = 0;
+  for (const [psp, x] of Object.entries(inflows).sort((a, b) => (b[1].gross + b[1].net) - (a[1].gross + a[1].net))) {
+    const own = lc.get(psp.toLowerCase());
+    const rate = own ?? PSP_DEFAULT_RATES[psp];
+    if (!rate || !(rate.pct >= 0)) { unknownPsp.push(psp); continue; }
+    if (!own) std.push(psp);
+    const p = rate.pct / 100, f = rate.fixed ?? 0;
+    let fee = x.gross * p + f * (x.gross > 0 ? x.n : 0);
+    if (x.net > 0) { const denom = 1 - p - (aov ? f / aov : 0); if (denom > 0.5) fee += x.net / denom - x.net; }
+    fee = r2(fee); if (!(fee > 0)) continue;
+    total += fee; rows.push({ label: psp, value: fee });
+    const basis = [x.gross > 0 ? `${fmt(x.gross)} ${reporting} payés (brut, ${x.n} transactions)` : "", x.net > 0 ? `${fmt(x.net)} ${reporting} versés (net)` : ""].filter(Boolean).join(" + ");
+    traces.push({ src: `${psp} : ${basis} × ${rate.pct.toLocaleString("fr-FR")} %${f ? ` + ${f.toLocaleString("fr-FR")} €/transaction` : ""} — ${own ? "tarif du contrat" : "tarif standard (hypothèse)"}`, value: fee });
+  }
+  if (!(total > 0)) return;
+  m.values.payment_fees = r2(total);
+  m.traces.payment_fees = traces;
+  m.sources.payment_fees = `encaissements du mois par prestataire × ${std.length ? "tarifs standards (hypothèse)" : "tarifs du contrat"}`;
+  if (std.length) m.confidence.payment_fees = "estimated";
+  m.breakdowns.payment_fees_by_psp = { label: "Frais de paiement par prestataire (estimés)", rows: rows.sort((a, b) => b.value - a.value) };
+  const pctCa = ca && ca > 0 ? ` (${(total / ca * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} % du CA)` : "";
+  m.flags.push({ id: "_psp_fees", severity: std.length ? "warn" : "info",
+    label: `Frais de paiement ${std.length ? "estimés" : "calculés"} : ${fmt(total)} ${reporting}${pctCa} — ${rows.map((r) => `${r.label} ${fmt(r.value)}`).join(" · ")}.` +
+      (std.length ? ` Aucun relevé des prestataires : tarifs standards utilisés pour ${std.join(", ")}. Donne les tarifs réels de tes contrats dans le chat du dossier pour un chiffre exact.` : "") +
+      (unknownPsp.length ? ` Prestataire(s) sans tarif connu, non comptés : ${unknownPsp.join(", ")}.` : "") });
+  if (std.length) m.questions.push(`Quels sont tes tarifs réels par prestataire de paiement (${std.join(", ")}) ? Ex. « Klarna 3,29 % + 0,35 € ».`);
 }
 
 // PORT FACTURÉ AUX CLIENTS : c'est la recette de la livraison. Le CA reste les ventes nettes Shopify (validé
