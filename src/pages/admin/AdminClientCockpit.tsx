@@ -6,7 +6,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal, Waypoints, KeyRound } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal, Waypoints, KeyRound, ListOrdered } from 'lucide-react';
 import { FlowMapPanel } from '@/components/flows/FlowMapPanel';
 import { ShopOnboardingPanel } from '@/components/generic/ShopOnboardingPanel';
 import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
@@ -28,6 +28,7 @@ import { analyzeFile, analyzeStoredFiles, coveredMonths, runStandardize, type St
 import { SourceCoverage } from '@/components/generic/SourceCoverage';
 import { ConnectorsPanel } from '@/components/generic/ConnectorsPanel';
 import { ClientAccessPanel } from '@/components/generic/ClientAccessPanel';
+import { PointsEditor } from '@/components/generic/PointsEditor';
 import { invokeFn, currentPeriod, shiftPeriod, periodLabel, DASHBOARD_STATUSES, STATUS_LABELS, logActivity, deleteClient } from '@/lib/genericApi';
 import { extractTextFromFile } from '@/lib/extractText';
 
@@ -934,6 +935,11 @@ export default function AdminClientCockpit() {
           ) : <p className="text-sm text-muted-foreground">Aucun dashboard généré pour ce mois.</p>}
         </Section>
 
+        {dash && (
+          <Section icon={<ListOrdered className="w-4 h-4" />} title="Les 3 points du mois (relecture avant envoi)">
+            <PointsEditor dash={dash} onSaved={(d) => { setDash(d); loadDashboard(); }} />
+          </Section>
+        )}
         {dash && (
           <Section icon={<Palette className="w-4 h-4" />} title="Assistant du dashboard (questions & ajustements)">
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />

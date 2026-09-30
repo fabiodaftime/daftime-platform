@@ -4,6 +4,8 @@
 //     puis re-rend et enregistre une nouvelle version.
 //
 // Body: { dashboard_id: uuid, message: string, history?: {role,content}[] }
+//     | { dashboard_id, action: 'set_points', points: {text, tone}[] }   ← 3 points réécrits À LA MAIN (sans IA)
+//     | { dashboard_id, action: 'reset_points' }                         ← retour aux points calculés par le moteur
 // Réponse: { action:'answer', answer } | { action:'edit', dashboard, summary }
 
 import { corsHeaders, json } from "../_shared/cors.ts";
@@ -57,7 +59,8 @@ Deno.serve(async (req) => {
     const dashboard_id: string | undefined = body.dashboard_id;
     const message: string = (body.message ?? "").toString();
     const history: AnthropicMessage[] = Array.isArray(body.history) ? body.history.slice(-6) : [];
-    if (!dashboard_id || !message.trim()) return json({ error: "dashboard_id et message requis" }, 400);
+    const manual = body.action === "set_points" || body.action === "reset_points";
+    if (!dashboard_id || (!manual && !message.trim())) return json({ error: "dashboard_id et message requis" }, 400);
 
     const { data: dash } = await admin.from("dashboards").select("*").eq("id", dashboard_id).maybeSingle();
     if (!dash) return json({ error: "dashboard introuvable" }, 404);
@@ -69,6 +72,28 @@ Deno.serve(async (req) => {
     const benchmarks = ((client as { benchmarks?: any } | null)?.benchmarks) ?? (dj as { benchmarks?: any }).benchmarks ?? {};
 
     const metrics = idVal(dj.sections ?? []);
+
+    // 3 POINTS DU MOIS réécrits par le conseiller (ou remis aux points calculés) : re-rendu sans IA, même plan/thème.
+    if (manual) {
+      const auto = (dj as { points_auto?: unknown[]; points?: unknown[] }).points_auto ?? (dj as { points?: unknown[] }).points ?? [];
+      const TONES = ["good", "warn", "info"];
+      const points = body.action === "reset_points" ? auto
+        : (Array.isArray(body.points) ? body.points : []).slice(0, 3)
+          .map((x: { text?: unknown; tone?: unknown }, i: number) => ({ key: `manuel_${i + 1}`, tone: TONES.includes(String(x?.tone)) ? String(x.tone) : "info", text: String(x?.text ?? "").trim().slice(0, 600), manual: true }))
+          .filter((x: { text: string }) => x.text);
+      if (body.action === "set_points" && !points.length) return json({ error: "Écris au moins un point." }, 400);
+      const html = await renderDashboardWithFx(
+        { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity, benchmarks,
+          brand: client?.brand as any, theme: dj.theme ?? {}, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets,
+          points: points as any, bridge: (dj as any).bridge?.vs_prev ?? (dj as any).bridge?.vs_avg3 ?? null, cashForecast: (dj as any).cash_forecast ?? null, paymentLevers: (dj as any).payment_levers ?? null },
+        { pages: (dj.plan?.pages ?? []) as any, theme: dj.theme ?? {} },
+      );
+      const data_json = { ...dj, points, points_auto: auto, points_manual: body.action === "set_points" };
+      const saved = await insertVersion(admin, "dashboards", { client_id: (dash as any).client_id, period: (dash as any).period }, {
+        standardized_data_id: (dash as any).standardized_data_id ?? null, html, data_json, status: (dash as any).status ?? "draft_ia", created_by: user.id,
+      });
+      return json({ action: "edit", dashboard: saved, summary: body.action === "reset_points" ? "Points calculés remis en place." : "Les 3 points du mois ont été mis à jour." });
+    }
     const metricsText = Object.entries(metrics).map(([id, m]) =>
       `- ${id} (${m.label}) : ${m.value}${m.unit ? " " + m.unit : ""}${m.change_pct != null ? ` (${m.change_pct >= 0 ? "+" : ""}${m.change_pct}% vs M-1)` : ""}`).join("\n");
     const bkText = dj.breakdowns && Object.keys(dj.breakdowns).length ? Object.entries(dj.breakdowns).map(([k, v]) => `${k} — ${v.label}`).join(" ; ") : "aucun";
