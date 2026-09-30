@@ -82,13 +82,19 @@ Deno.serve(async (req) => {
           .map((x: { text?: unknown; tone?: unknown }, i: number) => ({ key: `manuel_${i + 1}`, tone: TONES.includes(String(x?.tone)) ? String(x.tone) : "info", text: String(x?.text ?? "").trim().slice(0, 600), manual: true }))
           .filter((x: { text: string }) => x.text);
       if (body.action === "set_points" && !points.length) return json({ error: "Écris au moins un point." }, 400);
-      const html = await renderDashboardWithFx(
+      // Rapport antérieur au bloc « 3 points » : le bloc est ajouté en tête de la 1re page (sinon rien ne s'afficherait).
+      const pages = JSON.parse(JSON.stringify(dj.plan?.pages ?? [])) as { title?: string; widgets: { type: string; title?: string }[] }[];
+      if ((points as unknown[]).length && pages.length && !pages.some((pg) => pg.widgets?.some((w) => w.type === "points")))
+        pages[0].widgets = [{ type: "points", title: "Les 3 points du mois" }, ...(pages[0].widgets ?? [])];
+      // Rapport sans mise en page enregistrée (ancienne génération) : on ne re-rend PAS son HTML (il serait vidé) —
+      // seuls les points de l'espace client changent.
+      const html = !pages.length ? (dash as { html?: string }).html ?? "" : await renderDashboardWithFx(
         { client: dj.client ?? client?.name ?? "", period: dj.period ?? (dash as any).period, currency: dj.currency ?? client?.currency ?? "EUR", activity: dj.activity, benchmarks,
           brand: client?.brand as any, theme: dj.theme ?? {}, metrics, history: dj.history ?? { months: [], series: {}, labels: {} }, breakdowns: dj.breakdowns as any, targets: dj.targets,
           points: points as any, bridge: (dj as any).bridge?.vs_prev ?? (dj as any).bridge?.vs_avg3 ?? null, cashForecast: (dj as any).cash_forecast ?? null, paymentLevers: (dj as any).payment_levers ?? null },
-        { pages: (dj.plan?.pages ?? []) as any, theme: dj.theme ?? {} },
+        { pages: pages as any, theme: dj.theme ?? {} },
       );
-      const data_json = { ...dj, points, points_auto: auto, points_manual: body.action === "set_points" };
+      const data_json = { ...dj, plan: { ...(dj.plan ?? {}), pages }, points, points_auto: auto, points_manual: body.action === "set_points" };
       const saved = await insertVersion(admin, "dashboards", { client_id: (dash as any).client_id, period: (dash as any).period }, {
         standardized_data_id: (dash as any).standardized_data_id ?? null, html, data_json, status: (dash as any).status ?? "draft_ia", created_by: user.id,
       });
