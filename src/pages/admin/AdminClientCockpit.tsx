@@ -6,7 +6,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal, Waypoints } from 'lucide-react';
+import { FileUp, Wand2, LayoutDashboard, BookOpen, Palette, Trash2, Eye, Loader2, CheckCircle2, AlertCircle, Home, Activity, FileSearch, ChevronLeft, ChevronRight, SlidersHorizontal, Waypoints, KeyRound } from 'lucide-react';
 import { FlowMapPanel } from '@/components/flows/FlowMapPanel';
 import { ShopOnboardingPanel } from '@/components/generic/ShopOnboardingPanel';
 import { DocChecklistPanel } from '@/components/generic/DocChecklistPanel';
@@ -103,8 +103,8 @@ export default function AdminClientCockpit() {
   // Onglet actif stocké dans l'URL (?tab=…) : le bouton « retour » du navigateur restaure
   // l'onglet où l'on était (ex. Audit) au lieu de repartir sur Home.
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'flows' | 'custom' | 'dashboard' | 'shop';
-  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'flows' | 'custom' | 'dashboard' | 'shop') =>
+  const tab = (searchParams.get('tab') ?? 'home') as 'home' | 'data' | 'audit' | 'context' | 'flows' | 'custom' | 'dashboard' | 'shop' | 'access';
+  const setTab = (t: 'home' | 'data' | 'audit' | 'context' | 'flows' | 'custom' | 'dashboard' | 'shop' | 'access') =>
     setSearchParams((prev) => { const p = new URLSearchParams(prev); p.set('tab', t); return p; }, { replace: true });
 
   // Libellés lisibles des opérations (pour le bandeau d'état).
@@ -506,9 +506,10 @@ export default function AdminClientCockpit() {
     { id: 'custom' as const, label: 'Personnalisation', icon: <Palette className="w-4 h-4" /> },
     { id: 'shop' as const, label: 'Paramètres shop', icon: <SlidersHorizontal className="w-4 h-4" /> },
     { id: 'dashboard' as const, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'access' as const, label: 'Accès client', icon: <KeyRound className="w-4 h-4" /> },
   ];
-  const TAB_ICONS: Record<string, ShellNavItem['icon']> = { home: Home, data: Wand2, audit: FileSearch, context: BookOpen, flows: Waypoints, custom: Palette, shop: SlidersHorizontal, dashboard: LayoutDashboard };
-  const TAB_SHORT: Record<string, string> = { custom: 'Perso', shop: 'Shop' };
+  const TAB_ICONS: Record<string, ShellNavItem['icon']> = { home: Home, data: Wand2, audit: FileSearch, context: BookOpen, flows: Waypoints, custom: Palette, shop: SlidersHorizontal, dashboard: LayoutDashboard, access: KeyRound };
+  const TAB_SHORT: Record<string, string> = { custom: 'Perso', shop: 'Shop', access: 'Accès' };
   const shellNav: ShellNavItem[] = TABS.map((t) => ({ key: t.id, label: t.label, short: TAB_SHORT[t.id], icon: TAB_ICONS[t.id] }));
   const statuses = DASHBOARD_STATUSES.filter((s) => s !== 'supervision' || client?.requires_supervision);
   const missing: string[] = sd?.missing_items ?? [];
@@ -655,6 +656,7 @@ export default function AdminClientCockpit() {
                 <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => setTab('data')}><FileUp className="w-4 h-4 mr-2" />Déposer / standardiser les données</Button>
                 <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => setTab('custom')}><Palette className="w-4 h-4 mr-2" />Charte &amp; consignes</Button>
                 <Button size="sm" className="w-full justify-start" onClick={() => setTab('dashboard')} disabled={!sd}><LayoutDashboard className="w-4 h-4 mr-2" />{dash ? 'Voir le dashboard' : 'Générer le dashboard'}</Button>
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => setTab('access')}><KeyRound className="w-4 h-4 mr-2" />Donner l'accès au client</Button>
               </div>
             </div>
           </div>
@@ -937,8 +939,14 @@ export default function AdminClientCockpit() {
             <DashboardChat dashboardId={dash.id} onUpdated={(d) => { setDash(d); loadDashboard(); }} />
           </Section>
         )}
-        <ClientAccessPanel clientId={id!} published={dash?.status === 'publie'} />
         </>)}
+
+        {tab === 'access' && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Invite une personne du client (fondateur, associé…) : un lien d'accès à usage unique est créé, tu le lui envoies toi-même. Elle choisit son mot de passe et arrive sur l'espace de ce dossier — et seulement celui-ci.</p>
+            <ClientAccessPanel clientId={id!} published={dash?.status === 'publie'} />
+          </div>
+        )}
           </PageFade>
         </div>
       </div>

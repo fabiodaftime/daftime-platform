@@ -346,6 +346,7 @@ export default function AdminUsers() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
+        <PlatformAccessNotice />
         {/* Actions bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div className="relative">
@@ -563,6 +564,28 @@ export default function AdminUsers() {
           </Table>
         </div>
       </main>
+    </div>
+  );
+}
+
+// Cette page gère les accès des ANCIENS dossiers (tables Lovable « companies »). Les dossiers de la plateforme
+// (clients, ex. Error Paris) donnent l'accès depuis leur cockpit : onglet « Accès client » (lien d'invitation).
+function PlatformAccessNotice() {
+  const navigate = useNavigate();
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [pick, setPick] = useState('');
+  useEffect(() => { supabase.from('clients').select('id, name').order('name').then(({ data }) => setClients((data ?? []) as { id: string; name: string }[])); }, []);
+  return (
+    <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+      <div className="font-medium">Donner accès à un dossier de la plateforme (ex. Error Paris) ?</div>
+      <p className="mt-1">Cette page ne gère que les anciens dossiers. Pour un dossier de la plateforme, l'accès se donne depuis le dossier, onglet « Accès client » : tu crées un lien d'invitation et tu l'envoies à la personne.</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <select value={pick} onChange={(e) => setPick(e.target.value)} className="h-9 rounded border border-amber-300 bg-white px-2 text-sm min-w-[220px]">
+          <option value="">Choisir le dossier…</option>
+          {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <Button size="sm" disabled={!pick} onClick={() => navigate(`/admin/clients/${pick}?tab=access`)}>Ouvrir l'accès client</Button>
+      </div>
     </div>
   );
 }
