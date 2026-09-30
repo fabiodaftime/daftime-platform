@@ -1,4 +1,5 @@
-// Page d'arrivée d'un CLIENT invité (/bienvenue?token_hash=…&type=invite|magiclink).
+// Page d'arrivée d'un CLIENT invité : /bienvenue?invite=… (invitation Daftime, 7 jours — échangée contre un lien de
+// connexion par client-invite-accept) ou, liens plus anciens, /bienvenue?token_hash=…&type=invite|magiclink.
 // Valide le jeton ici même (verifyOtp) puis, pour un premier accès, fait choisir le mot de passe.
 // Ensuite : redirection vers l'accueil, qui envoie le client sur son espace.
 import { useEffect, useRef, useState } from 'react';
@@ -20,13 +21,26 @@ export default function Welcome() {
   useEffect(() => {
     if (done.current) return; done.current = true;
     const p = new URLSearchParams(window.location.search);
+    const EXPIRED = 'Ce lien a expiré ou a déjà servi. Demande un nouveau lien à ton conseiller Daftime.';
+    const verify = (token_hash: string, type: 'invite' | 'magiclink', askPassword: boolean) =>
+      supabase.auth.verifyOtp({ token_hash, type }).then(({ error }) => {
+        if (error) { setStep('error'); setErr(EXPIRED); return; }
+        window.history.replaceState({}, '', '/bienvenue'); // le jeton ne reste pas dans l'historique
+        if (askPassword) setStep('password'); else navigate('/', { replace: true });
+      });
+    const invite = p.get('invite');
+    if (invite) {
+      window.history.replaceState({}, '', '/bienvenue');
+      supabase.functions.invoke('client-invite-accept', { body: { token: invite } }).then(({ data, error }) => {
+        const d = data as { token_hash?: string; type?: 'invite' | 'magiclink'; needs_password?: boolean; error?: string } | null;
+        if (error || !d?.token_hash) { setStep('error'); setErr(d?.error ?? EXPIRED); return; }
+        verify(d.token_hash, d.type ?? 'magiclink', !!d.needs_password);
+      });
+      return;
+    }
     const token_hash = p.get('token_hash'); const type = p.get('type') === 'magiclink' ? 'magiclink' : 'invite';
     if (!token_hash) { setStep('error'); setErr('Lien incomplet.'); return; }
-    supabase.auth.verifyOtp({ token_hash, type }).then(({ error }) => {
-      if (error) { setStep('error'); setErr('Ce lien a expiré ou a déjà servi. Demande un nouveau lien à ton conseiller Daftime.'); return; }
-      window.history.replaceState({}, '', '/bienvenue'); // le jeton ne reste pas dans l'historique
-      if (type === 'invite') setStep('password'); else navigate('/', { replace: true });
-    });
+    verify(token_hash, type, type === 'invite');
   }, [navigate]);
 
   const save = async () => {

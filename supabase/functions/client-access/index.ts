@@ -1,9 +1,10 @@
 // ⑩ client-access — accès d'un CLIENT à son espace (/client/:id). Staff uniquement.
 //   list   : personnes ayant accès au dossier ;
 //   invite : crée le compte si besoin + rôle « client » sur le dossier, et renvoie un LIEN D'ACCÈS que le
-//            conseiller envoie lui-même (aucun e-mail automatique). Le lien pointe sur /bienvenue de la
-//            plateforme, qui valide le jeton côté navigateur (verifyOtp) : pas de dépendance à la liste
-//            d'URL de redirection de l'authentification (partagée avec la prod Lovable).
+//            conseiller envoie lui-même (aucun e-mail automatique). Le lien porte une INVITATION DAFTIME valable
+//            7 jours (jeton aléatoire, stocké haché, usage unique — table client_invitations) : au clic, /bienvenue
+//            appelle client-invite-accept qui génère le lien de connexion Supabase, consommé aussitôt. La durée des
+//            liens Supabase (1 h) est un réglage d'authentification PARTAGÉ avec la prod Lovable : on n'y touche pas.
 //   revoke : retire l'accès au dossier (le compte reste).
 // Body: { action, client_id, email?, user_id?, origin }
 
@@ -11,6 +12,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 import { requireStaff } from "../_shared/guard.ts";
 
 const ORIGINS = ["https://daftime-advisory-platform.com", "https://www.daftime-advisory-platform.com", "https://daftime-platform.vercel.app"];
+const INVITE_DAYS = 7;
 const isLocal = (o: string) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o);
 
 Deno.serve(async (req) => {
@@ -18,7 +20,7 @@ Deno.serve(async (req) => {
   try {
     const guard = await requireStaff(req);
     if (!guard.ok) return json({ error: guard.error }, guard.status);
-    const { admin } = guard;
+    const { admin, user: staff } = guard;
     const body = await req.json().catch(() => ({}));
     const { action, client_id } = body as { action?: string; client_id?: string };
     if (!client_id) return json({ error: "client_id requis" }, 400);
@@ -37,6 +39,10 @@ Deno.serve(async (req) => {
       const { user_id } = body as { user_id?: string };
       if (!user_id) return json({ error: "user_id requis" }, 400);
       await admin.from("user_roles").delete().eq("client_id", client_id).eq("user_id", user_id).eq("role", "client");
+      // Les invitations encore ouvertes pour cette personne ne doivent plus permettre d'entrer.
+      const { data: u } = await admin.auth.admin.getUserById(user_id);
+      if (u.user?.email) await admin.from("client_invitations").update({ revoked_at: new Date().toISOString() })
+        .eq("client_id", client_id).eq("email", u.user.email.toLowerCase()).is("used_at", null).is("revoked_at", null);
       return json({ ok: true });
     }
 
@@ -59,8 +65,17 @@ Deno.serve(async (req) => {
       const { data: has } = await admin.from("user_roles").select("id").eq("user_id", user.id).eq("client_id", client_id).eq("role", "client").maybeSingle();
       if (!has) { const { error } = await admin.from("user_roles").insert({ user_id: user.id, role: "client", client_id }); if (error) throw error; }
 
-      const link = `${origin}/bienvenue?token_hash=${encodeURIComponent(res.data.properties.hashed_token)}&type=${type}`;
-      return json({ ok: true, email, link, type, expires_in_minutes: 60 });
+      // Invitation Daftime 7 jours (la précédente encore ouverte pour ce dossier et cet e-mail est annulée).
+      const now = new Date();
+      await admin.from("client_invitations").update({ revoked_at: now.toISOString() }).eq("client_id", client_id).eq("email", email).is("used_at", null).is("revoked_at", null);
+      const raw = new Uint8Array(32); crypto.getRandomValues(raw);
+      const token = btoa(String.fromCharCode(...raw)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const token_hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+      const expires = new Date(now.getTime() + INVITE_DAYS * 86400000);
+      const { error: invErr } = await admin.from("client_invitations").insert({ client_id, email, token_hash, created_by: staff?.id ?? null, expires_at: expires.toISOString() });
+      if (invErr) throw invErr;
+      const link = `${origin}/bienvenue?invite=${encodeURIComponent(token)}`;
+      return json({ ok: true, email, link, type, expires_in_days: INVITE_DAYS, expires_at: expires.toISOString() });
     }
     return json({ error: "action inconnue" }, 400);
   } catch (e) {

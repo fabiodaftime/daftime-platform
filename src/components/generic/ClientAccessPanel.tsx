@@ -47,7 +47,7 @@ export function ClientAccessPanel({ clientId, published }: { clientId: string; p
       {err && <p className="text-xs text-destructive mt-2">{err}</p>}
       {link && (
         <div className="mt-2 rounded border bg-muted/40 p-2 text-xs space-y-1">
-          <div>Lien pour <b>{link.email}</b> — valable <b>1 heure</b>, à usage unique. Envoie-le toi-même (WhatsApp, e-mail…).</div>
+          <div>Lien pour <b>{link.email}</b> — valable <b>7 jours</b>, à usage unique (un nouveau lien annule le précédent). Envoie-le toi-même (WhatsApp, e-mail…).</div>
           <div className="flex items-center gap-2">
             <code className="flex-1 truncate">{link.url}</code>
             <Button size="sm" variant="outline" className="h-7" onClick={async () => { await navigator.clipboard.writeText(link.url); setCopied(true); }}>

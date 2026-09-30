@@ -26,6 +26,7 @@ const PLATFORM = {
   "distill-feedback": true, "restyle-dashboard": true, "dashboard-chat": true, "map-sku-costs": true, "bank-rules": true, "shopify-sync": true,
   "pennylane-sync": true, "client-access": true, "shopify-install": false, "shopify-compliance": false, // appels Shopify / marchand sans compte Daftime : signature Shopify vérifiée dans le code
   "nango-connect-session": true, "nango-webhook": false, "ingest-records": false, "flow-map": true,
+  "client-invite-accept": false, // lien d'invitation client ouvert SANS session : jeton Daftime vérifié dans le code
 };
 const FORBIDDEN = new Set(["sync-gsheet-to-inputs"]);
 
