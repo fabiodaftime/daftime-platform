@@ -17,7 +17,7 @@ describe("3 points du mois", () => {
     const pts = selectMonthPoints(derived(aug), b, "EUR");
     expect(pts.map((p) => p.key).slice(0, 2)).toEqual(["gagne", "acquisition"]);
     expect(pts.length).toBe(3);
-    expect(pts[0].text).toMatch(/dégage 10\s850\s€ de marge après pub \(CM3\)/);
+    expect(pts[0].text).toMatch(/dégage 10\s850\s€ de marge après pub \(CM3, 9,9\s% du CA\)/);
     expect(pts[0].text).toMatch(/En baisse de 5\s150\s€ vs juillet/);
   });
   it("pub jugée contre le point mort du shop (1/CM2)", () => {

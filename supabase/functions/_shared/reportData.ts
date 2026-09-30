@@ -60,7 +60,9 @@ export function prepareReport(inp: ReportInput): ReportData {
   const mainBridge = bridgePrev ?? bridgeAvg;
   const cashForecast = ((inp.sdData as { cash_forecast?: CashForecast })?.cash_forecast) ?? null;
   const paymentLevers = ((inp.sdData as { payment_levers?: PaymentLevers })?.payment_levers) ?? null;
-  const pointFacts = selectMonthPoints(curMap, mainBridge, currency, undefined, cashForecast);
+  // Signaux e-commerce pour le 3e point (retours, canaux, stock) + mois précédent (tendance du coût d'acquisition).
+  const pointFacts = selectMonthPoints(curMap, mainBridge, currency, undefined, cashForecast,
+    { prev: Object.keys(prevMap).length ? prevMap : null, breakdowns: (inp.sdData as { breakdowns?: Record<string, Bk> })?.breakdowns ?? null });
 
   const breakdowns = (inp.sdData as { breakdowns?: Record<string, Bk> })?.breakdowns
     ? JSON.parse(JSON.stringify((inp.sdData as { breakdowns: Record<string, Bk> }).breakdowns)) as Record<string, Bk> : undefined;

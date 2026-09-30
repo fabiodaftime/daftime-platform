@@ -90,20 +90,23 @@ describe("doctrine §4.2 — rentable à la 1re commande ?", () => {
     const { selectMonthPoints } = await import("../monthPoints.ts");
     const p = selectMonthPoints({ cm3: 32_789, cm3_rate: 9.8, cm2_per_order: 39.63, cac: 51.45, repeat_rate: 32.4, mer: 2.27, breakeven_roas: 1.85 }, null);
     const a = p.find((x) => x.key === "acquisition")!;
-    expect(a.tone).toBe("warn");
-    expect(a.text).toMatch(/Tu perds de l'argent à la 1re commande/);
+    // MER au-dessus du point mort : pas d'alarme contradictoire — rentable au global, 1re commande à rattraper.
+    expect(a.tone).toBe("info");
+    expect(a.text).toMatch(/^Ta pub est rentable au global \(MER 2,3× pour un point mort à 1,9×\), mais la 1re commande d'un nouveau client ne couvre pas son coût/);
     expect(a.text).toMatch(/ratio 0,77/);
-    expect(a.text).toMatch(/32,4 % de clients récurrents/);
+    expect(a.text).toMatch(/à vérifier sur les cohortes/);
   });
   it("ratio > 1 : rentable dès la 1re commande", async () => {
     const { selectMonthPoints } = await import("../monthPoints.ts");
     const a = selectMonthPoints({ cm3: 84_271, cm2_per_order: 45.46, cac: 39.59, mer: 3.15, breakeven_roas: 1.78 }, null).find((x) => x.key === "acquisition")!;
     expect(a.tone).toBe("good");
-    expect(a.text).toMatch(/rentable dès sa 1re commande.*ratio 1,15/);
+    expect(a.text).toMatch(/Ta pub est rentable au global \(MER 3,2×.*et chaque nouveau client est rentable dès sa 1re commande : 45\s€/);
   });
   it("ratio < 0,7 : stop scale", async () => {
     const { selectMonthPoints } = await import("../monthPoints.ts");
-    expect(selectMonthPoints({ cm2_per_order: 20, cac: 40 }, null).find((x) => x.key === "acquisition")!.text).toMatch(/^Stop scale/);
+    const a = selectMonthPoints({ cm2_per_order: 20, cac: 40 }, null).find((x) => x.key === "acquisition")!;
+    expect(a.tone).toBe("warn");
+    expect(a.text).toMatch(/^La 1re commande d'un nouveau client ne couvre pas son coût.*Écart trop large/);
   });
 });
 
@@ -137,7 +140,8 @@ describe("doctrine §4.3 — cohortes de réachat (3PL)", () => {
   it("marge 60 jours vs CAC dans le point acquisition", async () => {
     const { selectMonthPoints } = await import("../monthPoints.ts");
     const a = selectMonthPoints({ cm2_per_order: 39.63, cac: 51.45, repeat_60d: 22.2, orders_60d: 1.35, mer: 2.27, breakeven_roas: 1.85 }, null).find((x) => x.key === "acquisition")!;
-    expect(a.text).toMatch(/22,2\s% de réachat à 60 jours, soit 54\s€ de marge par client sur 60 jours — remboursé en 60 jours, sans marge d'erreur/);
+    expect(a.tone).toBe("warn"); // remboursé mais sans marge d'erreur (54 € pour 51 €)
+    expect(a.text).toMatch(/portée par tes clients qui reviennent\. Un nouveau client te coûte 51\s€ de pub pour 40\s€ de marge sur sa 1re commande : il se rembourse en 60 jours grâce au réachat \(22,2\s% des nouveaux clients recommandent\), sans marge d'erreur/);
   });
 });
 
@@ -160,6 +164,27 @@ describe("point 1 : la marge après pub n'est pas le gain final", () => {
     const { selectMonthPoints } = await import("../monthPoints.ts");
     const p = selectMonthPoints({ cm3: 32_789, cm3_rate: 9.8, ebitda: -8_432 }, null)[0];
     expect(p.tone).toBe("warn");
-    expect(p.text).toMatch(/Après tes charges fixes \(41\s221\s€\), il te reste -8\s432\s€|Après tes charges fixes \(41\s221\s€\), il te reste −8\s432\s€/);
+    expect(p.text).toMatch(/Mais tes charges fixes \(41\s221\s€\) la dépassent : ton résultat d'exploitation est à [-−]8\s432\s€/);
+  });
+});
+
+describe("3e point : le signal le plus coûteux, la trésorerie seulement si la projection montre une tension", () => {
+  const base = { cm3: 32_789, cm3_rate: 9.8, ebitda: -8_432, ca: 334_526, cm1: 224_238, gross_sales: 453_493, refunds: 60_215, cash_start: 139_675, cash_end: 99_236, cm2_per_order: 39.6 };
+  const prev = { gross_sales: 435_782, refunds: 24_079 };
+  const fc = { start: { balance: 99_236 }, low: { date: "2026-09-06", balance: 77_031 } };
+  it("projection sereine : pas de « mois devant toi », le signal le plus coûteux passe", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    const bks = { returns_by_reason: { rows: [{ label: "Trop petit", value: 903 }, { label: "Ne plaît pas", value: 242 }] },
+      channel_margin: { rows: [{ label: "Meta", value: -11_103, values: { spend: 58_290 } }, { label: "Google", value: 23_457, values: { spend: 21_483 } }] } };
+    const p3 = selectMonthPoints(base, null, "EUR", undefined, fc, { prev, breakdowns: bks }).at(-1)!;
+    expect(p3.text).not.toMatch(/mois devant toi/);
+    expect(p3.key).toBe("retours"); // ≈ 7,8 pts × 453 k × 67 % ≈ 23,7 k€ > 11,1 k€ (Meta)
+    expect(p3.text).toMatch(/Motif n°1 : « trop petit » \(78,9\s% des retours\).*guide des tailles/);
+  });
+  it("rien de saillant : la trésorerie dit ce que dit la projection", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    const p3 = selectMonthPoints({ ...base, refunds: 25_000 }, null, "EUR", undefined, fc, { prev }).at(-1)!;
+    expect(p3).toMatchObject({ key: "tresorerie", tone: "good" });
+    expect(p3.text).toMatch(/baissé de 40\s439\s€ ce mois, mais ta projection à 13 semaines reste solide : point bas 77\s031\s€ le 06\/09/);
   });
 });
