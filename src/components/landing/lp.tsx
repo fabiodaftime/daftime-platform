@@ -74,7 +74,7 @@ export function ProductPreview({ className = '' }: { className?: string }) {
             <span className="rounded-full bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] px-2.5 py-1 text-[11px] font-semibold">Nouveau rapport</span>
           </div>
           <div>
-            <div className="text-sm text-muted-foreground">Ce que ton shop a vraiment gagné</div>
+            <div className="text-sm text-muted-foreground">Ta marge après pub</div>
             <div className="num text-4xl sm:text-[2.6rem] font-semibold tracking-tight text-[hsl(var(--bad))] leading-tight">{eur(Math.round(cm3))}</div>
             <div className="text-xs text-muted-foreground mt-0.5">après pub · pour 136 840 € de CA (+12 %)</div>
           </div>

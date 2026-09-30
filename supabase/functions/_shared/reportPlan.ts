@@ -18,7 +18,8 @@ export const hasCascade = (d: ReportData) => ["ca", "cm1"].every((k) => d.metric
 // ADAPTATION AU DOSSIER : l'ordre des indicateurs de tête et des BLOCS OPTIONNELS, choisis (IA ou mots-clés)
 // d'après les consignes du conseiller et le contexte — toujours parmi ce qui a de la donnée.
 export interface Tailoring { kpis?: string[]; extras?: string[] }
-export const DEFAULT_HEAD_KPIS = ["cm3", "cm3_rate", "mer", "ca", "cash_end"];
+// Socle doctrinal : marge après pub (€ et %), ce qu'il reste après les charges fixes, pub vs point mort, CA net, cash.
+export const DEFAULT_HEAD_KPIS = ["cm3", "cm3_rate", "ebitda", "mer", "ca", "cash_end"];
 export interface Extra { id: string; label: string; page: "mois" | "tresorerie" }
 export function availableExtras(d: ReportData): Extra[] {
   const has = (id: string) => d.metrics[id]?.value != null;
@@ -56,7 +57,7 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = [], tailor: Ta
   const pages: DashPlan["pages"] = [];
   const ex = new Set((tailor.extras ?? []).filter((x) => availableExtras(d).some((a) => a.id === x)));
   // Indicateurs de tête : ceux demandés d'abord, complétés par le socle doctrinal (5 max, sans doublon).
-  const head = [...new Set([...(tailor.kpis ?? []), ...DEFAULT_HEAD_KPIS])].filter(has).slice(0, 5);
+  const head = [...new Set([...(tailor.kpis ?? []), ...DEFAULT_HEAD_KPIS])].filter(has).slice(0, 6);
 
   // 1. LE MOIS
   const cmChain = pick("ca", "cm1", "cm2", "cm3");
@@ -66,8 +67,10 @@ export function buildReportPlan(d: ReportData, forced: Widget[] = [], tailor: Ta
     { type: "points", title: "Les 3 points du mois" },
     ...W(head.length && { type: "kpi_row", items: head.map((metric) => ({ metric })) }),
     ...W(ex.has("par_commande") && kpis(...["cm3_per_order", "cm2_per_order", "logistics_per_order", "cpa_order", "aov"].filter((x) => !head.includes(x)))),
-    ...W(cmChain.length >= 3 && (ex.has("jusqu_ebitda")
-      ? { type: "waterfall", title: "Du CA net à l'EBITDA", metrics: [...cmChain, "ebitda"] }
+    // La marge après pub n'est pas ce que le shop gagne : dès que le résultat d'exploitation est connu, la cascade
+    // continue jusqu'à lui (charges fixes).
+    ...W(cmChain.length >= 3 && (ex.has("jusqu_ebitda") || (has("cm3") && has("ebitda"))
+      ? { type: "waterfall", title: "Du CA net à ce qu'il te reste après tes charges fixes", metrics: [...cmChain, "ebitda"] }
       : { type: "waterfall", title: "Du CA à la marge après pub", metrics: cmChain })),
     ...W(d.mainBridge && { type: "bridge" }),
     ...W(ex.has("brut_net") && { type: "waterfall", title: "Du CA brut au CA net", metrics: pick("gross_sales", "discounts", "refunds", "ca") }),

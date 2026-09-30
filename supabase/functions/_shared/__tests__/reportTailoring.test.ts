@@ -35,14 +35,15 @@ describe("adaptation au dossier", () => {
   it("plan : tête réordonnée, cascade jusqu'à l'EBITDA, brut → net, structure de coûts", () => {
     const p = buildReportPlan(d, [], { kpis: ["cm3_per_order", "mer"], extras: ["par_commande", "brut_net", "jusqu_ebitda", "structure_couts", "inconnu"] });
     const w = p.pages[0].widgets;
-    expect(w[1].items?.map((i) => i.metric)).toEqual(["cm3_per_order", "mer", "cm3", "ca", "cash_end"]);
-    expect(w.find((x) => x.title === "Du CA net à l'EBITDA")?.metrics).toEqual(["ca", "cm1", "cm2", "cm3", "ebitda"]);
+    expect(w[1].items?.map((i) => i.metric)).toEqual(["cm3_per_order", "mer", "cm3", "ebitda", "ca", "cash_end"]);
+    expect(w.find((x) => x.title === "Du CA net à ce qu'il te reste après tes charges fixes")?.metrics).toEqual(["ca", "cm1", "cm2", "cm3", "ebitda"]);
     expect(w.find((x) => x.title === "Du CA brut au CA net")?.metrics).toEqual(["gross_sales", "discounts", "refunds", "ca"]);
     expect(w.find((x) => x.title?.startsWith("Où part l"))?.metrics?.[0]).toBe("ads_total");
   });
-  it("sans adaptation : mise en page doctrinale inchangée", () => {
+  it("sans adaptation : socle doctrinal, résultat après charges fixes toujours montré s'il est connu", () => {
     const w = buildReportPlan(d).pages[0].widgets;
-    expect(w[1].items?.map((i) => i.metric)).toEqual(["cm3", "mer", "ca", "cash_end"]);
+    expect(w[1].items?.map((i) => i.metric)).toEqual(["cm3", "ebitda", "mer", "ca", "cash_end"]);
+    expect(w.find((x) => x.type === "waterfall")?.metrics).toEqual(["ca", "cm1", "cm2", "cm3", "ebitda"]);
     expect(w.some((x) => x.title === "Du CA brut au CA net")).toBe(false);
   });
 });

@@ -154,3 +154,12 @@ describe("doctrine §8.2 — marge par canal", () => {
     expect(m.flags[0].label).toMatch(/Meta −?-?7\s200/);
   });
 });
+
+describe("point 1 : la marge après pub n'est pas le gain final", () => {
+  it("dit ce qu'il reste après les charges fixes", async () => {
+    const { selectMonthPoints } = await import("../monthPoints.ts");
+    const p = selectMonthPoints({ cm3: 32_789, cm3_rate: 9.8, ebitda: -8_432 }, null)[0];
+    expect(p.tone).toBe("warn");
+    expect(p.text).toMatch(/Après tes charges fixes \(41\s221\s€\), il te reste -8\s432\s€|Après tes charges fixes \(41\s221\s€\), il te reste −8\s432\s€/);
+  });
+});

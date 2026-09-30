@@ -127,13 +127,16 @@ function MonthlyTrend({ series, currency }: { series: Array<{ period: string; va
   );
 }
 
-// Un seul mois publié : ce qu'il reste à chaque étape, du CA à la marge après pub.
+// Un seul mois publié : ce qu'il reste à chaque étape, du CA à la marge après pub, puis après les charges fixes
+// (résultat d'exploitation) et, s'il est connu, le résultat net — la marge après pub n'est pas ce que le shop gagne.
 function MonthCascade({ dataJson, currency, period }: { dataJson: any; currency: string; period: string }) {
   const steps = [
     { id: 'ca', label: "Chiffre d'affaires net", hint: 'ce que tu encaisses, hors taxes, remises et retours' },
     { id: 'cm1', label: 'Après coût des produits', hint: 'CM1' },
     { id: 'cm2', label: 'Après logistique & paiement', hint: 'CM2' },
-    { id: 'cm3', label: 'Après pub', hint: 'CM3 — ce que le shop gagne vraiment' },
+    { id: 'cm3', label: 'Après pub', hint: 'CM3 — ce que tes ventes rapportent, avant tes charges fixes' },
+    { id: 'ebitda', label: 'Après charges fixes', hint: "résultat d'exploitation (EBITDA) : équipe, outils, loyers, comptabilité" },
+    { id: 'resultat_net', label: 'Résultat net', hint: 'après amortissements, intérêts et impôts' },
   ].map((s) => ({ ...s, v: metricById(dataJson, s.id) })).filter((s) => s.v != null) as { id: string; label: string; hint: string; v: number }[];
   if (steps.length < 2) return null;
   const max = Math.max(...steps.map((s) => Math.abs(s.v)), 1);
@@ -348,7 +351,7 @@ export default function ClientSpace() {
     if (cm3 != null) out.push({ key: 'cm3', label: 'Marge après pub', raw: cm3, fmt: money, sub: cm3r != null ? `${num1(cm3r)} % de ton chiffre d'affaires` : undefined, delta: delta('cm3', cm3) });
     if (mer != null) out.push({ key: 'mer', label: 'CA pour 1 € de pub', raw: mer, fmt: (v) => `${num1(v)} €`, sub: be != null ? `point mort à ${num1(be)} €` : undefined,
       status: be != null ? (mer >= be ? { ok: true, text: 'au-dessus du point mort' } : { ok: false, text: 'sous le point mort' }) : undefined });
-    if (cpo != null) out.push({ key: 'cpo', label: 'Gagné par commande', raw: cpo, fmt: money, sub: aov != null ? `après pub · panier moyen ${money(aov)}` : 'après pub' });
+    if (cpo != null) out.push({ key: 'cpo', label: 'Marge par commande', raw: cpo, fmt: money, sub: aov != null ? `après pub, avant charges fixes · panier moyen ${money(aov)}` : 'après pub, avant charges fixes' });
     if (cash != null) {
       const low = dj?.cash_forecast?.low as { date: string; balance: number } | undefined;
       out.push({ key: 'cash', label: 'Trésorerie', raw: cash, fmt: money, sub: low ? `point bas prévu ${money(low.balance)} le ${ddmm(low.date)}` : 'fin de mois',
@@ -363,6 +366,7 @@ export default function ClientSpace() {
   }, [dj, client, series, period]);
 
   if (!client) return <AppLoading nav />;
+  const ebitdaNow = metricById(dj, 'ebitda');
 
   const advisor = (client as any)?.advisor as { name: string; email?: string; whatsapp?: string; photo_url?: string; booking_url?: string } | null | undefined;
   const advisorName = advisor?.name ?? ADVISOR.name;
@@ -425,7 +429,7 @@ export default function ClientSpace() {
           <div className="relative z-[1] max-w-2xl">
             <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-white/10 ring-1 ring-white/15"><Clock className="w-3.5 h-3.5" /> Ton premier rapport est en préparation</span>
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight mt-4 text-balance">Bienvenue, {client.name}.</h1>
-            <p className="text-white/70 mt-3 text-[15px] leading-relaxed">Chaque mois, tu verras ici ce que ton shop gagne vraiment, si ta pub est rentable et comment évolue ta trésorerie.</p>
+            <p className="text-white/70 mt-3 text-[15px] leading-relaxed">Chaque mois, tu verras ici ta vraie marge, ce qu'il te reste après tes charges, si ta pub est rentable et comment évolue ta trésorerie.</p>
           </div>
         </section>
       </Item>
@@ -480,12 +484,19 @@ export default function ClientSpace() {
                     </div>
                     {hero ? (
                       <div className="mt-6">
-                        <div className="text-white/60 text-sm">{hero.key === 'cm3' ? 'Ce que ton shop a vraiment gagné' : hero.label}</div>
+                        <div className="text-white/60 text-sm">{hero.key === 'cm3' ? 'Ta marge après pub' : hero.label}</div>
                         <CountUp value={hero.raw} format={hero.fmt} duration={1.4} className="num block text-[44px] sm:text-6xl font-semibold tracking-tight mt-1 leading-none" />
                         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70">
-                          <span>{hero.key === 'cm3' ? 'de marge après pub' : ''}{hero.sub ? `${hero.key === 'cm3' ? ' · ' : ''}${hero.sub}` : ''}</span>
+                          <span>{hero.key === 'cm3' ? 'avant tes charges fixes' : ''}{hero.sub ? `${hero.key === 'cm3' ? ' · ' : ''}${hero.sub}` : ''}</span>
                           {hero.delta != null && <span className={`font-medium ${hero.delta >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>{hero.delta >= 0 ? '▲' : '▼'} {num1(Math.abs(hero.delta))} % vs mois précédent</span>}
                         </div>
+                        {hero.key === 'cm3' && ebitdaNow != null && (
+                          <div className="mt-4 inline-flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg bg-white/[0.07] ring-1 ring-white/10 px-3 py-2 text-sm">
+                            <span className="text-white/65">Après tes charges fixes, il te reste</span>
+                            <span className={`num font-semibold ${ebitdaNow < 0 ? 'text-rose-300' : 'text-emerald-300'}`}>{moneyFmt(client.currency ?? 'EUR')(ebitdaNow)}</span>
+                            <span className="text-white/50 text-xs">résultat d'exploitation</span>
+                          </div>
+                        )}
                       </div>
                     ) : <h1 className="mt-8 text-3xl font-semibold">{client.name}</h1>}
                   </div>

@@ -31,8 +31,12 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
       ? ` ${bridge.delta >= 0 ? "En hausse" : "En baisse"} de ${eur(Math.abs(bridge.delta))} vs ${baseLabel ?? bridge.base}${top ? `, d'abord à cause de : ${top.label.toLowerCase()} (${signed(top.value)})` : ""}.`
       : "";
     const caveat = lvl === "cm1" ? " Logistique inconnue : on ne sait pas encore ce que le shop gagne vraiment." : lvl === "cm2" ? " Pub inconnue : ce n'est pas encore la marge finale." : "";
-    out.push({ key: "gagne", tone: m < 0 || (rate != null && lvl === "cm3" && rate < 10) ? "warn" : lvl === "cm3" ? "good" : "info",
-      text: `Ton shop dégage ${eur(m)} de ${LEVEL_FR[lvl]}${rate != null ? ` (${pct(rate)} du CA)` : ""}.${why}${caveat}` });
+    // La marge après pub n'est pas le gain final : ce qu'il reste après les charges fixes (résultat d'exploitation).
+    const eb = n("ebitda");
+    const after = lvl === "cm3" && eb != null
+      ? ` Après tes charges fixes (${eur(m - eb)}), il te reste ${eur(eb)} de résultat d'exploitation.` : "";
+    out.push({ key: "gagne", tone: m < 0 || (eb != null && eb < 0) || (rate != null && lvl === "cm3" && rate < 10) ? "warn" : lvl === "cm3" ? "good" : "info",
+      text: `Ton shop dégage ${eur(m)} de ${LEVEL_FR[lvl]}${rate != null ? ` (${pct(rate)} du CA)` : ""}.${why}${after}${caveat}` });
   }
 
   // (2) L'acquisition est-elle rentable ? D'abord le TEST DE BASE (doctrine §4.2) : CM2 par commande ÷ coût d'un
