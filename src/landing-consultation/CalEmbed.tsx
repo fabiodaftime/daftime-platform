@@ -1,11 +1,12 @@
 // Prise de RDV cal.com INLINE — même parti pris que src/landing-portugal/CalEmbed.tsx
 // (iframe brute, pas d'embed.js, montage à l'approche du viewport), avec deux ajouts :
 //   - les utm_* / fbclid de la page sont transmis à cal.com (iframe ET repli plein onglet) ;
-//   - la confirmation est captée par DEUX chemins dédoublonnés (voir ./schedule.ts).
+//   - la confirmation cal.com affiche juste un bandeau « C'est réservé » : AUCUN
+//     événement Meta ici, Schedule est envoyé côté serveur par Make (voir ./params.ts).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isInAppBrowser } from '@/lib/inApp';
 import { CAL } from './config';
-import { bookingUidFrom, fireSchedule, THANKS_MESSAGE, withForwardParams } from './schedule';
+import { withForwardParams } from './params';
 
 export function CalEmbed({ onBooked }: { onBooked?: () => void }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -40,22 +41,11 @@ export function CalEmbed({ onBooked }: { onBooked?: () => void }) {
 
   useEffect(() => {
     const onMessage = (ev: MessageEvent) => {
-      const origin = (ev.origin || '').toLowerCase();
-      // Chemin 2 bis : cal.com a redirigé l'iframe vers notre page /merci.
-      if (origin === window.location.origin) {
-        const d = ev.data as { type?: string; uid?: string } | null;
-        if (d?.type !== THANKS_MESSAGE) return;
-        fireSchedule('merci', d.uid);
-        onBookedRef.current?.();
-        return;
-      }
-      // Chemin 1 : confirmation émise par l'iframe cal.com.
-      if (!origin.endsWith('cal.com')) return;
+      if (!(ev.origin || '').toLowerCase().endsWith('cal.com')) return;
       const data = ev.data;
       const asText =
         typeof data === 'string' ? data : data && typeof data === 'object' ? JSON.stringify(data) : '';
       if (!asText.includes('bookingSuccessful')) return;
-      fireSchedule('cal.com', bookingUidFrom(data));
       onBookedRef.current?.();
     };
     window.addEventListener('message', onMessage);

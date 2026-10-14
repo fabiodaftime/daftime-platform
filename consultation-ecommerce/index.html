@@ -64,18 +64,15 @@
     <meta name="facebook-domain-verification" content="bah4ze2xh3iduliiw7n4oyac5xfupg" />
 
     <script>
-      // Pixel coupé en local (les visites de dev ne polluent pas les stats pub) et dans une
-      // iframe (la page /merci peut s'afficher DANS l'iframe cal.com de la landing).
+      // Pixel coupé en local (les visites de dev ne polluent pas les stats pub) et dans une iframe.
       window.__dftLocal = /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(location.hostname);
       window.__dftFramed = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
-      // Page /merci : cal.com renvoie l'uid de réservation, les utm_*… mais aussi le nom et
-      // l'e-mail du client. On garde l'uid en mémoire et on nettoie l'URL AVANT le pixel,
-      // pour qu'aucune donnée personnelle ne parte chez Meta avec l'adresse de la page.
+      // Page /merci : si un lien y arrive avec nom / e-mail en paramètres, on ne garde que les utm_*
+      // AVANT le pixel, pour qu'aucune donnée personnelle ne parte chez Meta avec l'adresse de la page.
       (function () {
         if (!/\/merci\/?$/.test(location.pathname)) return;
         try {
           var sp = new URLSearchParams(location.search), keep = new URLSearchParams();
-          window.__dftBooking = { uid: sp.get('uid') || sp.get('bookingUid') || sp.get('booking_uid') || '' };
           ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(function (k) {
             var v = sp.get(k); if (v) keep.set(k, v);
           });
@@ -85,7 +82,8 @@
       })();
     </script>
 
-    <!-- Meta Pixel Code (même ID que les autres LP) -->
+    <!-- Meta Pixel Code (même ID que les autres LP) — PageView UNIQUEMENT.
+         « Schedule » est envoyé côté serveur (Make → API Conversions Meta). -->
     <script>
       if (!window.__dftLocal && !window.__dftFramed) {
       !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');

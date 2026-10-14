@@ -1,52 +1,17 @@
-// Page /consultation-ecommerce/merci — cible du « Redirect on booking » cal.com.
+// Page /consultation-ecommerce/merci — page de confirmation simple.
 //
-// Deux contextes :
-//  - plein onglet (webview Instagram/Facebook, repli « ouvrir dans le navigateur »,
-//    ou cal.com qui redirige la page entière) → on envoie « Schedule » ici ;
-//  - dans l'iframe de la landing (cal.com redirige l'iframe) → pas de pixel ici
-//    (voir consultation-ecommerce/index.html), on prévient la page parente.
-//
-// L'uid de réservation et les utm_* sont lus par le script inline du <head>, qui
-// nettoie l'URL AVANT le pixel : cal.com renvoie aussi nom et e-mail du client en
-// paramètres, ils ne doivent pas partir chez Meta avec l'URL de la page.
+// AUCUN événement de conversion ici : la redirection cal.com vers cette page n'est
+// pas activée (option payante) et « Schedule » est envoyé côté serveur par Make
+// (API Conversions Meta). Le pixel n'y envoie que PageView, comme la landing.
 import { useEffect } from 'react';
-import { CalendarCheck } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-sm.png';
 import { PAGE_PATH } from '@/landing-consultation/config';
 import { THANKS } from '@/landing-consultation/content';
-import { fireSchedule, THANKS_MESSAGE } from '@/landing-consultation/schedule';
-
-declare global {
-  interface Window {
-    __dftBooking?: { uid?: string };
-    __dftFramed?: boolean;
-  }
-}
 
 export default function ConsultationThanks() {
-  const framed = window.__dftFramed ?? window.self !== window.top;
-
   useEffect(() => {
     document.title = 'Rendez-vous confirmé — Daftime Advisory';
-    const uid = window.__dftBooking?.uid || undefined;
-    if (framed) {
-      try { window.parent.postMessage({ type: THANKS_MESSAGE, uid }, window.location.origin); } catch { /* noop */ }
-      return;
-    }
-    fireSchedule('merci', uid);
-  }, [framed]);
-
-  if (framed) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white px-6 text-center text-primary">
-        <span className="grid h-12 w-12 place-items-center rounded-full bg-accent">
-          <CalendarCheck className="h-6 w-6 text-accent-foreground" aria-hidden />
-        </span>
-        <p className="text-xl font-semibold">{THANKS.title}</p>
-        <p className="max-w-sm text-[15px] leading-relaxed text-muted-foreground">{THANKS.text}</p>
-      </div>
-    );
-  }
+  }, []);
 
   return (
     <main className="flex min-h-screen flex-col bg-primary text-primary-foreground antialiased">

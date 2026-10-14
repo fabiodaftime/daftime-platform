@@ -7,7 +7,7 @@
 /** Adresse publique de la page (canonical et Open Graph — voir consultation-ecommerce/index.html). */
 export const SITE_URL = 'https://www.daftime-advisory-platform.com';
 export const PAGE_PATH = '/consultation-ecommerce';
-/** Page de confirmation : cible du « Redirect on booking » de l'event cal.com. */
+/** Page de confirmation (sans suivi de conversion — la redirection cal.com n'est pas activée). */
 export const THANKS_PATH = `${PAGE_PATH}/merci`;
 
 // ───────────────────────────────────────────────────────────────── Cal.com ──
@@ -23,19 +23,15 @@ export const CAL = {
   fullUrl: `https://cal.com/${CAL_USER}/${CAL_EVENT}`,
 } as const;
 
-/**
- * Paramètres d'URL transmis à cal.com, puis renvoyés par cal.com sur la page
- * /merci (option « Forward parameters »). cal.com enregistre aussi les utm_*
- * sur la réservation : on retrouve la campagne dans le détail du RDV.
- */
+/** Paramètres d'URL de la page transmis à cal.com (voir ./params.ts). */
 export const FORWARDED_PARAMS = [
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid',
 ] as const;
 
 // ────────────────────────────────────────────────────────────── Meta Pixel ──
-// Le snippet (PageView) est posé en dur dans consultation-ecommerce/index.html,
-// même ID que les autres LP. « Schedule » part depuis CalEmbed (postMessage
-// cal.com) OU depuis la page /merci (redirection cal.com) — dédoublonné.
+// Navigateur : PageView UNIQUEMENT (snippet dans consultation-ecommerce/index.html).
+// « Schedule » : côté serveur, scénario Make → API Conversions Meta, filtré sur
+// l'event cal.com ci-dessus. Aucun autre événement Meta n'est envoyé par la page.
 
 // ─────────────────────────────────────────────────────────── Qui est derrière ──
 export const ADVISOR = {

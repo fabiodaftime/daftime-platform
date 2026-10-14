@@ -9,26 +9,25 @@
 //  fond clair : sur fond clair il est un aplat (bouton, surligneur) avec texte
 //  bleu nuit ; il n'apparaît en texte que sur le bleu nuit.
 //
+//  Suivi Meta : PageView seulement (head). Schedule = serveur (Make → API Conversions).
+//
 //  Mobile d'abord (90 % du trafic = webview Meta) : pas d'animation conditionnant
 //  l'affichage, pas de librairie lourde, images locales de quelques ko.
 // ═══════════════════════════════════════════════════════════════════════════
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, CalendarCheck, Check } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-sm.png';
-import { trackFaqOpen, trackLead, trackViewContent } from '@/lib/tracking';
 import { ADVISOR, FLAGS, LEGAL, LINKS } from '@/landing-consultation/config';
 import {
   ABOUT, BOOKING, COUNTRIES, CTA_LABEL, FAQ, HERO, PAINS, STEPS,
 } from '@/landing-consultation/content';
 import { CalEmbed } from '@/landing-consultation/CalEmbed';
-import { PAGE_KEY } from '@/landing-consultation/schedule';
 
 const BOOKING_ANCHOR = 'reserver';
 
-/** Le CTA unique : intention (Lead) puis défilement vers le calendrier. */
-function Cta({ placement, className = '' }: { placement: string; className?: string }) {
+/** Le CTA unique : défilement vers le calendrier. */
+function Cta({ className = '' }: { className?: string }) {
   const go = () => {
-    trackLead(`consultation_${placement}`);
     const target = document.getElementById(BOOKING_ANCHOR);
     if (!target) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -60,14 +59,9 @@ export default function LandingConsultation() {
   const [bookingInView, setBookingInView] = useState(false);
   const bookingRef = useRef<HTMLElement>(null);
 
-  // Barre CTA mobile après le hero + signal d'intérêt à mi-page.
+  // Barre CTA mobile après le hero.
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      setPastHero(y > window.innerHeight * 0.7);
-      if (h > 0 && y / h >= 0.5) trackViewContent({ page: PAGE_KEY });
-    };
+    const onScroll = () => setPastHero(window.scrollY > window.innerHeight * 0.7);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -110,7 +104,7 @@ export default function LandingConsultation() {
             {HERO.subtitle}
           </p>
           <div className="mt-8">
-            <Cta placement="hero" />
+            <Cta />
           </div>
           <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-primary-foreground/75">
             {HERO.reassurance.map((r) => (
@@ -229,7 +223,7 @@ export default function LandingConsultation() {
             ))}
           </ul>
           <div className="mt-10">
-            <Cta placement="qui" />
+            <Cta />
           </div>
         </div>
       </section>
@@ -241,9 +235,6 @@ export default function LandingConsultation() {
           {FAQ.map((f) => (
             <details
               key={f.q}
-              onToggle={(e) => {
-                if (e.currentTarget.open) trackFaqOpen(f.q, PAGE_KEY);
-              }}
               className="group border-b border-primary/10"
             >
               <summary className="flex min-h-[56px] cursor-pointer touch-manipulation list-none items-center justify-between gap-5 py-4 text-[16px] font-medium leading-snug [&::-webkit-details-marker]:hidden">
@@ -316,7 +307,7 @@ export default function LandingConsultation() {
             showSticky ? 'translate-y-0' : 'invisible translate-y-full'
           }`}
         >
-          <Cta placement="sticky" />
+          <Cta />
         </div>
       )}
     </div>
