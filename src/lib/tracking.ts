@@ -51,9 +51,10 @@ export function trackLead(source: string): void {
   track('lead', { source }, { skipMeta: true });
 }
 
-/** RDV réellement confirmé dans cal.com → conversion (Meta "Schedule" + event générique). */
-export function trackSchedule(params: Params = {}): void {
-  try { window.fbq?.('track', 'Schedule', params); } catch { /* noop */ }
+/** RDV réellement confirmé dans cal.com → conversion (Meta "Schedule" + event générique).
+ *  `eventId` (uid de réservation cal.com) : Meta dédoublonne deux envois portant le même ID. */
+export function trackSchedule(params: Params = {}, eventId?: string): void {
+  try { window.fbq?.('track', 'Schedule', params, ...(eventId ? [{ eventID: eventId }] : [])); } catch { /* noop */ }
   track('appointment_booked', params, { skipMeta: true });
 }
 

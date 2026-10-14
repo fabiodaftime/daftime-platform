@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+  Entrée HTML autonome de la landing « consultation e-commerce » et de sa page /merci
+  (voir build.rollupOptions dans vite.config.ts et les rewrites de vercel.json).
+  Même modèle que portugal/index.html : Open Graph propres, bundle sans l'application.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1A1D56" />
+
+    <link rel="preconnect" href="https://cal.com" crossorigin />
+    <link rel="preconnect" href="https://app.cal.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cal.com" />
+
+    <!-- Poppins, 3 graisses, chargement NON bloquant -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" />
+    </noscript>
+
+    <link rel="canonical" href="https://www.daftime-advisory-platform.com/consultation-ecommerce" />
+    <title>20 min offertes pour remettre ta structure e-commerce d’aplomb — Daftime Advisory</title>
+    <meta
+      name="description"
+      content="Société, résidence, flux, encaissements : 20 minutes en visio avec un expert pour faire le point sur ta structure e-commerce. Tu repars avec un plan clair. Offertes."
+    />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Daftime Advisory" />
+    <meta property="og:title" content="20 min offertes pour remettre ta structure e-commerce d’aplomb" />
+    <meta
+      property="og:description"
+      content="Société, résidence, flux, encaissements : on fait le point, tu repars avec un plan clair."
+    />
+    <meta property="og:url" content="https://www.daftime-advisory-platform.com/consultation-ecommerce" />
+    <meta property="og:image" content="https://www.daftime-advisory-platform.com/og-consultation.png" />
+    <meta property="og:image:secure_url" content="https://www.daftime-advisory-platform.com/og-consultation.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Daftime Advisory — 20 minutes offertes pour ta structure e-commerce" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="20 min offertes pour remettre ta structure e-commerce d’aplomb" />
+    <meta name="twitter:description" content="Société, résidence, flux, encaissements : on fait le point, tu repars avec un plan clair." />
+    <meta name="twitter:image" content="https://www.daftime-advisory-platform.com/og-consultation.png" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="256x256" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+
+    <meta name="facebook-domain-verification" content="bah4ze2xh3iduliiw7n4oyac5xfupg" />
+
+    <script>
+      // Pixel coupé en local (les visites de dev ne polluent pas les stats pub) et dans une
+      // iframe (la page /merci peut s'afficher DANS l'iframe cal.com de la landing).
+      window.__dftLocal = /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(location.hostname);
+      window.__dftFramed = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
+      // Page /merci : cal.com renvoie l'uid de réservation, les utm_*… mais aussi le nom et
+      // l'e-mail du client. On garde l'uid en mémoire et on nettoie l'URL AVANT le pixel,
+      // pour qu'aucune donnée personnelle ne parte chez Meta avec l'adresse de la page.
+      (function () {
+        if (!/\/merci\/?$/.test(location.pathname)) return;
+        try {
+          var sp = new URLSearchParams(location.search), keep = new URLSearchParams();
+          window.__dftBooking = { uid: sp.get('uid') || sp.get('bookingUid') || sp.get('booking_uid') || '' };
+          ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'].forEach(function (k) {
+            var v = sp.get(k); if (v) keep.set(k, v);
+          });
+          var q = keep.toString();
+          history.replaceState(null, '', location.pathname + (q ? '?' + q : ''));
+        } catch (e) { /* noop */ }
+      })();
+    </script>
+
+    <!-- Meta Pixel Code (même ID que les autres LP) -->
+    <script>
+      if (!window.__dftLocal && !window.__dftFramed) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '2166358790810988');
+      fbq('track', 'PageView');
+      }
+    </script>
+    <!-- End Meta Pixel Code -->
+  </head>
+
+  <body>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2166358790810988&ev=PageView&noscript=1"/></noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/consultation.tsx"></script>
+  </body>
+</html>

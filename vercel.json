@@ -1,7 +1,24 @@
 {
   "rewrites": [
-    { "source": "/portugal", "destination": "/portugal/index.html" },
-    { "source": "/portugal/confidentialite", "destination": "/portugal/confidentialite.html" },
-    { "source": "/((?!assets/|dashboards/|portugal/|.*\\..*).*)", "destination": "/index.html" }
+    {
+      "source": "/portugal",
+      "destination": "/portugal/index.html"
+    },
+    {
+      "source": "/portugal/confidentialite",
+      "destination": "/portugal/confidentialite.html"
+    },
+    {
+      "source": "/consultation-ecommerce",
+      "destination": "/consultation-ecommerce/index.html"
+    },
+    {
+      "source": "/consultation-ecommerce/merci",
+      "destination": "/consultation-ecommerce/index.html"
+    },
+    {
+      "source": "/((?!assets/|dashboards/|portugal/|consultation-ecommerce/|.*\\..*).*)",
+      "destination": "/index.html"
+    }
   ]
 }

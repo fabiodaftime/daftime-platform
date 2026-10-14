@@ -23,6 +23,8 @@ export default defineConfig(() => ({
         // un FCP < 2 s sur mobile et porter ses propres meta (lang fr, Open Graph).
         // Voir src/portugal.tsx.
         portugal: path.resolve(__dirname, "portugal/index.html"),
+        // Landing « consultation e-commerce » + sa page /merci. Voir src/consultation.tsx.
+        consultation: path.resolve(__dirname, "consultation-ecommerce/index.html"),
       },
     },
   },
