@@ -43,7 +43,10 @@ export const ADVISOR = {
    * Tant que c'est vide, la page n'affiche pas de bio (rien d'inventé en ligne) ;
    * en local, un repère « [TEXTE BIO] » rappelle qu'il manque.
    */
-  bio: '',
+  bio:
+    'J’accompagne des e-commerçants (Shopify, marketplaces, marques) sur leur structure, leur compta '
+    + 'et le pilotage de leur marge. Mon parti pris : on part de ce que tu gagnes vraiment, pas de ton CA. '
+    + 'Et je te dis les choses simplement : ce qui va, ce qui coince, et par quoi commencer.',
 } as const;
 
 export const FLAGS = {
