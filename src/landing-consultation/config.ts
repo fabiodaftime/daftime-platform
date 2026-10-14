@@ -36,6 +36,7 @@ export const FORWARDED_PARAMS = [
 // ─────────────────────────────────────────────────────────── Qui est derrière ──
 export const ADVISOR = {
   name: 'Fabio Vieira',
+  role: 'Partner',
   /** [PHOTO] — remplacer le fichier public/consultation/fabio.webp (carré, 320 px suffit). */
   photo: '/consultation/fabio.webp',
   /**

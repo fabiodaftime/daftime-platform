@@ -164,17 +164,10 @@ export default function LandingConsultation() {
         <ul className="mt-8 grid grid-cols-2 border-l border-t border-primary/10 sm:grid-cols-4">
           {COUNTRIES.items.map((c) => (
             <li
-              key={c.name}
-              className="flex min-h-[68px] flex-col justify-center gap-1 border-b border-r border-primary/10 px-4 py-3"
+              key={c}
+              className="flex min-h-[56px] items-center border-b border-r border-primary/10 px-4 py-3 text-[16px] font-semibold"
             >
-              <span className="text-[16px] font-semibold">{c.name}</span>
-              <span className="text-[12px] text-muted-foreground">
-                {c.direct ? (
-                  <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-accent-foreground">Daftime en direct</span>
-                ) : (
-                  'Partenaire sur place'
-                )}
-              </span>
+              {c}
             </li>
           ))}
         </ul>
@@ -200,7 +193,7 @@ export default function LandingConsultation() {
             />
             <div>
               <p className="text-[18px] font-semibold">{ADVISOR.name}</p>
-              <p className="text-[14px] text-primary-foreground/70">Daftime Advisory · Dubaï</p>
+              <p className="text-[14px] text-primary-foreground/70">{ADVISOR.role} · Daftime Advisory</p>
             </div>
           </div>
           {ADVISOR.bio ? (

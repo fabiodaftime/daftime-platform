@@ -16,7 +16,7 @@ export const HERO = {
 export const PAINS = {
   title: 'Ça te parle ?',
   items: [
-    'Tu as une LLC US avec une adresse bidon, et ton compte de paiement saute.',
+    'Tu as une LLC US avec une adresse bidon, et ton compte bancaire ou PSP saute.',
     'Tu vis à l’étranger, mais ta société est restée en France.',
     'Paiements bloqués, fonds retenus, ta banque te demande l’origine des fonds.',
     'Ton CA a explosé, ta structure n’a pas bougé.',
@@ -39,14 +39,14 @@ export const COUNTRIES = {
   title: 'Où on t’accompagne',
   intro: 'Création de société, compta, fiscalité : des partenaires dans chaque pays, un seul interlocuteur — nous.',
   items: [
-    { name: 'États-Unis', direct: false },
-    { name: 'Royaume-Uni', direct: false },
-    { name: 'Dubaï', direct: true },
-    { name: 'Chypre', direct: false },
-    { name: 'Hong Kong', direct: false },
-    { name: 'Allemagne', direct: false },
-    { name: 'Portugal', direct: true },
-    { name: 'France', direct: true },
+    'États-Unis',
+    'Royaume-Uni',
+    'Dubaï',
+    'Chypre',
+    'Hong Kong',
+    'Allemagne',
+    'Portugal',
+    'France',
   ],
 } as const;
 
@@ -54,7 +54,7 @@ export const ABOUT = {
   title: 'Qui est derrière',
   firm: 'Daftime Advisory, cabinet basé à Dubaï. Comptabilité, fiscalité et conseil sur les Émirats, la France et le Portugal.',
   services: [
-    'Création de ta structure (LLC US, LTD UK, Chypre, Dubaï, Hong Kong…) via nos partenaires',
+    'Création de ta structure (LLC US, LTD UK, Chypre, Dubaï, Hong Kong…)',
     'Comptabilité',
     'CFO externalisé',
   ],
