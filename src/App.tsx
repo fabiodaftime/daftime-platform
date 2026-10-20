@@ -12,6 +12,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLoading } from "@/components/layout/AppLoading";
+import { RouteTitle } from "@/components/layout/RouteTitle";
 
 // Pages principales du front v2 : chargées en tâche de fond dès que le navigateur est libre, pour que le passage
 // d'une page à l'autre soit immédiat (pas d'écran d'attente le temps de télécharger la page).
@@ -87,6 +88,7 @@ const App = () => {
       <Toaster />
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true }}>
+        <RouteTitle />
         <AuthProvider>
           <Suspense fallback={<PageLoader />}>
           <Routes>

@@ -1,7 +1,7 @@
 // Espace client (front v2) : bandeau du mois (marge après pub + les 3 points), indicateurs animés, tendance,
 // rapport complet, flux, questions, envoi de document. Navigation via le shell (menu latéral / onglets mobiles).
 // RLS = isolation + « publié uniquement ». Ton : tutoiement (doctrine Daftime).
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -61,6 +61,11 @@ const TREND_IDS = ['ca', 'cm3', 'cm3_rate', 'ebitda', 'resultat_net'] as const;
 const moneyFmt = (currency = 'EUR') => (v: number) => {
   try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency, maximumFractionDigits: 0 }).format(v); }
   catch { return `${Math.round(v).toLocaleString('fr-FR')} ${currency}`; }
+};
+/** Symbole de la devise du client (« € », « AED »…) : le ratio pub ne doit pas afficher € à un client en dirhams. */
+const curSymbol = (currency = 'EUR') => {
+  try { return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).formatToParts(0).find((x) => x.type === 'currency')?.value ?? currency; }
+  catch { return currency; }
 };
 const num1 = (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
 const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
@@ -210,6 +215,7 @@ export default function ClientSpace() {
 
   const [tab, setTab] = useState<TabKey>('accueil');
   const [client, setClient] = useState<any>(null);
+  const [clientMissing, setClientMissing] = useState(false);
   const [period, setPeriod] = useState(currentPeriod());
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]); // mois publiés, du plus récent au plus ancien
   const [periodsLoaded, setPeriodsLoaded] = useState(false);
@@ -244,7 +250,7 @@ export default function ClientSpace() {
   };
 
   const loadClient = useCallback(async () => {
-    const { data } = await supabase.from('clients' as any)
+    const { data, error: clientErr } = await supabase.from('clients' as any)
       .select('id, name, currency, logo_url, legacy_company_id, activity_types:activity_type_id(slug, config), advisor:advisor_id(name, email, whatsapp, photo_url, booking_url)')
       .eq('id', id).maybeSingle();
     const legacyId = (data as { legacy_company_id?: string | null } | null)?.legacy_company_id;
@@ -254,6 +260,8 @@ export default function ClientSpace() {
       navigate(legacyDashboardRoute((co as { layout_type?: string } | null)?.layout_type, legacyId), { replace: true });
       return;
     }
+    // Sans ce repli, un dossier introuvable (ou une erreur réseau) laissait l'écran de chargement tourner sans fin.
+    if (clientErr || !data) { setClientMissing(true); return; }
     setClient(data);
   }, [id, navigate]);
 
@@ -271,9 +279,14 @@ export default function ClientSpace() {
     }
   }, [id]);
 
+  const dashReq = useRef(0);
   const loadDashboard = useCallback(async () => {
+    // Le 1er appel part avec le mois courant avant que loadAvailable ne bascule sur le dernier mois publié :
+    // seule la réponse de la DERNIÈRE requête est retenue (sinon une réponse lente écrase la bonne par null).
+    const req = ++dashReq.current;
     const { data } = await supabase.from('dashboards' as any).select('*')
       .eq('client_id', id).eq('period', period).eq('status', 'publie').eq('is_current', true).maybeSingle();
+    if (req !== dashReq.current) return;
     setDash(data); setDashLoaded(true);
   }, [id, period]);
 
@@ -325,13 +338,15 @@ export default function ClientSpace() {
         const path = `${id}/${docPeriod}/${f.name}`;
         const up = await supabase.storage.from(BUCKET).upload(path, f, { upsert: true, contentType: f.type || undefined });
         if (up.error) throw up.error;
-        await supabase.from('files' as any).insert({ client_id: id, period: docPeriod, original_name: f.name, storage_path: path, status: 'uploaded', uploaded_by: user?.id ?? null });
+        const ins = await supabase.from('files' as any).insert({ client_id: id, period: docPeriod, original_name: f.name, storage_path: path, status: 'uploaded', uploaded_by: user?.id ?? null });
+        if (ins.error) throw ins.error; // sinon « Envoyé » s'affichait alors que ton conseiller ne voit pas le fichier
         await logActivity(id!, 'file_uploaded', { entity_type: 'file', metadata: { name: f.name, period: docPeriod } });
       }
       await Promise.all([loadFiles(), loadActivity()]);
       setSent(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      console.error('upload', e);
+      setError(`L'envoi n'est pas passé. Réessaie, ou envoie le fichier directement à ${client?.advisor?.name ?? ADVISOR.name}.`);
     } finally { setBusy(false); }
   };
 
@@ -349,7 +364,8 @@ export default function ClientSpace() {
     const out: Kpi[] = [];
     const cm3 = g('cm3'), cm3r = g('cm3_rate'), mer = g('mer'), be = g('breakeven_roas'), cpo = g('cm3_per_order'), aov = g('aov'), cash = g('cash_end');
     if (cm3 != null) out.push({ key: 'cm3', label: 'Marge après pub', raw: cm3, fmt: money, sub: cm3r != null ? `${num1(cm3r)} % de ton chiffre d'affaires` : undefined, delta: delta('cm3', cm3) });
-    if (mer != null) out.push({ key: 'mer', label: 'CA pour 1 € de pub', raw: mer, fmt: (v) => `${num1(v)} €`, sub: be != null ? `point mort à ${num1(be)} €` : undefined,
+    const sym = curSymbol(client.currency ?? 'EUR');
+    if (mer != null) out.push({ key: 'mer', label: `CA pour 1 ${sym} de pub`, raw: mer, fmt: (v) => `${num1(v)} ${sym}`, sub: be != null ? `point mort à ${num1(be)} ${sym}` : undefined,
       status: be != null ? (mer >= be ? { ok: true, text: 'au-dessus du point mort' } : { ok: false, text: 'sous le point mort' }) : undefined });
     if (cpo != null) out.push({ key: 'cpo', label: 'Marge par commande', raw: cpo, fmt: money, sub: aov != null ? `après pub, avant charges fixes · panier moyen ${money(aov)}` : 'après pub, avant charges fixes' });
     if (cash != null) {
@@ -365,6 +381,18 @@ export default function ClientSpace() {
     return out.slice(0, 4);
   }, [dj, client, series, period]);
 
+  if (clientMissing) return (
+    <main className="v2 min-h-screen grid place-items-center p-6">
+      <div className="surface max-w-md p-8 text-center">
+        <h1 className="text-xl font-semibold">Espace introuvable</h1>
+        <p className="text-sm text-muted-foreground mt-2">Ce lien ne correspond à aucun espace auquel tu as accès, ou la connexion a échoué.</p>
+        <div className="mt-6 flex justify-center gap-2">
+          <Button variant="outline" onClick={() => window.location.reload()}>Réessayer</Button>
+          <Button onClick={() => navigate('/', { replace: true })}>Retour à l'accueil</Button>
+        </div>
+      </div>
+    </main>
+  );
   if (!client) return <AppLoading nav />;
   const ebitdaNow = metricById(dj, 'ebitda');
 
@@ -572,7 +600,9 @@ export default function ClientSpace() {
               <div><span className="eyebrow">Rapport mensuel</span><h1 className="text-xl font-semibold capitalize mt-0.5">{periodLabel(period)}</h1></div>
               <MonthSwitch />
             </div>
-            {dash ? <div className="surface overflow-hidden p-1 sm:p-2"><DashboardFrame html={dash.html ?? ''} /></div> : <Shimmer className="h-[70vh]" />}
+            {dash ? <div className="surface overflow-hidden p-1 sm:p-2"><DashboardFrame html={dash.html ?? ''} /></div>
+              : !dashLoaded ? <Shimmer className="h-[70vh]" />
+              : <div className="surface p-8 text-sm text-muted-foreground">Pas de rapport publié pour {periodLabel(period)}. Choisis un autre mois ci-dessus.</div>}
           </div>
         ))}
 
@@ -596,8 +626,8 @@ export default function ClientSpace() {
               </select>
             </div>
             <label className="block">
-              <input type="file" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) upload(e.target.files); e.currentTarget.value = ''; }} />
-              <span className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-12 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition">
+              <input type="file" multiple disabled={busy} className="peer sr-only" onChange={(e) => { if (e.target.files?.length) upload(e.target.files); e.currentTarget.value = ''; }} />
+              <span className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-12 cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40">
                 <UploadCloud className="w-7 h-7 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">{busy ? 'Envoi…' : 'Clique pour choisir tes fichiers'}</span>
               </span>

@@ -95,10 +95,10 @@ export function DailyView({ clientId, currency = 'EUR' }: { clientId: string; cu
 
   // Mode dégradé : aucune donnée quotidienne (connecteur non branché).
   if (!model) return (
-    <div className="rounded-xl border bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40 p-5">
-      <div className="font-semibold flex items-center gap-2"><Sunrise className="w-4 h-4 text-amber-600" /> Suivi quotidien pas encore actif</div>
+    <div className="rounded-xl border bg-[hsl(var(--warn)/0.08)] border-[hsl(var(--warn)/0.25)] p-5">
+      <div className="font-semibold flex items-center gap-2"><Sunrise className="w-4 h-4 text-[hsl(var(--warn))]" /> Suivi quotidien pas encore actif</div>
       <p className="text-sm text-muted-foreground mt-2">
-        Ton suivi jour par jour s'affichera ici dès que ta boutique sera connectée. En attendant, retrouve ton analyse dans l'onglet <b>Rapport complet</b>.
+        Ton suivi jour par jour s'affichera ici dès que ta boutique sera connectée. En attendant, retrouve ton analyse dans l'onglet <b>Rapport</b>.
       </p>
     </div>
   );

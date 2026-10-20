@@ -31,16 +31,18 @@ export function DashboardFrame({ html, showPdf = true, className = '' }: { html:
   const openTab = useCallback(() => {
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
     window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000); // l'onglet a chargé la page : on libère la mémoire
   }, [html]);
 
   const printPdf = useCallback(() => {
     const w = window.open('', '_blank');
-    if (!w) return;
+    // Fenêtre bloquée (bloqueur de pop-up, webview) : on ouvre le rapport dans un onglet, l'impression s'y fait au clavier.
+    if (!w) { openTab(); return; }
     w.document.open();
     w.document.write(html);
     w.document.close();
     w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 500);
-  }, [html]);
+  }, [html, openTab]);
 
   return (
     <div
@@ -49,14 +51,14 @@ export function DashboardFrame({ html, showPdf = true, className = '' }: { html:
     >
       <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1">
         {showPdf && (
-          <Button variant="secondary" size="sm" onClick={printPdf} className="shadow-sm bg-white/90 backdrop-blur hover:bg-white">
+          <Button variant="secondary" size="sm" onClick={printPdf} className="shadow-sm bg-card/90 text-foreground backdrop-blur hover:bg-card">
             <Printer className="w-4 h-4 mr-1.5" /> PDF
           </Button>
         )}
-        <Button variant="secondary" size="sm" onClick={openTab} className="shadow-sm bg-white/90 backdrop-blur hover:bg-white" title="Ouvrir dans un onglet">
+        <Button variant="secondary" size="sm" onClick={openTab} className="shadow-sm bg-card/90 text-foreground backdrop-blur hover:bg-card" title="Ouvrir dans un onglet" aria-label="Ouvrir dans un onglet">
           <ExternalLink className="w-4 h-4" />
         </Button>
-        <Button variant="secondary" size="sm" onClick={toggleFull} className="shadow-sm bg-white/90 backdrop-blur hover:bg-white">
+        <Button variant="secondary" size="sm" onClick={toggleFull} className="shadow-sm bg-card/90 text-foreground backdrop-blur hover:bg-card">
           {full ? <><Minimize2 className="w-4 h-4 mr-1.5" /> Quitter</> : <><Maximize2 className="w-4 h-4 mr-1.5" /> Plein écran</>}
         </Button>
       </div>

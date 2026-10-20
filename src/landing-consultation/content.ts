@@ -34,7 +34,6 @@ export const STEPS = {
   ],
 } as const;
 
-/** `direct` : Daftime y intervient en direct ; sinon via un partenaire sur place. */
 export const COUNTRIES = {
   title: 'Où on t’accompagne',
   intro: 'Création de société, compta, fiscalité : des partenaires dans chaque pays, un seul interlocuteur — nous.',

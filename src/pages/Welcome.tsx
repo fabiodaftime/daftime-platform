@@ -22,12 +22,14 @@ export default function Welcome() {
     if (done.current) return; done.current = true;
     const p = new URLSearchParams(window.location.search);
     const EXPIRED = 'Ce lien a expiré ou a déjà servi. Demande un nouveau lien à ton conseiller Daftime.';
+    // Sans ce repli, une coupure réseau laissait la page sur « Vérification de ton lien… » indéfiniment.
+    const NETWORK = 'Impossible de vérifier ton lien pour le moment (connexion). Recharge la page dans un instant.';
     const verify = (token_hash: string, type: 'invite' | 'magiclink', askPassword: boolean) =>
       supabase.auth.verifyOtp({ token_hash, type }).then(({ error }) => {
         if (error) { setStep('error'); setErr(EXPIRED); return; }
         window.history.replaceState({}, '', '/bienvenue'); // le jeton ne reste pas dans l'historique
         if (askPassword) setStep('password'); else navigate('/', { replace: true });
-      });
+      }).catch(() => { setStep('error'); setErr(NETWORK); });
     const invite = p.get('invite');
     if (invite) {
       window.history.replaceState({}, '', '/bienvenue');
@@ -35,11 +37,11 @@ export default function Welcome() {
         const d = data as { token_hash?: string; type?: 'invite' | 'magiclink'; needs_password?: boolean; error?: string } | null;
         if (error || !d?.token_hash) { setStep('error'); setErr(d?.error ?? EXPIRED); return; }
         verify(d.token_hash, d.type ?? 'magiclink', !!d.needs_password);
-      });
+      }).catch(() => { setStep('error'); setErr(NETWORK); });
       return;
     }
     const token_hash = p.get('token_hash'); const type = p.get('type') === 'magiclink' ? 'magiclink' : 'invite';
-    if (!token_hash) { setStep('error'); setErr('Lien incomplet.'); return; }
+    if (!token_hash) { setStep('error'); setErr('Ce lien est incomplet. Ouvre-le directement depuis l’e-mail de ton conseiller, ou demande-lui-en un nouveau.'); return; }
     verify(token_hash, type, type === 'invite');
   }, [navigate]);
 
@@ -49,7 +51,14 @@ export default function Welcome() {
     setSaving(true); setErr(null);
     const { error } = await supabase.auth.updateUser({ password: pw });
     setSaving(false);
-    if (error) { setErr(error.message); return; }
+    if (error) {
+      // Messages Supabase en anglais : on traduit les cas connus, sinon message générique.
+      const m = error.message.toLowerCase();
+      setErr(m.includes('different from the old') ? 'Choisis un mot de passe différent de l’ancien.'
+        : m.includes('weak') || m.includes('should be at least') ? 'Mot de passe trop faible : allonge-le ou mélange lettres et chiffres.'
+        : 'Impossible d’enregistrer ton mot de passe. Réessaie, ou demande un nouveau lien à ton conseiller.');
+      return;
+    }
     navigate('/', { replace: true });
   };
 
@@ -66,7 +75,15 @@ export default function Welcome() {
           <h1 className="text-3xl font-semibold tracking-tight mt-2">Bienvenue</h1>
 
           {step === 'checking' && <p className="text-sm text-muted-foreground mt-6 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Vérification de ton lien…</p>}
-          {step === 'error' && <p className="text-sm text-destructive mt-6">{err}</p>}
+          {step === 'error' && (
+            <div className="mt-6 space-y-4">
+              <p className="text-sm text-destructive">{err}</p>
+              {/* Pas de cul-de-sac : un client qui a déjà son mot de passe se connecte directement. */}
+              <Button variant="outline" className="w-full h-11 rounded-xl" onClick={() => navigate('/auth')}>
+                J’ai déjà un mot de passe : me connecter
+              </Button>
+            </div>
+          )}
           {step === 'password' && (
             <form className="mt-6 space-y-3" onSubmit={(e) => { e.preventDefault(); save(); }}>
               <p className="text-sm text-muted-foreground">Choisis ton mot de passe : tu t'en serviras pour revenir sur ton espace.</p>

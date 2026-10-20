@@ -77,6 +77,8 @@ function Section({ icon, title, children, action }: { icon: ReactNode; title: st
   );
 }
 
+const KEEP_NOTICE = '__keep_notice__';
+
 export default function AdminClientCockpit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -126,13 +128,15 @@ export default function AdminClientCockpit() {
       setter((prev) => (prev && prev.trim() ? prev + '\n\n' : '') + txt);
     });
 
-  // fn peut renvoyer un message de succès (ex. résumé de ce que l'IA a compris et appliqué).
+  // fn peut renvoyer un message de succès (ex. résumé de ce que l'IA a compris et appliqué),
+  // ou KEEP_NOTICE quand l'opération continue en arrière-plan (le bandeau « en cours » doit rester).
   const run = async (key: string, fn: () => Promise<void | string>) => {
     const label = OP_LABELS[key] ?? key;
     setBusy(key); setError(null);
     setNotice({ kind: 'running', text: `${label} en cours…` });
     try {
       const out = await fn();
+      if (out === KEEP_NOTICE) return;
       setNotice({ kind: 'success', text: typeof out === 'string' && out ? out : `${label} terminé.` });
       window.setTimeout(() => setNotice((n) => (n?.kind === 'success' ? null : n)), typeof out === 'string' && out ? 10000 : 4000);
     } catch (e) {
@@ -462,7 +466,7 @@ export default function AdminClientCockpit() {
       // tâche de fond : on suit jusqu'à l'apparition de la nouvelle version (marqueur conservé pour reprise au retour).
       setNotice({ kind: 'running', text: 'Génération du dashboard en cours en arrière-plan (≈ 1 min) — vous pouvez quitter la page.' });
       pollGenerate(since);
-      return;
+      return KEEP_NOTICE; // sinon « terminé » s'affichait alors que la génération tournait encore
     }
     // chemin synchrone (dev local)
     if (res?.dashboard) setDash(res.dashboard);
@@ -471,16 +475,25 @@ export default function AdminClientCockpit() {
     setGenActive(false);
   });
 
-  const changeStatus = (to: string) => run('status', async () => {
-    await supabase.from('dashboards' as any).update({ status: to }).eq('id', dash.id);
-    await supabase.from('dashboard_status_history' as any).insert({ dashboard_id: dash.id, from_status: dash.status, to_status: to, changed_by: user?.id ?? null });
+  const changeStatus = (to: string) => {
+    // Publier = le client le voit tout de suite : on demande confirmation (c'était un simple changement de liste).
+    if (to === 'publie' && !window.confirm('Publier ce rapport ? Le client le verra immédiatement dans son espace.')) return;
+    return changeStatusNow(to);
+  };
+  const changeStatusNow = (to: string) => run('status', async () => {
+    // Supabase ne lève pas d'exception : sans ces contrôles, un refus (droits) affichait quand même « terminé ».
+    const up = await supabase.from('dashboards' as any).update({ status: to }).eq('id', dash.id);
+    if (up.error) throw up.error;
+    const hist = await supabase.from('dashboard_status_history' as any).insert({ dashboard_id: dash.id, from_status: dash.status, to_status: to, changed_by: user?.id ?? null });
+    if (hist.error) console.warn('dashboard_status_history', hist.error);
     if (to === 'publie') await logActivity(id!, 'dashboard_published', { entity_type: 'dashboard', entity_id: dash.id });
     await loadDashboard();
   });
 
   // Consignes durables (reprises chaque mois) : édition directe + distillation d'une transcription de call.
   const saveGuidance = () => run('guidance', async () => {
-    await supabase.from('clients' as any).update({ dashboard_guidance: guidanceText }).eq('id', id);
+    const up = await supabase.from('clients' as any).update({ dashboard_guidance: guidanceText }).eq('id', id);
+    if (up.error) throw up.error;
     await loadClient();
   });
   const ingestTranscript = () => run('ingest', async () => {

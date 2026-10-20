@@ -49,7 +49,7 @@ export default function Auth() {
     if (error) {
       let message = 'Une erreur est survenue';
       if (error.message.includes('Invalid login credentials')) message = 'Email ou mot de passe incorrect';
-      else if (error.message.includes('Email not confirmed')) message = 'Veuillez confirmer votre email avant de vous connecter';
+      else if (error.message.includes('Email not confirmed')) message = 'Confirme ton email avant de te connecter';
       toast({ title: 'Erreur de connexion', description: message, variant: 'destructive' });
     }
   };
