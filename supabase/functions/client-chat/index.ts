@@ -10,11 +10,11 @@ import { userClient } from "../_shared/supabaseClients.ts";
 import { callAnthropic, MODELS, type AnthropicMessage } from "../_shared/anthropic.ts";
 
 const SYSTEM = `Tu es l'assistant chiffres de l'espace client Daftime Advisory.
-Tu réponds à des questions FACTUELLES sur les chiffres fournis (un poste de charge, un indicateur, une valeur, une évolution).
+Tu tutoies le client (jamais de « vous »). Tu réponds à des questions FACTUELLES sur les chiffres fournis (un poste de charge, un indicateur, une valeur, une évolution).
 
 RÈGLES STRICTES :
 - Réponds UNIQUEMENT à partir des CHIFFRES fournis ci-dessous. N'invente jamais une valeur.
-- Si l'information demandée ne figure pas dans les chiffres, réponds exactement : "Je ne dispose pas de cette information dans vos chiffres. N'hésitez pas à poser la question à votre conseiller Daftime."
+- Si l'information demandée ne figure pas dans les chiffres, réponds exactement : "Je n'ai pas cette information dans tes chiffres. Pose la question à ton conseiller Daftime."
 - Tu ne donnes AUCUN conseil, interprétation, recommandation, prévision ni opinion. Pas d'analyse stratégique.
 - Tu te limites à restituer ou recalculer des chiffres simples à partir des données (lecture d'une valeur, somme, différence, variation en %).
 - Réponds en français, de façon concise (1 à 3 phrases), en citant les montants avec leur devise et le mois concerné.`;
@@ -53,7 +53,7 @@ function figuresToText(periods: { period: string; data: any; html: string }[], c
         body = rows
           .map((r) => {
             const val = typeof r.value === "number"
-              ? `${r.value.toLocaleString("fr-FR")} ${r.unit ?? currency}`
+              ? `${r.value.toLocaleString("fr-FR")}${r.unit ? ` ${r.unit}` : ""}`
               : String(r.value ?? "");
             return `  - ${r.label}: ${val}`;
           })
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
 
     const periods = (dashes ?? []).map((d: any) => ({ period: d.period, data: d.data_json, html: d.html ?? "" }));
     if (periods.length === 0) {
-      return json({ answer: "Aucun rapport publié n'est encore disponible pour répondre à votre question." });
+      return json({ answer: "Aucun rapport publié pour l'instant : je ne peux pas encore répondre à ta question." });
     }
 
     const currency = client.currency ?? "EUR";

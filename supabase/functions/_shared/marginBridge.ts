@@ -42,7 +42,8 @@ export function marginBridge(cur: V, base: V, baseLabel: string): Bridge | null 
   const side = (v: V) => {
     const N = num(v.orders)!, ca = num(v.ca)!, cogs = num(v.cogs)!;
     const refunds = num(v.refunds);
-    const fees = (num(v.payment_fees) ?? 0) + (num(v.marketplace_fees) ?? 0);
+    // Un frais connu sur un seul des deux mois n'est pas une dérive : on ne compare que ce qui est connu des deux côtés.
+    const fees = (both("payment_fees") ? num(v.payment_fees)! : 0) + (both("marketplace_fees") ? num(v.marketplace_fees)! : 0);
     return { N, ca, A: ca / N, r: (ca - cogs) / ca, rho: refunds != null ? refunds / N : null,
       l: level === "cm1" ? 0 : num(v.shipping_cost)! / N, p: level === "cm1" ? 0 : fees / N, ads: level === "cm3" ? num(v.ads_total)! : 0 };
   };

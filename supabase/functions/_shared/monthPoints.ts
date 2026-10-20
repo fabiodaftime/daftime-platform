@@ -41,13 +41,15 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
     const why = bridge && bridge.level === lvl && Math.abs(bridge.delta) >= 1
       ? ` ${bridge.delta >= 0 ? "En hausse" : "En baisse"} de ${eur(Math.abs(bridge.delta))} vs ${baseLabel ?? bridge.base}${top ? `, d'abord à cause de : ${top.label.toLowerCase()} (${signed(top.value)})` : ""}.`
       : "";
-    const caveat = lvl === "cm1" ? " Logistique inconnue : on ne sait pas encore ce que le shop gagne vraiment." : lvl === "cm2" ? " Pub inconnue : ce n'est pas encore la marge finale." : "";
+    const caveat = lvl === "cm1" ? " Logistique inconnue : on ne connaît pas encore ta marge après livraison et frais." : lvl === "cm2" ? " Pub inconnue : ce n'est pas encore la marge finale." : "";
+    const feesCaveat = (lvl === "cm2" || lvl === "cm3") && n("payment_fees") == null
+      ? " Frais de paiement inconnus : cette marge et ton point mort sont un peu optimistes." : "";
     const eb = n("ebitda");
     const after = lvl === "cm3" && eb != null
       ? (eb >= 0 ? ` Après tes charges fixes (${eur(m - eb)}), il te reste ${eur(eb)} de résultat d'exploitation.`
         : ` Mais tes charges fixes (${eur(m - eb)}) la dépassent : ton résultat d'exploitation est à ${eur(eb)}.`) : "";
     out.push({ key: "gagne", tone: m < 0 || (eb != null && eb < 0) || (rate != null && lvl === "cm3" && rate < 10) ? "warn" : lvl === "cm3" ? "good" : "info",
-      text: `Ton shop dégage ${eur(m)} de ${LEVEL_FR[lvl]} (${lvl.toUpperCase()}${rate != null ? `, ${pct(rate)} du CA` : ""}).${why}${after}${caveat}` });
+      text: `Ton shop dégage ${eur(m)} de ${LEVEL_FR[lvl]} (${lvl.toUpperCase()}${rate != null ? `, ${pct(rate)} du CA` : ""}).${why}${after}${caveat}${feesCaveat}` });
   }
 
   // (2) L'acquisition est-elle rentable ? Global (MER vs point mort 1/CM2) PUIS nouveau client (CM2 par commande
@@ -61,7 +63,12 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
   const pcac = p("cac");
   const cacMove = cac != null && pcac != null && pcac > 0 ? ((cac / pcac) - 1) * 100 : null;
   const cacTrend = cacMove != null && Math.abs(cacMove) >= 10 ? ` (${cacMove > 0 ? "+" : ""}${pct(cacMove)} vs le mois dernier)` : "";
-  if (mer != null && be != null && mer < be) {
+  const cm2v = n("cm2"), adsv = n("ads_total");
+  if (be == null && cm2v != null && cm2v <= 0 && adsv) {
+    // CM2 ≤ 0 : aucun point mort n'existe (1/CM2 indéfini) — chaque euro de pub creuse la perte.
+    out.push({ key: "acquisition", tone: "warn",
+      text: `Avant même la pub, ta marge est à ${eur(cm2v)} (CM2) : aucun niveau de pub ne peut être rentable tant que produit, livraison et frais ne sont pas réparés. Les ${eur(adsv)} de pub du mois creusent la perte.` });
+  } else if (mer != null && be != null && mer < be) {
     out.push({ key: "acquisition", tone: "warn",
       text: `Ta pub est SOUS le point mort : ${xx(mer)} de CA par euro investi, alors qu'il faut ${xx(be)} pour couvrir tes coûts (1/CM2). Chaque euro de pub en plus te coûte de l'argent.` });
   } else if (ratio != null && cpo != null && cac != null) {
@@ -102,7 +109,7 @@ export function selectMonthPoints(v: V, bridge: Bridge | null, currency = "EUR",
     // Sans projection : la baisse du mois reste le seul repère de survie.
     const months = cashEnd > 0 ? Math.floor(cashEnd / -cashVar) : 0;
     out.push({ key: "tresorerie", tone: "warn",
-      text: `Ta trésorerie a baissé de ${eur(-cashVar)} ce mois (${eur(cashEnd)} en fin de mois)${cashEnd > 0 ? ` : à ce rythme, environ ${months} mois devant toi` : ""}.` });
+      text: `Ta trésorerie a baissé de ${eur(-cashVar)} ce mois (${eur(cashEnd)} en fin de mois)${cashEnd > 0 ? ` : à ce rythme, ${months >= 1 ? `environ ${months} mois` : "moins d'un mois"} devant toi` : ""}.` });
     return out.slice(0, 3);
   }
 

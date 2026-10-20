@@ -45,7 +45,6 @@ export function prepareReport(inp: ReportInput): ReportData {
   const monthsRaw = [...inp.history].filter((h) => h.period < period).sort((a, b) => (a.period < b.period ? -1 : 1)).slice(-5)
     .map((h) => ({ period: h.period, map: idVal(h.data) }));
   monthsRaw.push({ period, map: idVal(inp.sdData) });
-  const prevMap = monthsRaw.length >= 2 ? monthsRaw[monthsRaw.length - 2].map : {};
 
   // Dérivés du catalogue COURANT (cascade CM, point mort…) recalculés sur chaque mois (valeurs stockées prioritaires).
   const cat = getCatalog(inp.activityConfig);
@@ -53,6 +52,8 @@ export function prepareReport(inp: ReportInput): ReportData {
   for (const m of monthsRaw) m.map = { ...deriveUnit(m.map), ...m.map };
   const curMap = monthsRaw[monthsRaw.length - 1].map;
   const prevEntry = monthsRaw.find((m) => m.period.slice(0, 7) === shiftP(period, -1).slice(0, 7));
+  // « vs M-1 » = le mois PRÉCÉDENT strict (pas le dernier mois disponible, qui peut être M-3), avec ses dérivés recalculés.
+  const prevMap: Record<string, number> = prevEntry?.map ?? {};
   const bridgePrev = prevEntry ? marginBridge(curMap, prevEntry.map, monthName(prevEntry.period)) : null;
   const prior3 = monthsRaw.filter((m) => m.period < period && m.period >= shiftP(period, -3));
   const avg3 = averageBase(prior3.map((m) => m.map));

@@ -51,3 +51,21 @@ describe("garde-fou chiffres", () => {
     expect(numbersPreserved(facts, "Tu gardes 11 000 € de marge.")).toBe(false);
   });
 });
+
+describe("garde-fous ajoutés (audit 20/10)", () => {
+  it("frais de paiement connus sur un seul mois : pas de fausse dérive « paiement » dans le pont", () => {
+    const b = marginBridge(aug, { ...jul, payment_fees: undefined as unknown as number }, "juillet")!;
+    expect(b.effects.find((e) => e.key === "paiement")?.value ?? 0).toBe(0);
+  });
+  it("CM2 négative : aucun point mort, la pub est signalée comme creusant la perte", () => {
+    const x = { ...derived(aug), cogs: 100_000 };
+    const cm2 = x.ca - 100_000 - x.shipping_cost - x.payment_fees;
+    const pts = selectMonthPoints({ ...x, cm1: x.ca - 100_000, cm2, cm3: cm2 - x.ads_total, breakeven_roas: undefined as unknown as number }, null, "EUR");
+    expect(pts.find((p) => p.key === "acquisition")).toMatchObject({ tone: "warn" });
+    expect(pts.find((p) => p.key === "acquisition")!.text).toMatch(/aucun niveau de pub/);
+  });
+  it("frais de paiement inconnus : le point 1 le dit", () => {
+    const pts = selectMonthPoints({ ...derived(aug), payment_fees: undefined as unknown as number }, null, "EUR");
+    expect(pts[0].text).toMatch(/Frais de paiement inconnus/);
+  });
+});

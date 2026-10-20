@@ -288,7 +288,7 @@ export function estimatePaymentFees(m: Merged, reporting: string, custom?: Recor
     fee = r2(fee); if (!(fee > 0)) continue;
     total += fee; rows.push({ label: psp, value: fee });
     const basis = [x.gross > 0 ? `${fmt(x.gross)} ${reporting} payés (brut, ${x.n} transactions)` : "", x.net > 0 ? `${fmt(x.net)} ${reporting} versés (net)` : ""].filter(Boolean).join(" + ");
-    traces.push({ src: `${psp} : ${basis} × ${rate.pct.toLocaleString("fr-FR")} %${f ? ` + ${f.toLocaleString("fr-FR")} €/transaction` : ""} — ${own ? "tarif du contrat" : "tarif standard (hypothèse)"}`, value: fee });
+    traces.push({ src: `${psp} : ${basis} × ${rate.pct.toLocaleString("fr-FR")} %${f ? ` + ${f.toLocaleString("fr-FR")} ${reporting}/transaction` : ""} — ${own ? "tarif du contrat" : "tarif standard (hypothèse)"}`, value: fee });
   }
   if (!(total > 0)) return;
   m.values.payment_fees = r2(total);
