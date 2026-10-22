@@ -49,6 +49,14 @@ export default function Confidentialite() {
             </p>
           </section>
           <section>
+            <h2 className="font-semibold text-foreground mb-1">Mesure d’usage — Microsoft Clarity</h2>
+            <p>
+              Nos pages de présentation utilisent Microsoft Clarity pour comprendre comment elles sont utilisées (clics, défilement),
+              de façon pseudonymisée et sans les champs de saisie. Clarity dépose des cookies ; tu peux t’y opposer via les paramètres
+              de ton navigateur.
+            </p>
+          </section>
+          <section>
             <h2 className="font-semibold text-foreground mb-1">Durée de conservation</h2>
             <p>Tes données sont conservées le temps nécessaire au traitement de ta demande et à nos obligations, puis supprimées.</p>
           </section>
