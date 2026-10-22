@@ -10,7 +10,27 @@ export const HERO = {
   title: '20 minutes avec un expert pour remettre ta structure e-commerce d’aplomb.',
   titleHighlight: 'Offertes.',
   subtitle: 'Société, résidence, flux, encaissements : on fait le point, tu repars avec un plan clair.',
-  reassurance: ['20 min en visio', 'Sans engagement', 'Avec Fabio, en direct'],
+  reassurance: ['20 min en visio', 'Sans engagement', 'Gratuit'],
+} as const;
+
+/**
+ * Titre du hero aligné sur la pub d'origine (message match) : `?a=<clé>` dans l'URL de la pub,
+ * ou une clé contenue dans utm_content. Clé absente ou inconnue → titre par défaut (HERO).
+ * Le sous-titre, le bouton et le reste de la page ne changent pas.
+ */
+export const HERO_VARIANTS = {
+  structure: { title: 'Souvent, le problème n’est pas ton shop.', highlight: 'C’est ta structure.' },
+  question: { title: 'Je paie quoi, et où ? La réponse claire en 20 min.', highlight: 'Offertes.' },
+  clean: { title: 'Ta structure e-commerce est-elle vraiment', highlight: 'clean ?' },
+  gratuit: { title: 'Ton premier rendez-vous avec un expert fiscalité e-commerce :', highlight: '0 €.' },
+  tiktok: { title: 'Quelle structure pour ton shop ? Ça dépend de toi,', highlight: 'pas de TikTok.' },
+  expat: { title: 'Tu vis à l’étranger, ta boîte est restée en France ?', highlight: 'On vérifie que tout est aligné.' },
+} as const;
+export type HeroVariantKey = keyof typeof HERO_VARIANTS;
+
+export const FINAL_CTA = {
+  title: 'Réserve tes 20 minutes',
+  text: 'Tu repars avec une réponse claire sur ta structure, que tu travailles avec nous ou non.',
 } as const;
 
 export const PAINS = {

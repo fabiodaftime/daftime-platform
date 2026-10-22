@@ -13,35 +13,64 @@
 //
 //  Mobile d'abord (90 % du trafic = webview Meta) : pas d'animation conditionnant
 //  l'affichage, pas de librairie lourde, images locales de quelques ko.
+//
+//  Conversion (22/10, ~300 visites → 2 RDV) :
+//   - sur mobile / webview Instagram-Facebook, le bouton ouvre DIRECTEMENT la page cal.com
+//     (avant : long défilement jusqu'à une iframe montée tard, souvent bridée en webview) ;
+//   - le calendrier est remonté juste après « Comment ça se passe » ;
+//   - le titre du hero reprend l'accroche de la pub (?a=structure|question|clean|gratuit|tiktok|expat) ;
+//   - le visage de Fabio dans le hero : on réserve avec une personne, pas avec un cabinet.
 // ═══════════════════════════════════════════════════════════════════════════
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, CalendarCheck, Check } from 'lucide-react';
 import daftimeLogoWhite from '@/assets/daftime-logo-white-sm.png';
-import { ADVISOR, FLAGS, LEGAL, LINKS } from '@/landing-consultation/config';
+import { ADVISOR, CAL, FLAGS, LEGAL, LINKS } from '@/landing-consultation/config';
+import { withForwardParams } from '@/landing-consultation/params';
+import { isInAppBrowser } from '@/lib/inApp';
 import {
-  ABOUT, BOOKING, COUNTRIES, CTA_LABEL, FAQ, HERO, PAINS, STEPS,
+  ABOUT, BOOKING, COUNTRIES, CTA_LABEL, FAQ, FINAL_CTA, HERO, HERO_VARIANTS, PAINS, STEPS, type HeroVariantKey,
 } from '@/landing-consultation/content';
 import { CalEmbed } from '@/landing-consultation/CalEmbed';
 
 const BOOKING_ANCHOR = 'reserver';
 
-/** Le CTA unique : défilement vers le calendrier. */
+/** Mobile ou webview : on réserve sur la page cal.com elle-même (fiable, rapide, bouton retour natif). */
+const directBooking = () =>
+  isInAppBrowser() || (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches);
+
+/** `?a=<clé>` (ou clé contenue dans utm_content) → accroche de la pub reprise dans le hero. */
+function useHero() {
+  return useMemo(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const keys = Object.keys(HERO_VARIANTS) as HeroVariantKey[];
+    const a = (sp.get('a') ?? '').toLowerCase();
+    const uc = (sp.get('utm_content') ?? '').toLowerCase();
+    const key = keys.find((k) => k === a) ?? keys.find((k) => uc.includes(k));
+    return key ? HERO_VARIANTS[key] : { title: HERO.title, highlight: HERO.titleHighlight };
+  }, []);
+}
+
+/** Le CTA unique. Un vrai lien vers cal.com (marche sans JS, appui long, webview) ;
+ *  sur ordinateur, il fait défiler jusqu'au calendrier intégré. */
 function Cta({ className = '' }: { className?: string }) {
-  const go = () => {
+  const href = useMemo(() => withForwardParams(CAL.fullUrl), []);
+  const go = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (directBooking()) return; // navigation normale vers cal.com
     const target = document.getElementById(BOOKING_ANCHOR);
     if (!target) return;
+    e.preventDefault();
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   };
   return (
-    <button
-      type="button"
+    <a
+      href={href}
       onClick={go}
       className={`inline-flex h-14 w-full touch-manipulation items-center justify-center gap-2 rounded-xl bg-accent px-7 text-base font-semibold text-accent-foreground shadow-[0_6px_20px_-8px_rgba(214,211,3,0.7)] transition-[filter,transform] hover:brightness-105 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-primary motion-reduce:transition-none sm:w-auto ${className}`}
     >
       <CalendarCheck className="h-5 w-5" aria-hidden />
       {CTA_LABEL}
-    </button>
+    </a>
   );
 }
 
@@ -54,6 +83,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export default function LandingConsultation() {
+  const hero = useHero();
   const [booked, setBooked] = useState(false);
   const [pastHero, setPastHero] = useState(false);
   const [bookingInView, setBookingInView] = useState(false);
@@ -90,20 +120,27 @@ export default function LandingConsultation() {
           </p>
           <h1 className="mt-4 max-w-3xl text-balance text-[31px] font-semibold leading-[1.14] tracking-tight sm:text-[50px] sm:leading-[1.08]">
             {/* « e-commerce » insécable : sinon le titre se coupe au tiret sur mobile. */}
-            {HERO.title.split('e-commerce').map((part, i) => (
+            {hero.title.split('e-commerce').map((part, i) => (
               <span key={i}>
                 {i > 0 && <span className="whitespace-nowrap">e-commerce</span>}
                 {part}
               </span>
             ))}{' '}
-            <span className="box-decoration-clone whitespace-nowrap rounded-md bg-accent px-2 text-accent-foreground">
-              {HERO.titleHighlight}
+            <span className="box-decoration-clone rounded-md bg-accent px-2 text-accent-foreground">
+              {hero.highlight}
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-primary-foreground/80 sm:text-xl">
             {HERO.subtitle}
           </p>
-          <div className="mt-8">
+          <div className="mt-6 flex items-center gap-3">
+            <img src={ADVISOR.photo} alt="" width={44} height={44} decoding="async"
+              className="h-11 w-11 flex-shrink-0 rounded-full object-cover ring-2 ring-accent" />
+            <p className="text-[14px] leading-snug text-primary-foreground/85">
+              Avec <span className="font-semibold text-primary-foreground">{ADVISOR.name}</span>, {ADVISOR.role} chez Daftime Advisory
+            </p>
+          </div>
+          <div className="mt-6">
             <Cta />
           </div>
           <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-primary-foreground/75">
@@ -154,6 +191,26 @@ export default function LandingConsultation() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* ──────────── 4. Réservation (remontée juste après « comment ça se passe ») ── */}
+      <section id={BOOKING_ANCHOR} ref={bookingRef} className="scroll-mt-2 border-t border-primary/10 bg-white">
+        <div className="mx-auto max-w-4xl px-5 py-12 sm:py-16">
+          <SectionTitle>{BOOKING.title}</SectionTitle>
+          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">{BOOKING.text}</p>
+          {booked && (
+            <p
+              role="status"
+              className="mt-6 flex items-start gap-2.5 rounded-lg bg-accent px-4 py-3 text-[15px] font-medium text-accent-foreground"
+            >
+              <CalendarCheck className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden />
+              {BOOKING.confirmed}
+            </p>
+          )}
+          <div className="mt-7">
+            <CalEmbed onBooked={() => setBooked(true)} />
+          </div>
         </div>
       </section>
 
@@ -243,23 +300,12 @@ export default function LandingConsultation() {
         </div>
       </section>
 
-      {/* ───────────────────────────────────── 7. CTA final + réservation ── */}
-      <section id={BOOKING_ANCHOR} ref={bookingRef} className="scroll-mt-2 bg-secondary">
+      {/* ────────────────────────────────────────────────────── CTA de fin ── */}
+      <section className="bg-primary text-primary-foreground">
         <div className="mx-auto max-w-4xl px-5 py-12 sm:py-16">
-          <SectionTitle>{BOOKING.title}</SectionTitle>
-          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">{BOOKING.text}</p>
-          {booked && (
-            <p
-              role="status"
-              className="mt-6 flex items-start gap-2.5 rounded-lg bg-accent px-4 py-3 text-[15px] font-medium text-accent-foreground"
-            >
-              <CalendarCheck className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden />
-              {BOOKING.confirmed}
-            </p>
-          )}
-          <div className="mt-7">
-            <CalEmbed onBooked={() => setBooked(true)} />
-          </div>
+          <h2 className="text-balance text-[26px] font-semibold leading-[1.15] tracking-tight sm:text-[34px]">{FINAL_CTA.title}</h2>
+          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-primary-foreground/75">{FINAL_CTA.text}</p>
+          <div className="mt-7"><Cta /></div>
         </div>
       </section>
 

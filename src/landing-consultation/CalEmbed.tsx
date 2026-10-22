@@ -22,6 +22,10 @@ export function CalEmbed({ onBooked }: { onBooked?: () => void }) {
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
+    // Ordinateur : on charge le calendrier en tâche de fond (2,5 s après l'arrivée) pour qu'il soit prêt
+    // quand le bouton y fait défiler. Sur mobile le bouton ouvre cal.com directement : chargement au scroll.
+    const desktop = window.matchMedia('(min-width: 768px)').matches;
+    const t = desktop ? window.setTimeout(() => setVisible(true), 2500) : undefined;
     if (!('IntersectionObserver' in window)) {
       setVisible(true);
       return;
@@ -36,7 +40,7 @@ export function CalEmbed({ onBooked }: { onBooked?: () => void }) {
       { rootMargin: '600px 0px' },
     );
     observer.observe(host);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); if (t) window.clearTimeout(t); };
   }, []);
 
   useEffect(() => {
